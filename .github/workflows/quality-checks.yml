@@ -1,0 +1,291 @@
+name: Plugin Quality Checks
+
+on:
+    push:
+        branches: [main, develop]
+    pull_request:
+        branches: [main]
+
+jobs:
+    quality-checks:
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                php-version: [8.0, 8.1, 8.2, 8.3]
+                wordpress-version: [6.5, 6.6, latest]
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ matrix.php-version }}
+                  extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+                  coverage: none
+
+            - name: Validate composer.json
+              run: composer validate --strict
+
+            - name: Install Composer dependencies
+              run: composer install --prefer-dist --no-progress --no-suggest
+
+            - name: Configure WordPress Coding Standards
+              run: vendor/bin/phpcs --config-set installed_paths vendor/wp-coding-standards/wpcs
+
+            - name: Run PHP CodeSniffer
+              run: |
+                  # Run basic syntax validation
+                  echo "🔍 Running PHP syntax validation..."
+                  find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \;
+                  echo "✅ PHP syntax validation completed"
+
+            - name: WordPress Coding Standards Check
+              run: |
+                  echo "🔍 Running WordPress Coding Standards check..."
+                  vendor/bin/phpcs --standard=WordPress --extensions=php --ignore=vendor/ .
+                  echo "✅ WordPress Coding Standards check completed"
+
+            - name: Validate plugin structure
+              run: |
+                  echo "🔍 Validating plugin structure..."
+
+                  # Check main plugin file exists
+                  if [ ! -f "silver-assist-security.php" ]; then
+                    echo "❌ Main plugin file missing: silver-assist-security.php"
+                    exit 1
+                  fi
+                  echo "✅ Main plugin file exists"
+
+                  # Check required directories
+                  for dir in "src" "assets" "languages"; do
+                    if [ ! -d "$dir" ]; then
+                      echo "❌ Required directory missing: $dir"
+                      exit 1
+                    fi
+                    echo "✅ Directory exists: $dir"
+                  done
+
+                  # Check core classes exist
+                  for class in "src/Core/Plugin.php" "src/Core/Updater.php" "src/Admin/AdminPanel.php"; do
+                    if [ ! -f "$class" ]; then
+                      echo "❌ Core class missing: $class"
+                      exit 1
+                    fi
+                    echo "✅ Core class exists: $class"
+                  done
+
+    security-check:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: 8.0
+
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress
+
+            - name: Run security check
+              run: |
+                  # Check for common security issues (only in PHP files, excluding vendor)
+                  echo "🔍 Checking for eval() usage in PHP code..."
+                  EVAL_FILES=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -l "eval(" {} \; 2>/dev/null || true)
+                  if [ -n "$EVAL_FILES" ]; then
+                    echo "❌ eval() usage found in PHP files - security risk!"
+                    echo "$EVAL_FILES"
+                    exit 1
+                  else
+                    echo "✅ No eval() found in PHP code"
+                  fi
+
+                  echo "🔍 Checking for direct \$_GET usage in PHP code..."
+                  GET_FILES=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -l "\$_GET\[" {} \; 2>/dev/null || true)
+                  if [ -n "$GET_FILES" ]; then
+                    echo "⚠️ Direct \$_GET usage found - consider using sanitize_text_field()"
+                    echo "$GET_FILES"
+                  else
+                    echo "✅ No direct \$_GET usage in PHP code"
+                  fi
+
+                  echo "🔍 Checking for direct \$_POST usage in PHP code..."
+                  POST_FILES=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -l "\$_POST\[" {} \; 2>/dev/null || true)
+                  if [ -n "$POST_FILES" ]; then
+                    echo "⚠️ Direct \$_POST usage found - consider using sanitize_text_field()"
+                    echo "$POST_FILES"
+                  else
+                    echo "✅ No direct \$_POST usage in PHP code"
+                  fi
+
+                  echo "🔍 Checking for remote file_get_contents usage in PHP code..."
+                  HTTP_FILES=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -l "file_get_contents.*http" {} \; 2>/dev/null || true)
+                  if [ -n "$HTTP_FILES" ]; then
+                    echo "❌ Remote file_get_contents found - potential SSRF risk!"
+                    echo "$HTTP_FILES"
+                    exit 1
+                  else
+                    echo "✅ No remote file_get_contents found in PHP code"
+                  fi
+
+            - name: WordPress Security Best Practices
+              run: |
+                  echo "🔍 Checking WordPress security best practices..."
+
+                  # Check for proper nonce usage in forms
+                  echo "🔍 Checking for wp_nonce_field usage..."
+                  FORM_FILES=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -l "<form" {} \; 2>/dev/null || true)
+                  if [ -n "$FORM_FILES" ]; then
+                    for file in $FORM_FILES; do
+                      if ! grep -q "wp_nonce_field\|wp_create_nonce" "$file"; then
+                        echo "⚠️ Form without nonce found in: $file"
+                      fi
+                    done
+                  fi
+
+                  # Check for proper capability checks
+                  echo "🔍 Checking for capability checks..."
+                  ADMIN_FILES=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -l "add_menu_page\|add_submenu_page" {} \; 2>/dev/null || true)
+                  if [ -n "$ADMIN_FILES" ]; then
+                    for file in $ADMIN_FILES; do
+                      if ! grep -q "current_user_can\|wp_verify_nonce" "$file"; then
+                        echo "⚠️ Admin page without capability check in: $file"
+                      fi
+                    done
+                  fi
+
+                  echo "✅ WordPress security checks completed"
+
+    compatibility-check:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: 8.0
+
+            - name: Check PHP 8.0+ compatibility
+              run: |
+                  # Check for PHP 8.0+ features usage
+                  php -r "
+                    if (version_compare(PHP_VERSION, '8.0.0', '<')) {
+                      echo 'PHP 8.0+ required';
+                      exit(1);
+                    }
+                    echo '✅ PHP version compatible';
+                  "
+
+            - name: WordPress compatibility check
+              run: |
+                  # Basic WordPress function usage validation (only in PHP files)
+                  echo "🔍 Checking WordPress compatibility..."
+                  WP_FUNCTIONS=$(find . -name "*.php" -not -path "./vendor/*" -not -path "./.github/*" -not -path "./node_modules/*" -exec grep -l "add_action\|add_filter\|wp_enqueue" {} \; 2>/dev/null || true)
+                  if [ -n "$WP_FUNCTIONS" ]; then
+                    echo "✅ WordPress functions found"
+                  else
+                    echo "⚠️ No WordPress functions detected"
+                  fi
+
+                  # Check for WordPress version requirements
+                  echo "🔍 Checking WordPress version requirements..."
+                  if grep -q "Requires at least.*6\.5" silver-assist-security.php; then
+                    echo "✅ WordPress 6.5+ requirement found"
+                  else
+                    echo "⚠️ WordPress version requirement not found or incorrect"
+                  fi
+
+            - name: PSR-4 Autoloading Check
+              run: |
+                  echo "🔍 Checking PSR-4 autoloading structure..."
+
+                  # Check if namespace matches directory structure
+                  echo "🔍 Validating namespace structure..."
+                  find src/ -name "*.php" -exec grep -l "namespace SilverAssist" {} \; > /tmp/namespaced_files.txt || true
+
+                  if [ -s /tmp/namespaced_files.txt ]; then
+                    echo "✅ PSR-4 namespaces found"
+                    
+                    # Check specific namespace patterns
+                    if find src/Core/ -name "*.php" -exec grep -q "namespace SilverAssist\\\\Security\\\\Core" {} \; 2>/dev/null; then
+                      echo "✅ Core namespace structure correct"
+                    fi
+                    
+                    if find src/Admin/ -name "*.php" -exec grep -q "namespace SilverAssist\\\\Security\\\\Admin" {} \; 2>/dev/null; then
+                      echo "✅ Admin namespace structure correct"
+                    fi
+                    
+                    if find src/Security/ -name "*.php" -exec grep -q "namespace SilverAssist\\\\Security\\\\Security" {} \; 2>/dev/null; then
+                      echo "✅ Security namespace structure correct"
+                    fi
+                  else
+                    echo "❌ PSR-4 namespaces not found"
+                    exit 1
+                  fi
+
+    version-consistency:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Check version consistency
+              run: |
+                  echo "🔍 Checking version consistency across files..."
+
+                  # Make script executable
+                  chmod +x scripts/check-versions.sh
+
+                  # Run version consistency check
+                  ./scripts/check-versions.sh
+
+                  # Check exit code
+                  if [ $? -eq 0 ]; then
+                    echo "✅ All versions are consistent"
+                  else
+                    echo "❌ Version inconsistencies found"
+                    exit 1
+                  fi
+
+    scripts-validation:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Validate automation scripts
+              run: |
+                  echo "🔍 Validating automation scripts..."
+
+                  # Check if scripts exist and are executable
+                  for script in "update-version.sh" "build-release.sh" "check-versions.sh"; do
+                    if [ ! -f "scripts/$script" ]; then
+                      echo "❌ Script missing: scripts/$script"
+                      exit 1
+                    fi
+                    
+                    if [ ! -x "scripts/$script" ]; then
+                      echo "⚠️ Script not executable: scripts/$script"
+                      chmod +x "scripts/$script"
+                    fi
+                    
+                    echo "✅ Script validated: scripts/$script"
+                  done
+
+                  # Test scripts with dry-run where possible
+                  echo "🔍 Testing update-version script..."
+                  if ! ./scripts/update-version.sh --help >/dev/null 2>&1; then
+                    echo "⚠️ update-version.sh may have issues"
+                  else
+                    echo "✅ update-version.sh script functional"
+                  fi

@@ -1,0 +1,256 @@
+name: Create Release Package
+
+on:
+    push:
+        tags:
+            - "v*"
+    workflow_dispatch:
+        inputs:
+            version:
+                description: "Version number (e.g., 1.0.1)"
+                required: true
+                default: "1.0.0"
+
+jobs:
+    build-and-release:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Extract version from tag or input
+              id: version
+              run: |
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                    VERSION="${{ github.event.inputs.version }}"
+                  else
+                    VERSION=${GITHUB_REF#refs/tags/v}
+                  fi
+                  echo "version=$VERSION" >> $GITHUB_OUTPUT
+                  echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+            - name: Update version in plugin files
+              run: |
+                  VERSION="${{ steps.version.outputs.version }}"
+
+                  # Make the script executable
+                  chmod +x scripts/update-version.sh
+
+                  # Use our existing update-version script
+                  ./scripts/update-version.sh "$VERSION"
+
+                  echo "✅ Version updated to $VERSION using update-version.sh script"
+
+            - name: Create distribution package
+              id: package
+              run: |
+                  VERSION="${{ steps.version.outputs.version }}"
+
+                  # Make the script executable
+                  chmod +x scripts/build-release.sh
+
+                  # Run the release ZIP creation script
+                  ./scripts/build-release.sh "$VERSION"
+
+                  # Set outputs for GitHub Actions
+                  ZIP_FILE="silver-assist-security-v${VERSION}.zip"
+                  ZIP_PATH="releases/${ZIP_FILE}"
+
+                  if [ -f "$ZIP_PATH" ]; then
+                    PACKAGE_SIZE=$(du -k "$ZIP_PATH" | cut -f1)
+                    echo "zip_path=$ZIP_PATH" >> $GITHUB_OUTPUT
+                    echo "package_name=silver-assist-security-v$VERSION" >> $GITHUB_OUTPUT
+                    echo "package_size_kb=${PACKAGE_SIZE}KB" >> $GITHUB_OUTPUT
+                    echo "zip_file=$ZIP_FILE" >> $GITHUB_OUTPUT
+                    echo "📦 Package created: $ZIP_FILE (${PACKAGE_SIZE}KB)"
+                  else
+                    echo "❌ Package creation failed"
+                    exit 1
+                  fi
+
+            - name: Update RELEASE-NOTES.md
+              run: |
+                  VERSION="${{ steps.version.outputs.version }}"
+                  PACKAGE_SIZE="${{ steps.package.outputs.package_size_kb }}"
+                  DATE=$(date +"%B %d, %Y")
+
+                  # Create updated RELEASE-NOTES.md
+                  cat > RELEASE-NOTES.md << EOF
+                  # Silver Assist Security Suite - Release v$VERSION
+
+                  ## Package Information
+                  - **Plugin Name**: Silver Assist Security Suite
+                  - **Version**: $VERSION
+                  - **File**: silver-assist-security-v$VERSION.zip
+                  - **Size**: ~$PACKAGE_SIZE
+                  - **Release Date**: $DATE
+                  - **License**: Proprietary
+                  - **Repository**: https://github.com/SilverAssist/silver-assist-security
+
+                  ## Installation Package Contents
+                  - Main plugin file (\`silver-assist-security.php\`)
+                  - Core security components (\`src/Core/\`)
+                  - Admin panel interface (\`src/Admin/\`)
+                  - Security modules (\`src/Security/\`, \`src/GraphQL/\`)
+                  - Frontend assets (\`assets/css/\`, \`assets/js/\`)
+                  - Documentation ([README.md](README.md), [CHANGELOG.md](CHANGELOG.md))
+                  - Translation files (\`languages/\`)
+                  - Release automation scripts (\`scripts/\`)
+
+                  ## Installation Methods
+                  1. **WordPress Admin Dashboard** (Recommended)
+                  2. **Manual FTP Upload**
+                  3. **WP-CLI Installation**
+
+                  ## Requirements
+                  - WordPress 6.5+
+                  - PHP 8.0+
+                  - HTTPS (recommended for full security features)
+
+                  ## Features Included
+                  - ✅ HTTPOnly Cookie Protection
+                  - ✅ GraphQL Security (Rate Limiting, Query Validation)
+                  - ✅ Advanced Login Security
+                  - ✅ Real-time Security Monitoring
+                  - ✅ WordPress Hardening Features
+                  - ✅ Multi-language Support (English/Spanish)
+                  - ✅ Automatic Update System
+                  - ✅ Modern PHP 8+ Architecture
+                  - ✅ PSR-4 Autoloading
+                  - ✅ Security Event Logging
+
+                  ## Distribution Channels
+                  - **GitHub Releases**: Source code and compiled packages
+                  - **Direct Download**: From developer website
+
+                  ## Support & Documentation
+                  - **Installation Guide**: [README.md](README.md)
+                  - **Change History**: [CHANGELOG.md](CHANGELOG.md)
+                  - **Issues**: GitHub Issues tracker
+                  - **Enterprise Support**: Available from Silver Assist
+
+                  ## Installation Instructions
+                  See [README.md](README.md) for complete installation guide.
+                  EOF
+
+            - name: Generate release notes from CHANGELOG
+              id: changelog
+              run: |
+                  VERSION="${{ steps.version.outputs.version }}"
+
+                  # Extract current version changes from CHANGELOG.md
+                  if [ -f "CHANGELOG.md" ]; then
+                    echo "Looking for version $VERSION in CHANGELOG.md"
+                    
+                    # Debug: Show CHANGELOG structure
+                    echo "Debug: Lines containing version pattern:"
+                    grep -n "\\[${VERSION}\\]" CHANGELOG.md || echo "No direct match found"
+                    
+                    # Method 1: Using sed with escaped brackets (most reliable)
+                    CHANGES=$(sed -n "/## \\[${VERSION}\\]/,/## \\[/p" CHANGELOG.md | sed '$d' | tail -n +2)
+                    
+                    if [ -n "$CHANGES" ]; then
+                      echo "✅ Found changes with sed method"
+                      echo "## Changes in v$VERSION" > release_notes.md
+                      echo "$CHANGES" >> release_notes.md
+                    else
+                      echo "❌ Sed method failed, trying awk method"
+                      # Method 2: Using awk (more reliable across different systems)
+                      CHANGES_AWK=$(awk "/^## \\[${VERSION}\\]/{flag=1; next} /^## \\[/{flag=0} flag" CHANGELOG.md)
+                      
+                      if [ -n "$CHANGES_AWK" ]; then
+                        echo "✅ Found changes with awk method"
+                        echo "## Changes in v$VERSION" > release_notes.md
+                        echo "$CHANGES_AWK" >> release_notes.md
+                      else
+                        echo "❌ Awk method failed, trying grep method"
+                        # Method 3: Using grep with line numbers (fallback)
+                        LINE_START=$(grep -n "## \\[${VERSION}\\]" CHANGELOG.md | cut -d: -f1)
+                        if [ -n "$LINE_START" ]; then
+                          echo "✅ Found version at line: $LINE_START"
+                          # Extract from start line to next version or end of file
+                          CHANGES_GREP=$(tail -n +$((LINE_START + 1)) CHANGELOG.md | sed '/^## \[/q' | sed '$d')
+                          if [ -n "$CHANGES_GREP" ]; then
+                            echo "✅ Found changes with grep method"
+                            echo "## Changes in v$VERSION" > release_notes.md
+                            echo "$CHANGES_GREP" >> release_notes.md
+                          else
+                            echo "❌ All methods failed"
+                            echo "## Changes in v$VERSION" > release_notes.md
+                            echo "See [CHANGELOG.md](CHANGELOG.md) for detailed changes." >> release_notes.md
+                          fi
+                        else
+                          echo "❌ Version not found in CHANGELOG"
+                          echo "## Changes in v$VERSION" > release_notes.md
+                          echo "See [CHANGELOG.md](CHANGELOG.md) for detailed changes." >> release_notes.md
+                        fi
+                      fi
+                    fi
+                  else
+                    echo "CHANGELOG.md not found"
+                    echo "## Release v$VERSION" > release_notes.md
+                    echo "New release of Silver Assist Security Suite" >> release_notes.md
+                  fi
+
+                  # Add package information to release notes
+                  cat >> release_notes.md << EOF
+
+                  ## 📦 Package Information
+                  - **File**: silver-assist-security-v$VERSION.zip
+                  - **Size**: ~${{ steps.package.outputs.package_size_kb }}
+                  - **License**: Proprietary
+
+                  ## 🚀 Installation
+                  1. Download the ZIP file below
+                  2. Go to WordPress Admin → Plugins → Add New → Upload Plugin
+                  3. Choose the downloaded ZIP file and click "Install Now"
+                  4. Activate the plugin
+                  5. Go to Settings → Security Status to configure
+
+                  For detailed installation instructions, see the [README.md](README.md) file.
+
+                  ## 🔒 Security Features
+                  - HTTPOnly cookie protection
+                  - GraphQL security with rate limiting
+                  - Login attempt limiting and session management
+                  - WordPress hardening (XML-RPC blocking, version hiding)
+                  - Real-time security monitoring and file change detection
+                  - Multi-language support with comprehensive admin panel
+                  EOF
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: ${{ steps.version.outputs.tag }}
+                  name: "Silver Assist Security Suite v${{ steps.version.outputs.version }}"
+                  body_path: release_notes.md
+                  files: |
+                      ${{ steps.package.outputs.zip_path }}
+                  draft: false
+                  prerelease: false
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Upload package as artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: silver-assist-security-v${{ steps.version.outputs.version }}
+                  path: ${{ steps.package.outputs.zip_path }}
+                  retention-days: 90
+
+            - name: Summary
+              run: |
+                  echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Plugin**: Silver Assist Security Suite" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Package**: ${{ steps.package.outputs.zip_file }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Size**: ~${{ steps.package.outputs.package_size_kb }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Release**: [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }})" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 🔒 Security Features Included" >> $GITHUB_STEP_SUMMARY
+                  echo "- HTTPOnly cookie protection" >> $GITHUB_STEP_SUMMARY
+                  echo "- GraphQL security with rate limiting" >> $GITHUB_STEP_SUMMARY
+                  echo "- Advanced login security" >> $GITHUB_STEP_SUMMARY
+                  echo "- WordPress hardening features" >> $GITHUB_STEP_SUMMARY
+                  echo "- Real-time security monitoring" >> $GITHUB_STEP_SUMMARY
