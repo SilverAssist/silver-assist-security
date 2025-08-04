@@ -230,18 +230,7 @@ print_header "Composer Configuration"
 
 if [ -f "${PROJECT_ROOT}/composer.json" ]; then
     print_file "composer.json"
-    
-    version=$(grep -o "\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\"" "${PROJECT_ROOT}/composer.json" 2>/dev/null | cut -d'"' -f4)
-    
-    if [ -n "$version" ]; then
-        if [ "$version" = "$MAIN_VERSION" ]; then
-            print_version "$version ✓"
-        else
-            print_warning "$version (differs from main: $MAIN_VERSION)"
-        fi
-    else
-        print_warning "No version found in composer.json"
-    fi
+    print_version "Version field removed (recommended for non-Packagist packages) ✓"
 else
     print_warning "composer.json not found"
 fi

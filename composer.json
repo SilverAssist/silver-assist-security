@@ -3,7 +3,6 @@
     "description": "Comprehensive security suite for WordPress with advanced GraphQL protection",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
-    "version": "1.0.0",
     "authors": [
         {
             "name": "Silver Assist",
