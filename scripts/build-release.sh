@@ -116,8 +116,15 @@ echo -e "${YELLOW}🗜️  Creating ZIP archive...${NC}"
 cd "$TEMP_DIR"
 zip -r "$ZIP_NAME" silver-assist-security/ -x "*.DS_Store*" "*.git*" "*node_modules*" "*.log*" "*vendor*" "*.tmp*" "*scripts*" "*.github*" "*tests*" "*.idea*" "*.vscode*" "*HEADER-STANDARDS.md*" "*MIGRATION.md*"
 
-# Move ZIP to project root
+# Move ZIP to project root and releases directory
 mv "$ZIP_NAME" "$PROJECT_ROOT/"
+
+# Create releases directory if it doesn't exist
+mkdir -p "$PROJECT_ROOT/releases"
+
+# Copy ZIP to releases directory for GitHub Actions
+cp "$PROJECT_ROOT/$ZIP_NAME" "$PROJECT_ROOT/releases/"
+
 cd "$PROJECT_ROOT"
 
 # Clean up temp directory
@@ -180,6 +187,7 @@ if [ -n "$GITHUB_OUTPUT" ]; then
     echo "package_name=silver-assist-security-v${VERSION}" >> $GITHUB_OUTPUT
     echo "package_size=${ZIP_SIZE}" >> $GITHUB_OUTPUT
     echo "package_size_kb=${ZIP_SIZE_KB}KB" >> $GITHUB_OUTPUT
-    echo "zip_path=${ZIP_NAME}" >> $GITHUB_OUTPUT
+    echo "zip_path=releases/${ZIP_NAME}" >> $GITHUB_OUTPUT
+    echo "zip_file=${ZIP_NAME}" >> $GITHUB_OUTPUT
     echo "version=${VERSION}" >> $GITHUB_OUTPUT
 fi

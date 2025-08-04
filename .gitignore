@@ -29,6 +29,7 @@ Thumbs.db
 /dist/
 /build/
 /vendor/
+/releases/
 
 # Temporary files
 temp-package/
