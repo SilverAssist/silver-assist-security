@@ -35,12 +35,12 @@ jobs:
                   VERSION="${{ steps.version.outputs.version }}"
 
                   # Make the script executable
-                  chmod +x scripts/update-version.sh
+                  chmod +x scripts/update-version-simple.sh
 
-                  # Use our existing update-version script
-                  ./scripts/update-version.sh "$VERSION"
+                  # Use our simple update script with --no-confirm flag for CI
+                  ./scripts/update-version-simple.sh "$VERSION" --no-confirm
 
-                  echo "✅ Version updated to $VERSION using update-version.sh script"
+                  echo "✅ Version updated to $VERSION using update-version-simple.sh script"
 
             - name: Create distribution package
               id: package

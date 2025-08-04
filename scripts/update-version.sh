@@ -19,8 +19,6 @@
 # @version 1.0.0
 ###############################################################################
 
-set -e  # Exit on any error
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -47,12 +45,15 @@ print_error() {
 
 # Function to show usage
 show_usage() {
-    echo "Usage: $0 <new-version>"
+    echo "Usage: $0 <new-version> [--no-confirm]"
     echo ""
     echo "Examples:"
     echo "  $0 1.0.2"
-    echo "  $0 1.1.0"
+    echo "  $0 1.1.0 --no-confirm"
     echo "  $0 2.0.0"
+    echo ""
+    echo "Options:"
+    echo "  --no-confirm    Skip confirmation prompt (useful for CI/CD)"
     echo ""
     echo "This script will update version numbers in:"
     echo "  - Main plugin file (silver-assist-security.php)"
@@ -70,6 +71,16 @@ if [ $# -eq 0 ]; then
 fi
 
 NEW_VERSION="$1"
+NO_CONFIRM=false
+
+# Parse arguments
+if [ $# -eq 2 ] && [ "$2" = "--no-confirm" ]; then
+    NO_CONFIRM=true
+elif [ $# -gt 1 ] && [ "$2" != "--no-confirm" ]; then
+    print_error "Invalid argument: $2"
+    show_usage
+    exit 1
+fi
 
 # Validate version format (basic semantic versioning)
 if ! [[ $NEW_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -100,14 +111,35 @@ fi
 print_status "Current version: ${CURRENT_VERSION}"
 print_status "New version: ${NEW_VERSION}"
 
-# Confirm with user
-echo ""
-read -p "$(echo -e ${YELLOW}[CONFIRM]${NC} Update version from ${CURRENT_VERSION} to ${NEW_VERSION}? [y/N]: )" -n 1 -r
-echo ""
+# Check if versions are the same
+if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+    print_warning "Current version and new version are the same (${NEW_VERSION})"
+    if [ "$NO_CONFIRM" = false ]; then
+        echo ""
+        read -p "$(echo -e ${YELLOW}[CONFIRM]${NC} Continue anyway? [y/N]: )" -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            print_warning "Version update cancelled"
+            exit 0
+        fi
+    else
+        print_status "Same version detected in CI mode - exiting successfully (no changes needed)"
+        exit 0
+    fi
+else
+    # Confirm with user only if not in no-confirm mode
+    if [ "$NO_CONFIRM" = false ]; then
+        echo ""
+        read -p "$(echo -e ${YELLOW}[CONFIRM]${NC} Update version from ${CURRENT_VERSION} to ${NEW_VERSION}? [y/N]: )" -n 1 -r
+        echo ""
 
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    print_warning "Version update cancelled"
-    exit 0
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            print_warning "Version update cancelled"
+            exit 0
+        fi
+    else
+        print_status "Running in non-interactive mode (--no-confirm)"
+    fi
 fi
 
 echo ""
@@ -152,19 +184,19 @@ print_status "Updating main plugin file..."
 
 # Update plugin header version
 update_version_in_file "${PROJECT_ROOT}/silver-assist-security.php" \
-    "s/Version: [0-9]\+\.[0-9]\+\.[0-9]\+/Version: ${NEW_VERSION}/g" \
+    "s/Version: [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/Version: ${NEW_VERSION}/g" \
     "${NEW_VERSION}" \
     "plugin header"
 
 # Update constant
 update_version_in_file "${PROJECT_ROOT}/silver-assist-security.php" \
-    "s/define(\"SILVER_ASSIST_SECURITY_VERSION\", \"[0-9]\+\.[0-9]\+\.[0-9]\+\")/define(\"SILVER_ASSIST_SECURITY_VERSION\", \"${NEW_VERSION}\")/g" \
+    "s/define('SILVER_ASSIST_SECURITY_VERSION', '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*')/define('SILVER_ASSIST_SECURITY_VERSION', '${NEW_VERSION}')/g" \
     "${NEW_VERSION}" \
     "plugin constant"
 
 # Update @version tag in main file
 update_version_in_file "${PROJECT_ROOT}/silver-assist-security.php" \
-    "s/@version [0-9]\+\.[0-9]\+\.[0-9]\+/@version ${NEW_VERSION}/g" \
+    "s/@version [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/@version ${NEW_VERSION}/g" \
     "${NEW_VERSION}" \
     "main file @version tag"
 
@@ -177,7 +209,7 @@ updated_count=0
 find "${PROJECT_ROOT}/src" -name "*.php" -type f | while read -r file; do
     if grep -q "@version" "$file"; then
         if update_version_in_file "$file" \
-            "s/@version [0-9]\+\.[0-9]\+\.[0-9]\+/@version ${NEW_VERSION}/g" \
+            "s/@version [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/@version ${NEW_VERSION}/g" \
             "${NEW_VERSION}" \
             "$(basename "$file")"; then
             ((updated_count++))
@@ -196,8 +228,15 @@ updated_count=0
 find "${PROJECT_ROOT}/assets/css" -name "*.css" -type f 2>/dev/null | while read -r file; do
     if grep -q "@version" "$file"; then
         if update_version_in_file "$file" \
-            "s/@version [0-9]\+\.[0-9]\+\.[0-9]\+/@version ${NEW_VERSION}/g" \
+            "s/@version [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/@version ${NEW_VERSION}/g" \
             "${NEW_VERSION}" \
+            "$(basename "$file")"; then
+            ((updated_count++))
+        fi
+    else
+        print_warning "  No @version tag found in $(basename "$file")"
+    fi
+done
             "$(basename "$file")"; then
             ((updated_count++))
         fi
@@ -215,7 +254,7 @@ updated_count=0
 find "${PROJECT_ROOT}/assets/js" -name "*.js" -type f 2>/dev/null | while read -r file; do
     if grep -q "@version" "$file"; then
         if update_version_in_file "$file" \
-            "s/@version [0-9]\+\.[0-9]\+\.[0-9]\+/@version ${NEW_VERSION}/g" \
+            "s/@version [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/@version ${NEW_VERSION}/g" \
             "${NEW_VERSION}" \
             "$(basename "$file")"; then
             ((updated_count++))
@@ -233,13 +272,13 @@ print_status "Updating header standards documentation..."
 if [ -f "${PROJECT_ROOT}/HEADER-STANDARDS.md" ]; then
     # Update Version: entries
     update_version_in_file "${PROJECT_ROOT}/HEADER-STANDARDS.md" \
-        "s/Version: [0-9]\+\.[0-9]\+\.[0-9]\+/Version: ${NEW_VERSION}/g" \
+        "s/Version: [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/Version: ${NEW_VERSION}/g" \
         "${NEW_VERSION}" \
         "header standards version references"
     
     # Update @version entries
     update_version_in_file "${PROJECT_ROOT}/HEADER-STANDARDS.md" \
-        "s/@version [0-9]\+\.[0-9]\+\.[0-9]\+/@version ${NEW_VERSION}/g" \
+        "s/@version [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/@version ${NEW_VERSION}/g" \
         "${NEW_VERSION}" \
         "header standards @version tags"
     
@@ -251,7 +290,7 @@ fi
 # 6. Update this script's version
 print_status "Updating version update script..."
 update_version_in_file "${PROJECT_ROOT}/scripts/update-version.sh" \
-    "s/@version [0-9]\+\.[0-9]\+\.[0-9]\+/@version ${NEW_VERSION}/g" \
+    "s/@version [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/@version ${NEW_VERSION}/g" \
     "${NEW_VERSION}" \
     "update script"
 
@@ -261,9 +300,9 @@ print_success "Version update script updated"
 print_status "Checking README.md for version references..."
 
 if [ -f "${PROJECT_ROOT}/README.md" ]; then
-    if grep -q "Version: [0-9]\+\.[0-9]\+\.[0-9]\+" "${PROJECT_ROOT}/README.md"; then
+    if grep -q "Version: [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*" "${PROJECT_ROOT}/README.md"; then
         update_version_in_file "${PROJECT_ROOT}/README.md" \
-            "s/Version: [0-9]\+\.[0-9]\+\.[0-9]\+/Version: ${NEW_VERSION}/g" \
+            "s/Version: [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/Version: ${NEW_VERSION}/g" \
             "${NEW_VERSION}" \
             "README.md version references"
         print_success "README.md updated"
