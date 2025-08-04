@@ -1,0 +1,204 @@
+# Spanish (Spain) language file for Silver Assist Security Enhancement
+# Copyright (C) 2025 Silver Assist Security Enhancement
+# This file is distributed under the same license as the Silver Assist Security Enhancement package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Silver Assist Security Enhancement 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/silver-assist-security\n"
+"POT-Creation-Date: 2025-08-04 12:00+0000\n"
+"PO-Revision-Date: 2025-08-04 12:00+0000\n"
+"Last-Translator: Silver Assist Team\n"
+"Language-Team: Spanish (Spain)\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: silver-assist-security.php
+msgid "Security check failed."
+msgstr "Verificación de seguridad falló."
+
+#: silver-assist-security.php
+msgid "You do not have permission to access this page."
+msgstr "No tienes permisos para acceder a esta página."
+
+#: silver-assist-security.php
+msgid "Security settings saved successfully!"
+msgstr "¡Configuración de seguridad guardada exitosamente!"
+
+#: silver-assist-security.php
+msgid "Password Reset Enforcement"
+msgstr "Aplicación de Reinicio de Contraseña"
+
+#: silver-assist-security.php
+msgid "Require administrators to reset passwords every 90 days"
+msgstr "Requerir que los administradores reinicien sus contraseñas cada 90 días"
+
+#: silver-assist-security.php
+msgid "When enabled, administrator users will be required to reset their passwords every 90 days for enhanced security."
+msgstr "Cuando está habilitado, los usuarios administradores deberán reiniciar sus contraseñas cada 90 días para mayor seguridad."
+
+#: silver-assist-security.php
+msgid "Password Strength Enforcement"
+msgstr "Aplicación de Contraseñas Seguras"
+
+#: silver-assist-security.php
+msgid "Enforce strong password requirements for all users"
+msgstr "Aplicar requisitos de contraseñas seguras para todos los usuarios"
+
+#: silver-assist-security.php
+msgid "Requires 12+ characters, mixed case, numbers, and special characters. Prevents common passwords."
+msgstr "Requiere 12+ caracteres, mayúsculas y minúsculas, números y caracteres especiales. Previene contraseñas comunes."
+
+#: silver-assist-security.php
+msgid "Session Timeout"
+msgstr "Tiempo de Sesión"
+
+#: silver-assist-security.php
+msgid "hours"
+msgstr "horas"
+
+#: silver-assist-security.php
+msgid "How long user sessions remain active. Range: 1-24 hours. Default: 1 hour."
+msgstr "Cuánto tiempo permanecen activas las sesiones de usuario. Rango: 1-24 horas. Por defecto: 1 hora."
+
+#: silver-assist-security.php
+msgid "GraphQL Query Depth Limit"
+msgstr "Límite de Profundidad de Consultas GraphQL"
+
+#: silver-assist-security.php
+msgid "Maximum nesting level for GraphQL queries. Range: 1-20. Default: 8."
+msgstr "Nivel máximo de anidación para consultas GraphQL. Rango: 1-20. Por defecto: 8."
+
+#: silver-assist-security.php
+msgid "GraphQL Query Complexity Limit"
+msgstr "Límite de Complejidad de Consultas GraphQL"
+
+#: silver-assist-security.php
+msgid "Maximum complexity score for GraphQL queries. Range: 10-1000. Default: 100."
+msgstr "Puntuación máxima de complejidad para consultas GraphQL. Rango: 10-1000. Por defecto: 100."
+
+#: silver-assist-security.php
+msgid "GraphQL Query Timeout"
+msgstr "Tiempo de Espera de Consultas GraphQL"
+
+#: silver-assist-security.php
+msgid "seconds"
+msgstr "segundos"
+
+#: silver-assist-security.php
+msgid "Maximum execution time for GraphQL queries. Range: 1-30 seconds. Default: 5 seconds."
+msgstr "Tiempo máximo de ejecución para consultas GraphQL. Rango: 1-30 segundos. Por defecto: 5 segundos."
+
+#: silver-assist-security.php
+msgid "Save Security Settings"
+msgstr "Guardar Configuración de Seguridad"
+
+#: silver-assist-security.php
+msgid "Security Update Required"
+msgstr "Actualización de Seguridad Requerida"
+
+#: silver-assist-security.php
+msgid "This is the first time you access with Silver Assist Security activated."
+msgstr "Esta es la primera vez que accedes con Silver Assist Security activado."
+
+#: silver-assist-security.php
+msgid "For security reasons, you need to set a new password that meets our security standards:"
+msgstr "Por motivos de seguridad, necesitas establecer una nueva contraseña que cumpla con nuestros estándares de seguridad:"
+
+#: silver-assist-security.php
+msgid "Your password has expired."
+msgstr "Tu contraseña ha expirado."
+
+#: silver-assist-security.php
+msgid "Last update: %d days ago."
+msgstr "Última actualización: hace %d días."
+
+#: silver-assist-security.php
+msgid "For security, administrator passwords must be updated every 90 days. Please set a new password:"
+msgstr "Por seguridad, las contraseñas de administrador deben actualizarse cada 90 días. Por favor, establece una nueva contraseña:"
+
+#: silver-assist-security.php
+msgid "Secure password requirements:"
+msgstr "Requisitos de contraseña segura:"
+
+#: silver-assist-security.php
+msgid "Minimum 12 characters"
+msgstr "Mínimo 12 caracteres"
+
+#: silver-assist-security.php
+msgid "At least one uppercase letter (A-Z)"
+msgstr "Al menos una letra mayúscula (A-Z)"
+
+#: silver-assist-security.php
+msgid "At least one lowercase letter (a-z)"
+msgstr "Al menos una letra minúscula (a-z)"
+
+#: silver-assist-security.php
+msgid "At least one number (0-9)"
+msgstr "Al menos un número (0-9)"
+
+#: silver-assist-security.php
+msgid "At least one special character (!@#$%^&*)"
+msgstr "Al menos un carácter especial (!@#$%^&*)"
+
+#: silver-assist-security.php
+msgid "Do not use common passwords"
+msgstr "No uses contraseñas comunes"
+
+#: silver-assist-security.php
+msgid "This measure protects your website against unauthorized access and brute force attacks."
+msgstr "Esta medida protege tu sitio web contra acceso no autorizado y ataques de fuerza bruta."
+
+#: silver-assist-security.php
+msgid "Too many failed login attempts. Please try again in %d minutes."
+msgstr "Demasiados intentos de inicio de sesión fallidos. Por favor, inténtalo de nuevo en %d minutos."
+
+#: silver-assist-security.php
+msgid "Too many failed login attempts. Please try again later."
+msgstr "Demasiados intentos de inicio de sesión fallidos. Por favor, inténtalo de nuevo más tarde."
+
+#: silver-assist-security.php
+msgid "Access denied from your IP address: %s"
+msgstr "Acceso denegado desde tu dirección IP: %s"
+
+#: silver-assist-security.php
+msgid "Access Denied"
+msgstr "Acceso Denegado"
+
+#: silver-assist-security.php
+msgid "Password must be at least 12 characters long."
+msgstr "La contraseña debe tener al menos 12 caracteres."
+
+#: silver-assist-security.php
+msgid "Password must contain at least one uppercase letter."
+msgstr "La contraseña debe contener al menos una letra mayúscula."
+
+#: silver-assist-security.php
+msgid "Password must contain at least one lowercase letter."
+msgstr "La contraseña debe contener al menos una letra minúscula."
+
+#: silver-assist-security.php
+msgid "Password must contain at least one number."
+msgstr "La contraseña debe contener al menos un número."
+
+#: silver-assist-security.php
+msgid "Password must contain at least one special character."
+msgstr "La contraseña debe contener al menos un carácter especial."
+
+#: silver-assist-security.php
+msgid "Password is too common. Please choose a more unique password."
+msgstr "La contraseña es muy común. Por favor, elige una contraseña más única."
+
+#: silver-assist-security.php
+msgid "Login failed. Please check your credentials."
+msgstr "Inicio de sesión fallido. Por favor, verifica tus credenciales."
+
+#: silver-assist-security.php
+msgid "Security Alert - File Modified"
+msgstr "Alerta de Seguridad - Archivo Modificado"
+
+#: silver-assist-security.php
+msgid "Critical file has been modified: %1$s\nTime: %2$s\nPlease verify this change was authorized."
+msgstr "Archivo crítico ha sido modificado: %1$s\nHora: %2$s\nPor favor, verifica que este cambio fue autorizado."

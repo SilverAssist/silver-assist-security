@@ -1,0 +1,39 @@
+# Composer
+/vendor/
+composer.lock
+
+# Node modules
+/node_modules/
+
+# Development tools
+*.tmp
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+
+# Package builds
+/dist/
+/build/
+/vendor/
+
+# Temporary files
+temp-package/
+temp-package.zip
+silver-assist-security-v*.zip
+
+# Generated files (created by GitHub Actions)
+RELEASE-NOTES.md

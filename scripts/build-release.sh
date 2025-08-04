@@ -1,0 +1,185 @@
+#!/bin/bash
+
+###############################################################################
+# Silver Assist Security Suite - Release ZIP Creator
+#
+# Creates a properly structured ZIP file for WordPress plugin distribution
+# The ZIP will have a versioned filename but the internal folder will be just "silver-assist-security"
+#
+# Usage: ./scripts/build-release.sh [version]
+# If version is not provided, it will be extracted from the main plugin file
+#
+# @package SilverAssist\Security
+# @since 1.0.0
+# @author Silver Assist
+# @version 1.0.0
+###############################################################################
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+echo -e "${CYAN}=== Silver Assist Security Suite Release ZIP Creator ===${NC}"
+echo ""
+
+# Get current directory (should be project root)
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$PROJECT_ROOT"
+
+# Check if we're in the right directory
+if [ ! -f "silver-assist-security.php" ]; then
+    echo -e "${RED}❌ Error: silver-assist-security.php not found. Make sure you're running this from the project root.${NC}"
+    exit 1
+fi
+
+# Get version from parameter or extract from main plugin file
+if [ -n "$1" ]; then
+    VERSION="$1"
+    echo -e "${YELLOW}📋 Using provided version: ${VERSION}${NC}"
+else
+    VERSION=$(grep "Version:" silver-assist-security.php | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
+    echo -e "${YELLOW}📋 Extracted version from plugin file: ${VERSION}${NC}"
+fi
+
+if [ -z "$VERSION" ]; then
+    echo -e "${RED}❌ Error: Could not determine version. Please provide version as argument or ensure silver-assist-security.php has proper version header.${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}📦 Creating ZIP for version: ${VERSION}${NC}"
+echo ""
+
+# Define files and directories to include
+ZIP_NAME="silver-assist-security-v${VERSION}.zip"
+TEMP_DIR="/tmp/silver-assist-security-release"
+PLUGIN_DIR="${TEMP_DIR}/silver-assist-security"
+
+# Clean up any existing temp directory
+if [ -d "$TEMP_DIR" ]; then
+    rm -rf "$TEMP_DIR"
+fi
+
+# Create temporary directory structure
+mkdir -p "$PLUGIN_DIR"
+
+echo -e "${YELLOW}📋 Copying files...${NC}"
+
+# Copy main plugin file
+cp silver-assist-security.php "$PLUGIN_DIR/"
+echo "  ✅ silver-assist-security.php copied"
+
+# Copy documentation files
+cp README.md "$PLUGIN_DIR/"
+cp LICENSE "$PLUGIN_DIR/"
+echo "  ✅ Documentation files copied"
+
+# Copy CHANGELOG.md if it exists
+if [ -f "CHANGELOG.md" ]; then
+    cp CHANGELOG.md "$PLUGIN_DIR/"
+    echo "  ✅ CHANGELOG.md copied"
+fi
+
+# Copy src directory
+if [ -d "src" ]; then
+    cp -r src "$PLUGIN_DIR/"
+    echo "  ✅ src/ directory copied"
+fi
+
+# Copy assets directory
+if [ -d "assets" ]; then
+    cp -r assets "$PLUGIN_DIR/"
+    echo "  ✅ assets/ directory copied"
+fi
+
+# Copy languages directory if it exists
+if [ -d "languages" ]; then
+    cp -r languages "$PLUGIN_DIR/"
+    echo "  ✅ languages/ directory copied"
+fi
+
+# Copy composer.json if it exists (for PSR-4 autoloading)
+if [ -f "composer.json" ]; then
+    cp composer.json "$PLUGIN_DIR/"
+    echo "  ✅ composer.json copied"
+fi
+
+echo ""
+
+# Create the ZIP file
+echo -e "${YELLOW}🗜️  Creating ZIP archive...${NC}"
+cd "$TEMP_DIR"
+zip -r "$ZIP_NAME" silver-assist-security/ -x "*.DS_Store*" "*.git*" "*node_modules*" "*.log*" "*vendor*" "*.tmp*" "*scripts*" "*.github*" "*tests*" "*.idea*" "*.vscode*" "*HEADER-STANDARDS.md*" "*MIGRATION.md*"
+
+# Move ZIP to project root
+mv "$ZIP_NAME" "$PROJECT_ROOT/"
+cd "$PROJECT_ROOT"
+
+# Clean up temp directory
+rm -rf "$TEMP_DIR"
+
+# Get ZIP size information
+ZIP_SIZE=$(du -h "$ZIP_NAME" | cut -f1)
+ZIP_SIZE_BYTES=$(stat -f%z "$ZIP_NAME" 2>/dev/null || stat -c%s "$ZIP_NAME" 2>/dev/null || echo "0")
+ZIP_SIZE_KB=$((ZIP_SIZE_BYTES / 1024))
+
+echo ""
+echo -e "${GREEN}✅ Release ZIP created successfully!${NC}"
+echo -e "${BLUE}📦 File: ${ZIP_NAME}${NC}"
+echo -e "${BLUE}📏 Size: ${ZIP_SIZE} (~${ZIP_SIZE_KB}KB)${NC}"
+echo ""
+echo -e "${YELLOW}📂 Internal structure:${NC}"
+echo "   silver-assist-security/"
+echo "   ├── silver-assist-security.php"
+echo "   ├── README.md"
+echo "   ├── LICENSE"
+echo "   ├── CHANGELOG.md (if exists)"
+echo "   ├── src/"
+echo "   │   ├── Core/"
+echo "   │   │   ├── Plugin.php"
+echo "   │   │   └── Updater.php"
+echo "   │   ├── Admin/"
+echo "   │   │   └── AdminPanel.php"
+echo "   │   ├── Security/"
+echo "   │   │   ├── LoginSecurity.php"
+echo "   │   │   └── GeneralSecurity.php"
+echo "   │   └── GraphQL/"
+echo "   │       └── GraphQLSecurity.php"
+echo "   ├── assets/"
+echo "   │   ├── css/"
+echo "   │   │   └── admin.css"
+echo "   │   └── js/"
+echo "   │       └── admin.js"
+echo "   ├── languages/"
+echo "   │   ├── silver-assist-security.pot"
+echo "   │   └── *.po, *.mo files"
+echo "   └── composer.json"
+echo ""
+echo -e "${GREEN}🎉 Ready for WordPress installation!${NC}"
+echo ""
+echo -e "${BLUE}📋 Next steps:${NC}"
+echo "1. Upload ${ZIP_NAME} to WordPress admin (Plugins → Add New → Upload Plugin)"
+echo "2. The plugin folder will be extracted as 'silver-assist-security' (without version)"
+echo "3. WordPress will recognize it as a valid plugin"
+echo "4. Activate and configure the security settings"
+echo ""
+echo -e "${CYAN}🔧 Development notes:${NC}"
+echo "• ZIP filename includes version: ${ZIP_NAME}"
+echo "• Internal folder name: silver-assist-security (clean, no version)"
+echo "• Size: ~${ZIP_SIZE_KB}KB"
+echo "• Excludes: .git, node_modules, vendor, scripts, development files"
+echo "• Includes: Core security features, admin panel, GraphQL protection"
+
+# Output package information for GitHub Actions (if running in CI)
+if [ -n "$GITHUB_OUTPUT" ]; then
+    echo "package_name=silver-assist-security-v${VERSION}" >> $GITHUB_OUTPUT
+    echo "package_size=${ZIP_SIZE}" >> $GITHUB_OUTPUT
+    echo "package_size_kb=${ZIP_SIZE_KB}KB" >> $GITHUB_OUTPUT
+    echo "zip_path=${ZIP_NAME}" >> $GITHUB_OUTPUT
+    echo "version=${VERSION}" >> $GITHUB_OUTPUT
+fi
