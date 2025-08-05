@@ -14,7 +14,7 @@
 # @package SilverAssist\Security
 # @since 1.0.0
 # @author Silver Assist
-# @version 1.0.0
+# @version 1.0.2
 ###############################################################################
 
 set -e
@@ -113,33 +113,31 @@ fi
 
 echo ""
 
-# Create the ZIP file
+# Create releases directory if it doesn't exist
+mkdir -p "$PROJECT_ROOT/releases"
+
+# Create the ZIP file directly in releases directory
 echo -e "${YELLOW}🗜️  Creating ZIP archive...${NC}"
 cd "$TEMP_DIR"
 zip -r "$ZIP_NAME" silver-assist-security/ -x "*.DS_Store*" "*.git*" "*node_modules*" "*.log*" "*vendor*" "*.tmp*" "*scripts*" "*.github*" "*tests*" "*.idea*" "*.vscode*" "*HEADER-STANDARDS.md*" "*MIGRATION.md*" "*phpunit.xml*" "*.phpcs.xml*"
 
-# Move ZIP to project root and releases directory
-mv "$ZIP_NAME" "$PROJECT_ROOT/"
-
-# Create releases directory if it doesn't exist
-mkdir -p "$PROJECT_ROOT/releases"
-
-# Copy ZIP to releases directory for GitHub Actions
-cp "$PROJECT_ROOT/$ZIP_NAME" "$PROJECT_ROOT/releases/"
+# Move ZIP directly to releases directory (no copy in project root)
+mv "$ZIP_NAME" "$PROJECT_ROOT/releases/"
 
 cd "$PROJECT_ROOT"
 
 # Clean up temp directory
 rm -rf "$TEMP_DIR"
 
-# Get ZIP size information
-ZIP_SIZE=$(du -h "$ZIP_NAME" | cut -f1)
-ZIP_SIZE_BYTES=$(stat -f%z "$ZIP_NAME" 2>/dev/null || stat -c%s "$ZIP_NAME" 2>/dev/null || echo "0")
+# Get ZIP size information from releases directory
+ZIP_PATH="$PROJECT_ROOT/releases/$ZIP_NAME"
+ZIP_SIZE=$(du -h "$ZIP_PATH" | cut -f1)
+ZIP_SIZE_BYTES=$(stat -f%z "$ZIP_PATH" 2>/dev/null || stat -c%s "$ZIP_PATH" 2>/dev/null || echo "0")
 ZIP_SIZE_KB=$((ZIP_SIZE_BYTES / 1024))
 
 echo ""
 echo -e "${GREEN}✅ Release ZIP created successfully!${NC}"
-echo -e "${BLUE}📦 File: ${ZIP_NAME}${NC}"
+echo -e "${BLUE}📦 File: releases/${ZIP_NAME}${NC}"
 echo -e "${BLUE}📏 Size: ${ZIP_SIZE} (~${ZIP_SIZE_KB}KB)${NC}"
 echo ""
 echo -e "${YELLOW}📂 Internal structure:${NC}"
@@ -172,13 +170,21 @@ echo ""
 echo -e "${GREEN}🎉 Ready for WordPress installation!${NC}"
 echo ""
 echo -e "${BLUE}📋 Next steps:${NC}"
-echo "1. Upload ${ZIP_NAME} to WordPress admin (Plugins → Add New → Upload Plugin)"
-echo "2. The plugin folder will be extracted as 'silver-assist-security' (without version)"
-echo "3. WordPress will recognize it as a valid plugin"
-echo "4. Activate and configure the security settings"
+if [ -n "$GITHUB_OUTPUT" ]; then
+    # Running in CI/CD - shorter, technical output
+    echo "• Package created for GitHub Release automation"
+    echo "• File: releases/${ZIP_NAME}"
+    echo "• GitHub Actions will handle release creation"
+else
+    # Running manually - detailed user instructions
+    echo "1. Navigate to releases/ folder to find your ZIP file"
+    echo "2. Upload ${ZIP_NAME} to WordPress admin (Plugins → Add New → Upload Plugin)"
+    echo "3. The plugin folder will be extracted as 'silver-assist-security' (without version)"
+    echo "4. Activate and configure the security settings"
+fi
 echo ""
 echo -e "${CYAN}🔧 Development notes:${NC}"
-echo "• ZIP filename includes version: ${ZIP_NAME}"
+echo "• ZIP location: releases/${ZIP_NAME}"
 echo "• Internal folder name: silver-assist-security (clean, no version)"
 echo "• Size: ~${ZIP_SIZE_KB}KB"
 echo "• Excludes: .git, node_modules, vendor, scripts, tests, .vscode, development files"

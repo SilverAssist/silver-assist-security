@@ -27,6 +27,8 @@ Test individual classes and methods in isolation:
 - IP detection and tracking
 - Bot detection logic
 - Session management
+- Failed login attempt tracking
+- Lockout mechanisms
 
 ### Integration Tests (`tests/Integration/`)
 Test component interactions and WordPress integration:
@@ -35,15 +37,17 @@ Test component interactions and WordPress integration:
 - Settings management
 - Menu registration
 - Script/style enqueuing
+- Form handling and validation
 
 ### Security Tests (`tests/Security/`)
 Focused on security implementations:
 - HTTPOnly cookie enforcement
-- GraphQL query validation
+- GraphQL query validation (when WPGraphQL is active)
 - Security headers
 - Input sanitization
-- Rate limiting
-- Nonce verification
+- XML-RPC blocking
+- User enumeration protection
+- Version hiding
 
 ## Running Tests
 

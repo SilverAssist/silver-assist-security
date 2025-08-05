@@ -34,6 +34,13 @@ class LoginSecurityTest extends TestCase
         // Clean up any existing transients
         TestHelper::cleanup_transients();
         
+        // Set default options
+        update_option('silver_assist_login_attempts', 5);
+        update_option('silver_assist_lockout_duration', 900);
+        update_option('silver_assist_session_timeout', 30);
+        update_option('silver_assist_password_strength_enforcement', 1);
+        update_option('silver_assist_bot_protection', 1);
+        
         // Initialize LoginSecurity
         $this->login_security = new LoginSecurity();
         

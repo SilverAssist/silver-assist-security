@@ -1,46 +1,6 @@
 # Silver Assist Security Essentials
 
-A comprehensive WordPress security plugin designed to resolve critical security vulnerabilities identified in security assessments, specifically targeting login protection, HTTPOnl*Website seems slower?*
-- Review rate limiting settings in Security Status
-- Adjust GraphQL query limits if needed
-
-## 🌍 Multi-Language Support
-
-- **English**: Default language
-- **Spanish**: Complete translation included (`es_ES`)
-- **Translation Ready**: `.pot` file included for additional languages
-
-## 📈 Changelog
-
-### v1.0.0 (August 2025)
-- ✅ Initial release with complete security suite
-- ✅ HTTPOnly cookie protection
-- ✅ GraphQL security features  
-- ✅ Login attempt limiting with bot protection
-- ✅ Custom admin URL obfuscation
-- ✅ Real-time security dashboard
-- ✅ Spanish translation support
-- ✅ Automatic update system
-
----
-
-## 👨‍💻 Developer Information
-
-**Developed by**: Silver Assist  
-**Version**: 1.0.0  
-**Release Date**: August 2025  
-**License**: Proprietary  
-
-### Technical Details
-- Built with modern PHP 8+ features and PSR-4 autoloading
-- Modern ES6+ JavaScript with arrow functions and template literals
-- Modular component architecture for maintainability
-- WordPress coding standards compliant
-- Comprehensive security logging and monitoring
-
----
-
-*Silver Assist Security Essentials - Complete WordPress Security Protection*ookie implementation, and GraphQL security misconfigurations.
+A comprehensive WordPress security plugin designed to resolve critical security vulnerabilities identified in security assessments, specifically targeting login protection, HTTPOnly cookie implementation, and GraphQL security misconfigurations.
 
 ## 🛡️ Overview
 
@@ -55,17 +15,15 @@ This plugin automatically implements enterprise-level security measures without 
 ## 🎯 Security Issues Resolved
 
 ### 🔐 WordPress Admin Login Page Security
-**Problem**: Publicly accessible login page vulnerable to brute force attacks, user enumeration, bot crawling, and admin URL exposure  
+**Problem**: Publicly accessible login page vulnerable to brute force attacks, user enumeration, bot crawling  
 **Solution**: 
 - IP-based login attempt limiting (configurable 1-20 attempts)
-- Session timeout management (1-24 hours)
+- Session timeout management (5-120 minutes)
 - User enumeration protection via login error standardization
 - Strong password enforcement (12+ characters, mixed case, numbers, symbols)
-- **Bot and Crawler Protection**: Automatic 404 responses to suspicious crawlers, scanners, and automated tools
+- **Bot and Crawler Protection**: Automatic blocking of suspicious crawlers, scanners, and automated tools
 - **Anti-Reconnaissance**: Blocks security scanning tools (Nmap, Nikto, WPScan, Nuclei, etc.)
 - **Rate Limiting**: Prevents rapid-fire login attempts from automated scripts
-- **Custom Admin URL**: Hides default `/wp-login.php` and `/wp-admin/` behind configurable custom URL (default: `/silver-admin/`)
-- **404 Response to Default URLs**: Automatically returns "Not Found" to requests for standard admin paths
 
 ### 🍪 HTTPOnly Cookie Flag Missing
 **Problem**: Cookies accessible to client-side JavaScript, vulnerable to XSS attacks  
@@ -86,18 +44,6 @@ This plugin automatically implements enterprise-level security measures without 
 - **Alias & Field Duplication Protection**: Prevents excessive aliases and field repetition
 
 ## ✨ Additional Security Features
-**Problem**: Multiple GraphQL vulnerabilities including introspection exposure, unlimited aliases, field duplication, and circular queries
-**Solution**:
-- **Introspection Blocking**: Disabled in production environments
-- **Query Depth Limits**: Configurable limits (1-20 levels, default: 8) 
-- **Query Complexity Control**: Prevents resource exhaustion (10-1000 points, default: 100)
-- **Query Timeout Protection**: Configurable timeouts (1-30 seconds, default: 5)
-- **Rate Limiting**: 30 requests per minute per IP to prevent DoS attacks
-- **Alias & Field Duplication Protection**: Prevents excessive aliases and field repetition
-
-## ✅ **Additional Security Features**
-
-## ✨ Additional Security Features
 
 ### 🔒 WordPress Hardening *(Automatic)*
 - **Secure Headers**: Essential security headers (X-Frame-Options, X-XSS-Protection, etc.)
@@ -111,22 +57,17 @@ This plugin automatically implements enterprise-level security measures without 
 - **404 Responses**: Returns "Not Found" to suspicious automated requests
 - **Rate Limiting**: Prevents rapid-fire access attempts from scripts
 - **Header Analysis**: Detects missing browser headers typical of automated tools
+- **Enhanced Security Headers**: X-Frame-Options, X-XSS-Protection, Content Security Policy
+- **WordPress Hardening**: XML-RPC blocking, version hiding, file editing restrictions
+- **User Enumeration Protection**: Prevents discovery of valid usernames
 - **Behavioral Tracking**: Monitors and extends blocks for persistent bot activity
 
-### 🔒 Admin URL Protection *(Security through Obscurity)*
-- **Custom Login URL**: Access admin through `/silver-admin/` (configurable) instead of `/wp-login.php`
-- **Hidden Admin Panel**: Admin dashboard accessible via custom URL instead of `/wp-admin/`
-- **404 for Default URLs**: Standard admin URLs return "Not Found" to hide their existence
-- **URL Validation**: Prevents use of common/predictable admin URL slugs
-- **Automatic Redirects**: Seamless routing from custom URLs to actual admin functions
-- **Configurable Slug**: Customize admin URL slug via settings panel (must be unique)
-
-### 📊 Real-Time Monitoring Dashboard
+## 📊 Real-Time Monitoring Dashboard
 - **Security Status Overview**: View all security configurations at a glance
 - **Live Statistics**: Real-time login attempt tracking and blocked IPs monitoring
 - **GraphQL Activity**: Query analysis and rate limiting statistics
 
-### 🌍 Enterprise Features
+## 🌍 Enterprise Features
 - **Easy Configuration**: Simple admin panel with toggle switches and sliders
 - **Instant Updates**: All settings take effect immediately
 - **Multi-Language Support**: Full Spanish translation included
@@ -153,16 +94,6 @@ This plugin automatically implements enterprise-level security measures without 
 wp plugin install silver-assist-security.zip --activate
 ```
 
-### ⚠️ Important: New Admin Access URLs
-
-**After activation, WordPress admin URLs change for security:**
-
-- **New Login URL**: `https://yoursite.com/silver-admin/` (instead of `/wp-login.php`)
-- **New Admin Dashboard**: `https://yoursite.com/silver-admin/wp-admin/` (instead of `/wp-admin/`)
-- **Security Settings**: Go to **Settings → Security Status** from the new admin dashboard
-
-💡 **Bookmark the new admin URL for future access!**
-
 ## 🚀 Quick Start & Configuration
 
 ### Immediate Protection *(No Configuration Required)*
@@ -177,15 +108,13 @@ The plugin starts protecting your website immediately after activation:
 ✅ **User enumeration** is prevented  
 
 ### Configuration Dashboard
-Access your security control panel at **Settings → Security Status** (remember to use your new admin URL)
+Access your security control panel at **Settings → Security Essentials**
 
 **Login Security Configuration**
 - 🔧 **Max Login Attempts**: 1-20 failed attempts before lockout (default: 5)
 - 🔧 **Lockout Duration**: 60-3600 seconds blocking period (default: 900s/15min)
 - 🔧 **Session Timeout**: 5-120 minutes user session duration (default: 30min)
 - 🔧 **Bot Protection**: Enable/disable bot and crawler blocking (default: enabled)
-- 🔧 **Custom Admin URL**: Set custom URL slug for admin access (default: "silver-admin")
-- 🔧 **Hide Admin URLs**: Enable/disable hiding of default admin paths (default: enabled)
 
 **GraphQL Security Configuration** *(If WPGraphQL is Active)*
 - 🔧 **Query Depth Limit**: 1-20 levels (default: 8)
@@ -222,14 +151,11 @@ No. The plugin works automatically after activation with simple toggle controls 
 **Is it compatible with other security plugins?**  
 Yes, but we recommend using Silver Assist Security Essentials as your primary security solution to avoid conflicts.
 
-**How do I access the admin after installation?**  
-After activation, use the new secure URL: `https://yoursite.com/silver-admin/` instead of `/wp-login.php`. You can customize this URL in the security settings.
+**What happens to my login page after installation?**  
+Your login page remains at the standard WordPress location but gains enhanced protection against brute force attacks, bot detection, and user enumeration.
 
-**What if I forget the custom admin URL?**  
-You can temporarily disable the feature by adding `define('SILVER_ASSIST_DISABLE_CUSTOM_ADMIN', true);` to your `wp-config.php`, then access admin normally to reconfigure.
-
-**Can I change the custom admin URL slug?**  
-Yes! Go to **Settings → Security Status → Admin URL Security** and change the "Custom Admin URL" field. Avoid common words like "admin", "login", or "wp-admin".
+**Can I customize the security settings?**  
+Yes! Go to **Settings → Security Status** to configure login attempt limits, session timeouts, GraphQL security settings, and other features.
 
 ## ⚠️ System Requirements & Notes
 
@@ -251,7 +177,57 @@ Yes! Go to **Settings → Security Status → Admin URL Security** and change th
 - Verify WPGraphQL plugin is installed and active
 - Check GraphQL query complexity limits in settings
 
-*Login issues after activation?*
+*Website seems slower?*
+- Review rate limiting settings in Security Status
+- Adjust GraphQL query limits if needed
+
+## 🌍 Multi-Language Support
+
+- **English**: Default language
+- **Spanish**: Complete translation included (`es_ES`)
+- **Translation Ready**: `.pot` file included for additional languages
+
+## 📈 Changelog
+
+### v1.0.2 (August 2025)
+- 🔧 Complete removal of Hide Admin URLs functionality due to compatibility issues
+- ✅ Enhanced focus on core security features: login protection, password enforcement, GraphQL security
+- 🐛 Improved plugin stability and WordPress compatibility
+- 📝 Updated documentation and admin interface
+
+### v1.0.1 (August 2025)
+- 🔧 Renamed "Security Suite" to "Security Essentials" in admin menu for better clarity
+- 🎛️ Enhanced Admin Security dashboard with dynamic status indicators
+- 📊 Improved dashboard readability with clearer feature organization
+
+### v1.0.0 (August 2025)
+- ✅ Initial release with comprehensive security suite
+- ✅ HTTPOnly cookie protection
+- ✅ GraphQL security features  
+- ✅ Login attempt limiting with bot protection
+- ✅ Real-time security dashboard
+- ✅ Spanish translation support
+- ✅ Automatic update system
+
+---
+
+## 👨‍💻 Developer Information
+
+**Developed by**: Silver Assist  
+**Version**: 1.0.2  
+**Release Date**: August 2025  
+**License**: Proprietary  
+
+### Technical Details
+- Built with modern PHP 8+ features and PSR-4 autoloading
+- Modern ES6+ JavaScript with arrow functions and template literals
+- Modular component architecture for maintainability
+- WordPress coding standards compliant
+- Comprehensive security logging and monitoring
+
+---
+
+*Silver Assist Security Essentials - Complete WordPress Security Protection*
 - Clear browser cookies and try the new admin URL
 - Check if strong password requirements are enabled
 

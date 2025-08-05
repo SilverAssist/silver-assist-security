@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Core
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.1
+ * @version 1.0.2
  */
 
 namespace SilverAssist\Security\Core;
@@ -17,7 +17,6 @@ namespace SilverAssist\Security\Core;
 use SilverAssist\Security\Admin\AdminPanel;
 use SilverAssist\Security\Security\LoginSecurity;
 use SilverAssist\Security\Security\GeneralSecurity;
-use SilverAssist\Security\Security\AdminUrlSecurity;
 use SilverAssist\Security\GraphQL\GraphQLSecurity;
 use SilverAssist\Security\Core\Updater;
 
@@ -58,13 +57,6 @@ class Plugin
      * @var GeneralSecurity|null
      */
     private ?GeneralSecurity $general_security = null;
-
-    /**
-     * Admin URL security instance
-     * 
-     * @var AdminUrlSecurity|null
-     */
-    private ?AdminUrlSecurity $admin_url_security = null;
 
     /**
      * GraphQL security instance
@@ -164,7 +156,6 @@ class Plugin
     {
         $this->login_security = new LoginSecurity();
         $this->general_security = new GeneralSecurity();
-        $this->admin_url_security = new AdminUrlSecurity();
     }
 
     /**

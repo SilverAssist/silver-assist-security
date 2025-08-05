@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Admin
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.1
+ * @version 1.0.2
  */
 
 namespace SilverAssist\Security\Admin;
@@ -87,8 +87,6 @@ class AdminPanel
         \register_setting("silver_assist_security_login", "silver_assist_lockout_duration");
         \register_setting("silver_assist_security_login", "silver_assist_session_timeout");
         \register_setting("silver_assist_security_login", "silver_assist_bot_protection");
-        \register_setting("silver_assist_security_login", "silver_assist_custom_admin_url");
-        \register_setting("silver_assist_security_login", "silver_assist_hide_admin_urls");
 
         // Password Settings
         \register_setting("silver_assist_security_password", "silver_assist_password_strength_enforcement");
@@ -130,7 +128,9 @@ class AdminPanel
         // Localize script for AJAX
         \wp_localize_script("silver-assist-security-admin", "silverAssistSecurity", [
             "ajaxurl" => \admin_url("admin-ajax.php"),
+            "admin_url" => \admin_url(""),
             "nonce" => \wp_create_nonce("silver_assist_security_ajax"),
+            "logout_nonce" => \wp_create_nonce("log-out"),
             "refreshInterval" => 30000, // 30 seconds
             "strings" => [
                 "loading" => \__("Loading...", "silver-assist-security"),
@@ -156,9 +156,11 @@ class AdminPanel
                 "graphqlComplexityError" => \__("GraphQL query complexity must be between 10 and 1000", "silver-assist-security"),
                 "graphqlTimeoutError" => \__("GraphQL query timeout must be between 1 and 30 seconds", "silver-assist-security"),
                 "customUrlPatternError" => \__("Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)", "silver-assist-security"),
-                "customUrlForbiddenError" => \__("Custom admin URL cannot use common words like \"admin\", \"login\", \"dashboard\", etc.", "silver-assist-security"),
+                                "sessionTimeoutError" => \__("Session timeout must be between 5 and 120 minutes", "silver-assist-security"),
+                "graphqlDepthError" => \__("GraphQL query depth must be between 1 and 20", "silver-assist-security"),
                 "urlPatternError" => \__("Use only lowercase letters, numbers, and hyphens (3-30 characters)", "silver-assist-security"),
-                "urlForbiddenError" => \__("Avoid common words like \"admin\", \"login\", \"dashboard\"", "silver-assist-security"),
+                                "graphqlDepthError" => \__("GraphQL query depth must be between 1 and 20", "silver-assist-security"),
+                "graphqlComplexityError" => \__("GraphQL query complexity must be between 10 and 1000", "silver-assist-security"),
                 // Auto-save strings
                 "saving" => \__("Saving...", "silver-assist-security"),
                 "saved" => \__("Saved!", "silver-assist-security"),
@@ -334,10 +336,6 @@ class AdminPanel
                 "silver_assist_password_strength_enforcement" => isset($_POST["silver_assist_password_strength_enforcement"]) ? 1 : 0,
                 "silver_assist_bot_protection" => isset($_POST["silver_assist_bot_protection"]) ? 1 : 0,
 
-                // Admin URL Security
-                "silver_assist_custom_admin_url" => sanitize_text_field($_POST["silver_assist_custom_admin_url"] ?? "silver-admin"),
-                "silver_assist_hide_admin_urls" => isset($_POST["silver_assist_hide_admin_urls"]) ? 1 : 0,
-
                 // GraphQL Security
                 "silver_assist_graphql_query_depth" => (int) ($_POST["silver_assist_graphql_query_depth"] ?? 8),
                 "silver_assist_graphql_query_complexity" => (int) ($_POST["silver_assist_graphql_query_complexity"] ?? 100),
@@ -380,7 +378,6 @@ class AdminPanel
             ],
             "admin_security" => [
                 "password_strength_enforcement" => (bool) \get_option("silver_assist_password_strength_enforcement", 1),
-                "hide_admin_urls" => (bool) \get_option("silver_assist_hide_admin_urls", 1),
                 "status" => $this->get_admin_security_status()
             ],
             "graphql_security" => [
@@ -535,10 +532,9 @@ class AdminPanel
     private function get_admin_security_status(): string
     {
         $password_enforcement = (bool) \get_option("silver_assist_password_strength_enforcement", 1);
-        $hide_admin_urls = (bool) \get_option("silver_assist_hide_admin_urls", 1);
 
-        // Return active if at least one feature is enabled
-        return ($password_enforcement || $hide_admin_urls) ? "active" : "disabled";
+        // Return active if password enforcement is enabled
+        return $password_enforcement ? "active" : "disabled";
     }
 
     /**
@@ -684,24 +680,6 @@ class AdminPanel
         // Save bot protection settings
         \update_option("silver_assist_bot_protection", isset($_POST["silver_assist_bot_protection"]) ? 1 : 0);
 
-        // Save custom admin URL settings
-        if (isset($_POST["silver_assist_custom_admin_url"])) {
-            $custom_url = sanitize_text_field($_POST["silver_assist_custom_admin_url"]);
-            // Validate custom URL
-            if (preg_match("/^[a-z0-9\-]{3,30}$/", $custom_url) && !in_array($custom_url, ["admin", "login", "wp-admin", "wp-login", "dashboard"])) {
-                \update_option("silver_assist_custom_admin_url", $custom_url);
-            } else {
-                // Add error notice for invalid custom URL
-                \add_action("admin_notices", function () {
-                    echo "<div class=\"notice notice-error is-dismissible\">";
-                    echo "<p>" . \__("Invalid custom admin URL. Use only lowercase letters, numbers, and hyphens (3-30 characters). Avoid common words like 'admin' or 'login'.", "silver-assist-security") . "</p>";
-                    echo "</div>";
-                });
-            }
-        }
-
-        \update_option("silver_assist_hide_admin_urls", isset($_POST["silver_assist_hide_admin_urls"]) ? 1 : 0);
-
         // Save password settings
         \update_option("silver_assist_password_strength_enforcement", isset($_POST["silver_assist_password_strength_enforcement"]) ? 1 : 0);
 
@@ -745,8 +723,6 @@ class AdminPanel
         $lockout_duration = \get_option("silver_assist_lockout_duration", 900);
         $session_timeout = \get_option("silver_assist_session_timeout", 30);
         $bot_protection = \get_option("silver_assist_bot_protection", 1);
-        $custom_admin_url = \get_option("silver_assist_custom_admin_url", "silver-admin");
-        $hide_admin_urls = \get_option("silver_assist_hide_admin_urls", 1);
         $password_strength_enforcement = \get_option("silver_assist_password_strength_enforcement", 1);
         $graphql_query_depth = \get_option("silver_assist_graphql_query_depth", 8);
         $graphql_query_complexity = \get_option("silver_assist_graphql_query_complexity", 100);
@@ -813,14 +789,6 @@ class AdminPanel
                                 <span
                                     class="feature-value <?php echo $security_status['admin_security']['password_strength_enforcement'] ? 'enabled' : 'disabled'; ?>">
                                     <?php echo $security_status['admin_security']['password_strength_enforcement'] ? esc_html__('Enabled', 'silver-assist-security') : esc_html__('Disabled', 'silver-assist-security'); ?>
-                                </span>
-                            </div>
-                            <div class="feature-status">
-                                <span
-                                    class="feature-name"><?php esc_html_e('Hide Admin URL', 'silver-assist-security'); ?></span>
-                                <span
-                                    class="feature-value <?php echo $security_status['admin_security']['hide_admin_urls'] ? 'enabled' : 'disabled'; ?>">
-                                    <?php echo $security_status['admin_security']['hide_admin_urls'] ? esc_html__('Enabled', 'silver-assist-security') : esc_html__('Disabled', 'silver-assist-security'); ?>
                                 </span>
                             </div>
                         </div>
@@ -971,51 +939,6 @@ class AdminPanel
                     </div>
 
                     <!-- Admin URL Security Settings -->
-                    <div class="card">
-                        <h2><?php esc_html_e('Admin URL Security', 'silver-assist-security'); ?></h2>
-                        <table class="form-table">
-                            <tr>
-                                <th scope="row">
-                                    <?php esc_html_e('Hide Default Admin URLs', 'silver-assist-security'); ?>
-                                </th>
-                                <td>
-                                    <label>
-                                        <input type="checkbox" name="silver_assist_hide_admin_urls" value="1"
-                                            <?php checked($hide_admin_urls, 1); ?> />
-                                        <?php esc_html_e('Hide /wp-admin/ and /wp-login.php behind custom URL', 'silver-assist-security'); ?>
-                                    </label>
-                                    <p class="description">
-                                        <?php esc_html_e('Blocks access to default WordPress admin URLs and redirects to custom URL.', 'silver-assist-security'); ?>
-                                    </p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row">
-                                    <label for="silver_assist_custom_admin_url">
-                                        <?php esc_html_e('Custom Admin URL Slug', 'silver-assist-security'); ?>
-                                    </label>
-                                </th>
-                                <td>
-                                    <div class="custom-admin-url-input">
-                                        <span class="url-prefix"><?php echo esc_html(home_url('/')); ?></span>
-                                        <input type="text" id="silver_assist_custom_admin_url" name="silver_assist_custom_admin_url"
-                                            value="<?php echo esc_attr($custom_admin_url); ?>" class="regular-text" 
-                                            pattern="[a-z0-9\-]{3,30}" />
-                                        <span class="url-suffix">/</span>
-                                    </div>
-                                    <p class="description">
-                                        <?php esc_html_e('Custom URL slug for admin access (3-30 characters, lowercase letters, numbers, and hyphens only). Avoid common words like "admin" or "login".', 'silver-assist-security'); ?>
-                                    </p>
-                                    <p class="description" style="color: #d63638; font-weight: bold;">
-                                        <strong><?php esc_html_e('IMPORTANT:', 'silver-assist-security'); ?></strong>
-                                        <?php esc_html_e('After activation, access admin via:', 'silver-assist-security'); ?>
-                                        <code><?php echo esc_html(home_url('/' . $custom_admin_url . '/')); ?></code>
-                                    </p>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-
                     <!-- Password Security Settings -->
                     <div class="card">
                         <h2><?php esc_html_e('Password Security Settings', 'silver-assist-security'); ?></h2>

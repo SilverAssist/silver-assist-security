@@ -5,6 +5,34 @@ All notable changes to the Silver Assist Security Essentials will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-08-05
+
+### Removed
+- **Complete removal of Hide Admin URLs functionality** - This feature has been completely removed from the plugin due to compatibility issues and stability concerns
+- Custom admin URL routing and blocking mechanisms
+- All admin URL security UI elements from admin panel
+- JavaScript validation for custom admin URL inputs
+- Auto-save handling for custom admin URL settings
+- Complete removal and deletion of AdminUrlSecurity class from codebase
+
+### Changed
+- AdminUrlSecurity class completely removed from the codebase
+- Admin panel form cleaned of all custom admin URL related elements
+- Admin security status calculation no longer considers admin URL settings
+- Auto-save functionality simplified without custom admin URL validation
+- JavaScript admin.js cleaned of custom URL validation and related functions
+
+### Fixed
+- Resolved all routing issues that could cause complete admin lockout
+- Eliminated potential conflicts with WordPress core admin functionality
+- Improved plugin stability by removing all experimental URL manipulation features
+- Plugin now focuses only on core security features: login protection, password enforcement, GraphQL security
+
+### Technical Notes
+- All custom admin URL database options are force-disabled
+- Clean plugin codebase without any admin URL manipulation code
+- Future implementation of admin URL hiding will require complete redesign with better WordPress compatibility
+
 ## [1.0.1] - 2025-08-05
 
 ### Changed

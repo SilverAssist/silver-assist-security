@@ -13,7 +13,7 @@
 # @package SilverAssist\Security
 # @since 1.0.0
 # @author Silver Assist
-# @version 1.0.1
+# @version 1.0.2
 ###############################################################################
 
 set -e  # Exit on any error
@@ -258,6 +258,18 @@ if [ -f "${PROJECT_ROOT}/scripts/update-version-simple.sh" ]; then
         "update-version-simple.sh"
 fi
 
+if [ -f "${PROJECT_ROOT}/scripts/build-release.sh" ]; then
+    update_file "${PROJECT_ROOT}/scripts/build-release.sh" \
+        "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
+        "build-release.sh"
+fi
+
+if [ -f "${PROJECT_ROOT}/scripts/check-versions.sh" ]; then
+    update_file "${PROJECT_ROOT}/scripts/check-versions.sh" \
+        "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
+        "check-versions.sh"
+fi
+
 print_success "Version scripts updated"
 
 # 7. Update README.md if it contains version references
@@ -286,7 +298,7 @@ echo "  • CSS files: assets/css/*.css"
 echo "  • JavaScript files: assets/js/*.js"
 echo "  • Header standards: HEADER-STANDARDS.md"
 echo "  • Documentation: README.md (if applicable)"
-echo "  • Update scripts: scripts/update-version*.sh"
+echo "  • Update scripts: scripts/*.sh"
 echo ""
 print_status "Next steps:"
 echo "  1. Verify changes: ./scripts/check-versions.sh"

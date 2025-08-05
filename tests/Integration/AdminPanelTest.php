@@ -65,7 +65,7 @@ class AdminPanelTest extends TestCase
      */
     public function test_ajax_auto_save(): void
     {
-        // Mock AJAX request
+        // Mock AJAX request with current available settings
         $_POST = [
             'action' => 'silver_assist_auto_save',
             'nonce' => wp_create_nonce('silver_assist_security_ajax'),
@@ -74,8 +74,6 @@ class AdminPanelTest extends TestCase
             'silver_assist_session_timeout' => '60',
             'silver_assist_password_strength_enforcement' => '1',
             'silver_assist_bot_protection' => '1',
-            'silver_assist_custom_admin_url' => 'secure-admin',
-            'silver_assist_hide_admin_urls' => '1',
             'silver_assist_graphql_query_depth' => '10',
             'silver_assist_graphql_query_complexity' => '200',
             'silver_assist_graphql_query_timeout' => '10'
@@ -95,7 +93,7 @@ class AdminPanelTest extends TestCase
         // Verify settings were saved
         $this->assertEquals('10', get_option('silver_assist_login_attempts'));
         $this->assertEquals('1800', get_option('silver_assist_lockout_duration'));
-        $this->assertEquals('secure-admin', get_option('silver_assist_custom_admin_url'));
+        $this->assertEquals('60', get_option('silver_assist_session_timeout'));
     }
 
     /**
@@ -194,7 +192,6 @@ class AdminPanelTest extends TestCase
             'silver_assist_login_attempts' => '0', // Invalid: too low
             'silver_assist_lockout_duration' => '30', // Invalid: too low
             'silver_assist_session_timeout' => '200', // Invalid: too high
-            'silver_assist_custom_admin_url' => 'admin', // Invalid: forbidden word
         ];
 
         ob_start();
@@ -209,6 +206,5 @@ class AdminPanelTest extends TestCase
         
         // Values should not be saved if validation fails
         $this->assertNotEquals('0', get_option('silver_assist_login_attempts'));
-        $this->assertNotEquals('admin', get_option('silver_assist_custom_admin_url'));
     }
 }

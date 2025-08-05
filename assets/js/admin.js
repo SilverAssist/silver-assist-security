@@ -6,7 +6,7 @@
  * security status management.
  *
  * @file admin.js
- * @version 1.0.1
+ * @version 1.0.2
  * @author Silver Assist
  * @requires jQuery
  * @since 1.0.0
@@ -39,7 +39,7 @@
      * Initialize form validation for security settings
      * 
      * Validates all form inputs including login attempts, session timeout,
-     * GraphQL settings, and custom admin URL formatting.
+     * and GraphQL settings.
      * 
      * @since 1.0.0
      * @returns {void}
@@ -87,24 +87,6 @@
             if (graphqlTimeout && (graphqlTimeout < 1 || graphqlTimeout > 30)) {
                 errors.push(silverAssistSecurity.strings.graphqlTimeoutError || "GraphQL query timeout must be between 1 and 30 seconds");
                 isValid = false;
-            }
-
-            // Validate custom admin URL
-            const customAdminUrl = $("#silver_assist_custom_admin_url").val().trim();
-            if (customAdminUrl) {
-                // Check pattern: lowercase letters, numbers, and hyphens only, 3-30 characters
-                const urlPattern = /^[a-z0-9\-]{3,30}$/;
-                if (!urlPattern.test(customAdminUrl)) {
-                    errors.push(silverAssistSecurity.strings.customUrlPatternError || "Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)");
-                    isValid = false;
-                }
-
-                // Check for forbidden words
-                const forbiddenWords = ["admin", "login", "wp-admin", "wp-login", "dashboard", "backend", "panel", "control"];
-                if (forbiddenWords.includes(customAdminUrl.toLowerCase())) {
-                    errors.push(silverAssistSecurity.strings.customUrlForbiddenError || "Custom admin URL cannot use common words like \"admin\", \"login\", \"dashboard\", etc.");
-                    isValid = false;
-                }
             }
 
             if (!isValid) {
@@ -234,21 +216,52 @@
      */
     const autoSaveSettings = () => {
         const $form = $("form");
-        const formData = $form.serialize();
+        const formData = {};
+
+        // Serialize form data manually to handle checkboxes correctly
+        $form.find("input, select, textarea").each(function () {
+            const $field = $(this);
+            const name = $field.attr("name");
+            
+            if (!name) return;
+
+            if ($field.attr("type") === "checkbox") {
+                formData[name] = $field.is(":checked") ? "1" : "";
+            } else {
+                formData[name] = $field.val();
+            }
+        });
+
+        // Add action and nonce
+        formData.action = "silver_assist_auto_save";
+        formData.nonce = silverAssistSecurity.nonce;
 
         $.ajax({
             url: silverAssistSecurity.ajaxurl,
             type: "POST",
-            data: {
-                action: "silver_assist_auto_save",
-                nonce: silverAssistSecurity.nonce,
-                form_data: formData
-            },
+            data: formData,
             success: response => {
-                $(".saving-indicator").html(silverAssistSecurity.strings.saved || "Saved!").delay(2000).fadeOut();
+                if (response.success) {
+                    // Normal save indication
+                    $(".saving-indicator")
+                        .html(silverAssistSecurity.strings.saved || "Saved!")
+                        .delay(2000)
+                        .fadeOut();
+                } else {
+                    // Show error message
+                    $(".saving-indicator")
+                        .html(response.data.message || (silverAssistSecurity.strings.saveFailed || "Save failed"))
+                        .addClass("error")
+                        .delay(3000)
+                        .fadeOut();
+                }
             },
             error: () => {
-                $(".saving-indicator").html(silverAssistSecurity.strings.saveFailed || "Save failed").addClass("error").delay(3000).fadeOut();
+                $(".saving-indicator")
+                    .html(silverAssistSecurity.strings.saveFailed || "Save failed")
+                    .addClass("error")
+                    .delay(3000)
+                    .fadeOut();
             }
         });
     };
@@ -565,80 +578,5 @@
         const timeString = now.toLocaleTimeString();
         $("#last-updated-time").text(timeString);
     };
-
-    /**
-     * Initialize custom admin URL validation
-     * 
-     * Sets up real-time validation for custom admin URL input field,
-     * checking for forbidden words and providing visual feedback.
-     * 
-     * @since 1.0.0
-     * @returns {void}
-     */
-    const initCustomAdminUrlValidation = () => {
-        const $customUrlInput = $("#silver_assist_custom_admin_url");
-        const $urlPrefix = $(".url-prefix");
-        
-        if ($customUrlInput.length) {
-            // Real-time validation
-            $customUrlInput.on("input", function() {
-                const value = $(this).val().trim().toLowerCase();
-                const $container = $(this).closest(".custom-admin-url-input");
-                let isValid = true;
-                let errorMessage = "";
-
-                // Remove previous validation classes
-                $container.removeClass("valid invalid");
-                $(".custom-url-error").remove();
-
-                if (value) {
-                    // Check pattern
-                    const urlPattern = /^[a-z0-9\-]{3,30}$/;
-                    if (!urlPattern.test(value)) {
-                        isValid = false;
-                        errorMessage = silverAssistSecurity.strings.urlPatternError || "Use only lowercase letters, numbers, and hyphens (3-30 characters)";
-                    }
-
-                    // Check forbidden words
-                    const forbiddenWords = ["admin", "login", "wp-admin", "wp-login", "dashboard", "backend", "panel", "control"];
-                    if (forbiddenWords.includes(value)) {
-                        isValid = false;
-                        errorMessage = silverAssistSecurity.strings.urlForbiddenError || "Avoid common words like \"admin\", \"login\", \"dashboard\"";
-                    }
-
-                    // Apply validation styling
-                    if (isValid) {
-                        $container.addClass("valid");
-                        $(this).css("color", "#00a32a");
-                    } else {
-                        $container.addClass("invalid");
-                        $(this).css("color", "#d63638");
-                        
-                        // Show error message
-                        $container.after(`<p class="custom-url-error" style="color: #d63638; font-size: 12px; margin-top: 5px;">${errorMessage}</p>`);
-                    }
-                } else {
-                    $(this).css("color", "#50575e");
-                }
-            });
-
-            // Update URL preview
-            $customUrlInput.on("input", function() {
-                const value = $(this).val().trim();
-                if (value) {
-                    const fullUrl = $urlPrefix.text() + value + "/";
-                    $("#admin-url-preview").text(fullUrl);
-                }
-            });
-
-            // Initialize validation on page load
-            $customUrlInput.trigger("input");
-        }
-    };
-
-    // Call the new validation function when document is ready
-    $(() => {
-        initCustomAdminUrlValidation();
-    });
 
 }))(jQuery);

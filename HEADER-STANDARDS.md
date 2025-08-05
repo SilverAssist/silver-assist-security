@@ -6,7 +6,7 @@
 Plugin Name: Silver Assist Security Suite
 Plugin URI: https://github.com/SilverAssist/silver-assist-security
 Description: Comprehensive security suite for Silver Assist - includes login security, GraphQL protection, and admin configuration panel
-Version: 1.0.1
+Version: 1.0.2
 Author: Silver Assist
 Author URI: http://silverassist.com/
 Text Domain: silver-assist-security
@@ -29,7 +29,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 /**
  * Plugin Name: Silver Assist Security Suite
  * Description: Comprehensive security suite for Silver Assist - includes login security, GraphQL protection, and admin configuration panel
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Silver Assist
  * Author URI: http://silverassist.com/
  * Text Domain: silver-assist-security
@@ -42,7 +42,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  *
  * @package SilverAssist\Security
- * @version 1.0.1
+ * @version 1.0.2
  * @since 1.0.0
  * @author Silver Assist
  */
@@ -57,7 +57,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * [Detailed description of file functionality]
  *
  * @package SilverAssist\Security[/SubNamespace if applicable]
- * @version 1.0.1
+ * @version 1.0.2
  * @since 1.0.0
  * @author Silver Assist
  */
@@ -76,7 +76,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * @author Silver Assist
  * @copyright Copyright (c) 2025, Silver Assist
  * @license GPL v2 or later
- * @version 1.0.1
+ * @version 1.0.2
  */
 ```
 
@@ -89,7 +89,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * [Detailed description of JavaScript functionality]
  *
  * @file [filename.js]
- * @version 1.0.1
+ * @version 1.0.2
  * @author Silver Assist
  * @requires jQuery
  * @since 1.0.0
@@ -110,7 +110,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * @package SilverAssist\Security\Core
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.1
+ * @version 1.0.2
  */
 ```
 
@@ -126,7 +126,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * @package SilverAssist\Security\Admin
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.1
+ * @version 1.0.2
  */
 ```
 
@@ -142,7 +142,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * @package SilverAssist\Security\Security
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.1
+ * @version 1.0.2
  */
 ```
 
@@ -158,7 +158,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * @package SilverAssist\Security\Security
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.1
+ * @version 1.0.2
  */
 ```
 
@@ -174,7 +174,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * @package SilverAssist\Security\GraphQL
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.1
+ * @version 1.0.2
  */
 ```
 
@@ -192,7 +192,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * @author Silver Assist
  * @copyright Copyright (c) 2025, Silver Assist
  * @license GPL v2 or later
- * @version 1.0.1
+ * @version 1.0.2
  */
 ```
 
@@ -206,7 +206,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * security status management.
  *
  * @file admin.js
- * @version 1.0.1
+ * @version 1.0.2
  * @author Silver Assist
  * @requires jQuery
  * @since 1.0.0
@@ -234,7 +234,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 7. **Versioning standards**:
    - **@since**: Indicates when the file/feature was first introduced (never changes retroactively)
    - **@version**: Indicates current version of the file (updates with each release)
-   - **Current release v1.0.0**: Use both `@since 1.0.0` and `@version 1.0.1` for all files
+   - **Current release v1.0.0**: Use both `@since 1.0.0` and `@version 1.0.2` for all files
 
 8. **Security-specific documentation**: Include security-related functionality descriptions:
    - Login protection mechanisms

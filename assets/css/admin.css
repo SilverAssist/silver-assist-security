@@ -10,7 +10,7 @@
  * @author Silver Assist
  * @copyright Copyright (c) 2025, Silver Assist
  * @license GPL v2 or later
- * @version 1.0.1
+ * @version 1.0.2
  */
 
 /* =============================================================================
@@ -714,86 +714,6 @@
    ADMIN URL SECURITY STYLES
    ============================================================================= */
 
-.custom-admin-url-input {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    font-family: 'Courier New', monospace;
-    background: #f6f7f7;
-    border: 1px solid #8c8f94;
-    border-radius: 4px;
-    overflow: hidden;
-    max-width: 500px;
-}
-
-.custom-admin-url-input .url-prefix,
-.custom-admin-url-input .url-suffix {
-    background: #f0f0f1;
-    color: #50575e;
-    padding: 8px 12px;
-    font-size: 13px;
-    border-right: 1px solid #8c8f94;
-    white-space: nowrap;
-}
-
-.custom-admin-url-input .url-suffix {
-    border-right: none;
-    border-left: 1px solid #8c8f94;
-}
-
-.custom-admin-url-input input[type="text"] {
-    border: none;
-    box-shadow: none;
-    background: #fff;
-    padding: 8px 12px;
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    font-weight: 600;
-    color: #0073aa;
-    min-width: 120px;
-    flex: 1;
-}
-
-.custom-admin-url-input input[type="text"]:focus {
-    outline: none;
-    box-shadow: none;
-    background: #fff;
-}
-
-.custom-admin-url-input:focus-within {
-    border-color: #2271b1;
-    box-shadow: 0 0 0 1px #2271b1;
-}
-
-/* Admin URL Security Card Specific Styles */
-.silver-assist-security-admin .card h2:contains('Admin URL Security') {
-    color: #d63638;
-    border-bottom-color: #d63638;
-}
-
-.admin-url-warning {
-    background: #fff2cd;
-    border: 1px solid #dba617;
-    border-left: 4px solid #dba617;
-    padding: 12px 16px;
-    margin: 15px 0;
-    border-radius: 4px;
-}
-
-.admin-url-warning strong {
-    color: #8a6419;
-}
-
-.admin-url-warning code {
-    background: #f0f0f1;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    color: #d63638;
-    font-weight: bold;
-}
-
 /* Bot Protection Checkbox Styles */
 .silver-assist-security-admin input[type="checkbox"] + label {
     display: inline-flex;
@@ -805,15 +725,4 @@
 .silver-assist-security-admin input[type="checkbox"]:checked + label {
     color: #00a32a;
     font-weight: 500;
-}
-
-/* URL Input Validation Styling */
-.custom-admin-url-input input[type="text"]:invalid {
-    border-color: #d63638;
-    background: #fff2f2;
-}
-
-.custom-admin-url-input input[type="text"]:valid {
-    border-color: #00a32a;
-    background: #f6ffed;
 }

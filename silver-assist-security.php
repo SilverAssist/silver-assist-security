@@ -3,7 +3,7 @@
  * Plugin Name: Silver Assist Security Essentials
  * Plugin URI: https://github.com/SilverAssist/silver-assist-security
  * Description: Resolves critical security vulnerabilities: WordPress login protection, HTTPOnly cookie implementation, and comprehensive GraphQL security. Addresses security audit findings automatically.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Silver Assist
  * Author URI: http://silverassist.com/
  * Text Domain: silver-assist-security
@@ -18,7 +18,7 @@
  * @package SilverAssist\Security
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.1
+ * @version 1.0.2
  */
 
 // Prevent direct access
@@ -27,7 +27,7 @@ if (!defined("ABSPATH")) {
 }
 
 // Define plugin constants
-define('SILVER_ASSIST_SECURITY_VERSION', '1.0.1');
+define('SILVER_ASSIST_SECURITY_VERSION', '1.0.2');
 define('SILVER_ASSIST_SECURITY_PATH', plugin_dir_path(__FILE__));
 define('SILVER_ASSIST_SECURITY_URL', plugin_dir_url(__FILE__));
 define('SILVER_ASSIST_SECURITY_BASENAME', plugin_basename(__FILE__));
@@ -97,7 +97,7 @@ class SilverAssistSecurityBootstrap
         "silver_assist_password_strength_enforcement" => 1,
         "silver_assist_bot_protection" => 1, // Enable bot protection by default
         "silver_assist_custom_admin_url" => "silver-admin", // Custom admin URL slug
-        "silver_assist_hide_admin_urls" => 1, // Hide default admin URLs
+        "silver_assist_hide_admin_urls" => 0, // Hide default admin URLs - DISABLED by default
         "silver_assist_graphql_query_depth" => 8,
         "silver_assist_graphql_query_complexity" => 100,
         "silver_assist_graphql_query_timeout" => 5
