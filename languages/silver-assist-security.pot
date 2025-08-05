@@ -1,625 +1,405 @@
-# Copyright (C) 2025 Silver Assist Security Essentials
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Silver Assist
 # This file is distributed under the same license as the Silver Assist Security Essentials package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Silver Assist Security Essentials 1.0.1\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/silver-assist-security\n"
-"POT-Creation-Date: 2025-08-04 20:00+0000\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Project-Id-Version: Silver Assist Security Essentials 1.0.2\n"
+"Report-Msgid-Bugs-To: https://github.com/SilverAssist/silver-assist-security/"
+"issues\n"
+"POT-Creation-Date: 2025-08-05 18:35-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
 
-# Admin Panel Interface
-#: src/Admin/AdminPanel.php:58
-msgid "Silver Assist Security"
+#: src/Core/Plugin.php:201
+msgid "Settings"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:59
-msgid "Security Essentials"
+#: src/Security/GeneralSecurity.php:244
+msgid "Invalid login credentials."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:133
-msgid "Loading..."
+#: src/Security/GeneralSecurity.php:294
+#, php-format
+msgid "Secured by %s"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:134
-msgid "Error loading data"
+#: src/Security/LoginSecurity.php:130
+msgid "Website URL (leave blank):"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:135
-msgid "Last updated:"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:136
-msgid "No active threats detected"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:137
-msgid "Refreshing..."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:140
-msgid "New version %s available."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:141
-msgid "Update now"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:142
-msgid "Checking..."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:143
-msgid "New version available: %1$s\\nCurrent version: %2$s"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:144
-msgid "The plugin is up to date with the latest version (%s)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:145
-msgid "Error checking for updates:"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:146
-msgid "Unknown error"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:147
-msgid "Connectivity error while checking for updates"
-msgstr ""
-
-# Form Validation Error Strings
-#: src/Admin/AdminPanel.php:149
-msgid "Login attempts must be between 1 and 20"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:150
-msgid "Lockout duration must be between 60 and 3600 seconds"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:151
-msgid "Session timeout must be between 5 and 120 minutes"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:152
-msgid "GraphQL query depth must be between 1 and 20"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:153
-msgid "GraphQL query complexity must be between 10 and 1000"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:154
-msgid "GraphQL query timeout must be between 1 and 30 seconds"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:155
-msgid "Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:156
-msgid "Custom admin URL cannot use common words like \"admin\", \"login\", \"dashboard\", etc."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:157
-msgid "Use only lowercase letters, numbers, and hyphens (3-30 characters)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:158
-msgid "Avoid common words like \"admin\", \"login\", \"dashboard\""
-msgstr ""
-
-# Auto-save Strings
-#: src/Admin/AdminPanel.php:160
-msgid "Saving..."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:161
-msgid "Saved!"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:162
-msgid "Save failed"
-msgstr ""
-
-# AJAX Error Strings
-#: src/Admin/AdminPanel.php:164
-msgid "Failed to check for Silver Assist updates"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:165
-msgid "Failed to load security status"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:166
-msgid "Failed to load login stats"
-msgstr ""
-
-# Table Headers
-#: src/Admin/AdminPanel.php:168
-msgid "IP Hash"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:169
-msgid "Blocked Time"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:170
-msgid "Remaining"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:171
-msgid "min"
-msgstr ""
-
-# Security Settings Messages
-#: src/Admin/AdminPanel.php:522
-msgid "Invalid custom admin URL. Use only lowercase letters, numbers, and hyphens (3-30 characters). Avoid common words like 'admin' or 'login'."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:551
-msgid "Security settings have been saved successfully."
-msgstr ""
-
-# Security Dashboard
-#: src/Admin/AdminPanel.php:570
-msgid "Silver Assist Security Essentials"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:574
-msgid "Security Status Dashboard"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:580
-msgid "Refresh Now"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:590
-msgid "Login Security"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:598
-msgid "Max Attempts"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:602
-msgid "Blocked IPs"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:607
-msgid "Lockout (min)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:613
-msgid "Admin Security"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:620
-msgid "Password Strength Enforcement"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:805
-msgid "Hide Admin URL"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:622
-msgid "Enabled"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:622
-msgid "Disabled"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:628
-msgid "GraphQL Security"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:637
-msgid "Max Depth"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:642
-msgid "Max Complexity"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:647
-msgid "Timeout"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:651
-msgid "WPGraphQL plugin not detected"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:657
-msgid "General Security"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:664
-msgid "HTTPOnly Cookies"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:669
-msgid "XML-RPC Protection"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:674
-msgid "Version Hiding"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:683
-msgid "Active Threats & Blocked IPs"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:688
-msgid "Loading blocked IPs..."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:693
-msgid "Security Configuration"
-msgstr ""
-
-# Login Security Configuration
-#: src/Admin/AdminPanel.php:700
-msgid "Login Security Settings"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:704
-msgid "Maximum Login Attempts"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:710
-msgid "Number of failed login attempts before lockout (1-20)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:716
-msgid "Lockout Duration (seconds)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:723
-msgid "How long to lock out users after failed attempts (60-3600 seconds)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:729
-msgid "Session Timeout (minutes)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:736
-msgid "Session timeout duration in minutes (5-120)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:742
-msgid "Bot Protection"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:748
-msgid "Block automated bots and security scanners with 404 responses"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:751
-msgid "Detects and blocks common bots, crawlers, and security scanning tools."
-msgstr ""
-
-# Admin URL Security Configuration
-#: src/Admin/AdminPanel.php:758
-msgid "Admin URL Security"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:762
-msgid "Hide Default Admin URLs"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:768
-msgid "Hide /wp-admin/ and /wp-login.php behind custom URL"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:771
-msgid "Blocks access to default WordPress admin URLs and redirects to custom URL."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:777
-msgid "Custom Admin URL Slug"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:787
-msgid "Custom URL slug for admin access (3-30 characters, lowercase letters, numbers, and hyphens only). Avoid common words like \"admin\" or \"login\"."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:790
-msgid "IMPORTANT:"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:791
-msgid "After activation, access admin via:"
-msgstr ""
-
-# Password Security Configuration
-#: src/Admin/AdminPanel.php:799
-msgid "Password Security Settings"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:803
-msgid "Password Strength Enforcement"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:809
-msgid "Enforce strong password requirements"
-msgstr ""
-
-# GraphQL Security Configuration
-#: src/Admin/AdminPanel.php:818
-msgid "GraphQL Security Settings"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:822
-msgid "Maximum Query Depth"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:829
-msgid "Maximum allowed GraphQL query depth (1-20)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:835
-msgid "Maximum Query Complexity"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:842
-msgid "Maximum allowed GraphQL query complexity (10-1000)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:848
-msgid "Query Timeout (seconds)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:855
-msgid "Maximum GraphQL query execution time (1-30 seconds)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:862
-msgid "Save Security Settings"
-msgstr ""
-
-# Updates Section
-#: src/Admin/AdminPanel.php:891
-msgid "Plugin Updates"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:894
-msgid "Current Version"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:898
-msgid "Latest Version"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:903
-msgid "Update Available!"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:907
-msgid "Up to date"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:912
-msgid "Repository"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:922
-msgid "Check for Updates"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:926
-msgid "Go to Updates"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Requires 12+ characters, mixed case, numbers, and special characters. Prevents common passwords."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Session Timeout"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "hours"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "How long user sessions remain active. Range: 1-24 hours. Default: 1 hour."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "GraphQL Query Depth Limit"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Maximum nesting level for GraphQL queries. Range: 1-20. Default: 8."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "GraphQL Query Complexity Limit"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Maximum complexity score for GraphQL queries. Range: 10-1000. Default: 100."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "GraphQL Query Timeout"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "seconds"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Maximum execution time for GraphQL queries. Range: 1-30 seconds. Default: 5 seconds."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "When enabled, administrator users will be required to reset their passwords every 90 days for enhanced security."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Security Update Required"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "This is the first time you access with Silver Assist Security activated."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "For security reasons, you need to set a new password that meets our security standards:"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Your password has expired."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Last update: %d days ago."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "For security, administrator passwords must be updated every 90 days. Please set a new password:"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Secure password requirements:"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Minimum 12 characters"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "At least one uppercase letter (A-Z)"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "At least one lowercase letter (a-z)"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "At least one number (0-9)"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "At least one special character (!@#$%^&*)"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Do not use common passwords"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "This measure protects your website against unauthorized access and brute force attacks."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Password must be at least 12 characters long."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Password must contain at least one uppercase letter."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Password must contain at least one lowercase letter."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Password must contain at least one number."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Password must contain at least one special character."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Password is too common. Please choose a more unique password."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Too many failed login attempts. Please try again in %d minutes."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Too many failed login attempts. Please try again later."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Login failed. Please check your credentials."
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Access denied from your IP address: %s"
-msgstr ""
-
-#: silver-assist-security.php
-msgid "Access Denied"
-msgstr ""
-
-#: silver-assist-security.php
+#: src/Security/LoginSecurity.php:149 src/Admin/AdminPanel.php:654
 msgid "Security check failed."
 msgstr ""
 
-#: silver-assist-security.php
-msgid "Security Alert - File Modified"
+#: src/Security/LoginSecurity.php:219
+#, php-format
+msgid "Too many failed login attempts. Try again in %d minutes."
 msgstr ""
 
-#: silver-assist-security.php
-msgid "Critical file has been modified: %1$s\nTime: %2$s\nPlease verify this change was authorized."
+#: src/Security/LoginSecurity.php:311 src/Security/LoginSecurity.php:333
+msgid ""
+"Password must be at least 8 characters long and contain uppercase, "
+"lowercase, numbers, and special characters."
 msgstr ""
 
-#: src/Admin/AdminPanel.php
+#: src/Admin/AdminPanel.php:69
+msgid "Silver Assist Security"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:70
+msgid "Security Essentials"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:136
+msgid "Loading..."
+msgstr ""
+
+#: src/Admin/AdminPanel.php:137
+msgid "Error loading data"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:138 src/Admin/AdminPanel.php:740
+msgid "Last updated:"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:139
+msgid "No active threats detected"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:140
+msgid "Refreshing..."
+msgstr ""
+
+#: src/Admin/AdminPanel.php:143
+#, php-format
 msgid "New version %s available."
 msgstr ""
 
-#: src/Admin/AdminPanel.php
+#: src/Admin/AdminPanel.php:144
 msgid "Update now"
 msgstr ""
 
-#: src/Admin/AdminPanel.php
+#: src/Admin/AdminPanel.php:145
 msgid "Checking..."
 msgstr ""
 
-#: src/Admin/AdminPanel.php
+#: src/Admin/AdminPanel.php:146
+#, php-format
 msgid "New version available: %1$s\\nCurrent version: %2$s"
 msgstr ""
 
-#: src/Admin/AdminPanel.php
+#: src/Admin/AdminPanel.php:147
+#, php-format
 msgid "The plugin is up to date with the latest version (%s)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php
+#: src/Admin/AdminPanel.php:148
 msgid "Error checking for updates:"
 msgstr ""
 
-#: src/Admin/AdminPanel.php
+#: src/Admin/AdminPanel.php:149
 msgid "Unknown error"
 msgstr ""
 
-#: src/Admin/AdminPanel.php
+#: src/Admin/AdminPanel.php:150
 msgid "Connectivity error while checking for updates"
 msgstr ""
 
-#: src/Admin/AdminPanel.php
+#: src/Admin/AdminPanel.php:152
+msgid "Login attempts must be between 1 and 20"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:153
+msgid "Lockout duration must be between 60 and 3600 seconds"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:154
+msgid "Session timeout must be between 5 and 120 minutes"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:155
+msgid "GraphQL query depth must be between 1 and 20"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:156
+msgid "GraphQL query complexity must be between 10 and 1000"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:157
+msgid "GraphQL query timeout must be between 1 and 30 seconds"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:158
+msgid ""
+"Custom admin URL must contain only lowercase letters, numbers, and hyphens "
+"(3-30 characters)"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:159
+msgid "Use only lowercase letters, numbers, and hyphens (3-30 characters)"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:161
+msgid "Saving..."
+msgstr ""
+
+#: src/Admin/AdminPanel.php:162
+msgid "Saved!"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:163
+msgid "Save failed"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:165
+msgid "Failed to check for Silver Assist updates"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:166
+msgid "Failed to load security essentials"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:167
+msgid "Failed to load login stats"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:169
 msgid "IP Hash"
 msgstr ""
 
-#: src/Admin/AdminPanel.php
+#: src/Admin/AdminPanel.php:170
 msgid "Blocked Time"
 msgstr ""
 
-#: src/Admin/AdminPanel.php
+#: src/Admin/AdminPanel.php:171
 msgid "Remaining"
 msgstr ""
 
-#: src/Admin/AdminPanel.php
+#: src/Admin/AdminPanel.php:172
 msgid "min"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:347
+msgid "Settings saved automatically"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:353
+msgid "Error saving settings"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:704
+msgid "Security settings have been saved successfully."
+msgstr ""
+
+#: src/Admin/AdminPanel.php:732
+msgid "Silver Assist Security Essentials"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:737
+msgid "Security Status Dashboard"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:744
+msgid "Refresh Now"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:753
+msgid "Login Security"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:761
+msgid "Max Attempts"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:765
+msgid "Blocked IPs"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:770
+msgid "Lockout (min)"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:777
+msgid "Admin Security"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:784 src/Admin/AdminPanel.php:944
+msgid "Password Strength Enforcement"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:787 src/Admin/AdminPanel.php:834
+#: src/Admin/AdminPanel.php:840 src/Admin/AdminPanel.php:846
+msgid "Enabled"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:787
+msgid "Disabled"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:795
+msgid "GraphQL Security"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:804
+msgid "Max Depth"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:809
+msgid "Max Complexity"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:814
+msgid "Timeout"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:818
+msgid "WPGraphQL plugin not detected"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:825
+msgid "General Security"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:832
+msgid "HTTPOnly Cookies"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:838
+msgid "XML-RPC Protection"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:844
+msgid "Version Hiding"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:855
+msgid "Active Threats & Blocked IPs"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:859
+msgid "Loading blocked IPs..."
+msgstr ""
+
+#: src/Admin/AdminPanel.php:866
+msgid "Security Configuration"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:873
+msgid "Login Security Settings"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:878
+msgid "Maximum Login Attempts"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:885
+msgid "Number of failed login attempts before lockout (1-20)"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:892
+msgid "Lockout Duration (seconds)"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:900
+msgid "How long to lock out users after failed attempts (60-3600 seconds)"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:907
+msgid "Session Timeout (minutes)"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:915
+msgid "Session timeout duration in minutes (5-120)"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:921
+msgid "Bot Protection"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:927
+msgid "Block automated bots and security scanners with 404 responses"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:930
+msgid "Detects and blocks common bots, crawlers, and security scanning tools."
+msgstr ""
+
+#: src/Admin/AdminPanel.php:940
+msgid "Password Security Settings"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:950
+msgid "Enforce strong password requirements"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:960
+msgid "GraphQL Security Settings"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:965
+msgid "Maximum Query Depth"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:974
+msgid "Maximum allowed GraphQL query depth (1-20)"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:981
+msgid "Maximum Query Complexity"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:990
+msgid "Maximum allowed GraphQL query complexity (10-1000)"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:997
+msgid "Query Timeout (seconds)"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:1006
+msgid "Maximum GraphQL query execution time (1-30 seconds)"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:1014
+msgid "Save Security Settings"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:1046
+msgid "Plugin Updates"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:1049
+msgid "Current Version"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:1053
+msgid "Latest Version"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:1059
+msgid "Update Available!"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:1063
+msgid "Up to date"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:1068
+msgid "Repository"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:1079
+msgid "Check for Updates"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:1083
+msgid "Go to Updates"
 msgstr ""

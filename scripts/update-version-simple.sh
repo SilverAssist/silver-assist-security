@@ -51,6 +51,30 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
+# Check for help option
+if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+    echo "Silver Assist Security Essentials - Version Update Script"
+    echo ""
+    echo "Usage: $0 <new-version> [--no-confirm]"
+    echo ""
+    echo "Arguments:"
+    echo "  <new-version>    New version in semantic versioning format (e.g., 1.0.3)"
+    echo "  --no-confirm     Skip confirmation prompts (useful for CI/CD)"
+    echo ""
+    echo "Examples:"
+    echo "  $0 1.0.3"
+    echo "  $0 1.0.3 --no-confirm"
+    echo ""
+    echo "This script updates version numbers across all plugin files including:"
+    echo "  • Main plugin file header and constants"
+    echo "  • PHP files @version tags"
+    echo "  • CSS and JavaScript files"
+    echo "  • Documentation files"
+    echo "  • Script files"
+    echo ""
+    exit 0
+fi
+
 NEW_VERSION="$1"
 NO_CONFIRM=false
 
@@ -245,12 +269,6 @@ fi
 
 # 6. Update version scripts
 print_status "Updating version scripts..."
-
-if [ -f "${PROJECT_ROOT}/scripts/update-version.sh" ]; then
-    update_file "${PROJECT_ROOT}/scripts/update-version.sh" \
-        "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
-        "update-version.sh"
-fi
 
 if [ -f "${PROJECT_ROOT}/scripts/update-version-simple.sh" ]; then
     update_file "${PROJECT_ROOT}/scripts/update-version-simple.sh" \

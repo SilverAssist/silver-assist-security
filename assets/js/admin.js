@@ -222,7 +222,7 @@
         $form.find("input, select, textarea").each(function () {
             const $field = $(this);
             const name = $field.attr("name");
-            
+
             if (!name) return;
 
             if ($field.attr("type") === "checkbox") {
@@ -312,7 +312,7 @@
         }, response => {
             if (response.success && response.data.update_available) {
                 const updateNotice = `<div class="notice notice-info is-dismissible">` +
-                    `<p><strong>Silver Assist Security Essentials:</strong> ` + 
+                    `<p><strong>Silver Assist Security Essentials:</strong> ` +
                     silverAssistSecurity.strings.newVersionAvailable.replace("%s", response.data.latest_version) + ` ` +
                     `<a href="${silverAssistSecurity.strings.updateUrl}">${silverAssistSecurity.strings.updateNow}</a></p>` +
                     `</div>`;
@@ -331,31 +331,31 @@
         e.preventDefault();
         const $button = $(e.target);
         const originalText = $button.text();
-        
+
         $button.text(silverAssistSecurity.strings.checking).prop("disabled", true);
-        
+
         $.post(silverAssistSecurity.ajaxurl, {
             action: "silver_assist_security_check_version",
             nonce: silverAssistSecurity.nonce
         })
-        .done(response => {
-            if (response.success) {
-                if (response.data.update_available) {
-                    alert(silverAssistSecurity.strings.newVersionFound.replace("%1$s", response.data.latest_version).replace("%2$s", response.data.current_version));
-                    location.reload(); // Reload to show update notice
+            .done(response => {
+                if (response.success) {
+                    if (response.data.update_available) {
+                        alert(silverAssistSecurity.strings.newVersionFound.replace("%1$s", response.data.latest_version).replace("%2$s", response.data.current_version));
+                        location.reload(); // Reload to show update notice
+                    } else {
+                        alert(silverAssistSecurity.strings.upToDate.replace("%s", response.data.current_version));
+                    }
                 } else {
-                    alert(silverAssistSecurity.strings.upToDate.replace("%s", response.data.current_version));
+                    alert(silverAssistSecurity.strings.checkError + " " + (response.data.message || silverAssistSecurity.strings.unknownError));
                 }
-            } else {
-                alert(silverAssistSecurity.strings.checkError + " " + (response.data.message || silverAssistSecurity.strings.unknownError));
-            }
-        })
-        .fail(() => {
-            alert(silverAssistSecurity.strings.connectivityError);
-        })
-        .always(() => {
-            $button.text(originalText).prop("disabled", false);
-        });
+            })
+            .fail(() => {
+                alert(silverAssistSecurity.strings.connectivityError);
+            })
+            .always(() => {
+                $button.text(originalText).prop("disabled", false);
+            });
     });
 
     /**
@@ -515,7 +515,7 @@
      */
     const updateBlockedIPsDisplay = data => {
         const $container = $("#blocked-ips-list");
-        
+
         if (!data || data.length === 0) {
             $container.html(`<p class="no-threats">${silverAssistSecurity.strings.noThreats || "No active threats detected"}</p>`);
             $("#threat-count").text("0");
@@ -552,13 +552,13 @@
     const refreshDashboard = () => {
         const $button = $("#refresh-dashboard");
         const originalText = $button.text();
-        
+
         $button.text(silverAssistSecurity.strings.loading || "Loading...").prop("disabled", true);
-        
+
         loadSecurityStatus();
         loadLoginStats();
         loadBlockedIPs();
-        
+
         setTimeout(() => {
             $button.text(originalText).prop("disabled", false);
         }, 2000);

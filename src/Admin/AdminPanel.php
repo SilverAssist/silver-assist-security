@@ -156,18 +156,14 @@ class AdminPanel
                 "graphqlComplexityError" => \__("GraphQL query complexity must be between 10 and 1000", "silver-assist-security"),
                 "graphqlTimeoutError" => \__("GraphQL query timeout must be between 1 and 30 seconds", "silver-assist-security"),
                 "customUrlPatternError" => \__("Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)", "silver-assist-security"),
-                                "sessionTimeoutError" => \__("Session timeout must be between 5 and 120 minutes", "silver-assist-security"),
-                "graphqlDepthError" => \__("GraphQL query depth must be between 1 and 20", "silver-assist-security"),
                 "urlPatternError" => \__("Use only lowercase letters, numbers, and hyphens (3-30 characters)", "silver-assist-security"),
-                                "graphqlDepthError" => \__("GraphQL query depth must be between 1 and 20", "silver-assist-security"),
-                "graphqlComplexityError" => \__("GraphQL query complexity must be between 10 and 1000", "silver-assist-security"),
                 // Auto-save strings
                 "saving" => \__("Saving...", "silver-assist-security"),
                 "saved" => \__("Saved!", "silver-assist-security"),
                 "saveFailed" => \__("Save failed", "silver-assist-security"),
                 // AJAX error strings
                 "updateCheckFailed" => \__("Failed to check for Silver Assist updates", "silver-assist-security"),
-                "securityStatusFailed" => \__("Failed to load security status", "silver-assist-security"),
+                "securityStatusFailed" => \__("Failed to load security essentials", "silver-assist-security"),
                 "loginStatsFailed" => \__("Failed to load login stats", "silver-assist-security"),
                 // Table headers
                 "ipHash" => \__("IP Hash", "silver-assist-security"),

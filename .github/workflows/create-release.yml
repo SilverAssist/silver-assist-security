@@ -205,7 +205,7 @@ jobs:
                   2. Go to WordPress Admin → Plugins → Add New → Upload Plugin
                   3. Choose the downloaded ZIP file and click "Install Now"
                   4. Activate the plugin
-                  5. Go to Settings → Security Status to configure
+                  5. Go to Settings → Security Essentials to configure
 
                   For detailed installation instructions, see the [README.md](README.md) file.
 

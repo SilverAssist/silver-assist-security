@@ -556,7 +556,7 @@ jobs:
                   echo "🔍 Validating automation scripts..."
 
                   # Check if scripts exist and are executable
-                  for script in "update-version.sh" "build-release.sh" "check-versions.sh"; do
+                  for script in "update-version-simple.sh" "build-release.sh" "check-versions.sh"; do
                     if [ ! -f "scripts/$script" ]; then
                       echo "❌ Script missing: scripts/$script"
                       exit 1
@@ -572,10 +572,10 @@ jobs:
 
                   # Test scripts with dry-run where possible
                   echo "🔍 Testing update-version script..."
-                  if ! ./scripts/update-version.sh --help >/dev/null 2>&1; then
-                    echo "⚠️ update-version.sh may have issues"
+                  if ! ./scripts/update-version-simple.sh --help >/dev/null 2>&1; then
+                    echo "⚠️ update-version-simple.sh may have issues"
                   else
-                    echo "✅ update-version.sh script functional"
+                    echo "✅ update-version-simple.sh script functional"
                   fi
                   
                   # Test build script

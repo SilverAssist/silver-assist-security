@@ -30,19 +30,19 @@ Checks and displays current version numbers across all plugin files.
 
 ---
 
-### 📝 `update-version.sh`
+### 📝 `update-version-simple.sh`
 Automatically updates version numbers across all plugin files.
 
 **Usage:**
 ```bash
-./scripts/update-version.sh <new-version>
+./scripts/update-version-simple.sh <new-version> [--no-confirm]
 ```
 
 **Examples:**
 ```bash
-./scripts/update-version.sh 1.0.2
-./scripts/update-version.sh 1.1.0
-./scripts/update-version.sh 2.0.0
+./scripts/update-version-simple.sh 1.0.2
+./scripts/update-version-simple.sh 1.1.0
+./scripts/update-version-simple.sh 2.0.0 --no-confirm
 ```
 
 **What it updates:**
@@ -112,7 +112,7 @@ Here's the recommended workflow for creating a new release:
 ### 1. Update Version
 ```bash
 # Update all version numbers in the codebase
-./scripts/update-version.sh 1.0.2
+./scripts/update-version-simple.sh 1.0.2
 ```
 
 ### 2. Review Changes
@@ -201,7 +201,7 @@ chmod +x scripts/*.sh
 - Examples: `1.0.0`, `1.2.3`, `2.0.0`
 
 ### Script Behavior
-- **`update-version.sh`** only updates `@version` tags, not `@since` tags
+- **`update-version-simple.sh`** only updates `@version` tags, not `@since` tags
 - **`build-release.sh`** creates a clean package without development files
 - Both scripts include backup and error handling
 

@@ -155,7 +155,7 @@ Yes, but we recommend using Silver Assist Security Essentials as your primary se
 Your login page remains at the standard WordPress location but gains enhanced protection against brute force attacks, bot detection, and user enumeration.
 
 **Can I customize the security settings?**  
-Yes! Go to **Settings → Security Status** to configure login attempt limits, session timeouts, GraphQL security settings, and other features.
+Yes! Go to **Settings → Security Essentials** to configure login attempt limits, session timeouts, GraphQL security settings, and other features.
 
 ## ⚠️ System Requirements & Notes
 
@@ -178,7 +178,7 @@ Yes! Go to **Settings → Security Status** to configure login attempt limits, s
 - Check GraphQL query complexity limits in settings
 
 *Website seems slower?*
-- Review rate limiting settings in Security Status
+- Review rate limiting settings in Security Essentials
 - Adjust GraphQL query limits if needed
 
 ## 🌍 Multi-Language Support
@@ -232,14 +232,14 @@ Yes! Go to **Settings → Security Status** to configure login attempt limits, s
 - Check if strong password requirements are enabled
 
 *Website seems slower?*
-- Review rate limiting settings in Security Status
+- Review rate limiting settings in Security Essentials
 - Adjust GraphQL query limits if needed
 
 ## 🎛️ Security Configuration
 
-### **Security Status Dashboard**
+### **Security Essentials Dashboard**
 
-Access your comprehensive security control panel at **Settings → Security Status**:
+Access your comprehensive security control panel at **Settings → Security Essentials**:
 
 ### **Login Security Configuration**
 Addresses brute force attacks, bot reconnaissance, admin URL exposure, and unauthorized access:
@@ -279,7 +279,7 @@ Comprehensive protection against GraphQL vulnerabilities:
 ### **Security Monitoring**
 - 📊 **Real-time Dashboard**: Live security status and statistics
 - 📝 **Login Tracking**: Failed logins, blocked IPs, and attempt monitoring
-- � **GraphQL Monitoring**: Query analysis and rate limiting statistics
+- 🛡️ **GraphQL Monitoring**: Query analysis and rate limiting statistics
 
 ## 🌍 Multi-Language Support
 
@@ -309,9 +309,6 @@ After activation, use the new secure URL: `https://yoursite.com/silver-admin/` i
 
 ### **What if I forget the custom admin URL?**
 You can temporarily disable the feature by adding `define('SILVER_ASSIST_DISABLE_CUSTOM_ADMIN', true);` to your `wp-config.php`, then access admin normally to reconfigure.
-
-### **Can I change the custom admin URL slug?**
-Yes! Go to **Settings → Security Status → Login Security** and change the "Custom Admin URL" field. Avoid common words like "admin", "login", or "wp-admin".
 
 ## ⚠️ Important Notes
 
@@ -346,7 +343,7 @@ Currently optimized for single WordPress installations. Multisite compatibility 
 - Adjust GraphQL query limits if needed
 
 ### **Getting Help**
-- Check the **Security Status** page for configuration issues
+- Check the **Security Essentials** page for configuration issues
 - Review WordPress debug logs for security events
 - Contact Silver Assist support for enterprise assistance
 
@@ -367,7 +364,7 @@ Currently optimized for single WordPress installations. Multisite compatibility 
 ## 👨‍💻 Developer Information
 
 **Developed by**: Silver Assist  
-**Version**: 1.0.0  
+**Version**: 1.0.2 
 **Release Date**: August 2025  
 **License**: Proprietary  
 **Support**: Enterprise support available
