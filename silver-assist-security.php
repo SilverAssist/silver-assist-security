@@ -1,7 +1,8 @@
 <?php
 /**
- * Plugin Name: Silver Assist Security Suite
- * Description: Comprehensive security suite for Silver Assist - includes login security, GraphQL protection, and admin configuration panel
+ * Plugin Name: Silver Assist Security Essentials
+ * Plugin URI: https://github.com/SilverAssist/silver-assist-security
+ * Description: Resolves critical security vulnerabilities: WordPress login protection, HTTPOnly cookie implementation, and comprehensive GraphQL security. Addresses security audit findings automatically.
  * Version: 1.0.0
  * Author: Silver Assist
  * Author URI: http://silverassist.com/
@@ -32,7 +33,7 @@ define('SILVER_ASSIST_SECURITY_URL', plugin_dir_url(__FILE__));
 define('SILVER_ASSIST_SECURITY_BASENAME', plugin_basename(__FILE__));
 
 /**
- * PSR-4 Autoloader for Silver Assist Security Suite
+ * PSR-4 Autoloader for Silver Assist Security Essentials
  * 
  * @param string $class The fully-qualified class name.
  * @return void
@@ -93,9 +94,10 @@ class SilverAssistSecurityBootstrap
         "silver_assist_login_attempts" => 5,
         "silver_assist_lockout_duration" => 900, // 15 minutes
         "silver_assist_session_timeout" => 30, // 30 minutes
-        "silver_assist_password_reset_enforcement" => 1,
         "silver_assist_password_strength_enforcement" => 1,
-        "silver_assist_admin_password_reset" => 0,
+        "silver_assist_bot_protection" => 1, // Enable bot protection by default
+        "silver_assist_custom_admin_url" => "silver-admin", // Custom admin URL slug
+        "silver_assist_hide_admin_urls" => 1, // Hide default admin URLs
         "silver_assist_graphql_query_depth" => 8,
         "silver_assist_graphql_query_complexity" => 100,
         "silver_assist_graphql_query_timeout" => 5
@@ -110,9 +112,10 @@ class SilverAssistSecurityBootstrap
         "silver_assist_login_attempts",
         "silver_assist_lockout_duration",
         "silver_assist_session_timeout",
-        "silver_assist_password_reset_enforcement",
         "silver_assist_password_strength_enforcement",
-        "silver_assist_admin_password_reset",
+        "silver_assist_bot_protection",
+        "silver_assist_custom_admin_url",
+        "silver_assist_hide_admin_urls",
         "silver_assist_graphql_query_depth",
         "silver_assist_graphql_query_complexity",
         "silver_assist_graphql_query_timeout"
@@ -160,7 +163,7 @@ class SilverAssistSecurityBootstrap
     }
 
     /**
-     * Initialize the Silver Assist Security Suite
+     * Initialize the Silver Assist Security Essentials
      * 
      * @since 1.0.0
      * @return void
@@ -172,11 +175,11 @@ class SilverAssistSecurityBootstrap
             Plugin::getInstance();
         } catch (Exception $e) {
             // Log the error and show admin notice
-            error_log("Silver Assist Security Suite initialization failed: " . $e->getMessage());
+            error_log("Silver Assist Security Essentials initialization failed: " . $e->getMessage());
 
             add_action("admin_notices", function () use ($e) {
                 echo "<div class=\"notice notice-error\"><p>";
-                echo "<strong>Silver Assist Security Suite Error:</strong> " . esc_html($e->getMessage());
+                echo "<strong>Silver Assist Security Essentials Error:</strong> " . esc_html($e->getMessage());
                 echo "</p></div>";
             });
         }
@@ -192,10 +195,13 @@ class SilverAssistSecurityBootstrap
     {
         // Set default options
         foreach ($this->default_options as $option => $value) {
-            if (get_option($option) === false) {
-                add_option($option, $value);
+            if (\get_option($option) === false) {
+                \add_option($option, $value);
             }
         }
+
+        // Flush rewrite rules to ensure custom admin URL routing works properly
+        \flush_rewrite_rules();
     }
 
     /**
@@ -212,6 +218,9 @@ class SilverAssistSecurityBootstrap
         // Clean up rate limiting transients
         $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_graphql_rate_limit_%'");
         $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_graphql_rate_limit_%'");
+
+        // Flush rewrite rules to clean up custom admin URL routing
+        \flush_rewrite_rules();
     }
 
     /**
@@ -226,7 +235,7 @@ class SilverAssistSecurityBootstrap
 
         // Remove all plugin options
         foreach ($instance->plugin_options as $option) {
-            delete_option($option);
+            \delete_option($option);
         }
 
         // Clean up any remaining transients

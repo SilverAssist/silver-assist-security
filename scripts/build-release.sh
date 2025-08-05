@@ -1,7 +1,9 @@
 #!/bin/bash
 
 ###############################################################################
-# Silver Assist Security Suite - Release ZIP Creator
+#!/bin/bash
+
+# Silver Assist Security Essentials - Release ZIP Creator
 #
 # Creates a properly structured ZIP file for WordPress plugin distribution
 # The ZIP will have a versioned filename but the internal folder will be just "silver-assist-security"
@@ -25,7 +27,7 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-echo -e "${CYAN}=== Silver Assist Security Suite Release ZIP Creator ===${NC}"
+echo -e "${CYAN}=== Silver Assist Security Essentials Release ZIP Creator ===${NC}"
 echo ""
 
 # Get current directory (should be project root)
@@ -114,7 +116,7 @@ echo ""
 # Create the ZIP file
 echo -e "${YELLOW}🗜️  Creating ZIP archive...${NC}"
 cd "$TEMP_DIR"
-zip -r "$ZIP_NAME" silver-assist-security/ -x "*.DS_Store*" "*.git*" "*node_modules*" "*.log*" "*vendor*" "*.tmp*" "*scripts*" "*.github*" "*tests*" "*.idea*" "*.vscode*" "*HEADER-STANDARDS.md*" "*MIGRATION.md*"
+zip -r "$ZIP_NAME" silver-assist-security/ -x "*.DS_Store*" "*.git*" "*node_modules*" "*.log*" "*vendor*" "*.tmp*" "*scripts*" "*.github*" "*tests*" "*.idea*" "*.vscode*" "*HEADER-STANDARDS.md*" "*MIGRATION.md*" "*phpunit.xml*" "*.phpcs.xml*"
 
 # Move ZIP to project root and releases directory
 mv "$ZIP_NAME" "$PROJECT_ROOT/"
@@ -179,7 +181,7 @@ echo -e "${CYAN}🔧 Development notes:${NC}"
 echo "• ZIP filename includes version: ${ZIP_NAME}"
 echo "• Internal folder name: silver-assist-security (clean, no version)"
 echo "• Size: ~${ZIP_SIZE_KB}KB"
-echo "• Excludes: .git, node_modules, vendor, scripts, development files"
+echo "• Excludes: .git, node_modules, vendor, scripts, tests, .vscode, development files"
 echo "• Includes: Core security features, admin panel, GraphQL protection"
 
 # Output package information for GitHub Actions (if running in CI)

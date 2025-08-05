@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+<ruleset name="Silver Assist Security Essentials">
+    <description>PHP CodeSniffer configuration for Silver Assist Security plugin</description>
+
+    <!-- What to scan -->
+    <file>.</file>
+
+    <!-- Exclude patterns -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+    <exclude-pattern>*/languages/*</exclude-pattern>
+    <exclude-pattern>*/assets/*</exclude-pattern>
+    <exclude-pattern>*/scripts/*</exclude-pattern>
+    <exclude-pattern>*/.vscode/*</exclude-pattern>
+    <exclude-pattern>*/.git/*</exclude-pattern>
+    <exclude-pattern>*/composer.json</exclude-pattern>
+    <exclude-pattern>*/composer.lock</exclude-pattern>
+    <exclude-pattern>*/README.md</exclude-pattern>
+    <exclude-pattern>*/CHANGELOG.md</exclude-pattern>
+    <exclude-pattern>*/LICENSE</exclude-pattern>
+    <exclude-pattern>*/*.zip</exclude-pattern>
+
+    <!-- How to scan -->
+    <arg value="sp"/> <!-- Show sniff and progress -->
+    <arg name="basepath" value="./"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+    <arg name="parallel" value="8"/>
+
+    <!-- Rules: Check PHP version compatibility -->
+    <config name="minimum_supported_wp_version" value="6.5"/>
+    <config name="testVersion" value="8.0-"/>
+
+    <!-- Rules: WordPress Coding Standards -->
+    <rule ref="WordPress">
+        <!-- Exclude rules that conflict with modern PHP -->
+        <exclude name="WordPress.PHP.YodaConditions"/>
+        <exclude name="WordPress.Arrays.MultipleStatementAlignment"/>
+        <exclude name="WordPress.WhiteSpace.ControlStructureSpacing"/>
+        <exclude name="Generic.Commenting.DocComment.MissingShort"/>
+        <exclude name="Squiz.Commenting.FileComment.Missing"/>
+        <exclude name="Squiz.Commenting.ClassComment.Missing"/>
+        <exclude name="Squiz.Commenting.FunctionComment.MissingParamComment"/>
+        <exclude name="Squiz.Commenting.VariableComment.Missing"/>
+        
+        <!-- Allow modern PHP features -->
+        <exclude name="WordPress.PHP.DisallowShortTernary"/>
+        <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
+        <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
+    </rule>
+
+    <!-- Rules: WordPress Extra -->
+    <rule ref="WordPress-Extra">
+        <!-- Exclude overly strict formatting rules -->
+        <exclude name="WordPress.WhiteSpace.PrecisionAlignment"/>
+        <exclude name="Generic.WhiteSpace.ScopeIndent.IncorrectExact"/>
+        <exclude name="Generic.WhiteSpace.ScopeIndent.Incorrect"/>
+        <exclude name="PEAR.Functions.FunctionCallSignature.Indent"/>
+    </rule>
+
+    <!-- Rules: WordPress Documentation -->
+    <rule ref="WordPress-Docs">
+        <!-- Allow missing documentation for private methods -->
+        <exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+        <exclude name="Squiz.Commenting.VariableComment.Missing"/>
+    </rule>
+
+    <!-- Rules: Security -->
+    <rule ref="WordPress.Security"/>
+
+    <!-- Rules: PHP compatibility -->
+    <rule ref="PHPCompatibilityWP"/>
+
+    <!-- Rules: Modern PHP -->
+    <rule ref="PSR12">
+        <!-- Exclude rules that conflict with WordPress -->
+        <exclude name="PSR12.Files.FileHeader.IncorrectOrder"/>
+        <exclude name="PSR12.Files.FileHeader.SpacingAfterBlock"/>
+        <exclude name="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
+    </rule>
+
+    <!-- Custom rules for Silver Assist Security -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="silver-assist-security"/>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- Allow modern array syntax -->
+    <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
+
+    <!-- Enforce strict comparison -->
+    <rule ref="WordPress.PHP.StrictComparisons"/>
+
+    <!-- Enforce proper nonce verification -->
+    <rule ref="WordPress.Security.NonceVerification"/>
+
+    <!-- Enforce proper escaping -->
+    <rule ref="WordPress.Security.EscapeOutput"/>
+
+    <!-- Enforce proper sanitization -->
+    <rule ref="WordPress.Security.ValidatedSanitizedInput"/>
+
+    <!-- File naming conventions -->
+    <rule ref="WordPress.Files.FileName">
+        <properties>
+            <property name="strict_class_file_names" value="false"/>
+        </properties>
+    </rule>
+
+    <!-- Ignore WordPress VIP rules for plugin development -->
+    <rule ref="WordPress.VIP">
+        <exclude name="WordPress.VIP.DirectDatabaseQuery"/>
+        <exclude name="WordPress.VIP.FileSystemWritesDisallow"/>
+        <exclude name="WordPress.VIP.RestrictedFunctions"/>
+        <exclude name="WordPress.VIP.SlowDBQuery"/>
+    </rule>
+
+    <!-- Custom severity levels -->
+    <rule ref="WordPress.Security">
+        <type>error</type>
+    </rule>
+
+    <rule ref="WordPress.WP.I18n">
+        <type>error</type>
+    </rule>
+
+    <!-- Show progress -->
+    <arg name="report" value="summary"/>
+    <arg name="report" value="source"/>
+</ruleset>

@@ -1,7 +1,13 @@
 # Silver Assist Security - Translation Guide
 
 ## Overview
-Silver Assist Security Plugin supports internationalization (i18n) using WordPress standard translation system.
+Silver Assist Security Plugin supports internationalization (i18n) using WordPress standard translation system. This plugin specifically addresses critical security vulnerabilities found in WordPress security assessments.
+
+## Plugin Purpose
+This plugin resolves three specific security issues commonly identified in security audits:
+1. **WordPress Admin Login Page Exposure** - Brute force protection
+2. **HTTPOnly Cookie Flag Missing** - XSS attack prevention
+3. **GraphQL Security Misconfigurations** - DoS and introspection protection
 
 ## Available Translations
 - **English (en_US)**: Default language
@@ -82,12 +88,12 @@ If you would like to contribute a translation:
 
 ## Current Translatable Strings
 The plugin includes translations for:
-- Password reset notifications
-- Security requirement messages
-- Error messages
-- Login attempt warnings
-- File monitoring alerts
-- Admin interface messages
+- Security audit compliance messages
+- Login protection notifications
+- HTTPOnly cookie status messages
+- GraphQL security alerts and warnings
+- Admin interface configuration options
+- Security dashboard and monitoring displays
 
 ## Support
 For translation support or questions, contact the Silver Assist team.

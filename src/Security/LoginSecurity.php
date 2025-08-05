@@ -1,6 +1,6 @@
 <?php
 /**
- * Silver Assist Security Suite - Login Security Protection
+ * Silver Assist Security Essentials - Login Security Protection
  *
  * Implements comprehensive login security including failed attempt tracking,
  * IP-based lockouts, session timeout management, and password strength enforcement.
@@ -81,6 +81,10 @@ class LoginSecurity
         \add_action("login_form", [$this, "add_login_form_security"]);
         \add_action("login_init", [$this, "setup_login_protection"]);
 
+        // Bot and crawler protection
+        \add_action("login_init", [$this, "block_suspicious_bots"], 5);
+        \add_action("wp_login_failed", [$this, "track_bot_behavior"]);
+
         // Login attempt tracking
         \add_action("wp_login_failed", [$this, "handle_failed_login"]);
         \add_filter("authenticate", [$this, "check_login_lockout"], 30, 3);
@@ -102,21 +106,11 @@ class LoginSecurity
      */
     private function init_password_security(): void
     {
-        $password_reset_enforcement = \get_option("silver_assist_password_reset_enforcement", 1);
         $password_strength_enforcement = \get_option("silver_assist_password_strength_enforcement", 1);
-        $admin_password_reset = \get_option("silver_assist_admin_password_reset", 0);
-
-        if ($password_reset_enforcement) {
-            \add_action("wp_login", [$this, "check_password_reset_requirement"], 10, 2);
-        }
 
         if ($password_strength_enforcement) {
             \add_action("user_profile_update_errors", [$this, "validate_password_strength"], 10, 3);
             \add_action("validate_password_reset", [$this, "validate_password_strength_reset"], 10, 2);
-        }
-
-        if (!$admin_password_reset) {
-            \add_filter("allow_password_reset", [$this, "disable_admin_password_reset"], 10, 2);
         }
     }
 
@@ -298,25 +292,6 @@ class LoginSecurity
     }
 
     /**
-     * Check password reset requirement
-     * 
-     * @since 1.0.0
-     * @param string $user_login Username
-     * @param \WP_User $user User object
-     * @return void
-     */
-    public function check_password_reset_requirement(string $user_login, \WP_User $user): void
-    {
-        $needs_reset = \get_user_meta($user->ID, "force_password_reset", true);
-
-        if ($needs_reset) {
-            \wp_logout();
-            \wp_redirect(\wp_login_url() . "?force_reset=1&user_id=" . $user->ID);
-            exit;
-        }
-    }
-
-    /**
      * Validate password strength
      * 
      * @since 1.0.0
@@ -359,25 +334,6 @@ class LoginSecurity
                 );
             }
         }
-    }
-
-    /**
-     * Disable admin password reset
-     * 
-     * @since 1.0.0
-     * @param bool $allow Whether to allow password reset
-     * @param int $user_id User ID
-     * @return bool
-     */
-    public function disable_admin_password_reset(bool $allow, int $user_id): bool
-    {
-        $user = \get_user_by("id", $user_id);
-
-        if ($user && in_array("administrator", $user->roles)) {
-            return false;
-        }
-
-        return $allow;
     }
 
     /**
@@ -470,5 +426,150 @@ class LoginSecurity
         }
 
         return 0;
+    }
+
+    /**
+     * Block suspicious bots and crawlers from accessing login page
+     * 
+     * @since 1.0.0
+     * @return void
+     */
+    public function block_suspicious_bots(): void
+    {
+        // Check if bot protection is enabled
+        $bot_protection_enabled = \get_option("silver_assist_bot_protection", 1);
+        if (!$bot_protection_enabled) {
+            return;
+        }
+
+        $user_agent = $_SERVER["HTTP_USER_AGENT"] ?? "";
+        $ip = $this->get_client_ip();
+
+        // List of known bot/crawler patterns
+        $bot_patterns = [
+            "bot", "crawler", "spider", "scraper", "scan", "probe",
+            "wget", "curl", "python", "php", "perl", "java",
+            "masscan", "nmap", "nikto", "sqlmap", "gobuster",
+            "dirb", "dirbuster", "wpscan", "nuclei", "httpx"
+        ];
+
+        // Check if user agent matches bot patterns
+        $is_bot = false;
+        foreach ($bot_patterns as $pattern) {
+            if (stripos($user_agent, $pattern) !== false) {
+                $is_bot = true;
+                break;
+            }
+        }
+
+        // Additional checks for suspicious behavior
+        if (!$is_bot) {
+            // Check for empty or very short user agents (common in bots)
+            if (empty($user_agent) || strlen($user_agent) < 10) {
+                $is_bot = true;
+            }
+
+            // Check for missing common browser headers
+            if (!isset($_SERVER["HTTP_ACCEPT"]) || !isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
+                $is_bot = true;
+            }
+
+            // Check for rapid access patterns
+            $access_key = "login_access_" . md5($ip);
+            $recent_access = \get_transient($access_key) ?: 0;
+            if ($recent_access > 5) { // More than 5 requests in last minute
+                $is_bot = true;
+            }
+            \set_transient($access_key, $recent_access + 1, 60);
+        }
+
+        if ($is_bot) {
+            $this->send_404_response();
+        }
+    }
+
+    /**
+     * Track bot behavior for additional security measures
+     * 
+     * @since 1.0.0
+     * @return void
+     */
+    public function track_bot_behavior(): void
+    {
+        $ip = $this->get_client_ip();
+        $user_agent = $_SERVER["HTTP_USER_AGENT"] ?? "Unknown";
+        
+        // Log bot activity for security monitoring
+        $bot_log_key = "bot_activity_" . md5($ip);
+        $bot_activity = \get_transient($bot_log_key) ?: [];
+        
+        $bot_activity[] = [
+            "timestamp" => time(),
+            "user_agent" => $user_agent,
+            "method" => $_SERVER["REQUEST_METHOD"] ?? "GET",
+            "uri" => $_SERVER["REQUEST_URI"] ?? ""
+        ];
+
+        // Keep only last 10 activities
+        if (count($bot_activity) > 10) {
+            $bot_activity = array_slice($bot_activity, -10);
+        }
+
+        \set_transient($bot_log_key, $bot_activity, 3600); // Store for 1 hour
+
+        // If too many bot activities, extend blocking
+        if (count($bot_activity) > 3) {
+            $extended_block_key = "extended_bot_block_" . md5($ip);
+            \set_transient($extended_block_key, true, 7200); // Block for 2 hours
+        }
+    }
+
+    /**
+     * Send 404 Not Found response to bots
+     * 
+     * @since 1.0.0
+     * @return void
+     */
+    private function send_404_response(): void
+    {
+        // Log the blocked access attempt
+        error_log(sprintf(
+            "SECURITY_ALERT: Bot blocked from login page - IP: %s, User-Agent: %s, Timestamp: %s",
+            $this->get_client_ip(),
+            $_SERVER["HTTP_USER_AGENT"] ?? "Unknown",
+            \current_time("mysql")
+        ));
+
+        // Send proper 404 headers
+        \status_header(404);
+        \nocache_headers();
+
+        // Send minimal 404 page content
+        echo "<!DOCTYPE html>
+<html>
+<head>
+    <title>404 Not Found</title>
+    <meta name=\"robots\" content=\"noindex,nofollow,noarchive,nosnippet,noimageindex\">
+</head>
+<body>
+    <h1>Not Found</h1>
+    <p>The requested URL was not found on this server.</p>
+</body>
+</html>";
+
+        exit;
+    }
+
+    /**
+     * Check if IP is in extended bot block list
+     * 
+     * @since 1.0.0
+     * @param string $ip IP address to check
+     * @return bool True if blocked
+     */
+    private function is_bot_blocked(string $ip): bool
+    {
+        $extended_block_key = "extended_bot_block_" . md5($ip);
+        return \get_transient($extended_block_key) !== false;
     }
 }

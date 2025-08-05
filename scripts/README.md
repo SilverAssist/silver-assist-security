@@ -1,6 +1,6 @@
-# Silver Assist Security Suite - Release Scripts
+# Silver Assist Security Essentials - Release Scripts
 
-This directory contains bash scripts to automate the release process for the Silver Assist Security Suite WordPress plugin.
+This directory contains bash scripts to automate the release process for the Silver Assist Security Essentials WordPress plugin.
 
 ## Scripts Overview
 

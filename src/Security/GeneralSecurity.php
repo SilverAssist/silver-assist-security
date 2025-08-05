@@ -1,6 +1,6 @@
 <?php
 /**
- * Silver Assist Security Suite - General WordPress Security
+ * Silver Assist Security Essentials - General WordPress Security
  *
  * Implements general WordPress security hardening including security headers,
  * version hiding, user enumeration protection, and cookie security configuration.
@@ -292,7 +292,7 @@ class GeneralSecurity
     {
         return sprintf(
             \__("Secured by %s", "silver-assist-security"),
-            "<strong>Silver Assist Security Suite</strong>"
+            "<strong>Silver Assist Security Essentials</strong>"
         );
     }
 

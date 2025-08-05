@@ -77,10 +77,10 @@ jobs:
 
                   # Create updated RELEASE-NOTES.md
                   cat > RELEASE-NOTES.md << EOF
-                  # Silver Assist Security Suite - Release v$VERSION
+                  # Silver Assist Security Essentials - Release v$VERSION
 
                   ## Package Information
-                  - **Plugin Name**: Silver Assist Security Suite
+                  - **Plugin Name**: Silver Assist Security Essentials
                   - **Version**: $VERSION
                   - **File**: silver-assist-security-v$VERSION.zip
                   - **Size**: ~$PACKAGE_SIZE
@@ -112,13 +112,12 @@ jobs:
                   - ✅ HTTPOnly Cookie Protection
                   - ✅ GraphQL Security (Rate Limiting, Query Validation)
                   - ✅ Advanced Login Security
-                  - ✅ Real-time Security Monitoring
+                  - ✅ Real-time Security Dashboard
                   - ✅ WordPress Hardening Features
                   - ✅ Multi-language Support (English/Spanish)
                   - ✅ Automatic Update System
                   - ✅ Modern PHP 8+ Architecture
                   - ✅ PSR-4 Autoloading
-                  - ✅ Security Event Logging
 
                   ## Distribution Channels
                   - **GitHub Releases**: Source code and compiled packages
@@ -190,7 +189,7 @@ jobs:
                   else
                     echo "CHANGELOG.md not found"
                     echo "## Release v$VERSION" > release_notes.md
-                    echo "New release of Silver Assist Security Suite" >> release_notes.md
+                    echo "New release of Silver Assist Security Essentials" >> release_notes.md
                   fi
 
                   # Add package information to release notes
@@ -215,7 +214,7 @@ jobs:
                   - GraphQL security with rate limiting
                   - Login attempt limiting and session management
                   - WordPress hardening (XML-RPC blocking, version hiding)
-                  - Real-time security monitoring and file change detection
+                  - Real-time security dashboard with live statistics
                   - Multi-language support with comprehensive admin panel
                   EOF
 
@@ -223,7 +222,7 @@ jobs:
               uses: softprops/action-gh-release@v1
               with:
                   tag_name: ${{ steps.version.outputs.tag }}
-                  name: "Silver Assist Security Suite v${{ steps.version.outputs.version }}"
+                  name: "Silver Assist Security Essentials v${{ steps.version.outputs.version }}"
                   body_path: release_notes.md
                   files: |
                       ${{ steps.package.outputs.zip_path }}
@@ -242,7 +241,7 @@ jobs:
             - name: Summary
               run: |
                   echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Plugin**: Silver Assist Security Suite" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Plugin**: Silver Assist Security Essentials" >> $GITHUB_STEP_SUMMARY
                   echo "- **Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
                   echo "- **Package**: ${{ steps.package.outputs.zip_file }}" >> $GITHUB_STEP_SUMMARY
                   echo "- **Size**: ~${{ steps.package.outputs.package_size_kb }}" >> $GITHUB_STEP_SUMMARY

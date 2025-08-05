@@ -1,8 +1,8 @@
 <?php
 /**
- * Silver Assist Security Suite - Custom GitHub Updates Handler
+ * Silver Assist Security Essentials - Custom GitHub Updates Handler
  *
- * Handles automatic updates from public GitHub releases for the Silver Assist Security Suite.
+ * Handles automatic updates from public GitHub releases for the Silver Assist Security Essentials.
  * Provides seamless WordPress admin updates without requiring authentication tokens.
  *
  * @package SilverAssist\Security\Core
@@ -194,7 +194,7 @@ class Updater
         ]);
 
         if (\is_wp_error($response) || 200 !== \wp_remote_retrieve_response_code($response)) {
-            error_log("Silver Assist Security Suite Updater: Failed to fetch latest version");
+            error_log("Silver Assist Security Essentials Updater: Failed to fetch latest version");
             return false;
         }
 
@@ -275,7 +275,7 @@ class Updater
         <h4>Automatic Installation</h4>
         <ol>
             <li>Go to WordPress Admin → Plugins → Add New</li>
-            <li>Search for 'Silver Assist Security Suite'</li>
+            <li>Search for 'Silver Assist Security Essentials'</li>
             <li>Click 'Install Now' and then 'Activate'</li>
         </ol>
         
@@ -346,18 +346,37 @@ class Updater
      */
     public function manual_version_check(): void
     {
+        // Verify nonce
+        if (!\wp_verify_nonce($_POST["nonce"] ?? "", "silver_assist_security_ajax")) {
+            \wp_send_json_error([
+                "message" => "Security check failed",
+                "code" => "invalid_nonce"
+            ]);
+        }
+        
         if (!\current_user_can("update_plugins")) {
-            \wp_die("Insufficient permissions");
+            \wp_send_json_error([
+                "message" => "Insufficient permissions",
+                "code" => "insufficient_permissions"
+            ]);
         }
 
-        \delete_transient($this->version_transient);
-        $latest_version = $this->get_latest_version();
+        try {
+            \delete_transient($this->version_transient);
+            $latest_version = $this->get_latest_version();
 
-        \wp_send_json_success([
-            "current_version" => $this->current_version,
-            "latest_version" => $latest_version,
-            "update_available" => version_compare($this->current_version, $latest_version, "<"),
-        ]);
+            \wp_send_json_success([
+                "current_version" => $this->current_version,
+                "latest_version" => $latest_version ?: "Unknown",
+                "update_available" => $latest_version && version_compare($this->current_version, $latest_version, "<"),
+                "github_repo" => $this->github_repo,
+            ]);
+        } catch (Exception $e) {
+            \wp_send_json_error([
+                "message" => "Error checking for updates: " . $e->getMessage(),
+                "code" => "version_check_failed"
+            ]);
+        }
     }
 
     /**

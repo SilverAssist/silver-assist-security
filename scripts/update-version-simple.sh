@@ -1,7 +1,9 @@
 #!/bin/bash
 
 ###############################################################################
-# Silver Assist Security Suite - Simple Version Update Script
+#!/bin/bash
+
+# Silver Assist Security Essentials - Simple Version Update Script
 #
 # A more robust version updater that handles macOS sed quirks better
 #
@@ -70,7 +72,7 @@ fi
 # Get project root
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-print_status "Updating Silver Assist Security Suite to version ${NEW_VERSION}"
+print_status "Updating Silver Assist Security Essentials to version ${NEW_VERSION}"
 print_status "Project root: ${PROJECT_ROOT}"
 
 # Check if we're in the right directory

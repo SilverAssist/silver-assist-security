@@ -1,6 +1,6 @@
 <?php
 /**
- * Silver Assist Security Suite - GraphQL Security Protection
+ * Silver Assist Security Essentials - GraphQL Security Protection
  *
  * Implements comprehensive GraphQL security including query depth/complexity limits,
  * rate limiting, introspection control, and request validation. Provides protection
