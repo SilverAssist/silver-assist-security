@@ -24,6 +24,10 @@ msgstr ""
 msgid "Silver Assist Security"
 msgstr "Silver Assist Security"
 
+#: src/Admin/AdminPanel.php:59
+msgid "Security Essentials"
+msgstr "Seguridad Esencial"
+
 #: src/Admin/AdminPanel.php:70
 msgid "Silver Assist Security Essentials"
 msgstr "Silver Assist Security Essentials"
@@ -172,12 +176,16 @@ msgid "Lockout (min)"
 msgstr "Bloqueo (min)"
 
 #: src/Admin/AdminPanel.php:613
-msgid "Password Security"
-msgstr "Seguridad de Contraseñas"
+msgid "Admin Security"
+msgstr "Seguridad de Administración"
 
 #: src/Admin/AdminPanel.php:620
-msgid "Strength Enforcement"
-msgstr "Aplicación de Fortaleza"
+msgid "Password Strength Enforcement"
+msgstr "Aplicación de Fortaleza de Contraseña"
+
+#: src/Admin/AdminPanel.php:805
+msgid "Hide Admin URL"
+msgstr "Ocultar URL de Administración"
 
 #: src/Admin/AdminPanel.php:622
 msgid "Enabled"
@@ -313,10 +321,6 @@ msgstr "Después de la activación, acceda al admin vía:"
 #: src/Admin/AdminPanel.php:799
 msgid "Password Security Settings"
 msgstr "Configuración de Seguridad de Contraseñas"
-
-#: src/Admin/AdminPanel.php:803
-msgid "Password Strength Enforcement"
-msgstr "Aplicación de Fortaleza de Contraseñas"
 
 #: src/Admin/AdminPanel.php:809
 msgid "Enforce strong password requirements"

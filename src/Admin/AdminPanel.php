@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Admin
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.0
+ * @version 1.0.1
  */
 
 namespace SilverAssist\Security\Admin;
@@ -67,7 +67,7 @@ class AdminPanel
     {
         \add_options_page(
             \__("Silver Assist Security", "silver-assist-security"),
-            \__("Security Suite", "silver-assist-security"),
+            \__("Security Essentials", "silver-assist-security"),
             "manage_options",
             "silver-assist-security",
             [$this, "render_admin_page"]
@@ -378,9 +378,10 @@ class AdminPanel
                 "session_timeout" => (int) \get_option("silver_assist_session_timeout", 30),
                 "status" => "active"
             ],
-            "password_security" => [
-                "strength_enforcement" => (bool) \get_option("silver_assist_password_strength_enforcement", 1),
-                "status" => "active"
+            "admin_security" => [
+                "password_strength_enforcement" => (bool) \get_option("silver_assist_password_strength_enforcement", 1),
+                "hide_admin_urls" => (bool) \get_option("silver_assist_hide_admin_urls", 1),
+                "status" => $this->get_admin_security_status()
             ],
             "graphql_security" => [
                 "enabled" => class_exists("WPGraphQL"),
@@ -523,6 +524,21 @@ class AdminPanel
         $count += 3; // HTTPOnly cookies, XML-RPC disabled, version hiding
 
         return $count;
+    }
+
+    /**
+     * Get admin security status based on feature activation
+     * 
+     * @since 1.0.1
+     * @return string Status (active|disabled)
+     */
+    private function get_admin_security_status(): string
+    {
+        $password_enforcement = (bool) \get_option("silver_assist_password_strength_enforcement", 1);
+        $hide_admin_urls = (bool) \get_option("silver_assist_hide_admin_urls", 1);
+
+        // Return active if at least one feature is enabled
+        return ($password_enforcement || $hide_admin_urls) ? "active" : "disabled";
     }
 
     /**
@@ -784,19 +800,27 @@ class AdminPanel
                         </div>
                     </div>
 
-                    <div class="status-card password-security">
+                    <div class="status-card admin-security">
                         <div class="card-header">
-                            <h3><?php esc_html_e('Password Security', 'silver-assist-security'); ?></h3>
+                            <h3><?php esc_html_e('Admin Security', 'silver-assist-security'); ?></h3>
                             <span class="status-indicator"
-                                id="password-status"><?php echo esc_html($security_status['password_security']['status']); ?></span>
+                                id="admin-status"><?php echo esc_html($security_status['admin_security']['status']); ?></span>
                         </div>
                         <div class="card-content">
                             <div class="feature-status">
                                 <span
-                                    class="feature-name"><?php esc_html_e('Strength Enforcement', 'silver-assist-security'); ?></span>
+                                    class="feature-name"><?php esc_html_e('Password Strength Enforcement', 'silver-assist-security'); ?></span>
                                 <span
-                                    class="feature-value <?php echo $security_status['password_security']['strength_enforcement'] ? 'enabled' : 'disabled'; ?>">
-                                    <?php echo $security_status['password_security']['strength_enforcement'] ? esc_html__('Enabled', 'silver-assist-security') : esc_html__('Disabled', 'silver-assist-security'); ?>
+                                    class="feature-value <?php echo $security_status['admin_security']['password_strength_enforcement'] ? 'enabled' : 'disabled'; ?>">
+                                    <?php echo $security_status['admin_security']['password_strength_enforcement'] ? esc_html__('Enabled', 'silver-assist-security') : esc_html__('Disabled', 'silver-assist-security'); ?>
+                                </span>
+                            </div>
+                            <div class="feature-status">
+                                <span
+                                    class="feature-name"><?php esc_html_e('Hide Admin URL', 'silver-assist-security'); ?></span>
+                                <span
+                                    class="feature-value <?php echo $security_status['admin_security']['hide_admin_urls'] ? 'enabled' : 'disabled'; ?>">
+                                    <?php echo $security_status['admin_security']['hide_admin_urls'] ? esc_html__('Enabled', 'silver-assist-security') : esc_html__('Disabled', 'silver-assist-security'); ?>
                                 </span>
                             </div>
                         </div>

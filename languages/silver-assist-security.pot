@@ -18,7 +18,7 @@ msgid "Silver Assist Security"
 msgstr ""
 
 #: src/Admin/AdminPanel.php:59
-msgid "Security Suite"
+msgid "Security Essentials"
 msgstr ""
 
 #: src/Admin/AdminPanel.php:133
@@ -196,11 +196,15 @@ msgid "Lockout (min)"
 msgstr ""
 
 #: src/Admin/AdminPanel.php:613
-msgid "Password Security"
+msgid "Admin Security"
 msgstr ""
 
 #: src/Admin/AdminPanel.php:620
-msgid "Strength Enforcement"
+msgid "Password Strength Enforcement"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:805
+msgid "Hide Admin URL"
 msgstr ""
 
 #: src/Admin/AdminPanel.php:622
