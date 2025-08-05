@@ -5,6 +5,35 @@ All notable changes to the Silver Assist Security Essentials will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-08-05
+
+### Changed
+- 🔧 Renamed "Security Suite" to "Security Essentials" in admin menu for better clarity
+- 🎛️ Renamed "Password Security" dashboard card to "Admin Security" for broader scope
+- 📊 Enhanced Admin Security card with dynamic status based on feature activation
+
+### Added
+- ✨ "Hide Admin URL" status indicator in Admin Security dashboard card
+- 🔧 Dynamic admin security status (active only when at least one option is enabled)
+- 📝 Improved dashboard readability with clearer feature organization
+
+### Fixed
+- 🐛 Admin security status now correctly reflects actual feature activation state
+- 🎯 Better visual feedback for enabled/disabled security features
+
+### Translations
+- 🌍 Updated Spanish translations for new UI labels
+- 🇪🇸 Added "Admin Security" → "Seguridad de Administración"
+- 🇪🇸 Added "Hide Admin URL" → "Ocultar URL de Administración"
+- 🇪🇸 Updated "Password Strength Enforcement" → "Aplicación de Fortaleza de Contraseña"
+- 📦 Recompiled .mo files for immediate translation availability
+
+### Technical
+- 🔧 Added `get_admin_security_status()` method for centralized status logic
+- 📊 Improved code organization with dedicated status checking
+- ✅ Maintained PSR-4 compliance and WordPress coding standards
+- 📝 Enhanced PHPDoc documentation for new methods
+
 ## [1.0.0] - 2025-08-04
 
 ### Security Issues Resolved
