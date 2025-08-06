@@ -360,6 +360,8 @@ class AdminPanel
      */
     private function get_security_status(): array
     {
+        $graphql_config = $this->get_graphql_configuration();
+
         $status = [
             "login_security" => [
                 "enabled" => true,
@@ -375,9 +377,12 @@ class AdminPanel
             "graphql_security" => [
                 "enabled" => class_exists("WPGraphQL"),
                 "headless_mode" => (bool) \get_option("silver_assist_graphql_headless_mode", false),
-                "query_depth_limit" => (int) \get_option("silver_assist_graphql_query_depth", 8),
-                "query_complexity_limit" => (int) \get_option("silver_assist_graphql_query_complexity", 100),
-                "query_timeout" => (int) \get_option("silver_assist_graphql_query_timeout", 5),
+                "query_depth_limit" => $graphql_config["query_depth_limit"],
+                "query_complexity_limit" => $graphql_config["query_complexity_limit"],
+                "query_timeout" => $graphql_config["query_timeout"],
+                "introspection_enabled" => $graphql_config["introspection_enabled"],
+                "debug_mode" => $graphql_config["debug_mode"],
+                "endpoint_access" => $graphql_config["endpoint_access"],
                 "status" => class_exists("WPGraphQL") ? "active" : "disabled"
             ],
             "general_security" => [
@@ -392,6 +397,64 @@ class AdminPanel
         ];
 
         return $status;
+    }
+
+    /**
+     * Get current WPGraphQL configuration with headless mode adjustments
+     * 
+     * @since 1.0.3
+     * @return array GraphQL configuration data
+     */
+    private function get_graphql_configuration(): array
+    {
+        // Default values when WPGraphQL is not available
+        $default_config = [
+            "query_depth_limit" => 8,
+            "query_complexity_limit" => 100,
+            "query_timeout" => 5,
+            "introspection_enabled" => false,
+            "debug_mode" => false,
+            "endpoint_access" => "public"
+        ];
+
+        if (!\class_exists("WPGraphQL")) {
+            return $default_config;
+        }
+
+        // Get WPGraphQL settings
+        $graphql_settings = \get_option("graphql_general_settings", []);
+        $headless_mode = (bool) \get_option("silver_assist_graphql_headless_mode", false);
+
+        // Query Depth Limit
+        $depth_enabled = $graphql_settings["query_depth_enabled"] ?? "off";
+        $query_depth = $depth_enabled === "on" ?
+            (int) ($graphql_settings["query_depth_max_depth"] ?? 10) :
+            ($headless_mode ? 15 : 10); // Extended depth for headless mode
+
+        // Query Complexity (WPGraphQL does not have this by default, so we simulate it)
+        $query_complexity = $headless_mode ? 200 : 100; // Extended complexity for headless
+
+        // Query Timeout (our enhancement)
+        $query_timeout = $headless_mode ? 10 : 5; // Extended timeout for headless operations
+
+        // Introspection
+        $introspection_enabled = ($graphql_settings["public_introspection_enabled"] ?? "off") === "on";
+
+        // Debug Mode
+        $debug_mode = ($graphql_settings["debug_mode_enabled"] ?? "off") === "on";
+
+        // Endpoint Access
+        $auth_required = $graphql_settings["restrict_endpoint_to_authenticated_users"] ?? "off";
+        $endpoint_access = $auth_required === "on" ? "restricted" : "public";
+
+        return [
+            "query_depth_limit" => $query_depth,
+            "query_complexity_limit" => $query_complexity,
+            "query_timeout" => $query_timeout,
+            "introspection_enabled" => $introspection_enabled,
+            "debug_mode" => $debug_mode,
+            "endpoint_access" => $endpoint_access
+        ];
     }
 
     /**
@@ -543,8 +606,8 @@ class AdminPanel
         $count = $wpdb->get_var(
             "SELECT COUNT(*) 
              FROM {$wpdb->options} 
-             WHERE option_name LIKE '_transient_lockout_%' 
-             AND option_value = '1'"
+             WHERE option_name LIKE \"_transient_lockout_%\" 
+             AND option_value = \"1\""
         );
 
         return (int) $count;
@@ -564,7 +627,7 @@ class AdminPanel
         $count = $wpdb->get_var(
             "SELECT COUNT(*) 
              FROM {$wpdb->options} 
-             WHERE option_name LIKE '_transient_login_attempts_%'"
+             WHERE option_name LIKE \"_transient_login_attempts_%\""
         );
 
         return (int) $count;
@@ -586,7 +649,7 @@ class AdminPanel
         $attempt_transients = $wpdb->get_results(
             "SELECT option_name, option_value 
              FROM {$wpdb->options} 
-             WHERE option_name LIKE '_transient_login_attempts_%' 
+             WHERE option_name LIKE \"_transient_login_attempts_%\" 
              ORDER BY option_id DESC 
              LIMIT 10"
         );
@@ -608,8 +671,8 @@ class AdminPanel
         $lockout_transients = $wpdb->get_results(
             "SELECT option_name, option_value 
              FROM {$wpdb->options} 
-             WHERE option_name LIKE '_transient_lockout_%' 
-             AND option_value = '1'
+             WHERE option_name LIKE \"_transient_lockout_%\" 
+             AND option_value = \"1\"
              ORDER BY option_id DESC 
              LIMIT 5"
         );
@@ -651,21 +714,21 @@ class AdminPanel
             \wp_die(\__("Security check failed.", "silver-assist-security"));
         }
 
-        // Save login security settings
-        if (isset($_POST["silver_assist_login_attempts"])) {
-            $login_attempts = intval($_POST["silver_assist_login_attempts"]);
+        // Save login security settings using null coalescing for cleaner code
+        $login_attempts = intval($_POST["silver_assist_login_attempts"] ?? \get_option("silver_assist_login_attempts", 5));
+        if ($_POST["silver_assist_login_attempts"] ?? null) {
             $login_attempts = max(1, min(20, $login_attempts));
             \update_option("silver_assist_login_attempts", $login_attempts);
         }
 
-        if (isset($_POST["silver_assist_lockout_duration"])) {
-            $lockout_duration = intval($_POST["silver_assist_lockout_duration"]);
+        $lockout_duration = intval($_POST["silver_assist_lockout_duration"] ?? \get_option("silver_assist_lockout_duration", 900));
+        if ($_POST["silver_assist_lockout_duration"] ?? null) {
             $lockout_duration = max(60, min(3600, $lockout_duration));
             \update_option("silver_assist_lockout_duration", $lockout_duration);
         }
 
-        if (isset($_POST["silver_assist_session_timeout"])) {
-            $session_timeout = intval($_POST["silver_assist_session_timeout"]);
+        $session_timeout = intval($_POST["silver_assist_session_timeout"] ?? \get_option("silver_assist_session_timeout", 30));
+        if ($_POST["silver_assist_session_timeout"] ?? null) {
             $session_timeout = max(5, min(120, $session_timeout));
             \update_option("silver_assist_session_timeout", $session_timeout);
         }
@@ -709,19 +772,19 @@ class AdminPanel
 
         ?>
         <div class="wrap">
-            <h1><?php echo esc_html(__('Silver Assist Security Essentials', 'silver-assist-security')); ?></h1>
+            <h1><?php echo esc_html(__("Silver Assist Security Essentials", "silver-assist-security")); ?></h1>
 
             <!-- Real-time Security Status Dashboard -->
             <div class="silver-assist-dashboard">
                 <div class="dashboard-header">
-                    <h2><?php esc_html_e('Security Status Dashboard', 'silver-assist-security'); ?></h2>
+                    <h2><?php esc_html_e("Security Status Dashboard", "silver-assist-security"); ?></h2>
                     <div class="dashboard-refresh">
                         <span class="last-updated" id="last-updated">
-                            <?php esc_html_e('Last updated:', 'silver-assist-security'); ?>
-                            <span id="last-updated-time"><?php echo esc_html(current_time('H:i:s')); ?></span>
+                            <?php esc_html_e("Last updated:", "silver-assist-security"); ?>
+                            <span id="last-updated-time"><?php echo esc_html(current_time("H:i:s")); ?></span>
                         </span>
                         <button type="button" class="button" id="refresh-dashboard">
-                            <?php esc_html_e('Refresh Now', 'silver-assist-security'); ?>
+                            <?php esc_html_e("Refresh Now", "silver-assist-security"); ?>
                         </button>
                     </div>
                 </div>
@@ -730,41 +793,41 @@ class AdminPanel
                 <div class="dashboard-cards">
                     <div class="status-card login-security">
                         <div class="card-header">
-                            <h3><?php esc_html_e('Login Security', 'silver-assist-security'); ?></h3>
+                            <h3><?php esc_html_e("Login Security", "silver-assist-security"); ?></h3>
                             <span class="status-indicator"
-                                id="login-status"><?php echo esc_html($security_status['login_security']['status']); ?></span>
+                                id="login-status"><?php echo esc_html($security_status["login_security"]["status"]); ?></span>
                         </div>
                         <div class="card-content">
                             <div class="stat">
                                 <span class="stat-value"
-                                    id="blocked-ips-count"><?php echo esc_html($security_status['login_security']['max_attempts']); ?></span>
-                                <span class="stat-label"><?php esc_html_e('Max Attempts', 'silver-assist-security'); ?></span>
+                                    id="blocked-ips-count"><?php echo esc_html($security_status["login_security"]["max_attempts"]); ?></span>
+                                <span class="stat-label"><?php esc_html_e("Max Attempts", "silver-assist-security"); ?></span>
                             </div>
                             <div class="stat">
                                 <span class="stat-value" id="recent-attempts">0</span>
-                                <span class="stat-label"><?php esc_html_e('Blocked IPs', 'silver-assist-security'); ?></span>
+                                <span class="stat-label"><?php esc_html_e("Blocked IPs", "silver-assist-security"); ?></span>
                             </div>
                             <div class="stat">
                                 <span
-                                    class="stat-value"><?php echo esc_html(round($security_status['login_security']['lockout_duration'] / 60)); ?></span>
-                                <span class="stat-label"><?php esc_html_e('Lockout (min)', 'silver-assist-security'); ?></span>
+                                    class="stat-value"><?php echo esc_html(round($security_status["login_security"]["lockout_duration"] / 60)); ?></span>
+                                <span class="stat-label"><?php esc_html_e("Lockout (min)", "silver-assist-security"); ?></span>
                             </div>
                         </div>
                     </div>
 
                     <div class="status-card admin-security">
                         <div class="card-header">
-                            <h3><?php esc_html_e('Admin Security', 'silver-assist-security'); ?></h3>
+                            <h3><?php esc_html_e("Admin Security", "silver-assist-security"); ?></h3>
                             <span class="status-indicator"
-                                id="admin-status"><?php echo esc_html($security_status['admin_security']['status']); ?></span>
+                                id="admin-status"><?php echo esc_html($security_status["admin_security"]["status"]); ?></span>
                         </div>
                         <div class="card-content">
                             <div class="feature-status">
                                 <span
-                                    class="feature-name"><?php esc_html_e('Password Strength Enforcement', 'silver-assist-security'); ?></span>
+                                    class="feature-name"><?php esc_html_e("Password Strength Enforcement", "silver-assist-security"); ?></span>
                                 <span
-                                    class="feature-value <?php echo $security_status['admin_security']['password_strength_enforcement'] ? 'enabled' : 'disabled'; ?>">
-                                    <?php echo $security_status['admin_security']['password_strength_enforcement'] ? esc_html__('Enabled', 'silver-assist-security') : esc_html__('Disabled', 'silver-assist-security'); ?>
+                                    class="feature-value <?php echo $security_status["admin_security"]["password_strength_enforcement"] ? "enabled" : "disabled"; ?>">
+                                    <?php echo $security_status["admin_security"]["password_strength_enforcement"] ? esc_html__("Enabled", "silver-assist-security") : esc_html__("Disabled", "silver-assist-security"); ?>
                                 </span>
                             </div>
                         </div>
@@ -772,66 +835,90 @@ class AdminPanel
 
                     <div class="status-card graphql-security">
                         <div class="card-header">
-                            <h3><?php esc_html_e('GraphQL Security', 'silver-assist-security'); ?></h3>
+                            <h3><?php esc_html_e("GraphQL Security", "silver-assist-security"); ?></h3>
                             <span class="status-indicator"
-                                id="graphql-status"><?php echo esc_html($security_status['graphql_security']['status']); ?></span>
+                                id="graphql-status"><?php echo esc_html($security_status["graphql_security"]["status"]); ?></span>
                         </div>
                         <div class="card-content">
-                            <?php if ($security_status['graphql_security']['enabled']): ?>
+                            <?php if ($security_status["graphql_security"]["enabled"]): ?>
                                 <div class="headless-mode-indicator">
-                                    <span class="mode-label"><?php esc_html_e('Mode:', 'silver-assist-security'); ?></span>
-                                    <span class="mode-value <?php echo $security_status['graphql_security']['headless_mode'] ? 'headless' : 'standard'; ?>">
-                                        <?php echo $security_status['graphql_security']['headless_mode'] ? 
-                                            esc_html__('Headless CMS', 'silver-assist-security') : 
-                                            esc_html__('Standard', 'silver-assist-security'); ?>
+                                    <span class="mode-label"><?php esc_html_e("Mode:", "silver-assist-security"); ?></span>
+                                    <span
+                                        class="mode-value <?php echo $security_status["graphql_security"]["headless_mode"] ? "headless" : "standard"; ?>">
+                                        <?php echo $security_status["graphql_security"]["headless_mode"] ?
+                                            esc_html__("Headless CMS", "silver-assist-security") :
+                                            esc_html__("Standard", "silver-assist-security"); ?>
                                     </span>
                                 </div>
                                 <div class="stat">
                                     <span
-                                        class="stat-value"><?php echo esc_html($security_status['graphql_security']['query_depth_limit']); ?></span>
-                                    <span class="stat-label"><?php esc_html_e('Max Depth', 'silver-assist-security'); ?></span>
+                                        class="stat-value"><?php echo esc_html($security_status["graphql_security"]["query_depth_limit"]); ?></span>
+                                    <span class="stat-label"><?php esc_html_e("Max Depth", "silver-assist-security"); ?></span>
                                 </div>
                                 <div class="stat">
                                     <span
-                                        class="stat-value"><?php echo esc_html($security_status['graphql_security']['query_complexity_limit']); ?></span>
-                                    <span class="stat-label"><?php esc_html_e('Max Complexity', 'silver-assist-security'); ?></span>
+                                        class="stat-value"><?php echo esc_html($security_status["graphql_security"]["query_complexity_limit"]); ?></span>
+                                    <span class="stat-label"><?php esc_html_e("Max Complexity", "silver-assist-security"); ?></span>
                                 </div>
                                 <div class="stat">
                                     <span
-                                        class="stat-value"><?php echo esc_html($security_status['graphql_security']['query_timeout']); ?>s</span>
-                                    <span class="stat-label"><?php esc_html_e('Timeout', 'silver-assist-security'); ?></span>
+                                        class="stat-value"><?php echo esc_html($security_status["graphql_security"]["query_timeout"]); ?>s</span>
+                                    <span class="stat-label"><?php esc_html_e("Timeout", "silver-assist-security"); ?></span>
+                                </div>
+                                <div class="graphql-security-status">
+                                    <div class="security-indicator">
+                                        <span
+                                            class="indicator-label"><?php esc_html_e("Introspection:", "silver-assist-security"); ?></span>
+                                        <span
+                                            class="indicator-value <?php echo $security_status["graphql_security"]["introspection_enabled"] ? "warning" : "secure"; ?>">
+                                            <?php echo $security_status["graphql_security"]["introspection_enabled"] ?
+                                                esc_html__("Enabled", "silver-assist-security") :
+                                                esc_html__("Disabled", "silver-assist-security"); ?>
+                                        </span>
+                                    </div>
+                                    <div class="security-indicator">
+                                        <span
+                                            class="indicator-label"><?php esc_html_e("Access:", "silver-assist-security"); ?></span>
+                                        <span
+                                            class="indicator-value <?php echo $security_status["graphql_security"]["endpoint_access"] === "public" ? "warning" : "secure"; ?>">
+                                            <?php echo $security_status["graphql_security"]["endpoint_access"] === "public" ?
+                                                esc_html__("Public", "silver-assist-security") :
+                                                esc_html__("Restricted", "silver-assist-security"); ?>
+                                        </span>
+                                    </div>
                                 </div>
                             <?php else: ?>
                                 <p class="graphql-disabled">
-                                    <?php esc_html_e('WPGraphQL plugin not detected', 'silver-assist-security'); ?></p>
+                                    <?php esc_html_e("WPGraphQL plugin not detected", "silver-assist-security"); ?>
+                                </p>
                             <?php endif; ?>
                         </div>
                     </div>
 
                     <div class="status-card general-security">
                         <div class="card-header">
-                            <h3><?php esc_html_e('General Security', 'silver-assist-security'); ?></h3>
+                            <h3><?php esc_html_e("General Security", "silver-assist-security"); ?></h3>
                             <span class="status-indicator"
-                                id="general-status"><?php echo esc_html($security_status['general_security']['status']); ?></span>
+                                id="general-status"><?php echo esc_html($security_status["general_security"]["status"]); ?></span>
                         </div>
                         <div class="card-content">
                             <div class="feature-status">
                                 <span
-                                    class="feature-name"><?php esc_html_e('HTTPOnly Cookies', 'silver-assist-security'); ?></span>
+                                    class="feature-name"><?php esc_html_e("HTTPOnly Cookies", "silver-assist-security"); ?></span>
                                 <span
-                                    class="feature-value enabled"><?php esc_html_e('Enabled', 'silver-assist-security'); ?></span>
+                                    class="feature-value enabled"><?php esc_html_e("Enabled", "silver-assist-security"); ?></span>
                             </div>
                             <div class="feature-status">
                                 <span
-                                    class="feature-name"><?php esc_html_e('XML-RPC Protection', 'silver-assist-security'); ?></span>
+                                    class="feature-name"><?php esc_html_e("XML-RPC Protection", "silver-assist-security"); ?></span>
                                 <span
-                                    class="feature-value enabled"><?php esc_html_e('Enabled', 'silver-assist-security'); ?></span>
+                                    class="feature-value enabled"><?php esc_html_e("Enabled", "silver-assist-security"); ?></span>
                             </div>
                             <div class="feature-status">
                                 <span
-                                    class="feature-name"><?php esc_html_e('Version Hiding', 'silver-assist-security'); ?></span>
+                                    class="feature-name"><?php esc_html_e("Version Hiding", "silver-assist-security"); ?></span>
                                 <span
-                                    class="feature-value enabled"><?php esc_html_e('Enabled', 'silver-assist-security'); ?></span>
+                                    class="feature-value enabled"><?php esc_html_e("Enabled", "silver-assist-security"); ?></span>
                             </div>
                         </div>
                     </div>
@@ -840,44 +927,44 @@ class AdminPanel
                 <!-- Active Threats and Blocked IPs -->
                 <div class="dashboard-threats">
                     <div class="threats-header">
-                        <h3><?php esc_html_e('Active Threats & Blocked IPs', 'silver-assist-security'); ?></h3>
+                        <h3><?php esc_html_e("Active Threats & Blocked IPs", "silver-assist-security"); ?></h3>
                         <span class="threat-count" id="threat-count">0</span>
                     </div>
                     <div class="threats-content" id="blocked-ips-list">
-                        <p class="loading"><?php esc_html_e('Loading blocked IPs...', 'silver-assist-security'); ?></p>
+                        <p class="loading"><?php esc_html_e("Loading blocked IPs...", "silver-assist-security"); ?></p>
                     </div>
                 </div>
             </div>
 
             <!-- Security Configuration Form -->
             <div class="silver-assist-configuration">
-                <h2><?php esc_html_e('Security Configuration', 'silver-assist-security'); ?></h2>
+                <h2><?php esc_html_e("Security Configuration", "silver-assist-security"); ?></h2>
 
                 <form method="post" action="">
-                    <?php wp_nonce_field('silver_assist_security_settings'); ?>
+                    <?php wp_nonce_field("silver_assist_security_settings"); ?>
 
                     <!-- Login Security Settings -->
                     <div class="card">
-                        <h2><?php esc_html_e('Login Security Settings', 'silver-assist-security'); ?></h2>
+                        <h2><?php esc_html_e("Login Security Settings", "silver-assist-security"); ?></h2>
                         <table class="form-table">
                             <tr>
                                 <th scope="row">
                                     <label for="silver_assist_login_attempts">
-                                        <?php esc_html_e('Maximum Login Attempts', 'silver-assist-security'); ?>
+                                        <?php esc_html_e("Maximum Login Attempts", "silver-assist-security"); ?>
                                     </label>
                                 </th>
                                 <td>
                                     <input type="number" id="silver_assist_login_attempts" name="silver_assist_login_attempts"
                                         value="<?php echo esc_attr($login_attempts); ?>" min="1" max="20" class="small-text" />
                                     <p class="description">
-                                        <?php esc_html_e('Number of failed login attempts before lockout (1-20)', 'silver-assist-security'); ?>
+                                        <?php esc_html_e("Number of failed login attempts before lockout (1-20)", "silver-assist-security"); ?>
                                     </p>
                                 </td>
                             </tr>
                             <tr>
                                 <th scope="row">
                                     <label for="silver_assist_lockout_duration">
-                                        <?php esc_html_e('Lockout Duration (seconds)', 'silver-assist-security'); ?>
+                                        <?php esc_html_e("Lockout Duration (seconds)", "silver-assist-security"); ?>
                                     </label>
                                 </th>
                                 <td>
@@ -885,14 +972,14 @@ class AdminPanel
                                         name="silver_assist_lockout_duration" value="<?php echo esc_attr($lockout_duration); ?>"
                                         min="60" max="3600" class="small-text" />
                                     <p class="description">
-                                        <?php esc_html_e('How long to lock out users after failed attempts (60-3600 seconds)', 'silver-assist-security'); ?>
+                                        <?php esc_html_e("How long to lock out users after failed attempts (60-3600 seconds)", "silver-assist-security"); ?>
                                     </p>
                                 </td>
                             </tr>
                             <tr>
                                 <th scope="row">
                                     <label for="silver_assist_session_timeout">
-                                        <?php esc_html_e('Session Timeout (minutes)', 'silver-assist-security'); ?>
+                                        <?php esc_html_e("Session Timeout (minutes)", "silver-assist-security"); ?>
                                     </label>
                                 </th>
                                 <td>
@@ -900,22 +987,21 @@ class AdminPanel
                                         value="<?php echo esc_attr($session_timeout); ?>" min="5" max="120"
                                         class="small-text" />
                                     <p class="description">
-                                        <?php esc_html_e('Session timeout duration in minutes (5-120)', 'silver-assist-security'); ?>
+                                        <?php esc_html_e("Session timeout duration in minutes (5-120)", "silver-assist-security"); ?>
                                     </p>
                                 </td>
                             </tr>
                             <tr>
                                 <th scope="row">
-                                    <?php esc_html_e('Bot Protection', 'silver-assist-security'); ?>
+                                    <?php esc_html_e("Bot Protection", "silver-assist-security"); ?>
                                 </th>
                                 <td>
                                     <label>
-                                        <input type="checkbox" name="silver_assist_bot_protection" value="1"
-                                            <?php checked($bot_protection, 1); ?> />
-                                        <?php esc_html_e('Block automated bots and security scanners with 404 responses', 'silver-assist-security'); ?>
+                                        <input type="checkbox" name="silver_assist_bot_protection" value="1" <?php checked($bot_protection, 1); ?> />
+                                        <?php esc_html_e("Block automated bots and security scanners with 404 responses", "silver-assist-security"); ?>
                                     </label>
                                     <p class="description">
-                                        <?php esc_html_e('Detects and blocks common bots, crawlers, and security scanning tools.', 'silver-assist-security'); ?>
+                                        <?php esc_html_e("Detects and blocks common bots, crawlers, and security scanning tools.", "silver-assist-security"); ?>
                                     </p>
                                 </td>
                             </tr>
@@ -925,17 +1011,17 @@ class AdminPanel
                     <!-- Admin URL Security Settings -->
                     <!-- Password Security Settings -->
                     <div class="card">
-                        <h2><?php esc_html_e('Password Security Settings', 'silver-assist-security'); ?></h2>
+                        <h2><?php esc_html_e("Password Security Settings", "silver-assist-security"); ?></h2>
                         <table class="form-table">
                             <tr>
                                 <th scope="row">
-                                    <?php esc_html_e('Password Strength Enforcement', 'silver-assist-security'); ?>
+                                    <?php esc_html_e("Password Strength Enforcement", "silver-assist-security"); ?>
                                 </th>
                                 <td>
                                     <label>
                                         <input type="checkbox" name="silver_assist_password_strength_enforcement" value="1"
                                             <?php checked($password_strength_enforcement, 1); ?> />
-                                        <?php esc_html_e('Enforce strong password requirements', 'silver-assist-security'); ?>
+                                        <?php esc_html_e("Enforce strong password requirements", "silver-assist-security"); ?>
                                     </label>
                                 </td>
                             </tr>
@@ -943,91 +1029,110 @@ class AdminPanel
                     </div>
 
                     <!-- GraphQL Security Settings -->
-                    <?php if (class_exists('WPGraphQL')): ?>
+                    <?php if (class_exists("WPGraphQL")): ?>
                         <div class="card">
-                            <h2><?php esc_html_e('GraphQL Security Enhancements', 'silver-assist-security'); ?></h2>
-                            
+                            <h2><?php esc_html_e("GraphQL Security Enhancements", "silver-assist-security"); ?></h2>
+
                             <div class="graphql-native-notice">
-                                <p><strong><?php esc_html_e('WPGraphQL Detected', 'silver-assist-security'); ?></strong></p>
-                                <p><?php esc_html_e('WPGraphQL has its own security settings. These enhancements work alongside WPGraphQL\'s native configuration.', 'silver-assist-security'); ?></p>
-                                <p><a href="<?php echo admin_url('admin.php?page=graphql-settings'); ?>" class="button button-secondary" target="_blank">
-                                    <?php esc_html_e('Open WPGraphQL Settings', 'silver-assist-security'); ?>
-                                </a></p>
+                                <p><strong><?php esc_html_e("WPGraphQL Detected", "silver-assist-security"); ?></strong></p>
+                                <p><?php esc_html_e("WPGraphQL has its own security settings. These enhancements work alongside WPGraphQL's native configuration.", "silver-assist-security"); ?>
+                                </p>
+                                <p><a href="<?php echo admin_url("admin.php?page=graphql-settings"); ?>"
+                                        class="button button-secondary" target="_blank">
+                                        <?php esc_html_e("Open WPGraphQL Settings", "silver-assist-security"); ?>
+                                    </a></p>
                             </div>
-                            
+
                             <table class="form-table">
                                 <tr>
                                     <th scope="row">
-                                        <?php esc_html_e('Headless CMS Mode', 'silver-assist-security'); ?>
+                                        <?php esc_html_e("Headless CMS Mode", "silver-assist-security"); ?>
                                     </th>
                                     <td>
                                         <label>
-                                            <input type="checkbox" name="silver_assist_graphql_headless_mode" value="1"
-                                                <?php checked($graphql_headless_mode, 1); ?> />
-                                            <?php esc_html_e('Enable optimized rate limiting for headless CMS usage', 'silver-assist-security'); ?>
+                                            <input type="checkbox" name="silver_assist_graphql_headless_mode" value="1" <?php checked($graphql_headless_mode, 1); ?> />
+                                            <?php esc_html_e("Enable optimized rate limiting for headless CMS usage", "silver-assist-security"); ?>
                                         </label>
                                         <p class="description">
-                                            <?php esc_html_e('Increases rate limits and timeout handling for better headless CMS performance. Use WPGraphQL\'s native settings for query depth and complexity.', 'silver-assist-security'); ?>
+                                            <?php esc_html_e("Increases rate limits and timeout handling for better headless CMS performance. Use WPGraphQL's native settings for query depth and complexity.", "silver-assist-security"); ?>
                                         </p>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th scope="row">
-                                        <?php esc_html_e('Enhanced Rate Limiting', 'silver-assist-security'); ?>
+                                        <?php esc_html_e("Enhanced Rate Limiting", "silver-assist-security"); ?>
                                     </th>
                                     <td>
                                         <p class="description">
-                                            <strong><?php esc_html_e('Current Rate Limits:', 'silver-assist-security'); ?></strong><br>
+                                            <strong><?php esc_html_e("Current Rate Limits:", "silver-assist-security"); ?></strong><br>
                                             <?php if ($graphql_headless_mode): ?>
-                                                • <?php esc_html_e('Standard requests: 300/minute', 'silver-assist-security'); ?><br>
-                                                • <?php esc_html_e('Build processes: 600/minute (auto-detected)', 'silver-assist-security'); ?><br>
-                                                • <?php esc_html_e('Query timeout: Extended for complex operations', 'silver-assist-security'); ?>
+                                                • <?php esc_html_e("Standard requests: 300/minute", "silver-assist-security"); ?><br>
+                                                •
+                                                <?php esc_html_e("Build processes: 600/minute (auto-detected)", "silver-assist-security"); ?><br>
+                                                •
+                                                <?php esc_html_e("Query timeout: Extended for complex operations", "silver-assist-security"); ?>
                                             <?php else: ?>
-                                                • <?php esc_html_e('Standard requests: 100/minute', 'silver-assist-security'); ?><br>
-                                                • <?php esc_html_e('Build processes: 300/minute (auto-detected)', 'silver-assist-security'); ?><br>
-                                                • <?php esc_html_e('Query timeout: Standard limits', 'silver-assist-security'); ?>
+                                                • <?php esc_html_e("Standard requests: 100/minute", "silver-assist-security"); ?><br>
+                                                •
+                                                <?php esc_html_e("Build processes: 300/minute (auto-detected)", "silver-assist-security"); ?><br>
+                                                • <?php esc_html_e("Query timeout: Standard limits", "silver-assist-security"); ?>
                                             <?php endif; ?>
                                         </p>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th scope="row">
-                                        <?php esc_html_e('WPGraphQL Recommendations', 'silver-assist-security'); ?>
+                                        <?php esc_html_e("WPGraphQL Recommendations", "silver-assist-security"); ?>
                                     </th>
                                     <td>
                                         <div class="wpgraphql-recommendations">
-                                            <p><strong><?php esc_html_e('For Headless CMS Usage:', 'silver-assist-security'); ?></strong></p>
+                                            <p><strong><?php esc_html_e("For Headless CMS Usage:", "silver-assist-security"); ?></strong>
+                                            </p>
                                             <ul>
-                                                <li><?php esc_html_e('✓ Enable Query Depth Limiting with Max Depth: 15-20', 'silver-assist-security'); ?></li>
-                                                <li><?php esc_html_e('✓ Keep Batch Queries enabled with limit: 10-20', 'silver-assist-security'); ?></li>
-                                                <li><?php esc_html_e('✓ Disable Public Introspection in production', 'silver-assist-security'); ?></li>
-                                                <li><?php esc_html_e('✓ Disable GraphQL Debug Mode in production', 'silver-assist-security'); ?></li>
+                                                <li><?php esc_html_e("✓ Enable Query Depth Limiting with Max Depth: 15-20", "silver-assist-security"); ?>
+                                                </li>
+                                                <li><?php esc_html_e("✓ Keep Batch Queries enabled with limit: 10-20", "silver-assist-security"); ?>
+                                                </li>
+                                                <li><?php esc_html_e("✓ Disable Public Introspection in production", "silver-assist-security"); ?>
+                                                </li>
+                                                <li><?php esc_html_e("✓ Disable GraphQL Debug Mode in production", "silver-assist-security"); ?>
+                                                </li>
                                             </ul>
-                                            
-                                            <p><strong><?php esc_html_e('Authentication Strategy:', 'silver-assist-security'); ?></strong></p>
+
+                                            <p><strong><?php esc_html_e("Authentication Strategy:", "silver-assist-security"); ?></strong>
+                                            </p>
                                             <div class="auth-strategy-recommendations">
-                                                <p><strong style="color: #d63638;"><?php esc_html_e('⚠️ Important Decision: Endpoint Authentication', 'silver-assist-security'); ?></strong></p>
+                                                <p><strong
+                                                        style="color: #d63638;"><?php esc_html_e("⚠️ Important Decision: Endpoint Authentication", "silver-assist-security"); ?></strong>
+                                                </p>
                                                 <div class="auth-options">
                                                     <div class="auth-option">
-                                                        <strong><?php esc_html_e('Public Frontend (Blog, Portfolio, E-commerce):', 'silver-assist-security'); ?></strong>
+                                                        <strong><?php esc_html_e("Public Frontend (Blog, Portfolio, E-commerce):", "silver-assist-security"); ?></strong>
                                                         <ul>
-                                                            <li><?php esc_html_e('❌ DO NOT restrict endpoint to authenticated users', 'silver-assist-security'); ?></li>
-                                                            <li><?php esc_html_e('✓ Use query whitelisting for specific operations', 'silver-assist-security'); ?></li>
-                                                            <li><?php esc_html_e('✓ Implement IP-based rate limiting (our headless mode)', 'silver-assist-security'); ?></li>
+                                                            <li><?php esc_html_e("❌ DO NOT restrict endpoint to authenticated users", "silver-assist-security"); ?>
+                                                            </li>
+                                                            <li><?php esc_html_e("✓ Use query whitelisting for specific operations", "silver-assist-security"); ?>
+                                                            </li>
+                                                            <li><?php esc_html_e("✓ Implement IP-based rate limiting (our headless mode)", "silver-assist-security"); ?>
+                                                            </li>
                                                         </ul>
                                                     </div>
                                                     <div class="auth-option">
-                                                        <strong><?php esc_html_e('Private Application (Dashboard, Intranet):', 'silver-assist-security'); ?></strong>
+                                                        <strong><?php esc_html_e("Private Application (Dashboard, Intranet):", "silver-assist-security"); ?></strong>
                                                         <ul>
-                                                            <li><?php esc_html_e('✅ Restrict endpoint to authenticated users', 'silver-assist-security'); ?></li>
-                                                            <li><?php esc_html_e('✓ Use JWT tokens for frontend authentication', 'silver-assist-security'); ?></li>
-                                                            <li><?php esc_html_e('✓ Maximum security for sensitive data', 'silver-assist-security'); ?></li>
+                                                            <li><?php esc_html_e("✅ Restrict endpoint to authenticated users", "silver-assist-security"); ?>
+                                                            </li>
+                                                            <li><?php esc_html_e("✓ Use JWT tokens for frontend authentication", "silver-assist-security"); ?>
+                                                            </li>
+                                                            <li><?php esc_html_e("✓ Maximum security for sensitive data", "silver-assist-security"); ?>
+                                                            </li>
                                                         </ul>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <p><strong><?php esc_html_e('Current WPGraphQL Settings:', 'silver-assist-security'); ?></strong></p>
+                                            <p><strong><?php esc_html_e("Current WPGraphQL Settings:", "silver-assist-security"); ?></strong>
+                                            </p>
                                             <div id="wpgraphql-current-settings" class="wpgraphql-settings-display">
                                                 <?php echo $this->get_wpgraphql_current_settings(); ?>
                                             </div>
@@ -1035,25 +1140,29 @@ class AdminPanel
                                     </td>
                                 </tr>
                             </table>
-                            
+
                             <?php if ($graphql_headless_mode): ?>
                                 <div class="headless-mode-notice">
-                                    <p><strong><?php esc_html_e('Headless CMS Mode Active', 'silver-assist-security'); ?></strong></p>
+                                    <p><strong><?php esc_html_e("Headless CMS Mode Active", "silver-assist-security"); ?></strong></p>
                                     <ul>
-                                        <li><?php esc_html_e('✓ Enhanced rate limiting for high-frequency requests', 'silver-assist-security'); ?></li>
-                                        <li><?php esc_html_e('✓ Build process detection (Next.js, Gatsby, etc.)', 'silver-assist-security'); ?></li>
-                                        <li><?php esc_html_e('✓ Extended timeouts for complex queries', 'silver-assist-security'); ?></li>
-                                        <li><?php esc_html_e('✓ Optimized for static site generation (SSG/ISR)', 'silver-assist-security'); ?></li>
+                                        <li><?php esc_html_e("✓ Enhanced rate limiting for high-frequency requests", "silver-assist-security"); ?>
+                                        </li>
+                                        <li><?php esc_html_e("✓ Build process detection (Next.js, Gatsby, etc.)", "silver-assist-security"); ?>
+                                        </li>
+                                        <li><?php esc_html_e("✓ Extended timeouts for complex queries", "silver-assist-security"); ?>
+                                        </li>
+                                        <li><?php esc_html_e("✓ Optimized for static site generation (SSG/ISR)", "silver-assist-security"); ?>
+                                        </li>
                                     </ul>
                                     <p class="description">
-                                        <?php esc_html_e('Configure query depth and complexity limits in WPGraphQL settings for optimal performance.', 'silver-assist-security'); ?>
+                                        <?php esc_html_e("Configure query depth and complexity limits in WPGraphQL settings for optimal performance.", "silver-assist-security"); ?>
                                     </p>
                                 </div>
                             <?php endif; ?>
                         </div>
                     <?php endif; ?>
 
-                    <?php submit_button(__('Save Security Settings', 'silver-assist-security'), 'primary', 'save_silver_assist_security'); ?>
+                    <?php submit_button(__("Save Security Settings", "silver-assist-security"), "primary", "save_silver_assist_security"); ?>
                 </form>
 
                 <!-- Updates Information Section -->
@@ -1146,28 +1255,27 @@ class AdminPanel
         }
 
         $settings = [];
-        
+
         // Get WPGraphQL settings
         $graphql_settings = \get_option("graphql_general_settings", []);
-        
+
         // Authentication Restriction - Most Important for Headless
-        $auth_required = isset($graphql_settings["restrict_endpoint_to_authenticated_users"]) ? 
-            $graphql_settings["restrict_endpoint_to_authenticated_users"] : "off";
-        
-        $auth_status = $auth_required === "on" ? 
+        $auth_required = $graphql_settings["restrict_endpoint_to_authenticated_users"] ?? "off";
+
+        $auth_status = $auth_required === "on" ?
             "<span style=\"color: #d63638; font-weight: bold;\">" . esc_html__("RESTRICTED", "silver-assist-security") . "</span>" :
             "<span style=\"color: #00a32a; font-weight: bold;\">" . esc_html__("PUBLIC", "silver-assist-security") . "</span>";
-            
+
         $settings[] = sprintf(
             "<strong>%s:</strong> %s",
             esc_html__("Endpoint Access", "silver-assist-security"),
             $auth_status
         );
-        
+
         // Query Depth
-        $depth_enabled = isset($graphql_settings["query_depth_enabled"]) ? $graphql_settings["query_depth_enabled"] : "off";
-        $max_depth = isset($graphql_settings["query_depth_max_depth"]) ? $graphql_settings["query_depth_max_depth"] : 10;
-        
+        $depth_enabled = $graphql_settings["query_depth_enabled"] ?? "off";
+        $max_depth = $graphql_settings["query_depth_max_depth"] ?? 10;
+
         $settings[] = sprintf(
             "<strong>%s:</strong> %s (%s: %d)",
             \esc_html__("Query Depth Limiting", "silver-assist-security"),
@@ -1177,9 +1285,9 @@ class AdminPanel
         );
 
         // Batch Queries
-        $batch_enabled = isset($graphql_settings["batch_queries_enabled"]) ? $graphql_settings["batch_queries_enabled"] : "on";
-        $batch_limit = isset($graphql_settings["batch_queries_limit"]) ? $graphql_settings["batch_queries_limit"] : 10;
-        
+        $batch_enabled = $graphql_settings["batch_queries_enabled"] ?? "on";
+        $batch_limit = $graphql_settings["batch_queries_limit"] ?? 10;
+
         $settings[] = sprintf(
             "<strong>%s:</strong> %s (%s: %d)",
             \esc_html__("Batch Queries", "silver-assist-security"),
@@ -1189,25 +1297,25 @@ class AdminPanel
         );
 
         // Public Introspection
-        $introspection_enabled = isset($graphql_settings["public_introspection_enabled"]) ? $graphql_settings["public_introspection_enabled"] : "off";
-        
+        $introspection_enabled = $graphql_settings["public_introspection_enabled"] ?? "off";
+
         $settings[] = sprintf(
             "<strong>%s:</strong> %s",
             \esc_html__("Public Introspection", "silver-assist-security"),
-            $introspection_enabled === "on" ? 
-                "<span style=\"color: #d63638;\">" . \esc_html__("Enabled", "silver-assist-security") . "</span>" :
-                "<span style=\"color: #00a32a;\">" . \esc_html__("Disabled", "silver-assist-security") . "</span>"
+            $introspection_enabled === "on" ?
+            "<span style=\"color: #d63638;\">" . \esc_html__("Enabled", "silver-assist-security") . "</span>" :
+            "<span style=\"color: #00a32a;\">" . \esc_html__("Disabled", "silver-assist-security") . "</span>"
         );
 
         // Debug Mode
-        $debug_enabled = isset($graphql_settings["debug_mode_enabled"]) ? $graphql_settings["debug_mode_enabled"] : "off";
-        
+        $debug_enabled = $graphql_settings["debug_mode_enabled"] ?? "off";
+
         $settings[] = sprintf(
             "<strong>%s:</strong> %s",
             \esc_html__("Debug Mode", "silver-assist-security"),
-            $debug_enabled === "on" ? 
-                "<span style=\"color: #d63638;\">" . \esc_html__("Enabled", "silver-assist-security") . "</span>" :
-                "<span style=\"color: #00a32a;\">" . \esc_html__("Disabled", "silver-assist-security") . "</span>"
+            $debug_enabled === "on" ?
+            "<span style=\"color: #d63638;\">" . \esc_html__("Enabled", "silver-assist-security") . "</span>" :
+            "<span style=\"color: #00a32a;\">" . \esc_html__("Disabled", "silver-assist-security") . "</span>"
         );
 
         // Add security assessment
@@ -1218,10 +1326,10 @@ class AdminPanel
         if ($debug_enabled === "on") {
             $security_issues[] = \esc_html__("Debug mode enabled (not recommended for production)", "silver-assist-security");
         }
-        
+
         if (!empty($security_issues)) {
-            $settings[] = "<strong style=\"color: #d63638;\">" . \esc_html__("⚠️ Security Concerns:", "silver-assist-security") . "</strong><br>" . 
-                         implode("<br>", $security_issues);
+            $settings[] = "<strong style=\"color: #d63638;\">" . \esc_html__("⚠️ Security Concerns:", "silver-assist-security") . "</strong><br>" .
+                implode("<br>", $security_issues);
         }
 
         return "<ul><li>" . implode("</li><li>", $settings) . "</li></ul>";

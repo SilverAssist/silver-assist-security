@@ -212,6 +212,80 @@
     padding: 20px 0;
 }
 
+/* GraphQL Security Card Specific Styles */
+.headless-mode-indicator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.mode-label {
+    font-size: 14px;
+    color: #1d2327;
+    font-weight: 500;
+}
+
+.mode-value {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.mode-value.headless {
+    background: #e1f5fe;
+    color: #01579b;
+}
+
+.mode-value.standard {
+    background: #f3e5f5;
+    color: #4a148c;
+}
+
+/* GraphQL Security Indicators */
+.graphql-security-status {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.security-indicator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 12px;
+}
+
+.indicator-label {
+    color: #666;
+    font-weight: 500;
+}
+
+.indicator-value {
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-size: 11px;
+}
+
+.indicator-value.secure {
+    background: #d4edda;
+    color: #155724;
+}
+
+.indicator-value.warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
 /* Threats Section */
 .dashboard-threats {
     background: white;

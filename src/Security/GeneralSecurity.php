@@ -223,7 +223,7 @@ class GeneralSecurity
 
         // Disable author enumeration via URL
         \add_action("template_redirect", function () {
-            if (\is_author() || (isset($_GET["author"]) && $_GET["author"])) {
+            if (\is_author() || ($_GET["author"] ?? false)) {
                 \wp_redirect(\home_url());
                 exit;
             }

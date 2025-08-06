@@ -340,7 +340,8 @@ Admin forms process data with validation and immediate option updates:
 
 ### String Quotation Standards
 - **MANDATORY**: ALL strings in PHP and JavaScript MUST use double quotes: `"string"`
-- **FORBIDDEN**: Single quotes for strings: `'string'` 
+- **i18n Functions**: ALL WordPress i18n functions MUST use double quotes: `__("Text", "silver-assist-security")`, `esc_html_e("Text", "silver-assist-security")`
+- **FORBIDDEN**: Single quotes for strings: `'string'` or `__('text', 'domain')`
 - **Exception**: Only use single quotes inside double-quoted strings when necessary
 - **SQL Queries**: Use double quotes for string literals in SQL: `WHERE option_value = "1"`
 
@@ -352,7 +353,8 @@ Admin forms process data with validation and immediate option updates:
 
 ### WordPress i18n Standards
 - **Text domain**: `"silver-assist-security"` - MANDATORY for all i18n functions
-- **ALL user-facing strings**: Must use WordPress i18n functions
+- **ALL user-facing strings**: Must use WordPress i18n functions with double quotes
+- **Functions**: `__("text", "silver-assist-security")`, `esc_html_e("text", "silver-assist-security")`, etc.
 - **JavaScript i18n**: Pass translated strings from PHP via `wp_localize_script()`
 - **Forbidden**: Hardcoded user-facing strings without translation functions
 
