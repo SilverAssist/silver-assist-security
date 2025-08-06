@@ -29,7 +29,7 @@ This release introduces a revolutionary hybrid GraphQL validation system that co
   - Proper placeholder ordering (%1\$d, %2\$d) for internationalization
   - Updated POT file generation with zero warnings
   - Spanish translation files updated and compiled
-- **Advanced Version Update System** - Enhanced script with deferred self-modification capabilities and robust file processing
+- **Advanced Update System** - Enhanced script with deferred self-modification capabilities and robust file processing
   - Smart script auto-modification with conflict resolution for executing files
   - Enhanced update feedback with detailed file update counters and comprehensive progress reporting
 - **Intelligent GraphQL Rate Limiting** - Adaptive rate limiting based on WPGraphQL configuration and headless mode detection
@@ -56,14 +56,14 @@ This release introduces a revolutionary hybrid GraphQL validation system that co
   - GraphQLConfigManager usage patterns in coding instructions
   - Centralized configuration best practices
   - Testing methodology improvements
-  - Complete PHPDoc and JSDoc documentation with @since 1.1.0 tags for all new functionality
+  - Complete PHPDoc and JSDoc documentation with proper version tags for all new functionality
 
 ### Changed
 - **Complete GraphQL Code Deduplication** - Eliminated ~150 lines of duplicated configuration code
   - AdminPanel refactored to use GraphQLConfigManager for all GraphQL display logic
   - GraphQLSecurity refactored to use centralized configuration instead of local initialization
   - Single source of truth for all GraphQL settings and validation
-- **Enhanced Version Update System** - Improved script capabilities with deferred self-modification
+- **Enhanced Update System** - Improved script capabilities with deferred self-modification
   - Resolves script execution conflicts during file updates
   - Robust file processing with comprehensive error handling
   - Enhanced version consistency checking across all components
@@ -89,7 +89,7 @@ This release introduces a revolutionary hybrid GraphQL validation system that co
 ### Fixed
 - **Script Self-Modification Conflicts** - Resolved chmod +x permission issues preventing scripts from updating themselves during execution
 - **File Processing Reliability** - Fixed subshell loop failures in version update scripts affecting PHP, CSS, and JavaScript file processing
-- **Version Pattern Detection** - Enhanced version checking to handle multiple @version patterns and documentation references correctly
+- **Pattern Detection** - Enhanced checking to handle multiple version patterns and documentation references correctly
 - **Update Script Error Handling** - Improved error recovery and pattern matching for edge cases in documentation files
 - **Dependency Loop Prevention** - Eliminated circular dependencies in GraphQL configuration management through singleton pattern
 - **Rate Limiting False Positives** - Fixed GraphQL rate limiting calculations that were incorrectly blocking legitimate requests
@@ -109,7 +109,7 @@ This release introduces a revolutionary hybrid GraphQL validation system that co
 ### Translations
 - **Updated Spanish Translations** - Complete translation updates for v1.1.0 with new GraphQL terminology
 - **New Translation Strings** - All GraphQLConfigManager messages and interface elements fully translated
-- **Updated .pot/.po/.mo Files** - Regenerated translation files with WP-CLI for version 1.1.0
+- **Updated .pot/.po/.mo Files** - Regenerated translation files with WP-CLI for v1.1.0
 - **GraphQL Security Terms** - Added translations for "Introspección", "Acceso", "Público", "Restringido"
 
 ## [1.0.3] - 2025-08-06
