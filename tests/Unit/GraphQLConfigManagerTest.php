@@ -5,7 +5,7 @@
  * Tests for the centralized GraphQL configuration management system.
  *
  * @package SilverAssist\Security\Tests\Unit
- * @since 1.0.4
+ * @since 1.1.0
  */
 
 namespace SilverAssist\Security\Tests\Unit;
@@ -17,7 +17,7 @@ use SilverAssist\Security\Tests\Helpers\TestHelper;
 /**
  * Test GraphQLConfigManager functionality
  * 
- * @since 1.0.4
+ * @since 1.1.0
  */
 class GraphQLConfigManagerTest extends TestCase
 {
@@ -68,7 +68,7 @@ class GraphQLConfigManagerTest extends TestCase
     /**
      * Test singleton pattern implementation
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_singleton_pattern(): void
     {
@@ -82,7 +82,7 @@ class GraphQLConfigManagerTest extends TestCase
     /**
      * Test query depth configuration
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_query_depth_configuration(): void
     {
@@ -109,7 +109,7 @@ class GraphQLConfigManagerTest extends TestCase
     /**
      * Test query complexity configuration
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_query_complexity_configuration(): void
     {
@@ -121,7 +121,7 @@ class GraphQLConfigManagerTest extends TestCase
     /**
      * Test query timeout configuration
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_query_timeout_configuration(): void
     {
@@ -134,7 +134,7 @@ class GraphQLConfigManagerTest extends TestCase
     /**
      * Test intelligent rate limiting
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_rate_limiting(): void
     {
@@ -150,7 +150,7 @@ class GraphQLConfigManagerTest extends TestCase
     /**
      * Test WPGraphQL detection
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_wpgraphql_detection(): void
     {
@@ -165,7 +165,7 @@ class GraphQLConfigManagerTest extends TestCase
     /**
      * Test headless mode detection
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_headless_mode_detection(): void
     {
@@ -176,7 +176,7 @@ class GraphQLConfigManagerTest extends TestCase
     /**
      * Test security level evaluation
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_security_level_evaluation(): void
     {
@@ -190,7 +190,7 @@ class GraphQLConfigManagerTest extends TestCase
     /**
      * Test complete configuration retrieval
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_all_configurations(): void
     {
@@ -225,7 +225,7 @@ class GraphQLConfigManagerTest extends TestCase
     /**
      * Test configuration caching
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_configuration_caching(): void
     {
@@ -247,7 +247,7 @@ class GraphQLConfigManagerTest extends TestCase
     /**
      * Test configuration HTML generation
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_configuration_html(): void
     {
@@ -266,7 +266,7 @@ class GraphQLConfigManagerTest extends TestCase
     /**
      * Test error handling for missing WPGraphQL
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_missing_wpgraphql_handling(): void
     {

@@ -212,7 +212,7 @@ class AdminPanelTest extends TestCase
     /**
      * Test AdminPanel integration with GraphQLConfigManager
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_admin_panel_graphql_config_integration(): void
     {
@@ -246,7 +246,7 @@ class AdminPanelTest extends TestCase
     /**
      * Test that GraphQL settings are handled through GraphQLConfigManager
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_graphql_settings_centralization(): void
     {

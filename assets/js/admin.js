@@ -374,7 +374,7 @@
      * Sets up the real-time security dashboard with initial data loading,
      * auto-refresh intervals, and manual refresh button handling.
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      * @returns {void}
      */
     const initDashboard = () => {

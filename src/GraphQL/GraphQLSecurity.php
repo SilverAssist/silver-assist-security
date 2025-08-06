@@ -658,7 +658,7 @@ class GraphQLSecurity
     /**
      * Check if request is likely from a build process
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      * @return bool
      */
     private function is_likely_build_process(): bool
@@ -987,7 +987,7 @@ class GraphQLSecurity
     /**
      * Get current WPGraphQL configuration status using ConfigManager
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      * @return array
      */
     public function get_wpgraphql_status(): array

@@ -7,7 +7,7 @@
  * of truth for GraphQL settings, status checks, and configuration validation.
  *
  * @package SilverAssist\Security\GraphQL
- * @since 1.0.4
+ * @since 1.1.0
  * @author Silver Assist
  * @version 1.1.0
  */
@@ -20,7 +20,7 @@ namespace SilverAssist\Security\GraphQL;
  * Centralized management of GraphQL configuration and settings
  * to eliminate code duplication and improve maintainability
  * 
- * @since 1.0.4
+ * @since 1.1.0
  */
 class GraphQLConfigManager
 {
@@ -64,7 +64,7 @@ class GraphQLConfigManager
   /**
    * Private constructor to enforce singleton pattern
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    */
   private function __construct()
   {
@@ -75,7 +75,7 @@ class GraphQLConfigManager
   /**
    * Get singleton instance
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @return GraphQLConfigManager
    */
   public static function getInstance(): GraphQLConfigManager
@@ -89,7 +89,7 @@ class GraphQLConfigManager
   /**
    * Check if WPGraphQL is available and functional
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @return bool True if WPGraphQL is active and functional
    */
   public function is_wpgraphql_available(): bool
@@ -100,7 +100,7 @@ class GraphQLConfigManager
   /**
    * Check if headless mode is enabled
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @return bool
    */
   public function is_headless_mode(): bool
@@ -149,7 +149,7 @@ class GraphQLConfigManager
   /**
    * Get WPGraphQL setting with fallback
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @param string $setting_key The setting key to retrieve
    * @param mixed $default Default value if setting not found
    * @return mixed Setting value or default
@@ -166,7 +166,7 @@ class GraphQLConfigManager
   /**
    * Get complete GraphQL configuration
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @return array Complete configuration array
    */
   public function get_configuration(): array
@@ -180,7 +180,7 @@ class GraphQLConfigManager
   /**
    * Load and cache configuration
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @return void
    */
   private function load_configuration(): void
@@ -211,7 +211,7 @@ class GraphQLConfigManager
   /**
    * Load WPGraphQL specific settings
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @param array $config Base configuration
    * @param bool $is_headless Whether headless mode is enabled
    * @return array Updated configuration
@@ -255,7 +255,7 @@ class GraphQLConfigManager
   /**
    * Get security recommendations based on current configuration
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @return array Array of security recommendations
    */
   public function get_security_recommendations(): array
@@ -290,7 +290,7 @@ class GraphQLConfigManager
   /**
    * Get formatted settings display for admin panel
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @return string HTML formatted settings display
    */
   public function get_settings_display(): string
@@ -371,7 +371,7 @@ class GraphQLConfigManager
   /**
    * Get safe limits for GraphQL security based on mode
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @param string $limit_type Type of limit to get (depth|complexity|timeout|aliases|directives|field_duplicates)
    * @return int Safe limit value
    */
@@ -394,7 +394,7 @@ class GraphQLConfigManager
   /**
    * Get rate limiting configuration
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @return array Rate limiting configuration
    */
   public function get_rate_limiting_config(): array
@@ -424,7 +424,7 @@ class GraphQLConfigManager
   /**
    * Clear configuration cache (for testing or dynamic updates)
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @return void
    */
   public function clear_cache(): void
@@ -436,7 +436,7 @@ class GraphQLConfigManager
   /**
    * Get WPGraphQL integration status for monitoring
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @return array Integration status information
    */
   public function get_integration_status(): array
@@ -455,7 +455,7 @@ class GraphQLConfigManager
   /**
    * Calculate overall security level based on configuration
    * 
-   * @since 1.0.4
+   * @since 1.1.0
    * @param array $config Configuration array
    * @return string Security level (high|medium|low)
    */

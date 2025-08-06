@@ -108,7 +108,7 @@ class SecurityTest extends TestCase
     /**
      * Test GraphQLConfigManager centralized configuration
      * 
-     * @since 1.0.4
+     * @since 1.1.0
      */
     public function test_graphql_config_manager(): void
     {
