@@ -40,7 +40,7 @@ jobs:
                   # Use our simple update script with --no-confirm flag for CI
                   ./scripts/update-version-simple.sh "$VERSION" --no-confirm
 
-                  echo "✅ Version updated to $VERSION using update-version-simple.sh script"
+                  echo "Version updated to $VERSION using update-version-simple.sh script"
 
             - name: Create distribution package
               id: package
@@ -63,9 +63,9 @@ jobs:
                     echo "package_name=silver-assist-security-v$VERSION" >> $GITHUB_OUTPUT
                     echo "package_size_kb=${PACKAGE_SIZE}KB" >> $GITHUB_OUTPUT
                     echo "zip_file=$ZIP_FILE" >> $GITHUB_OUTPUT
-                    echo "📦 Package created: $ZIP_FILE (${PACKAGE_SIZE}KB)"
+                    echo "Package created: $ZIP_FILE (${PACKAGE_SIZE}KB)"
                   else
-                    echo "❌ Package creation failed"
+                    echo "Package creation failed"
                     exit 1
                   fi
 
@@ -109,15 +109,15 @@ jobs:
                   - HTTPS (recommended for full security features)
 
                   ## Features Included
-                  - ✅ HTTPOnly Cookie Protection
-                  - ✅ GraphQL Security (Rate Limiting, Query Validation)
-                  - ✅ Advanced Login Security
-                  - ✅ Real-time Security Dashboard
-                  - ✅ WordPress Hardening Features
-                  - ✅ Multi-language Support (English/Spanish)
-                  - ✅ Automatic Update System
-                  - ✅ Modern PHP 8+ Architecture
-                  - ✅ PSR-4 Autoloading
+                  - HTTPOnly Cookie Protection
+                  - GraphQL Security (Rate Limiting, Query Validation)
+                  - Advanced Login Security
+                  - Real-time Security Dashboard
+                  - WordPress Hardening Features
+                  - Multi-language Support (English/Spanish)
+                  - Automatic Update System
+                  - Modern PHP 8+ Architecture
+                  - PSR-4 Autoloading
 
                   ## Distribution Channels
                   - **GitHub Releases**: Source code and compiled packages
@@ -150,37 +150,37 @@ jobs:
                     CHANGES=$(sed -n "/## \\[${VERSION}\\]/,/## \\[/p" CHANGELOG.md | sed '$d' | tail -n +2)
                     
                     if [ -n "$CHANGES" ]; then
-                      echo "✅ Found changes with sed method"
+                      echo "Found changes with sed method"
                       echo "## Changes in v$VERSION" > release_notes.md
                       echo "$CHANGES" >> release_notes.md
                     else
-                      echo "❌ Sed method failed, trying awk method"
+                      echo "Sed method failed, trying awk method"
                       # Method 2: Using awk (more reliable across different systems)
                       CHANGES_AWK=$(awk "/^## \\[${VERSION}\\]/{flag=1; next} /^## \\[/{flag=0} flag" CHANGELOG.md)
                       
                       if [ -n "$CHANGES_AWK" ]; then
-                        echo "✅ Found changes with awk method"
+                        echo "Found changes with awk method"
                         echo "## Changes in v$VERSION" > release_notes.md
                         echo "$CHANGES_AWK" >> release_notes.md
                       else
-                        echo "❌ Awk method failed, trying grep method"
+                        echo "Awk method failed, trying grep method"
                         # Method 3: Using grep with line numbers (fallback)
                         LINE_START=$(grep -n "## \\[${VERSION}\\]" CHANGELOG.md | cut -d: -f1)
                         if [ -n "$LINE_START" ]; then
-                          echo "✅ Found version at line: $LINE_START"
+                          echo "Found version at line: $LINE_START"
                           # Extract from start line to next version or end of file
                           CHANGES_GREP=$(tail -n +$((LINE_START + 1)) CHANGELOG.md | sed '/^## \[/q' | sed '$d')
                           if [ -n "$CHANGES_GREP" ]; then
-                            echo "✅ Found changes with grep method"
+                            echo "Found changes with grep method"
                             echo "## Changes in v$VERSION" > release_notes.md
                             echo "$CHANGES_GREP" >> release_notes.md
                           else
-                            echo "❌ All methods failed"
+                            echo "All methods failed"
                             echo "## Changes in v$VERSION" > release_notes.md
                             echo "See [CHANGELOG.md](CHANGELOG.md) for detailed changes." >> release_notes.md
                           fi
                         else
-                          echo "❌ Version not found in CHANGELOG"
+                          echo "Version not found in CHANGELOG"
                           echo "## Changes in v$VERSION" > release_notes.md
                           echo "See [CHANGELOG.md](CHANGELOG.md) for detailed changes." >> release_notes.md
                         fi
@@ -195,12 +195,12 @@ jobs:
                   # Add package information to release notes
                   cat >> release_notes.md << EOF
 
-                  ## 📦 Package Information
+                  ## Package Information
                   - **File**: silver-assist-security-v$VERSION.zip
                   - **Size**: ~${{ steps.package.outputs.package_size_kb }}
                   - **License**: Proprietary
 
-                  ## 🚀 Installation
+                  ## Installation
                   1. Download the ZIP file below
                   2. Go to WordPress Admin → Plugins → Add New → Upload Plugin
                   3. Choose the downloaded ZIP file and click "Install Now"
@@ -209,7 +209,7 @@ jobs:
 
                   For detailed installation instructions, see the [README.md](README.md) file.
 
-                  ## 🔒 Security Features
+                  ## Security Features
                   - HTTPOnly cookie protection
                   - GraphQL security with rate limiting
                   - Login attempt limiting and session management
@@ -240,14 +240,14 @@ jobs:
 
             - name: Summary
               run: |
-                  echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
+                  echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
                   echo "- **Plugin**: Silver Assist Security Essentials" >> $GITHUB_STEP_SUMMARY
                   echo "- **Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
                   echo "- **Package**: ${{ steps.package.outputs.zip_file }}" >> $GITHUB_STEP_SUMMARY
                   echo "- **Size**: ~${{ steps.package.outputs.package_size_kb }}" >> $GITHUB_STEP_SUMMARY
                   echo "- **Release**: [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }})" >> $GITHUB_STEP_SUMMARY
                   echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "### 🔒 Security Features Included" >> $GITHUB_STEP_SUMMARY
+                  echo "### Security Features Included" >> $GITHUB_STEP_SUMMARY
                   echo "- HTTPOnly cookie protection" >> $GITHUB_STEP_SUMMARY
                   echo "- GraphQL security with rate limiting" >> $GITHUB_STEP_SUMMARY
                   echo "- Advanced login security" >> $GITHUB_STEP_SUMMARY

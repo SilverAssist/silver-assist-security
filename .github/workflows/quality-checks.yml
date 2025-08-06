@@ -28,11 +28,11 @@ jobs:
 
             - name: Validate composer.json
               run: |
-                  echo "🔍 Validating composer.json..."
+                  echo "Validating composer.json..."
                   if composer validate --strict; then
-                    echo "✅ composer.json is valid"
+                    echo "composer.json is valid"
                   else
-                    echo "⚠️ composer.json has warnings, but continuing..."
+                    echo "composer.json has warnings, but continuing..."
                   fi
 
             - name: Cache Composer dependencies
@@ -51,93 +51,93 @@ jobs:
                   # Only configure if vendor directory exists and has the right structure
                   if [ -d "vendor/wp-coding-standards/wpcs" ]; then
                     vendor/bin/phpcs --config-set installed_paths vendor/wp-coding-standards/wpcs
-                    echo "✅ WPCS configured successfully"
+                    echo "WPCS configured successfully"
                   else
-                    echo "⚠️ WPCS not found, skipping configuration"
+                    echo "WPCS not found, skipping configuration"
                   fi
 
             - name: Run PHP CodeSniffer
               run: |
                   # Run basic syntax validation
-                  echo "🔍 Running PHP syntax validation..."
+                  echo "Running PHP syntax validation..."
                   find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \;
-                  echo "✅ PHP syntax validation completed"
+                  echo "PHP syntax validation completed"
 
             - name: WordPress Coding Standards Check
               run: |
-                  echo "🔍 Running WordPress Coding Standards check..."
+                  echo "Running WordPress Coding Standards check..."
                   # Use basic PSR12 standard as fallback if WordPress standard fails
                   if vendor/bin/phpcs --standard=WordPress --extensions=php --ignore=vendor/ . 2>/dev/null; then
-                    echo "✅ WordPress Coding Standards check completed"
+                    echo "WordPress Coding Standards check completed"
                   else
-                    echo "⚠️ WordPress standard failed, trying PSR12 as fallback..."
-                    vendor/bin/phpcs --standard=PSR12 --extensions=php --ignore=vendor/ src/ || echo "⚠️ Some coding standard issues found, but continuing..."
+                    echo "WordPress standard failed, trying PSR12 as fallback..."
+                    vendor/bin/phpcs --standard=PSR12 --extensions=php --ignore=vendor/ src/ || echo "Some coding standard issues found, but continuing..."
                   fi
 
             - name: Validate plugin structure
               run: |
-                  echo "🔍 Validating plugin structure..."
+                  echo "Validating plugin structure..."
 
                   # Check main plugin file exists
                   if [ ! -f "silver-assist-security.php" ]; then
-                    echo "❌ Main plugin file missing: silver-assist-security.php"
+                    echo "Main plugin file missing: silver-assist-security.php"
                     exit 1
                   fi
-                  echo "✅ Main plugin file exists"
+                  echo "Main plugin file exists"
 
                   # Check required directories
                   for dir in "src" "assets" "languages"; do
                     if [ ! -d "$dir" ]; then
-                      echo "❌ Required directory missing: $dir"
+                      echo "Required directory missing: $dir"
                       exit 1
                     fi
-                    echo "✅ Directory exists: $dir"
+                    echo "Directory exists: $dir"
                   done
 
                   # Check core classes exist
                   for class in "src/Core/Plugin.php" "src/Core/Updater.php" "src/Admin/AdminPanel.php"; do
                     if [ ! -f "$class" ]; then
-                      echo "❌ Core class missing: $class"
+                      echo "Core class missing: $class"
                       exit 1
                     fi
-                    echo "✅ Core class exists: $class"
+                    echo "Core class exists: $class"
                   done
                   
                   # Check test configuration files
-                  echo "🔍 Checking test configuration..."
+                  echo "Checking test configuration..."
                   if [ -f "phpunit.xml.dist" ]; then
-                    echo "✅ PHPUnit configuration exists"
+                    echo "PHPUnit configuration exists"
                   else
-                    echo "⚠️ PHPUnit configuration missing"
+                    echo "PHPUnit configuration missing"
                   fi
                   
                   if [ -f ".phpcs.xml.dist" ]; then
-                    echo "✅ PHP CodeSniffer configuration exists"
+                    echo "PHP CodeSniffer configuration exists"
                   else
-                    echo "⚠️ PHP CodeSniffer configuration missing"
+                    echo "PHP CodeSniffer configuration missing"
                   fi
                   
                   # Check test directory structure
                   if [ -d "tests" ]; then
-                    echo "✅ Tests directory exists"
+                    echo "Tests directory exists"
                     
                     # Check test subdirectories
                     for test_dir in "tests/Unit" "tests/Integration" "tests/Security"; do
                       if [ -d "$test_dir" ]; then
-                        echo "✅ Test directory exists: $test_dir"
+                        echo "Test directory exists: $test_dir"
                       else
-                        echo "⚠️ Test directory missing: $test_dir"
+                        echo "Test directory missing: $test_dir"
                       fi
                     done
                     
                     # Check test helper
                     if [ -f "tests/Helpers/TestHelper.php" ]; then
-                      echo "✅ Test helper exists"
+                      echo "Test helper exists"
                     else
-                      echo "⚠️ Test helper missing"
+                      echo "Test helper missing"
                     fi
                   else
-                    echo "⚠️ Tests directory not found"
+                    echo "Tests directory not found"
                   fi
 
     unit-tests:
@@ -172,90 +172,90 @@ jobs:
 
             - name: Install Composer dependencies
               run: |
-                  echo "🔍 Installing Composer dependencies for PHP ${{ matrix.php-version }}..."
+                  echo "Installing Composer dependencies for PHP ${{ matrix.php-version }}..."
                   composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
-                  echo "✅ Composer dependencies installed"
+                  echo "Composer dependencies installed"
 
             - name: Validate test infrastructure
               run: |
-                  echo "🔍 Validating test infrastructure..."
+                  echo "Validating test infrastructure..."
                   
                   # Check if PHPUnit is available
                   if [ ! -f vendor/bin/phpunit ]; then
-                      echo "❌ PHPUnit not found, test validation will be skipped"
+                      echo "PHPUnit not found, test validation will be skipped"
                       exit 0
                   fi
                   
                   # Check PHPUnit configuration
                   if [ ! -f phpunit.xml.dist ]; then
-                      echo "❌ PHPUnit configuration not found, test validation will be skipped"
+                      echo "PHPUnit configuration not found, test validation will be skipped"
                       exit 0
                   fi
                   
-                  echo "✅ Test infrastructure validated for PHP ${{ matrix.php-version }}"
+                  echo "Test infrastructure validated for PHP ${{ matrix.php-version }}"
 
             - name: PHP syntax validation
               run: |
-                  echo "🔍 Running comprehensive PHP syntax validation with PHP ${{ matrix.php-version }}..."
+                  echo "Running comprehensive PHP syntax validation with PHP ${{ matrix.php-version }}..."
                   
                   # Test all PHP files syntax including test files
                   find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \;
                   
-                  echo "✅ PHP syntax validation completed for PHP ${{ matrix.php-version }}"
+                  echo "PHP syntax validation completed for PHP ${{ matrix.php-version }}"
 
             - name: Test files validation
               run: |
-                  echo "🔍 Validating test files structure and syntax..."
+                  echo "Validating test files structure and syntax..."
                   
                   # Check if test files are loadable without WordPress
                   if [ -d "tests" ]; then
-                      echo "🔍 Validating test file syntax..."
+                      echo "Validating test file syntax..."
                       find tests/ -name "*.php" -exec php -l {} \;
-                      echo "✅ Test files have valid syntax"
+                      echo "Test files have valid syntax"
                       
                       # Count test files
                       TEST_COUNT=$(find tests/ -name "*Test.php" | wc -l)
-                      echo "📊 Found $TEST_COUNT test files"
+                      echo "Found $TEST_COUNT test files"
                       
                       # Check test helper
                       if [ -f "tests/Helpers/TestHelper.php" ]; then
-                          echo "✅ TestHelper class found"
+                          echo "TestHelper class found"
                       fi
                       
                       # Check bootstrap
                       if [ -f "tests/bootstrap.php" ]; then
-                          echo "✅ Test bootstrap found"
+                          echo "Test bootstrap found"
                       fi
                   else
-                      echo "⚠️ Tests directory not found"
+                      echo "Tests directory not found"
                   fi
 
             - name: PHPUnit configuration validation
               run: |
-                  echo "🔍 Validating PHPUnit configuration with PHP ${{ matrix.php-version }}..."
+                  echo "Validating PHPUnit configuration with PHP ${{ matrix.php-version }}..."
                   
                   # Try to validate PHPUnit configuration
                   if vendor/bin/phpunit --version >/dev/null 2>&1; then
-                      echo "✅ PHPUnit is functional (version: $(vendor/bin/phpunit --version | head -1))"
+                      echo "PHPUnit is functional (version: $(vendor/bin/phpunit --version | head -1))"
                       
                       # Try to list tests without running them (skip WordPress dependency issues)
-                      echo "🔍 Attempting to parse test configuration..."
+                      echo "Attempting to parse test configuration..."
                       if vendor/bin/phpunit --configuration phpunit.xml.dist --list-tests >/dev/null 2>&1; then
-                          echo "✅ PHPUnit can parse test configuration"
+                          echo "PHPUnit can parse test configuration"
                           
                           # Show test suites
-                          echo "📋 Test suites found:"
+                          echo "Test suites found:"
                           vendor/bin/phpunit --configuration phpunit.xml.dist --list-suites || echo "  Could not list suites (may need WordPress environment)"
                       else
-                          echo "⚠️ PHPUnit configuration may need WordPress environment - this is expected"
+                          echo "PHPUnit configuration may need WordPress environment - this is expected"
                       fi
                   else
-                      echo "⚠️ PHPUnit may have issues, but continuing..."
+                      echo "PHPUnit may have issues, but continuing..."
                   fi
 
             - name: Class autoloading validation
               run: |
-                  echo "🔍 Validating class autoloading with PHP ${{ matrix.php-version }}..."
+                  echo "Validating class autoloading with PHP ${{ matrix.php-version }}..."
                   
                   # Test if our classes can be autoloaded (basic check)
                   php -r "
@@ -264,15 +264,15 @@ jobs:
                   // Test basic class loading without WordPress
                   try {
                       if (class_exists('SilverAssist\\\\Security\\\\Core\\\\Plugin', false)) {
-                          echo '✅ Core Plugin class is autoloadable' . PHP_EOL;
+                          echo 'Core Plugin class is autoloadable' . PHP_EOL;
                       } else {
-                          echo '⚠️ Core Plugin class not found in autoloader' . PHP_EOL;
+                          echo 'Core Plugin class not found in autoloader' . PHP_EOL;
                       }
                   } catch (Exception \$e) {
-                      echo '⚠️ Autoloader test failed: ' . \$e->getMessage() . PHP_EOL;
+                      echo 'Autoloader test failed: ' . \$e->getMessage() . PHP_EOL;
                   }
                   
-                  echo '✅ Autoloader validation completed for PHP ${{ matrix.php-version }}' . PHP_EOL;
+                  echo 'Autoloader validation completed for PHP ${{ matrix.php-version }}' . PHP_EOL;
                   "
 
     security-check:
@@ -299,78 +299,78 @@ jobs:
 
             - name: Install dependencies
               run: |
-                  echo "🔍 Installing dependencies..."
+                  echo "Installing dependencies..."
                   composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
-                  echo "✅ Dependencies installed"
+                  echo "Dependencies installed"
 
             - name: Run security check
               run: |
                   # Check for common security issues (only in PHP files, excluding vendor)
-                  echo "🔍 Checking for eval() usage in PHP code..."
+                  echo "Checking for eval() usage in PHP code..."
                   EVAL_FILES=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -l "eval(" {} \; 2>/dev/null || true)
                   if [ -n "$EVAL_FILES" ]; then
-                    echo "❌ eval() usage found in PHP files - security risk!"
+                    echo "eval() usage found in PHP files - security risk!"
                     echo "$EVAL_FILES"
                     exit 1
                   else
-                    echo "✅ No eval() found in PHP code"
+                    echo "No eval() found in PHP code"
                   fi
 
-                  echo "🔍 Checking for direct \$_GET usage in PHP code..."
+                  echo "Checking for direct \$_GET usage in PHP code..."
                   GET_FILES=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -l "\$_GET\[" {} \; 2>/dev/null || true)
                   if [ -n "$GET_FILES" ]; then
-                    echo "⚠️ Direct \$_GET usage found - consider using sanitize_text_field()"
+                    echo "Direct \$_GET usage found - consider using sanitize_text_field()"
                     echo "$GET_FILES"
                   else
-                    echo "✅ No direct \$_GET usage in PHP code"
+                    echo "No direct \$_GET usage in PHP code"
                   fi
 
-                  echo "🔍 Checking for direct \$_POST usage in PHP code..."
+                  echo "Checking for direct \$_POST usage in PHP code..."
                   POST_FILES=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -l "\$_POST\[" {} \; 2>/dev/null || true)
                   if [ -n "$POST_FILES" ]; then
-                    echo "⚠️ Direct \$_POST usage found - consider using sanitize_text_field()"
+                    echo "Direct \$_POST usage found - consider using sanitize_text_field()"
                     echo "$POST_FILES"
                   else
-                    echo "✅ No direct \$_POST usage in PHP code"
+                    echo "No direct \$_POST usage in PHP code"
                   fi
 
-                  echo "🔍 Checking for remote file_get_contents usage in PHP code..."
+                  echo "Checking for remote file_get_contents usage in PHP code..."
                   HTTP_FILES=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -l "file_get_contents.*http" {} \; 2>/dev/null || true)
                   if [ -n "$HTTP_FILES" ]; then
-                    echo "❌ Remote file_get_contents found - potential SSRF risk!"
+                    echo "Remote file_get_contents found - potential SSRF risk!"
                     echo "$HTTP_FILES"
                     exit 1
                   else
-                    echo "✅ No remote file_get_contents found in PHP code"
+                    echo "No remote file_get_contents found in PHP code"
                   fi
 
             - name: WordPress Security Best Practices
               run: |
-                  echo "🔍 Checking WordPress security best practices..."
+                  echo "Checking WordPress security best practices..."
 
                   # Check for proper nonce usage in forms
-                  echo "🔍 Checking for wp_nonce_field usage..."
+                  echo "Checking for wp_nonce_field usage..."
                   FORM_FILES=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -l "<form" {} \; 2>/dev/null || true)
                   if [ -n "$FORM_FILES" ]; then
                     for file in $FORM_FILES; do
                       if ! grep -q "wp_nonce_field\|wp_create_nonce" "$file"; then
-                        echo "⚠️ Form without nonce found in: $file"
+                        echo "Form without nonce found in: $file"
                       fi
                     done
                   fi
 
                   # Check for proper capability checks
-                  echo "🔍 Checking for capability checks..."
+                  echo "Checking for capability checks..."
                   ADMIN_FILES=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -l "add_menu_page\|add_submenu_page" {} \; 2>/dev/null || true)
                   if [ -n "$ADMIN_FILES" ]; then
                     for file in $ADMIN_FILES; do
                       if ! grep -q "current_user_can\|wp_verify_nonce" "$file"; then
-                        echo "⚠️ Admin page without capability check in: $file"
+                        echo "Admin page without capability check in: $file"
                       fi
                     done
                   fi
 
-                  echo "✅ WordPress security checks completed"
+                  echo "WordPress security checks completed"
 
     test-validation:
         runs-on: ubuntu-latest
@@ -397,57 +397,57 @@ jobs:
 
             - name: Install Composer dependencies
               run: |
-                  echo "🔍 Installing Composer dependencies..."
+                  echo "Installing Composer dependencies..."
                   composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
-                  echo "✅ Composer dependencies installed"
+                  echo "Composer dependencies installed"
 
             - name: Validate test files syntax
               run: |
-                  echo "🔍 Validating test files syntax..."
+                  echo "Validating test files syntax..."
                   
                   # Check if tests directory exists
                   if [ ! -d "tests" ]; then
-                    echo "⚠️ Tests directory not found, skipping test validation"
+                    echo "Tests directory not found, skipping test validation"
                     exit 0
                   fi
                   
                   # Run syntax validation on test files
                   find tests/ -name "*.php" -exec php -l {} \;
-                  echo "✅ Test files syntax validation completed"
+                  echo "Test files syntax validation completed"
 
             - name: Validate PHPUnit configuration
               run: |
-                  echo "🔍 Validating PHPUnit configuration..."
+                  echo "Validating PHPUnit configuration..."
                   
                   if [ ! -f "phpunit.xml.dist" ]; then
-                    echo "⚠️ PHPUnit configuration not found"
+                    echo "PHPUnit configuration not found"
                     exit 0
                   fi
                   
                   # Check if PHPUnit can parse the configuration
                   if vendor/bin/phpunit --configuration phpunit.xml.dist --list-tests >/dev/null 2>&1; then
-                    echo "✅ PHPUnit configuration is valid"
+                    echo "PHPUnit configuration is valid"
                   else
-                    echo "⚠️ PHPUnit configuration may have issues"
+                    echo "PHPUnit configuration may have issues"
                   fi
 
             - name: Check test dependencies
               run: |
-                  echo "🔍 Checking test dependencies..."
+                  echo "Checking test dependencies..."
                   
                   # Check if required test classes exist
                   if [ -f "tests/Helpers/TestHelper.php" ]; then
                     php -l tests/Helpers/TestHelper.php
-                    echo "✅ TestHelper class syntax is valid"
+                    echo "TestHelper class syntax is valid"
                   fi
                   
                   # Check test bootstrap
                   if [ -f "tests/bootstrap.php" ]; then
                     php -l tests/bootstrap.php
-                    echo "✅ Test bootstrap syntax is valid"
+                    echo "Test bootstrap syntax is valid"
                   fi
                   
-                  echo "✅ Test dependencies validation completed"
+                  echo "Test dependencies validation completed"
 
     compatibility-check:
         runs-on: ubuntu-latest
@@ -469,53 +469,53 @@ jobs:
                       echo 'PHP 8.0+ required';
                       exit(1);
                     }
-                    echo '✅ PHP version compatible';
+                    echo 'PHP version compatible';
                   "
 
             - name: WordPress compatibility check
               run: |
                   # Basic WordPress function usage validation (only in PHP files)
-                  echo "🔍 Checking WordPress compatibility..."
+                  echo "Checking WordPress compatibility..."
                   WP_FUNCTIONS=$(find . -name "*.php" -not -path "./vendor/*" -not -path "./.github/*" -not -path "./node_modules/*" -exec grep -l "add_action\|add_filter\|wp_enqueue" {} \; 2>/dev/null || true)
                   if [ -n "$WP_FUNCTIONS" ]; then
-                    echo "✅ WordPress functions found"
+                    echo "WordPress functions found"
                   else
-                    echo "⚠️ No WordPress functions detected"
+                    echo "No WordPress functions detected"
                   fi
 
                   # Check for WordPress version requirements
-                  echo "🔍 Checking WordPress version requirements..."
+                  echo "Checking WordPress version requirements..."
                   if grep -q "Requires at least.*6\.5" silver-assist-security.php; then
-                    echo "✅ WordPress 6.5+ requirement found"
+                    echo "WordPress 6.5+ requirement found"
                   else
-                    echo "⚠️ WordPress version requirement not found or incorrect"
+                    echo "WordPress version requirement not found or incorrect"
                   fi
 
             - name: PSR-4 Autoloading Check
               run: |
-                  echo "🔍 Checking PSR-4 autoloading structure..."
+                  echo "Checking PSR-4 autoloading structure..."
 
                   # Check if namespace matches directory structure
-                  echo "🔍 Validating namespace structure..."
+                  echo "Validating namespace structure..."
                   find src/ -name "*.php" -exec grep -l "namespace SilverAssist" {} \; > /tmp/namespaced_files.txt || true
 
                   if [ -s /tmp/namespaced_files.txt ]; then
-                    echo "✅ PSR-4 namespaces found"
+                    echo "PSR-4 namespaces found"
                     
                     # Check specific namespace patterns
                     if find src/Core/ -name "*.php" -exec grep -q "namespace SilverAssist\\\\Security\\\\Core" {} \; 2>/dev/null; then
-                      echo "✅ Core namespace structure correct"
+                      echo "Core namespace structure correct"
                     fi
                     
                     if find src/Admin/ -name "*.php" -exec grep -q "namespace SilverAssist\\\\Security\\\\Admin" {} \; 2>/dev/null; then
-                      echo "✅ Admin namespace structure correct"
+                      echo "Admin namespace structure correct"
                     fi
                     
                     if find src/Security/ -name "*.php" -exec grep -q "namespace SilverAssist\\\\Security\\\\Security" {} \; 2>/dev/null; then
-                      echo "✅ Security namespace structure correct"
+                      echo "Security namespace structure correct"
                     fi
                   else
-                    echo "❌ PSR-4 namespaces not found"
+                    echo "PSR-4 namespaces not found"
                     exit 1
                   fi
 
@@ -528,7 +528,7 @@ jobs:
 
             - name: Check version consistency
               run: |
-                  echo "🔍 Checking version consistency across files..."
+                  echo "Checking version consistency across files..."
 
                   # Make script executable
                   chmod +x scripts/check-versions.sh
@@ -538,9 +538,9 @@ jobs:
 
                   # Check exit code
                   if [ $? -eq 0 ]; then
-                    echo "✅ All versions are consistent"
+                    echo "All versions are consistent"
                   else
-                    echo "❌ Version inconsistencies found"
+                    echo "Version inconsistencies found"
                     exit 1
                   fi
 
@@ -553,74 +553,74 @@ jobs:
 
             - name: Validate automation scripts
               run: |
-                  echo "🔍 Validating automation scripts..."
+                  echo "Validating automation scripts..."
 
                   # Check if scripts exist and are executable
                   for script in "update-version-simple.sh" "build-release.sh" "check-versions.sh"; do
                     if [ ! -f "scripts/$script" ]; then
-                      echo "❌ Script missing: scripts/$script"
+                      echo "Script missing: scripts/$script"
                       exit 1
                     fi
                     
                     if [ ! -x "scripts/$script" ]; then
-                      echo "⚠️ Script not executable: scripts/$script"
+                      echo "Script not executable: scripts/$script"
                       chmod +x "scripts/$script"
                     fi
                     
-                    echo "✅ Script validated: scripts/$script"
+                    echo "Script validated: scripts/$script"
                   done
 
                   # Test scripts with dry-run where possible
-                  echo "🔍 Testing update-version script..."
+                  echo "Testing update-version script..."
                   if ! ./scripts/update-version-simple.sh --help >/dev/null 2>&1; then
-                    echo "⚠️ update-version-simple.sh may have issues"
+                    echo "update-version-simple.sh may have issues"
                   else
-                    echo "✅ update-version-simple.sh script functional"
+                    echo "update-version-simple.sh script functional"
                   fi
                   
                   # Test build script
-                  echo "🔍 Testing build-release script..."
+                  echo "Testing build-release script..."
                   if ./scripts/build-release.sh --help >/dev/null 2>&1; then
-                    echo "✅ build-release.sh script functional"
+                    echo "build-release.sh script functional"
                   else
-                    echo "⚠️ build-release.sh may not have help option"
+                    echo "build-release.sh may not have help option"
                   fi
 
             - name: Test runner validation
               run: |
-                  echo "🔍 Validating test runner setup..."
+                  echo "Validating test runner setup..."
                   
                   # Check if composer.json has test-related dependencies
                   if grep -q "phpunit" composer.json; then
-                    echo "✅ PHPUnit found in composer.json"
+                    echo "PHPUnit found in composer.json"
                   else
-                    echo "⚠️ PHPUnit not found in composer.json"
+                    echo "PHPUnit not found in composer.json"
                   fi
                   
                   # Check if test configuration exists and is valid
                   if [ -f "phpunit.xml.dist" ]; then
-                    echo "✅ PHPUnit configuration file exists"
+                    echo "PHPUnit configuration file exists"
                     
                     # Basic XML validation
                     if php -r "simplexml_load_file('phpunit.xml.dist') or exit(1);" 2>/dev/null; then
-                      echo "✅ PHPUnit configuration XML is valid"
+                      echo "PHPUnit configuration XML is valid"
                     else
-                      echo "❌ PHPUnit configuration XML is invalid"
+                      echo "PHPUnit configuration XML is invalid"
                       exit 1
                     fi
                   fi
                   
                   # Check PHP CodeSniffer configuration
                   if [ -f ".phpcs.xml.dist" ]; then
-                    echo "✅ PHP CodeSniffer configuration exists"
+                    echo "PHP CodeSniffer configuration exists"
                     
                     # Basic XML validation
                     if php -r "simplexml_load_file('.phpcs.xml.dist') or exit(1);" 2>/dev/null; then
-                      echo "✅ PHP CodeSniffer configuration XML is valid"
+                      echo "PHP CodeSniffer configuration XML is valid"
                     else
-                      echo "❌ PHP CodeSniffer configuration XML is invalid"
+                      echo "PHP CodeSniffer configuration XML is invalid"
                       exit 1
                     fi
                   fi
                   
-                  echo "✅ Test runner validation completed"
+                  echo "Test runner validation completed"
