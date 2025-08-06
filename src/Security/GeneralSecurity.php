@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Security
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.2
+ * @version 1.0.3
  */
 
 namespace SilverAssist\Security\Security;
@@ -174,7 +174,9 @@ class GeneralSecurity
      */
     public function configure_secure_cookies(): void
     {
-        if (!headers_sent()) {
+        // Only configure session cookies if no session has started yet
+        // This prevents disrupting existing sessions during plugin activation
+        if (!headers_sent() && session_status() === PHP_SESSION_NONE) {
             $secure = \is_ssl();
 
             session_set_cookie_params([

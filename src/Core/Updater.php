@@ -8,7 +8,7 @@
  * @package SilverAssist\Security\Core
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.2
+ * @version 1.0.3
  */
 
 namespace SilverAssist\Security\Core;
@@ -373,7 +373,7 @@ class Updater
             ]);
         } catch (Exception $e) {
             \wp_send_json_error([
-                "message" => "Error checking for updates: " . $e->getMessage(),
+                "message" => "Error checking for updates: {$e->getMessage()}",
                 "code" => "version_check_failed"
             ]);
         }

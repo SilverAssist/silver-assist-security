@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Admin
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.2
+ * @version 1.0.3
  */
 
 namespace SilverAssist\Security\Admin;
@@ -66,8 +66,8 @@ class AdminPanel
     public function add_admin_menu(): void
     {
         \add_options_page(
-            \__("Silver Assist Security", "silver-assist-security"),
-            \__("Security Essentials", "silver-assist-security"),
+            __("Silver Assist Security", "silver-assist-security"),
+            __("Security Essentials", "silver-assist-security"),
             "manage_options",
             "silver-assist-security",
             [$this, "render_admin_page"]
@@ -92,9 +92,7 @@ class AdminPanel
         \register_setting("silver_assist_security_password", "silver_assist_password_strength_enforcement");
 
         // GraphQL Settings
-        \register_setting("silver_assist_security_graphql", "silver_assist_graphql_query_depth");
-        \register_setting("silver_assist_security_graphql", "silver_assist_graphql_query_complexity");
-        \register_setting("silver_assist_security_graphql", "silver_assist_graphql_query_timeout");
+        \register_setting("silver_assist_security_graphql", "silver_assist_graphql_headless_mode");
     }
 
     /**
@@ -133,43 +131,43 @@ class AdminPanel
             "logout_nonce" => \wp_create_nonce("log-out"),
             "refreshInterval" => 30000, // 30 seconds
             "strings" => [
-                "loading" => \__("Loading...", "silver-assist-security"),
-                "error" => \__("Error loading data", "silver-assist-security"),
-                "lastUpdated" => \__("Last updated:", "silver-assist-security"),
-                "noThreats" => \__("No active threats detected", "silver-assist-security"),
-                "refreshing" => \__("Refreshing...", "silver-assist-security"),
+                "loading" => __("Loading...", "silver-assist-security"),
+                "error" => __("Error loading data", "silver-assist-security"),
+                "lastUpdated" => __("Last updated:", "silver-assist-security"),
+                "noThreats" => __("No active threats detected", "silver-assist-security"),
+                "refreshing" => __("Refreshing...", "silver-assist-security"),
                 "updateUrl" => \admin_url("update-core.php"),
                 // Version check strings
-                "newVersionAvailable" => \__("New version %s available.", "silver-assist-security"),
-                "updateNow" => \__("Update now", "silver-assist-security"),
-                "checking" => \__("Checking...", "silver-assist-security"),
-                "newVersionFound" => \__("New version available: %1\$s\\nCurrent version: %2\$s", "silver-assist-security"),
-                "upToDate" => \__("The plugin is up to date with the latest version (%s)", "silver-assist-security"),
-                "checkError" => \__("Error checking for updates:", "silver-assist-security"),
-                "unknownError" => \__("Unknown error", "silver-assist-security"),
-                "connectivityError" => \__("Connectivity error while checking for updates", "silver-assist-security"),
+                "newVersionAvailable" => __("New version %s available.", "silver-assist-security"),
+                "updateNow" => __("Update now", "silver-assist-security"),
+                "checking" => __("Checking...", "silver-assist-security"),
+                "newVersionFound" => __("New version available: %1\$s\\nCurrent version: %2\$s", "silver-assist-security"),
+                "upToDate" => __("The plugin is up to date with the latest version (%s)", "silver-assist-security"),
+                "checkError" => __("Error checking for updates:", "silver-assist-security"),
+                "unknownError" => __("Unknown error", "silver-assist-security"),
+                "connectivityError" => __("Connectivity error while checking for updates", "silver-assist-security"),
                 // Form validation error strings
-                "loginAttemptsError" => \__("Login attempts must be between 1 and 20", "silver-assist-security"),
-                "lockoutDurationError" => \__("Lockout duration must be between 60 and 3600 seconds", "silver-assist-security"),
-                "sessionTimeoutError" => \__("Session timeout must be between 5 and 120 minutes", "silver-assist-security"),
-                "graphqlDepthError" => \__("GraphQL query depth must be between 1 and 20", "silver-assist-security"),
-                "graphqlComplexityError" => \__("GraphQL query complexity must be between 10 and 1000", "silver-assist-security"),
-                "graphqlTimeoutError" => \__("GraphQL query timeout must be between 1 and 30 seconds", "silver-assist-security"),
-                "customUrlPatternError" => \__("Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)", "silver-assist-security"),
-                "urlPatternError" => \__("Use only lowercase letters, numbers, and hyphens (3-30 characters)", "silver-assist-security"),
+                "loginAttemptsError" => __("Login attempts must be between 1 and 20", "silver-assist-security"),
+                "lockoutDurationError" => __("Lockout duration must be between 60 and 3600 seconds", "silver-assist-security"),
+                "sessionTimeoutError" => __("Session timeout must be between 5 and 120 minutes", "silver-assist-security"),
+                "graphqlDepthError" => __("GraphQL query depth must be between 1 and 20", "silver-assist-security"),
+                "graphqlComplexityError" => __("GraphQL query complexity must be between 10 and 1000", "silver-assist-security"),
+                "graphqlTimeoutError" => __("GraphQL query timeout must be between 1 and 30 seconds", "silver-assist-security"),
+                "customUrlPatternError" => __("Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)", "silver-assist-security"),
+                "urlPatternError" => __("Use only lowercase letters, numbers, and hyphens (3-30 characters)", "silver-assist-security"),
                 // Auto-save strings
-                "saving" => \__("Saving...", "silver-assist-security"),
-                "saved" => \__("Saved!", "silver-assist-security"),
-                "saveFailed" => \__("Save failed", "silver-assist-security"),
+                "saving" => __("Saving...", "silver-assist-security"),
+                "saved" => __("Saved!", "silver-assist-security"),
+                "saveFailed" => __("Save failed", "silver-assist-security"),
                 // AJAX error strings
-                "updateCheckFailed" => \__("Failed to check for Silver Assist updates", "silver-assist-security"),
-                "securityStatusFailed" => \__("Failed to load security essentials", "silver-assist-security"),
-                "loginStatsFailed" => \__("Failed to load login stats", "silver-assist-security"),
+                "updateCheckFailed" => __("Failed to check for Silver Assist updates", "silver-assist-security"),
+                "securityStatusFailed" => __("Failed to load security essentials", "silver-assist-security"),
+                "loginStatsFailed" => __("Failed to load login stats", "silver-assist-security"),
                 // Table headers
-                "ipHash" => \__("IP Hash", "silver-assist-security"),
-                "blockedTime" => \__("Blocked Time", "silver-assist-security"),
-                "remaining" => \__("Remaining", "silver-assist-security"),
-                "minutes" => \__("min", "silver-assist-security"),
+                "ipHash" => __("IP Hash", "silver-assist-security"),
+                "blockedTime" => __("Blocked Time", "silver-assist-security"),
+                "remaining" => __("Remaining", "silver-assist-security"),
+                "minutes" => __("min", "silver-assist-security"),
             ]
         ]);
     }
@@ -329,13 +327,11 @@ class AdminPanel
                 "silver_assist_login_attempts" => (int) ($_POST["silver_assist_login_attempts"] ?? 5),
                 "silver_assist_lockout_duration" => (int) ($_POST["silver_assist_lockout_duration"] ?? 900),
                 "silver_assist_session_timeout" => (int) ($_POST["silver_assist_session_timeout"] ?? 30),
-                "silver_assist_password_strength_enforcement" => isset($_POST["silver_assist_password_strength_enforcement"]) ? 1 : 0,
-                "silver_assist_bot_protection" => isset($_POST["silver_assist_bot_protection"]) ? 1 : 0,
+                "silver_assist_password_strength_enforcement" => (int) ($_POST["silver_assist_password_strength_enforcement"] ?? 0),
+                "silver_assist_bot_protection" => (int) ($_POST["silver_assist_bot_protection"] ?? 0),
 
                 // GraphQL Security
-                "silver_assist_graphql_query_depth" => (int) ($_POST["silver_assist_graphql_query_depth"] ?? 8),
-                "silver_assist_graphql_query_complexity" => (int) ($_POST["silver_assist_graphql_query_complexity"] ?? 100),
-                "silver_assist_graphql_query_timeout" => (int) ($_POST["silver_assist_graphql_query_timeout"] ?? 5),
+                "silver_assist_graphql_headless_mode" => (int) ($_POST["silver_assist_graphql_headless_mode"] ?? 0),
             ];
 
             // Update all settings
@@ -378,6 +374,7 @@ class AdminPanel
             ],
             "graphql_security" => [
                 "enabled" => class_exists("WPGraphQL"),
+                "headless_mode" => (bool) \get_option("silver_assist_graphql_headless_mode", false),
                 "query_depth_limit" => (int) \get_option("silver_assist_graphql_query_depth", 8),
                 "query_complexity_limit" => (int) \get_option("silver_assist_graphql_query_complexity", 100),
                 "query_timeout" => (int) \get_option("silver_assist_graphql_query_timeout", 5),
@@ -487,7 +484,7 @@ class AdminPanel
 
         } catch (Exception $e) {
             // Log error and return empty array
-            error_log("Silver Assist Security: Error getting blocked IPs - " . $e->getMessage());
+            error_log("Silver Assist Security: Error getting blocked IPs - {$e->getMessage()}");
             return [];
         }
     }
@@ -674,29 +671,14 @@ class AdminPanel
         }
 
         // Save bot protection settings
-        \update_option("silver_assist_bot_protection", isset($_POST["silver_assist_bot_protection"]) ? 1 : 0);
+        \update_option("silver_assist_bot_protection", (int) ($_POST["silver_assist_bot_protection"] ?? 0));
 
         // Save password settings
-        \update_option("silver_assist_password_strength_enforcement", isset($_POST["silver_assist_password_strength_enforcement"]) ? 1 : 0);
+        \update_option("silver_assist_password_strength_enforcement", (int) ($_POST["silver_assist_password_strength_enforcement"] ?? 0));
 
-        // Save GraphQL settings
-        if (isset($_POST["silver_assist_graphql_query_depth"])) {
-            $query_depth = intval($_POST["silver_assist_graphql_query_depth"]);
-            $query_depth = max(1, min(20, $query_depth));
-            \update_option("silver_assist_graphql_query_depth", $query_depth);
-        }
-
-        if (isset($_POST["silver_assist_graphql_query_complexity"])) {
-            $query_complexity = intval($_POST["silver_assist_graphql_query_complexity"]);
-            $query_complexity = max(10, min(1000, $query_complexity));
-            \update_option("silver_assist_graphql_query_complexity", $query_complexity);
-        }
-
-        if (isset($_POST["silver_assist_graphql_query_timeout"])) {
-            $query_timeout = intval($_POST["silver_assist_graphql_query_timeout"]);
-            $query_timeout = max(1, min(30, $query_timeout));
-            \update_option("silver_assist_graphql_query_timeout", $query_timeout);
-        }
+        // Save GraphQL settings  
+        // Save headless mode setting
+        \update_option("silver_assist_graphql_headless_mode", (int) ($_POST["silver_assist_graphql_headless_mode"] ?? 0));
 
         // Add success message
         \add_action("admin_notices", function () {
@@ -720,9 +702,7 @@ class AdminPanel
         $session_timeout = \get_option("silver_assist_session_timeout", 30);
         $bot_protection = \get_option("silver_assist_bot_protection", 1);
         $password_strength_enforcement = \get_option("silver_assist_password_strength_enforcement", 1);
-        $graphql_query_depth = \get_option("silver_assist_graphql_query_depth", 8);
-        $graphql_query_complexity = \get_option("silver_assist_graphql_query_complexity", 100);
-        $graphql_query_timeout = \get_option("silver_assist_graphql_query_timeout", 5);
+        $graphql_headless_mode = \get_option("silver_assist_graphql_headless_mode", false);
 
         // Get initial security status for display
         $security_status = $this->get_security_status();
@@ -798,6 +778,14 @@ class AdminPanel
                         </div>
                         <div class="card-content">
                             <?php if ($security_status['graphql_security']['enabled']): ?>
+                                <div class="headless-mode-indicator">
+                                    <span class="mode-label"><?php esc_html_e('Mode:', 'silver-assist-security'); ?></span>
+                                    <span class="mode-value <?php echo $security_status['graphql_security']['headless_mode'] ? 'headless' : 'standard'; ?>">
+                                        <?php echo $security_status['graphql_security']['headless_mode'] ? 
+                                            esc_html__('Headless CMS', 'silver-assist-security') : 
+                                            esc_html__('Standard', 'silver-assist-security'); ?>
+                                    </span>
+                                </div>
                                 <div class="stat">
                                     <span
                                         class="stat-value"><?php echo esc_html($security_status['graphql_security']['query_depth_limit']); ?></span>
@@ -957,57 +945,111 @@ class AdminPanel
                     <!-- GraphQL Security Settings -->
                     <?php if (class_exists('WPGraphQL')): ?>
                         <div class="card">
-                            <h2><?php esc_html_e('GraphQL Security Settings', 'silver-assist-security'); ?></h2>
+                            <h2><?php esc_html_e('GraphQL Security Enhancements', 'silver-assist-security'); ?></h2>
+                            
+                            <div class="graphql-native-notice">
+                                <p><strong><?php esc_html_e('WPGraphQL Detected', 'silver-assist-security'); ?></strong></p>
+                                <p><?php esc_html_e('WPGraphQL has its own security settings. These enhancements work alongside WPGraphQL\'s native configuration.', 'silver-assist-security'); ?></p>
+                                <p><a href="<?php echo admin_url('admin.php?page=graphql-settings'); ?>" class="button button-secondary" target="_blank">
+                                    <?php esc_html_e('Open WPGraphQL Settings', 'silver-assist-security'); ?>
+                                </a></p>
+                            </div>
+                            
                             <table class="form-table">
                                 <tr>
                                     <th scope="row">
-                                        <label for="silver_assist_graphql_query_depth">
-                                            <?php esc_html_e('Maximum Query Depth', 'silver-assist-security'); ?>
-                                        </label>
+                                        <?php esc_html_e('Headless CMS Mode', 'silver-assist-security'); ?>
                                     </th>
                                     <td>
-                                        <input type="number" id="silver_assist_graphql_query_depth"
-                                            name="silver_assist_graphql_query_depth"
-                                            value="<?php echo esc_attr($graphql_query_depth); ?>" min="1" max="20"
-                                            class="small-text" />
+                                        <label>
+                                            <input type="checkbox" name="silver_assist_graphql_headless_mode" value="1"
+                                                <?php checked($graphql_headless_mode, 1); ?> />
+                                            <?php esc_html_e('Enable optimized rate limiting for headless CMS usage', 'silver-assist-security'); ?>
+                                        </label>
                                         <p class="description">
-                                            <?php esc_html_e('Maximum allowed GraphQL query depth (1-20)', 'silver-assist-security'); ?>
+                                            <?php esc_html_e('Increases rate limits and timeout handling for better headless CMS performance. Use WPGraphQL\'s native settings for query depth and complexity.', 'silver-assist-security'); ?>
                                         </p>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th scope="row">
-                                        <label for="silver_assist_graphql_query_complexity">
-                                            <?php esc_html_e('Maximum Query Complexity', 'silver-assist-security'); ?>
-                                        </label>
+                                        <?php esc_html_e('Enhanced Rate Limiting', 'silver-assist-security'); ?>
                                     </th>
                                     <td>
-                                        <input type="number" id="silver_assist_graphql_query_complexity"
-                                            name="silver_assist_graphql_query_complexity"
-                                            value="<?php echo esc_attr($graphql_query_complexity); ?>" min="10" max="1000"
-                                            class="small-text" />
                                         <p class="description">
-                                            <?php esc_html_e('Maximum allowed GraphQL query complexity (10-1000)', 'silver-assist-security'); ?>
+                                            <strong><?php esc_html_e('Current Rate Limits:', 'silver-assist-security'); ?></strong><br>
+                                            <?php if ($graphql_headless_mode): ?>
+                                                • <?php esc_html_e('Standard requests: 300/minute', 'silver-assist-security'); ?><br>
+                                                • <?php esc_html_e('Build processes: 600/minute (auto-detected)', 'silver-assist-security'); ?><br>
+                                                • <?php esc_html_e('Query timeout: Extended for complex operations', 'silver-assist-security'); ?>
+                                            <?php else: ?>
+                                                • <?php esc_html_e('Standard requests: 100/minute', 'silver-assist-security'); ?><br>
+                                                • <?php esc_html_e('Build processes: 300/minute (auto-detected)', 'silver-assist-security'); ?><br>
+                                                • <?php esc_html_e('Query timeout: Standard limits', 'silver-assist-security'); ?>
+                                            <?php endif; ?>
                                         </p>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th scope="row">
-                                        <label for="silver_assist_graphql_query_timeout">
-                                            <?php esc_html_e('Query Timeout (seconds)', 'silver-assist-security'); ?>
-                                        </label>
+                                        <?php esc_html_e('WPGraphQL Recommendations', 'silver-assist-security'); ?>
                                     </th>
                                     <td>
-                                        <input type="number" id="silver_assist_graphql_query_timeout"
-                                            name="silver_assist_graphql_query_timeout"
-                                            value="<?php echo esc_attr($graphql_query_timeout); ?>" min="1" max="30"
-                                            class="small-text" />
-                                        <p class="description">
-                                            <?php esc_html_e('Maximum GraphQL query execution time (1-30 seconds)', 'silver-assist-security'); ?>
-                                        </p>
+                                        <div class="wpgraphql-recommendations">
+                                            <p><strong><?php esc_html_e('For Headless CMS Usage:', 'silver-assist-security'); ?></strong></p>
+                                            <ul>
+                                                <li><?php esc_html_e('✓ Enable Query Depth Limiting with Max Depth: 15-20', 'silver-assist-security'); ?></li>
+                                                <li><?php esc_html_e('✓ Keep Batch Queries enabled with limit: 10-20', 'silver-assist-security'); ?></li>
+                                                <li><?php esc_html_e('✓ Disable Public Introspection in production', 'silver-assist-security'); ?></li>
+                                                <li><?php esc_html_e('✓ Disable GraphQL Debug Mode in production', 'silver-assist-security'); ?></li>
+                                            </ul>
+                                            
+                                            <p><strong><?php esc_html_e('Authentication Strategy:', 'silver-assist-security'); ?></strong></p>
+                                            <div class="auth-strategy-recommendations">
+                                                <p><strong style="color: #d63638;"><?php esc_html_e('⚠️ Important Decision: Endpoint Authentication', 'silver-assist-security'); ?></strong></p>
+                                                <div class="auth-options">
+                                                    <div class="auth-option">
+                                                        <strong><?php esc_html_e('Public Frontend (Blog, Portfolio, E-commerce):', 'silver-assist-security'); ?></strong>
+                                                        <ul>
+                                                            <li><?php esc_html_e('❌ DO NOT restrict endpoint to authenticated users', 'silver-assist-security'); ?></li>
+                                                            <li><?php esc_html_e('✓ Use query whitelisting for specific operations', 'silver-assist-security'); ?></li>
+                                                            <li><?php esc_html_e('✓ Implement IP-based rate limiting (our headless mode)', 'silver-assist-security'); ?></li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="auth-option">
+                                                        <strong><?php esc_html_e('Private Application (Dashboard, Intranet):', 'silver-assist-security'); ?></strong>
+                                                        <ul>
+                                                            <li><?php esc_html_e('✅ Restrict endpoint to authenticated users', 'silver-assist-security'); ?></li>
+                                                            <li><?php esc_html_e('✓ Use JWT tokens for frontend authentication', 'silver-assist-security'); ?></li>
+                                                            <li><?php esc_html_e('✓ Maximum security for sensitive data', 'silver-assist-security'); ?></li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <p><strong><?php esc_html_e('Current WPGraphQL Settings:', 'silver-assist-security'); ?></strong></p>
+                                            <div id="wpgraphql-current-settings" class="wpgraphql-settings-display">
+                                                <?php echo $this->get_wpgraphql_current_settings(); ?>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             </table>
+                            
+                            <?php if ($graphql_headless_mode): ?>
+                                <div class="headless-mode-notice">
+                                    <p><strong><?php esc_html_e('Headless CMS Mode Active', 'silver-assist-security'); ?></strong></p>
+                                    <ul>
+                                        <li><?php esc_html_e('✓ Enhanced rate limiting for high-frequency requests', 'silver-assist-security'); ?></li>
+                                        <li><?php esc_html_e('✓ Build process detection (Next.js, Gatsby, etc.)', 'silver-assist-security'); ?></li>
+                                        <li><?php esc_html_e('✓ Extended timeouts for complex queries', 'silver-assist-security'); ?></li>
+                                        <li><?php esc_html_e('✓ Optimized for static site generation (SSG/ISR)', 'silver-assist-security'); ?></li>
+                                    </ul>
+                                    <p class="description">
+                                        <?php esc_html_e('Configure query depth and complexity limits in WPGraphQL settings for optimal performance.', 'silver-assist-security'); ?>
+                                    </p>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
 
@@ -1022,6 +1064,9 @@ class AdminPanel
 
     /**
      * Render updates information section
+     * 
+     * Displays current plugin version, latest available version, update status,
+     * and provides manual update checking functionality with GitHub integration.
      * 
      * @since 1.0.0
      * @return void
@@ -1086,5 +1131,99 @@ class AdminPanel
                 </p>
             </div>
             <?php
+    }
+
+    /**
+     * Get current WPGraphQL settings for display
+     * 
+     * @since 1.0.3
+     * @return string HTML display of current settings
+     */
+    private function get_wpgraphql_current_settings(): string
+    {
+        if (!\class_exists("WPGraphQL")) {
+            return "<em>" . esc_html__("WPGraphQL not active", "silver-assist-security") . "</em>";
+        }
+
+        $settings = [];
+        
+        // Get WPGraphQL settings
+        $graphql_settings = \get_option("graphql_general_settings", []);
+        
+        // Authentication Restriction - Most Important for Headless
+        $auth_required = isset($graphql_settings["restrict_endpoint_to_authenticated_users"]) ? 
+            $graphql_settings["restrict_endpoint_to_authenticated_users"] : "off";
+        
+        $auth_status = $auth_required === "on" ? 
+            "<span style=\"color: #d63638; font-weight: bold;\">" . esc_html__("RESTRICTED", "silver-assist-security") . "</span>" :
+            "<span style=\"color: #00a32a; font-weight: bold;\">" . esc_html__("PUBLIC", "silver-assist-security") . "</span>";
+            
+        $settings[] = sprintf(
+            "<strong>%s:</strong> %s",
+            esc_html__("Endpoint Access", "silver-assist-security"),
+            $auth_status
+        );
+        
+        // Query Depth
+        $depth_enabled = isset($graphql_settings["query_depth_enabled"]) ? $graphql_settings["query_depth_enabled"] : "off";
+        $max_depth = isset($graphql_settings["query_depth_max_depth"]) ? $graphql_settings["query_depth_max_depth"] : 10;
+        
+        $settings[] = sprintf(
+            "<strong>%s:</strong> %s (%s: %d)",
+            \esc_html__("Query Depth Limiting", "silver-assist-security"),
+            $depth_enabled === "on" ? \esc_html__("Enabled", "silver-assist-security") : \esc_html__("Disabled", "silver-assist-security"),
+            \esc_html__("Max Depth", "silver-assist-security"),
+            (int) $max_depth
+        );
+
+        // Batch Queries
+        $batch_enabled = isset($graphql_settings["batch_queries_enabled"]) ? $graphql_settings["batch_queries_enabled"] : "on";
+        $batch_limit = isset($graphql_settings["batch_queries_limit"]) ? $graphql_settings["batch_queries_limit"] : 10;
+        
+        $settings[] = sprintf(
+            "<strong>%s:</strong> %s (%s: %d)",
+            \esc_html__("Batch Queries", "silver-assist-security"),
+            $batch_enabled === "on" ? \esc_html__("Enabled", "silver-assist-security") : \esc_html__("Disabled", "silver-assist-security"),
+            \esc_html__("Limit", "silver-assist-security"),
+            (int) $batch_limit
+        );
+
+        // Public Introspection
+        $introspection_enabled = isset($graphql_settings["public_introspection_enabled"]) ? $graphql_settings["public_introspection_enabled"] : "off";
+        
+        $settings[] = sprintf(
+            "<strong>%s:</strong> %s",
+            \esc_html__("Public Introspection", "silver-assist-security"),
+            $introspection_enabled === "on" ? 
+                "<span style=\"color: #d63638;\">" . \esc_html__("Enabled", "silver-assist-security") . "</span>" :
+                "<span style=\"color: #00a32a;\">" . \esc_html__("Disabled", "silver-assist-security") . "</span>"
+        );
+
+        // Debug Mode
+        $debug_enabled = isset($graphql_settings["debug_mode_enabled"]) ? $graphql_settings["debug_mode_enabled"] : "off";
+        
+        $settings[] = sprintf(
+            "<strong>%s:</strong> %s",
+            \esc_html__("Debug Mode", "silver-assist-security"),
+            $debug_enabled === "on" ? 
+                "<span style=\"color: #d63638;\">" . \esc_html__("Enabled", "silver-assist-security") . "</span>" :
+                "<span style=\"color: #00a32a;\">" . \esc_html__("Disabled", "silver-assist-security") . "</span>"
+        );
+
+        // Add security assessment
+        $security_issues = [];
+        if ($introspection_enabled === "on") {
+            $security_issues[] = \esc_html__("Public introspection enabled (security risk)", "silver-assist-security");
+        }
+        if ($debug_enabled === "on") {
+            $security_issues[] = \esc_html__("Debug mode enabled (not recommended for production)", "silver-assist-security");
+        }
+        
+        if (!empty($security_issues)) {
+            $settings[] = "<strong style=\"color: #d63638;\">" . \esc_html__("⚠️ Security Concerns:", "silver-assist-security") . "</strong><br>" . 
+                         implode("<br>", $security_issues);
+        }
+
+        return "<ul><li>" . implode("</li><li>", $settings) . "</li></ul>";
     }
 }

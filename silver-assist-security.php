@@ -3,7 +3,7 @@
  * Plugin Name: Silver Assist Security Essentials
  * Plugin URI: https://github.com/SilverAssist/silver-assist-security
  * Description: Resolves critical security vulnerabilities: WordPress login protection, HTTPOnly cookie implementation, and comprehensive GraphQL security. Addresses security audit findings automatically.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: Silver Assist
  * Author URI: http://silverassist.com/
  * Text Domain: silver-assist-security
@@ -18,7 +18,7 @@
  * @package SilverAssist\Security
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.2
+ * @version 1.0.3
  */
 
 // Prevent direct access
@@ -27,7 +27,7 @@ if (!defined("ABSPATH")) {
 }
 
 // Define plugin constants
-define('SILVER_ASSIST_SECURITY_VERSION', '1.0.2');
+define('SILVER_ASSIST_SECURITY_VERSION', '1.0.3');
 define('SILVER_ASSIST_SECURITY_PATH', plugin_dir_path(__FILE__));
 define('SILVER_ASSIST_SECURITY_URL', plugin_dir_url(__FILE__));
 define('SILVER_ASSIST_SECURITY_BASENAME', plugin_basename(__FILE__));
@@ -100,7 +100,8 @@ class SilverAssistSecurityBootstrap
         "silver_assist_hide_admin_urls" => 0, // Hide default admin URLs - DISABLED by default
         "silver_assist_graphql_query_depth" => 8,
         "silver_assist_graphql_query_complexity" => 100,
-        "silver_assist_graphql_query_timeout" => 5
+        "silver_assist_graphql_query_timeout" => 5,
+        "silver_assist_graphql_headless_mode" => 0 // Headless CMS mode - DISABLED by default
     ];
 
     /**
@@ -118,7 +119,8 @@ class SilverAssistSecurityBootstrap
         "silver_assist_hide_admin_urls",
         "silver_assist_graphql_query_depth",
         "silver_assist_graphql_query_complexity",
-        "silver_assist_graphql_query_timeout"
+        "silver_assist_graphql_query_timeout",
+        "silver_assist_graphql_headless_mode"
     ];
 
     /**
@@ -159,7 +161,7 @@ class SilverAssistSecurityBootstrap
         register_uninstall_hook(__FILE__, [__CLASS__, "uninstall"]);
 
         // Initialize plugin
-        add_action("plugins_loaded", [$this, "init_plugin"]);
+        \add_action("plugins_loaded", [$this, "init_plugin"]);
     }
 
     /**
@@ -175,9 +177,9 @@ class SilverAssistSecurityBootstrap
             Plugin::getInstance();
         } catch (Exception $e) {
             // Log the error and show admin notice
-            error_log("Silver Assist Security Essentials initialization failed: " . $e->getMessage());
+            error_log("Silver Assist Security Essentials initialization failed: {$e->getMessage()}");
 
-            add_action("admin_notices", function () use ($e) {
+            \add_action("admin_notices", function () use ($e) {
                 echo "<div class=\"notice notice-error\"><p>";
                 echo "<strong>Silver Assist Security Essentials Error:</strong> " . esc_html($e->getMessage());
                 echo "</p></div>";
@@ -200,8 +202,47 @@ class SilverAssistSecurityBootstrap
             }
         }
 
+        // Initialize last_activity for all currently logged-in users
+        // This prevents immediate logout after plugin activation
+        $this->initialize_user_last_activity();
+
         // Flush rewrite rules to ensure custom admin URL routing works properly
         \flush_rewrite_rules();
+    }
+
+    /**
+     * Initialize last_activity for all currently logged-in users
+     * 
+     * This prevents immediate logout after plugin activation by setting
+     * last_activity timestamp for users who are currently logged in.
+     * 
+     * @since 1.0.3
+     * @return void
+     */
+    private function initialize_user_last_activity(): void
+    {
+        // Get all currently logged-in users by checking for active sessions
+        $current_time = time();
+
+        // Query for users who have WordPress sessions (simplified check)
+        $users = \get_users([
+            "meta_query" => [
+                [
+                    "key" => "session_tokens",
+                    "compare" => "EXISTS"
+                ]
+            ]
+        ]);
+
+        // Initialize last_activity for each logged-in user
+        foreach ($users as $user) {
+            $existing_activity = \get_user_meta($user->ID, "last_activity", true);
+
+            // Only set if not already set to avoid overwriting existing data
+            if (empty($existing_activity)) {
+                \update_user_meta($user->ID, "last_activity", $current_time);
+            }
+        }
     }
 
     /**

@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Security
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.2
+ * @version 1.0.3
  */
 
 namespace SilverAssist\Security\Security;
@@ -251,17 +251,30 @@ class LoginSecurity
     public function setup_session_timeout(): void
     {
         if (\is_user_logged_in()) {
-            $last_activity = \get_user_meta(\get_current_user_id(), "last_activity", true);
+            $user_id = \get_current_user_id();
+            $last_activity = \get_user_meta($user_id, "last_activity", true);
             $timeout = $this->session_timeout * 60; // Convert to seconds
 
-            if ($last_activity && (time() - $last_activity) > $timeout) {
-                \wp_logout();
-                \wp_redirect(\wp_login_url() . "?session_expired=1");
-                exit;
+            // Only check timeout if last_activity exists and is not empty
+            // This prevents logout during plugin activation when last_activity hasn't been set yet
+            if ($last_activity && is_numeric($last_activity) && (int) $last_activity > 0) {
+                $time_since_last_activity = time() - (int) $last_activity;
+
+                // Only logout if timeout exceeded and not in admin area during plugin management
+                if (
+                    $time_since_last_activity > $timeout &&
+                    (!\is_admin() ||
+                        (!\current_user_can("activate_plugins") && !isset($_GET["page"]) && !isset($_POST["action"])))
+                ) {
+                    \wp_logout();
+                    \wp_redirect(\wp_login_url() . "?session_expired=1");
+                    exit;
+                }
             }
 
-            // Update last activity
-            \update_user_meta(\get_current_user_id(), "last_activity", time());
+            // Always update last activity for logged-in users (but only if not empty)
+            // This ensures we initialize last_activity for new users
+            \update_user_meta($user_id, "last_activity", time());
         }
     }
 
@@ -447,10 +460,28 @@ class LoginSecurity
 
         // List of known bot/crawler patterns
         $bot_patterns = [
-            "bot", "crawler", "spider", "scraper", "scan", "probe",
-            "wget", "curl", "python", "php", "perl", "java",
-            "masscan", "nmap", "nikto", "sqlmap", "gobuster",
-            "dirb", "dirbuster", "wpscan", "nuclei", "httpx"
+            "bot",
+            "crawler",
+            "spider",
+            "scraper",
+            "scan",
+            "probe",
+            "wget",
+            "curl",
+            "python",
+            "php",
+            "perl",
+            "java",
+            "masscan",
+            "nmap",
+            "nikto",
+            "sqlmap",
+            "gobuster",
+            "dirb",
+            "dirbuster",
+            "wpscan",
+            "nuclei",
+            "httpx"
         ];
 
         // Check if user agent matches bot patterns
@@ -475,7 +506,7 @@ class LoginSecurity
             }
 
             // Check for rapid access patterns
-            $access_key = "login_access_" . md5($ip);
+            $access_key = "login_access_{md5($ip)}";
             $recent_access = \get_transient($access_key) ?: 0;
             if ($recent_access > 5) { // More than 5 requests in last minute
                 $is_bot = true;
@@ -498,11 +529,11 @@ class LoginSecurity
     {
         $ip = $this->get_client_ip();
         $user_agent = $_SERVER["HTTP_USER_AGENT"] ?? "Unknown";
-        
+
         // Log bot activity for security monitoring
-        $bot_log_key = "bot_activity_" . md5($ip);
+        $bot_log_key = "bot_activity_{md5($ip)}";
         $bot_activity = \get_transient($bot_log_key) ?: [];
-        
+
         $bot_activity[] = [
             "timestamp" => time(),
             "user_agent" => $user_agent,
@@ -519,7 +550,7 @@ class LoginSecurity
 
         // If too many bot activities, extend blocking
         if (count($bot_activity) > 3) {
-            $extended_block_key = "extended_bot_block_" . md5($ip);
+            $extended_block_key = "extended_bot_block_{md5($ip)}";
             \set_transient($extended_block_key, true, 7200); // Block for 2 hours
         }
     }
@@ -569,7 +600,7 @@ class LoginSecurity
      */
     private function is_bot_blocked(string $ip): bool
     {
-        $extended_block_key = "extended_bot_block_" . md5($ip);
+        $extended_block_key = "extended_bot_block_{md5($ip)}";
         return \get_transient($extended_block_key) !== false;
     }
 }

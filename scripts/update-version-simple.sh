@@ -13,7 +13,7 @@
 # @package SilverAssist\Security
 # @since 1.0.0
 # @author Silver Assist
-# @version 1.0.2
+# @version 1.0.3
 ###############################################################################
 
 set -e  # Exit on any error
