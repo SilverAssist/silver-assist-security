@@ -216,6 +216,7 @@ class LoginSecurity
             return new \WP_Error(
                 "login_locked",
                 sprintf(
+                    /* translators: %d: number of minutes remaining until unlock */
                     \__("Too many failed login attempts. Try again in %d minutes.", "silver-assist-security"),
                     ceil($remaining_time / 60)
                 )

@@ -102,6 +102,7 @@ class AdminPanel
 
         // GraphQL Settings
         \register_setting("silver_assist_security_graphql", "silver_assist_graphql_headless_mode");
+        \register_setting("silver_assist_security_graphql", "silver_assist_graphql_query_timeout");
     }
 
     /**
@@ -139,6 +140,7 @@ class AdminPanel
             "nonce" => \wp_create_nonce("silver_assist_security_ajax"),
             "logout_nonce" => \wp_create_nonce("log-out"),
             "refreshInterval" => 30000, // 30 seconds
+            "phpExecutionTimeout" => $this->config_manager->get_php_execution_timeout(),
             "strings" => [
                 "loading" => __("Loading...", "silver-assist-security"),
                 "error" => __("Error loading data", "silver-assist-security"),
@@ -147,11 +149,17 @@ class AdminPanel
                 "refreshing" => __("Refreshing...", "silver-assist-security"),
                 "updateUrl" => \admin_url("update-core.php"),
                 // Version check strings
-                "newVersionAvailable" => __("New version %s available.", "silver-assist-security"),
+                "newVersionAvailable" => 
+                    /* translators: %s: new version number */
+                    __("New version %s available.", "silver-assist-security"),
                 "updateNow" => __("Update now", "silver-assist-security"),
                 "checking" => __("Checking...", "silver-assist-security"),
-                "newVersionFound" => __("New version available: %1\$s\\nCurrent version: %2\$s", "silver-assist-security"),
-                "upToDate" => __("The plugin is up to date with the latest version (%s)", "silver-assist-security"),
+                "newVersionFound" => 
+                    /* translators: %1$s: new version number, %2$s: current version number */
+                    __("New version available: %1\$s\\nCurrent version: %2\$s", "silver-assist-security"),
+                "upToDate" => 
+                    /* translators: %s: current version number */
+                    __("The plugin is up to date with the latest version (%s)", "silver-assist-security"),
                 "checkError" => __("Error checking for updates:", "silver-assist-security"),
                 "unknownError" => __("Unknown error", "silver-assist-security"),
                 "connectivityError" => __("Connectivity error while checking for updates", "silver-assist-security"),
@@ -161,7 +169,11 @@ class AdminPanel
                 "sessionTimeoutError" => __("Session timeout must be between 5 and 120 minutes", "silver-assist-security"),
                 "graphqlDepthError" => __("GraphQL query depth must be between 1 and 20", "silver-assist-security"),
                 "graphqlComplexityError" => __("GraphQL query complexity must be between 10 and 1000", "silver-assist-security"),
-                "graphqlTimeoutError" => __("GraphQL query timeout must be between 1 and 30 seconds", "silver-assist-security"),
+                "graphqlTimeoutError" => sprintf(
+                    /* translators: %d: maximum timeout in seconds based on PHP limit */
+                    __("GraphQL query timeout must be between 1 and %d seconds (PHP limit)", "silver-assist-security"),
+                    $this->config_manager->get_php_execution_timeout()
+                ),
                 "customUrlPatternError" => __("Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)", "silver-assist-security"),
                 "urlPatternError" => __("Use only lowercase letters, numbers, and hyphens (3-30 characters)", "silver-assist-security"),
                 // Auto-save strings
@@ -703,6 +715,14 @@ class AdminPanel
         // Save headless mode setting
         \update_option("silver_assist_graphql_headless_mode", (int) ($_POST["silver_assist_graphql_headless_mode"] ?? 0));
 
+        // Save GraphQL timeout setting
+        $graphql_timeout = intval($_POST["silver_assist_graphql_query_timeout"] ?? \get_option("silver_assist_graphql_query_timeout", $this->config_manager->get_php_execution_timeout()));
+        if ($_POST["silver_assist_graphql_query_timeout"] ?? null) {
+            $php_timeout = $this->config_manager->get_php_execution_timeout();
+            $graphql_timeout = max(1, min($php_timeout, $graphql_timeout));
+            \update_option("silver_assist_graphql_query_timeout", $graphql_timeout);
+        }
+
         // Add success message
         \add_action("admin_notices", function () {
             echo "<div class=\"notice notice-success is-dismissible\">";
@@ -726,6 +746,7 @@ class AdminPanel
         $bot_protection = \get_option("silver_assist_bot_protection", 1);
         $password_strength_enforcement = \get_option("silver_assist_password_strength_enforcement", 1);
         $graphql_headless_mode = \get_option("silver_assist_graphql_headless_mode", false);
+        $graphql_query_timeout = \get_option("silver_assist_graphql_query_timeout", $this->config_manager->get_php_execution_timeout());
 
         // Get initial security status for display
         $security_status = $this->get_security_status();
@@ -1029,6 +1050,31 @@ class AdminPanel
                                         </label>
                                         <p class="description">
                                             <?php esc_html_e("Increases rate limits and timeout handling for better headless CMS performance. Use WPGraphQL's native settings for query depth and complexity.", "silver-assist-security"); ?>
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">
+                                        <?php esc_html_e("GraphQL Query Timeout", "silver-assist-security"); ?>
+                                    </th>
+                                    <td>
+                                        <input type="range" 
+                                               name="silver_assist_graphql_query_timeout" 
+                                               id="silver_assist_graphql_query_timeout"
+                                               min="1" 
+                                               max="<?php echo esc_attr($this->config_manager->get_php_execution_timeout()); ?>" 
+                                               value="<?php echo esc_attr($graphql_query_timeout); ?>" 
+                                               step="1" />
+                                        <span id="graphql-timeout-value"><?php echo esc_html($graphql_query_timeout); ?></span>
+                                        <?php esc_html_e("seconds", "silver-assist-security"); ?>
+                                        <p class="description">
+                                            <strong><?php esc_html_e("PHP Limit:", "silver-assist-security"); ?></strong> 
+                                            <?php echo esc_html($this->config_manager->get_php_execution_timeout()); ?> 
+                                            <?php esc_html_e("seconds", "silver-assist-security"); ?>
+                                            <br>
+                                            <?php esc_html_e("Maximum time allowed for GraphQL query execution. Cannot exceed PHP execution time limit.", "silver-assist-security"); ?>
+                                            <br>
+                                            <em><?php echo esc_html($this->config_manager->get_timeout_config()["description"]); ?></em>
                                         </p>
                                     </td>
                                 </tr>

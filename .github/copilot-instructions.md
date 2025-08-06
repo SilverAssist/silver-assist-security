@@ -458,6 +458,7 @@ Admin forms process data with validation and immediate option updates:
 - **FORBIDDEN**: Single quotes for strings: `'string'` or `__('text', 'domain')`
 - **Exception**: Only use single quotes inside double-quoted strings when necessary
 - **SQL Queries**: Use double quotes for string literals in SQL: `WHERE option_value = "1"`
+- **sprintf() Placeholders**: When using `sprintf()` with positional placeholders like `%1$d`, escape the `$` to prevent PHP variable interpretation: `"Query complexity %1\$d exceeds maximum %2\$d"`
 
 ### Documentation Requirements
 - **PHP**: Complete PHPDoc documentation for ALL classes, methods, and properties
@@ -471,6 +472,13 @@ Admin forms process data with validation and immediate option updates:
 - **Functions**: `__("text", "silver-assist-security")`, `esc_html_e("text", "silver-assist-security")`, etc.
 - **JavaScript i18n**: Pass translated strings from PHP via `wp_localize_script()`
 - **Forbidden**: Hardcoded user-facing strings without translation functions
+
+#### sprintf() Placeholder Standards
+- **Simple placeholders**: Use `%d`, `%s`, `%f` for sequential arguments: `sprintf(__("Found %d items", "domain"), $count)`
+- **Positional placeholders**: Use `%1\$d`, `%2\$s` with escaped `$` for non-sequential: `__("Value %1\$d exceeds limit %2\$d", "domain")`
+- **Translator comments**: ALWAYS add comments for placeholders: `/* translators: %d: number of items found */`
+- **Multiple placeholders**: Use positional numbering for clarity: `%1\$d` for first, `%2\$s` for second, etc.
+- **Escaping requirement**: In double-quoted strings, escape `$` in placeholders to prevent variable interpretation
 
 ## Modern PHP 8+ Conventions
 
@@ -784,10 +792,30 @@ echo "<h1>" . esc_html__("Security Settings", "silver-assist-security") . "</h1>
 esc_html_e("Login attempts exceeded", "silver-assist-security");
 $message = __("Settings saved successfully", "silver-assist-security");
 
+// ✅ CORRECT - sprintf() with escaped placeholders and translator comments
+throw new \GraphQL\Error\UserError(
+    sprintf(
+        /* translators: 1: current complexity, 2: maximum allowed complexity */
+        \__("Query complexity %1\$d exceeds maximum %2\$d", "silver-assist-security"),
+        $current_complexity,
+        $max_complexity
+    )
+);
+
+// ✅ CORRECT - Simple placeholder without positional numbering
+$message = sprintf(
+    /* translators: %d: number of failed attempts */
+    \__("Too many failed attempts: %d", "silver-assist-security"),
+    $attempts
+);
+
 // ❌ INCORRECT - Hardcoded strings
 echo "<h1>Security Settings</h1>";
 echo "Login attempts exceeded";
 $message = "Settings saved successfully";
+
+// ❌ INCORRECT - Unescaped placeholders causing variable interpretation
+\__("Query complexity %1$d exceeds maximum %2$d", "silver-assist-security"); // PHP sees $d as variable
 ```
 
 #### JavaScript i18n Examples

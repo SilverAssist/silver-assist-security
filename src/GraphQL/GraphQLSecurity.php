@@ -158,7 +158,7 @@ class GraphQLSecurity
     {
         // Use config manager to check WPGraphQL settings
         $config = $this->config_manager->get_configuration();
-        
+
         // If WPGraphQL already has introspection disabled, respect that
         if (!$config["introspection_enabled"]) {
             return;
@@ -176,14 +176,236 @@ class GraphQLSecurity
     }
 
     /**
-     * Add security validations
+     * Add security validations integrating with WPGraphQL native features
      * 
      * @since 1.0.0
      * @return void
      */
     public function add_security_validations(): void
     {
-        add_filter("graphql_validation_rules", [$this, "add_custom_validation_rules"]);
+        // Add our custom validation rules
+        \add_filter("graphql_validation_rules", [$this, "add_custom_validation_rules"]);
+
+        // Integrate with WPGraphQL's native depth validation
+        $this->integrate_with_wpgraphql_depth_validation();
+
+        // Enhance WPGraphQL's connection limits for complexity estimation
+        $this->enhance_wpgraphql_connection_limits();
+    }
+
+    /**
+     * Integrate with WPGraphQL's native query depth validation
+     * 
+     * @since 1.1.0
+     * @return void
+     */
+    private function integrate_with_wpgraphql_depth_validation(): void
+    {
+        // Check if WPGraphQL depth validation is enabled
+        if (function_exists("get_graphql_setting")) {
+            $wpgraphql_depth_enabled = \get_graphql_setting("query_depth_enabled", "off");
+            $wpgraphql_max_depth = \get_graphql_setting("query_depth_max", 10);
+
+            // If WPGraphQL depth validation is enabled, coordinate with it
+            if ($wpgraphql_depth_enabled === "on") {
+                // Log coordination for debugging
+                if (defined("WP_DEBUG") && WP_DEBUG) {
+                    error_log(sprintf(
+                        "Silver Assist Security: Coordinating with WPGraphQL depth validation (max: %d)",
+                        $wpgraphql_max_depth
+                    ));
+                }
+
+                // Use WPGraphQL's limit if it's more restrictive
+                if ($wpgraphql_max_depth < $this->max_query_depth) {
+                    $this->max_query_depth = $wpgraphql_max_depth;
+                }
+            }
+        }
+    }
+
+    /**
+     * Enhance WPGraphQL's connection limits for complexity estimation
+     * 
+     * @since 1.1.0
+     * @return void
+     */
+    private function enhance_wpgraphql_connection_limits(): void
+    {
+        // Filter WPGraphQL's max query amount for complexity estimation
+        \add_filter("graphql_connection_max_query_amount", [$this, "filter_connection_max_query_amount"], 10, 5);
+
+        // Add complexity hints to connection resolvers
+        \add_filter("graphql_connection_query_args", [$this, "add_complexity_hints_to_connections"], 10, 5);
+    }
+
+    /**
+     * Filter WPGraphQL's connection max query amount based on complexity estimation
+     * 
+     * @since 1.1.0
+     * @param int $max_query_amount The maximum number of nodes to query
+     * @param mixed $source The source object
+     * @param array $args The connection arguments
+     * @param mixed $context The GraphQL context
+     * @param mixed $info The ResolveInfo object
+     * @return int
+     */
+    public function filter_connection_max_query_amount(int $max_query_amount, $source, array $args, $context, $info): int
+    {
+        // Use our complexity configuration to adjust connection limits
+        $complexity_ratio = $this->max_query_complexity / 100; // Base ratio
+
+        // More complex queries get lower connection limits
+        $adjusted_limit = intval($max_query_amount / $complexity_ratio);
+
+        // Ensure we don't go below 10 or above default WPGraphQL limit (100)
+        return max(10, min(100, $adjusted_limit));
+    }
+
+    /**
+     * Add complexity hints to GraphQL connections
+     * 
+     * @since 1.1.0
+     * @param array $query_args The query arguments
+     * @param mixed $source The source object
+     * @param array $args The connection arguments
+     * @param mixed $context The GraphQL context
+     * @param mixed $info The ResolveInfo object
+     * @return array
+     */
+    public function add_complexity_hints_to_connections(array $query_args, $source, array $args, $context, $info): array
+    {
+        // Add complexity metadata for monitoring
+        $query_args["_silver_assist_complexity_hint"] = [
+            "max_complexity" => $this->max_query_complexity,
+            "connection_type" => $info->fieldName ?? "unknown",
+            "estimated_cost" => $this->estimate_connection_complexity($args)
+        ];
+
+        return $query_args;
+    }
+
+    /**
+     * Estimate connection complexity based on arguments
+     * 
+     * @since 1.1.0
+     * @param array $args Connection arguments
+     * @return int Estimated complexity points
+     */
+    private function estimate_connection_complexity(array $args): int
+    {
+        $base_cost = 1;
+
+        // Factor in the number of items requested
+        $first = $args["first"] ?? 10;
+        $last = $args["last"] ?? 10;
+        $item_count = max($first, $last);
+
+        // Higher item counts increase complexity
+        $item_complexity = ceil($item_count / 10);
+
+        // Factor in where arguments (filtering increases complexity)
+        $where_complexity = !empty($args["where"]) ? count($args["where"]) : 0;
+
+        return $base_cost + $item_complexity + $where_complexity;
+    }
+
+    /**
+     * Add custom validation rules with WPGraphQL integration
+     * 
+     * @since 1.0.0
+     * @param array $validation_rules Existing validation rules
+     * @return array Modified validation rules
+     */
+    public function add_custom_validation_rules(array $validation_rules): array
+    {
+        // Add our enhanced complexity validation
+        $validation_rules[] = new class ($this->max_query_complexity, $this->config_manager) {
+            private int $max_complexity;
+            private GraphQLConfigManager $config_manager;
+
+            public function __construct(int $max_complexity, GraphQLConfigManager $config_manager)
+            {
+                $this->max_complexity = $max_complexity;
+                $this->config_manager = $config_manager;
+            }
+
+            public function __invoke($context): array
+            {
+                return [
+                    "DocumentNode" => function ($node) use ($context) {
+                        // Use our enhanced complexity validation with WPGraphQL integration
+                        $estimated_complexity = $this->estimate_query_complexity($node);
+
+                        // Get dynamic complexity limit based on configuration
+                        $complexity_limit = $this->config_manager->get_safe_limit("complexity");
+
+                        if ($estimated_complexity > $complexity_limit) {
+                            $context->reportError(new \GraphQL\Error\Error(
+                                sprintf(
+                                    /* translators: 1: estimated complexity, 2: maximum allowed complexity */
+                                    \__("Query complexity %1\$d exceeds maximum allowed complexity %2\$d", "silver-assist-security"),
+                                    $estimated_complexity,
+                                    $complexity_limit
+                                )
+                            ));
+                        }
+                    }
+                ];
+            }
+
+            /**
+             * Estimate query complexity using enhanced proxy method
+             * 
+             * @param mixed $node DocumentNode
+             * @return int Estimated complexity
+             */
+            private function estimate_query_complexity($node): int
+            {
+                // Convert node to string for analysis
+                $query_string = $node->__toString();
+
+                // Enhanced complexity estimation
+                $base_complexity = 1;
+
+                // Field count estimation (each field adds complexity)
+                $field_matches = [];
+                preg_match_all("/\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*[{\(]/", $query_string, $field_matches);
+                $field_complexity = count($field_matches[1] ?? []);
+
+                // Connection complexity (connections with arguments)
+                $connection_matches = [];
+                preg_match_all("/\(\s*first:\s*(\d+)/", $query_string, $connection_matches);
+                $connection_complexity = 0;
+                foreach ($connection_matches[1] ?? [] as $first_value) {
+                    $connection_complexity += ceil((int) $first_value / 10);
+                }
+
+                // Where clause complexity (filtering increases complexity)
+                $where_complexity = substr_count(strtolower($query_string), "where:");
+
+                // Fragment complexity (fragments can multiply complexity)
+                $fragment_complexity = substr_count($query_string, "fragment") * 2;
+
+                // Nested query complexity (deeper nesting = higher complexity)
+                $nesting_level = 0;
+                $max_nesting = 0;
+                for ($i = 0; $i < strlen($query_string); $i++) {
+                    if ($query_string[$i] === "{") {
+                        $nesting_level++;
+                        $max_nesting = max($max_nesting, $nesting_level);
+                    } elseif ($query_string[$i] === "}") {
+                        $nesting_level--;
+                    }
+                }
+                $nesting_complexity = $max_nesting * 2;
+
+                return $base_complexity + $field_complexity + $connection_complexity +
+                    $where_complexity + $fragment_complexity + $nesting_complexity;
+            }
+        };
+
+        return $validation_rules;
     }
 
     /**
@@ -193,17 +415,6 @@ class GraphQLSecurity
      * @param array $rules Existing validation rules
      * @return array
      */
-    public function add_custom_validation_rules(array $rules): array
-    {
-        $rules[] = [$this, "validate_query_depth"];
-        $rules[] = [$this, "validate_query_complexity"];
-        $rules[] = [$this, "validate_aliases"];
-        $rules[] = [$this, "validate_directives"];
-        $rules[] = [$this, "validate_field_duplicates"];
-
-        return $rules;
-    }
-
     /**
      * Validate query before execution
      * 
@@ -227,7 +438,7 @@ class GraphQLSecurity
         // Check for introspection in production
         if (defined("WP_ENVIRONMENT_TYPE") && WP_ENVIRONMENT_TYPE === "production") {
             if ($this->is_introspection_query($query)) {
-                throw new \GraphQL\Error\UserError("Introspection is disabled in production.");
+                throw new \GraphQL\Error\UserError(\__("Introspection is disabled in production.", "silver-assist-security"));
             }
         }
 
@@ -264,7 +475,8 @@ class GraphQLSecurity
         if ($alias_count > $this->max_aliases) {
             throw new \GraphQL\Error\UserError(
                 sprintf(
-                    "Query contains too many aliases (%d). Maximum allowed: %d",
+                    /* translators: 1: number of aliases found, 2: maximum allowed */
+                    \__("Query contains too many aliases (%1\$d). Maximum allowed: %2\$d", "silver-assist-security"),
                     $alias_count,
                     $this->max_aliases
                 )
@@ -276,7 +488,8 @@ class GraphQLSecurity
         if ($directive_count > $this->max_directives * 2) {
             throw new \GraphQL\Error\UserError(
                 sprintf(
-                    "Query contains too many directives (%d). Maximum allowed: %d",
+                    /* translators: 1: number of directives found, 2: maximum allowed */
+                    \__("Query contains too many directives (%1\$d). Maximum allowed: %2\$d", "silver-assist-security"),
                     $directive_count,
                     $this->max_directives * 2
                 )
@@ -287,7 +500,8 @@ class GraphQLSecurity
         if (preg_match("/(\w+)(\s*\w+\s*)*\{[^}]*\1[^}]*\1/", $query)) {
             throw new \GraphQL\Error\UserError(
                 sprintf(
-                    "Query contains excessive field duplication. Maximum allowed: %d",
+                    /* translators: %d: maximum allowed field duplicates */
+                    \__("Query contains excessive field duplication. Maximum allowed: %d", "silver-assist-security"),
                     $this->max_field_duplicates
                 )
             );
@@ -297,7 +511,11 @@ class GraphQLSecurity
         $depth_pattern = str_repeat("\{[^}]*", $this->max_query_depth + 1);
         if (preg_match("/$depth_pattern/", $query)) {
             throw new \GraphQL\Error\UserError(
-                sprintf("Query depth exceeds maximum limit of %d levels.", $this->max_query_depth)
+                sprintf(
+                    /* translators: %d: maximum query depth limit in levels */
+                    \__("Query depth exceeds maximum limit of %d levels.", "silver-assist-security"),
+                    $this->max_query_depth
+                )
             );
         }
 
@@ -306,7 +524,8 @@ class GraphQLSecurity
         if (strlen($query) > $max_query_length) {
             throw new \GraphQL\Error\UserError(
                 sprintf(
-                    "Query is too large (%d characters). Maximum allowed: %d characters.",
+                    /* translators: 1: current query length in characters, 2: maximum allowed characters */
+                    \__("Query is too large (%1\$d characters). Maximum allowed: %2\$d characters.", "silver-assist-security"),
                     strlen($query),
                     $max_query_length
                 )
@@ -322,9 +541,72 @@ class GraphQLSecurity
      */
     public function set_execution_timeout(): void
     {
-        if (!ini_get("max_execution_time") || ini_get("max_execution_time") > $this->query_timeout) {
-            set_time_limit($this->query_timeout);
+        // Add GraphQL-specific timeout filter
+        \add_filter("graphql_request_results", [$this, "enforce_query_timeout"], 1, 5);
+
+        // Get timeout configuration with PHP awareness
+        $timeout_config = $this->config_manager->get_timeout_config();
+
+        // Only set PHP limit if current GraphQL timeout is lower than PHP limit
+        if ($timeout_config["php_timeout"] === 0 || $timeout_config["current_timeout"] < $timeout_config["php_timeout"]) {
+            set_time_limit($timeout_config["current_timeout"]);
         }
+
+        // Log timeout configuration for debugging
+        if (defined("WP_DEBUG") && WP_DEBUG) {
+            error_log(sprintf(
+                "GraphQL Security: PHP timeout=%ds, GraphQL timeout=%ds, Applied=%ds",
+                $timeout_config["php_timeout"],
+                $timeout_config["current_timeout"],
+                $timeout_config["php_timeout"] === 0 ? $timeout_config["current_timeout"] :
+                min($timeout_config["php_timeout"], $timeout_config["current_timeout"])
+            ));
+        }
+    }
+
+    /**
+     * Enforce query timeout using GraphQL execution tracking
+     * 
+     * @since 1.1.0
+     * @param array $response GraphQL response
+     * @param mixed $schema GraphQL schema
+     * @param string|null $operation Operation name
+     * @param string $query Query string
+     * @param array|null $variables Query variables
+     * @return array
+     */
+    public function enforce_query_timeout(array $response, $schema, ?string $operation, string $query, ?array $variables): array
+    {
+        $execution_time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
+
+        // Check if query execution exceeded our timeout
+        if ($execution_time > $this->query_timeout) {
+            error_log(sprintf(
+                "GraphQL query timeout exceeded: %.2fs (limit: %ds) - Query: %s",
+                $execution_time,
+                $this->query_timeout,
+                substr($query, 0, 100) . "..."
+            ));
+
+            // Add timeout error to response
+            if (!isset($response["errors"])) {
+                $response["errors"] = [];
+            }
+
+            $response["errors"][] = [
+                "message" => sprintf(
+                    /* translators: %d: timeout limit in seconds */
+                    \__("Query execution timeout exceeded (%ds limit)", "silver-assist-security"),
+                    $this->query_timeout
+                ),
+                "extensions" => [
+                    "code" => "QUERY_TIMEOUT",
+                    "execution_time" => $execution_time
+                ]
+            ];
+        }
+
+        return $response;
     }
 
     /**
@@ -349,14 +631,14 @@ class GraphQLSecurity
     {
         // Get rate limiting configuration from manager
         $rate_config = $this->config_manager->get_rate_limiting_config();
-        
+
         $ip = $this->get_client_ip();
         $rate_limit_key = "graphql_rate_limit_{md5($ip)}";
         $time_window = 60; // seconds
 
         // Check if this is likely a build/development request
         $is_likely_build = $this->is_likely_build_process();
-        
+
         // Use appropriate limits based on context
         if ($this->config_manager->is_headless_mode() || $is_likely_build) {
             $max_requests = $rate_config["burst_limit"];
@@ -367,7 +649,7 @@ class GraphQLSecurity
         $current_requests = \get_transient($rate_limit_key) ?: 0;
 
         if ($current_requests >= $max_requests) {
-            throw new \GraphQL\Error\UserError("Rate limit exceeded. Please try again later.");
+            throw new \GraphQL\Error\UserError(\__("Rate limit exceeded. Please try again later.", "silver-assist-security"));
         }
 
         \set_transient($rate_limit_key, $current_requests + 1, $time_window);
@@ -431,7 +713,7 @@ class GraphQLSecurity
     public function log_graphql_requests(array $response, $schema, ?string $operation, string $query, ?array $variables): array
     {
         $log_data = [
-            "timestamp" => current_time("mysql"),
+            "timestamp" => \current_time("mysql"),
             "ip" => $this->get_client_ip(),
             "operation" => $operation,
             "query_length" => strlen($query),
@@ -520,7 +802,12 @@ class GraphQLSecurity
     }
 
     /**
-     * Validate query complexity (placeholder for GraphQL validation rules)
+     * Validate query complexity using hybrid approach
+     * 
+     * Since WPGraphQL doesn't have native complexity analysis, we use a hybrid approach:
+     * 1. Delegate depth validation to WPGraphQL's native QueryDepth rule
+     * 2. Use enhanced proxy validation for complexity estimation
+     * 3. Integrate with WPGraphQL's connection limits and rate limiting
      * 
      * @since 1.0.0
      * @param mixed $context GraphQL context
@@ -528,6 +815,13 @@ class GraphQLSecurity
      */
     public function validate_query_complexity($context): array
     {
+        // WPGraphQL doesn't have native complexity analysis
+        // Our complexity validation happens in validate_query_patterns() 
+        // using enhanced heuristics combined with WPGraphQL's native features:
+        // - Query depth: Handled by WPGraphQL's QueryDepth validation rule
+        // - Connection limits: Handled by WPGraphQL's AbstractConnectionResolver
+        // - Rate limiting: Our implementation with WPGraphQL integration
+        // - Complexity estimation: Our enhanced proxy validation
         return [];
     }
 

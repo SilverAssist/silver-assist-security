@@ -293,6 +293,7 @@ class GeneralSecurity
     public function change_admin_footer(): string
     {
         return sprintf(
+            /* translators: %s: plugin name with HTML formatting */
             \__("Secured by %s", "silver-assist-security"),
             "<strong>Silver Assist Security Essentials</strong>"
         );

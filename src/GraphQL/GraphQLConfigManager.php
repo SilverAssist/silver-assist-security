@@ -112,6 +112,41 @@ class GraphQLConfigManager
   }
 
   /**
+   * Get PHP execution timeout setting
+   * 
+   * @since 1.1.0
+   * @return int PHP max_execution_time or 0 if unlimited
+   */
+  public function get_php_execution_timeout(): int
+  {
+    $timeout = ini_get("max_execution_time");
+    return $timeout ? (int) $timeout : 0;
+  }
+
+  /**
+   * Get timeout configuration with PHP awareness
+   * 
+   * @since 1.1.0
+   * @return array Timeout configuration including PHP settings
+   */
+  public function get_timeout_config(): array
+  {
+    $php_timeout = $this->get_php_execution_timeout();
+    $current_timeout = (int) \get_option("silver_assist_graphql_query_timeout", 
+      $php_timeout > 0 ? min($php_timeout, 30) : 30
+    );
+    
+    return [
+      "php_timeout" => $php_timeout,
+      "current_timeout" => $current_timeout,
+      "is_unlimited_php" => $php_timeout === 0,
+      "is_using_php_default" => !get_option("silver_assist_graphql_query_timeout"),
+      "recommended_min" => 5,
+      "recommended_max" => $php_timeout > 0 ? min($php_timeout, 60) : 60
+    ];
+  }
+
+  /**
    * Get WPGraphQL setting with fallback
    * 
    * @since 1.0.4
@@ -195,8 +230,10 @@ class GraphQLConfigManager
     // Query Complexity (enhanced by our plugin)
     $config["query_complexity_limit"] = $is_headless ? 200 : 100;
 
-    // Query Timeout (our enhancement)
-    $config["query_timeout"] = $is_headless ? 10 : 5;
+    // Query Timeout (our enhancement) - Use PHP setting as base
+    $php_timeout = $this->get_php_execution_timeout();
+    $default_timeout = $php_timeout > 0 ? min($php_timeout, 30) : 30; // Cap at 30 seconds max
+    $config["query_timeout"] = (int) \get_option("silver_assist_graphql_query_timeout", $default_timeout);
 
     // Introspection
     $config["introspection_enabled"] = $this->get_wpgraphql_setting("public_introspection_enabled", "off") === "on";

@@ -31,6 +31,9 @@
         // Auto-save feature
         initAutoSave();
 
+        // Initialize GraphQL timeout slider
+        initGraphQLTimeoutSlider();
+
         // Initialize dashboard
         initDashboard();
     });
@@ -84,8 +87,9 @@
             }
 
             const graphqlTimeout = $("#silver_assist_graphql_query_timeout").val();
-            if (graphqlTimeout && (graphqlTimeout < 1 || graphqlTimeout > 30)) {
-                errors.push(silverAssistSecurity.strings.graphqlTimeoutError || "GraphQL query timeout must be between 1 and 30 seconds");
+            const phpTimeout = silverAssistSecurity.phpExecutionTimeout || 30;
+            if (graphqlTimeout && (graphqlTimeout < 1 || graphqlTimeout > phpTimeout)) {
+                errors.push(silverAssistSecurity.strings.graphqlTimeoutError || `GraphQL query timeout must be between 1 and ${phpTimeout} seconds`);
                 isValid = false;
             }
 
@@ -686,6 +690,42 @@
         const now = new Date();
         const timeString = now.toLocaleTimeString();
         $("#last-updated-time").text(timeString);
+    };
+
+    /**
+     * Initialize GraphQL timeout slider functionality
+     * 
+     * Sets up the range slider for GraphQL query timeout configuration
+     * with real-time value display and PHP limit awareness.
+     * 
+     * @since 1.1.0
+     * @returns {void}
+     */
+    const initGraphQLTimeoutSlider = () => {
+        const timeoutSlider = $("#silver_assist_graphql_query_timeout");
+        const timeoutDisplay = $("#graphql-timeout-value");
+
+        if (timeoutSlider.length && timeoutDisplay.length) {
+            // Update display value when slider changes
+            timeoutSlider.on("input", function() {
+                timeoutDisplay.text($(this).val());
+            });
+
+            // Update validation on change
+            timeoutSlider.on("change", function() {
+                const value = parseInt($(this).val());
+                const maxValue = parseInt($(this).attr("max"));
+                
+                if (value > maxValue) {
+                    $(this).val(maxValue);
+                    timeoutDisplay.text(maxValue);
+                    
+                    // Show warning
+                    const warningMessage = "GraphQL timeout cannot exceed PHP execution time limit (" + maxValue + "s)";
+                    showValidationErrors([warningMessage]);
+                }
+            });
+        }
     };
 
 }))(jQuery);
