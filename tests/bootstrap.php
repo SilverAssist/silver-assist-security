@@ -25,7 +25,7 @@ if (!defined('WP_TESTS_CONFIG_FILE_PATH')) {
 define('SILVER_ASSIST_SECURITY_PATH', dirname(__DIR__));
 define('SILVER_ASSIST_SECURITY_URL', 'http://example.org/wp-content/plugins/silver-assist-security/');
 define('SILVER_ASSIST_SECURITY_BASENAME', 'silver-assist-security/silver-assist-security.php');
-define('SILVER_ASSIST_SECURITY_VERSION', '1.0.2');
+define('SILVER_ASSIST_SECURITY_VERSION', '1.0.4');
 
 // Load WordPress test functions
 if (file_exists('/tmp/wordpress-tests-lib/includes/functions.php')) {

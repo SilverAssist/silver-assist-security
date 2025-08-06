@@ -14,7 +14,7 @@
 # @package SilverAssist\Security
 # @since 1.0.0
 # @author Silver Assist
-# @version 1.0.3
+# @version 1.1.0
 ###############################################################################
 
 set -e

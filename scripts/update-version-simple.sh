@@ -8,12 +8,12 @@
 # A more robust version updater that handles macOS sed quirks better
 #
 # Usage: ./scripts/update-version-simple.sh <new-version> [--no-confirm]
-# Example: ./scripts/update-version-simple.sh 1.0.3
+# Example: ./scripts/update-version-simple.sh 1.0.4
 #
 # @package SilverAssist\Security
 # @since 1.0.0
 # @author Silver Assist
-# @version 1.0.3
+# @version 1.1.0
 ###############################################################################
 
 set -e  # Exit on any error
@@ -150,6 +150,9 @@ fi
 echo ""
 print_status "Starting version update process..."
 
+# Initialize deferred commands file (for self-modification)
+rm -f "${PROJECT_ROOT}/.version_update_deferred"
+
 # Function to update file using perl (more reliable than sed on macOS)
 update_file() {
     local file="$1"
@@ -157,6 +160,19 @@ update_file() {
     local description="$3"
     
     if [ -f "$file" ]; then
+        # Special handling for the script modifying itself
+        local current_script="${BASH_SOURCE[0]}"
+        local current_script_abs="$(cd "$(dirname "$current_script")" && pwd)/$(basename "$current_script")"
+        local file_abs="$(cd "$(dirname "$file")" && pwd)/$(basename "$file")"
+        
+        # Check if this script is trying to modify itself
+        if [ "$current_script_abs" = "$file_abs" ]; then
+            print_status "  Deferring self-modification for $description"
+            # Store the modification for later execution
+            echo "perl -i -pe '$pattern' '$file'" >> "${PROJECT_ROOT}/.version_update_deferred"
+            return 0
+        fi
+        
         # Create backup
         cp "$file" "$file.bak"
         
@@ -206,61 +222,144 @@ print_success "Main plugin file updated"
 # 2. Update PHP files
 print_status "Updating PHP files..."
 
-find "${PROJECT_ROOT}/src" -name "*.php" -print0 | while IFS= read -r -d '' file; do
-    if grep -q "@version" "$file"; then
-        update_file "$file" \
-            "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
-            "$(basename "$file")"
-    fi
-done
+# Get all PHP files with @version tags
+php_files=""
+if [ -d "${PROJECT_ROOT}/src" ]; then
+    # Use a more robust approach to find PHP files
+    for php_file in $(find "${PROJECT_ROOT}/src" -name "*.php" 2>/dev/null); do
+        if [ -f "$php_file" ] && grep -q "@version" "$php_file"; then
+            php_files="$php_files $php_file"
+        fi
+    done
+fi
 
-print_success "PHP files updated"
+# Update each PHP file
+if [ -n "$php_files" ]; then
+    php_update_count=0
+    for php_file in $php_files; do
+        file_name=$(basename "$php_file")
+        
+        if update_file "$php_file" \
+            "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
+            "$file_name"; then
+            php_update_count=$((php_update_count + 1))
+        fi
+    done
+    
+    if [ $php_update_count -gt 0 ]; then
+        print_success "PHP files updated ($php_update_count files)"
+    else
+        print_warning "No PHP files were updated (pattern not found or files unchanged)"
+    fi
+else
+    print_warning "No PHP files with @version tags found in src/ directory"
+fi
 
 # 3. Update CSS files  
 print_status "Updating CSS files..."
 
+# Get all CSS files with @version tags
+css_files=""
 if [ -d "${PROJECT_ROOT}/assets/css" ]; then
-    find "${PROJECT_ROOT}/assets/css" -name "*.css" -print0 | while IFS= read -r -d '' file; do
-        if grep -q "@version" "$file"; then
-            update_file "$file" \
-                "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
-                "$(basename "$file")"
+    # Use a more robust approach to find CSS files
+    for css_file in "${PROJECT_ROOT}/assets/css"/*.css; do
+        if [ -f "$css_file" ] && grep -q "@version" "$css_file"; then
+            css_files="$css_files $css_file"
         fi
     done
-    print_success "CSS files updated"
+fi
+
+# Update each CSS file
+if [ -n "$css_files" ]; then
+    css_update_count=0
+    for css_file in $css_files; do
+        file_name=$(basename "$css_file")
+        
+        if update_file "$css_file" \
+            "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
+            "$file_name"; then
+            css_update_count=$((css_update_count + 1))
+        fi
+    done
+    
+    if [ $css_update_count -gt 0 ]; then
+        print_success "CSS files updated ($css_update_count files)"
+    else
+        print_warning "No CSS files were updated (pattern not found or files unchanged)"
+    fi
 else
-    print_warning "CSS directory not found"
+    if [ -d "${PROJECT_ROOT}/assets/css" ]; then
+        print_status "No CSS files with @version tags found"
+    else
+        print_warning "CSS directory not found"
+    fi
 fi
 
 # 4. Update JavaScript files
 print_status "Updating JavaScript files..."
 
+# Get all JavaScript files with @version tags
+js_files=""
 if [ -d "${PROJECT_ROOT}/assets/js" ]; then
-    find "${PROJECT_ROOT}/assets/js" -name "*.js" -print0 | while IFS= read -r -d '' file; do
-        if grep -q "@version" "$file"; then
-            update_file "$file" \
-                "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
-                "$(basename "$file")"
+    # Use a more robust approach to find JavaScript files
+    for js_file in "${PROJECT_ROOT}/assets/js"/*.js; do
+        if [ -f "$js_file" ] && grep -q "@version" "$js_file"; then
+            js_files="$js_files $js_file"
         fi
     done
-    print_success "JavaScript files updated"
+fi
+
+# Update each JavaScript file
+if [ -n "$js_files" ]; then
+    js_update_count=0
+    for js_file in $js_files; do
+        file_name=$(basename "$js_file")
+        
+        if update_file "$js_file" \
+            "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
+            "$file_name"; then
+            js_update_count=$((js_update_count + 1))
+        fi
+    done
+    
+    if [ $js_update_count -gt 0 ]; then
+        print_success "JavaScript files updated ($js_update_count files)"
+    else
+        print_warning "No JavaScript files were updated (pattern not found or files unchanged)"
+    fi
 else
-    print_warning "JavaScript directory not found"
+    if [ -d "${PROJECT_ROOT}/assets/js" ]; then
+        print_status "No JavaScript files with @version tags found"
+    else
+        print_warning "JavaScript directory not found"
+    fi
 fi
 
 # 5. Update HEADER-STANDARDS.md
 print_status "Updating header standards documentation..."
 
 if [ -f "${PROJECT_ROOT}/HEADER-STANDARDS.md" ]; then
-    # Update Version: entries
+    # Update Version: entries (both in main section and examples)
     update_file "${PROJECT_ROOT}/HEADER-STANDARDS.md" \
         "s/Version: [0-9]+\\.[0-9]+\\.[0-9]+/Version: ${NEW_VERSION}/g" \
         "header standards version references"
     
-    # Update @version entries
+    # Update @version entries in examples and code blocks
     update_file "${PROJECT_ROOT}/HEADER-STANDARDS.md" \
         "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
         "header standards @version tags"
+    
+    # Update * Version: entries in examples (with asterisk)
+    update_file "${PROJECT_ROOT}/HEADER-STANDARDS.md" \
+        "s/\\* Version: [0-9]+\\.[0-9]+\\.[0-9]+/\\* Version: ${NEW_VERSION}/g" \
+        "header standards example version references" || true
+    
+    # Update documentation text references (e.g., "v1.0.0**: Use both `@since 1.0.0` and `@version 1.1.0`")
+    if grep -q "Use both.*@version [0-9]\+\.[0-9]\+\.[0-9]\+" "${PROJECT_ROOT}/HEADER-STANDARDS.md"; then
+        update_file "${PROJECT_ROOT}/HEADER-STANDARDS.md" \
+            "s/(Use both.*@version )[0-9]+\\.[0-9]+\\.[0-9]+/\\1${NEW_VERSION}/g" \
+            "header standards documentation text" || true
+    fi
     
     print_success "Header standards documentation updated"
 else
@@ -270,25 +369,38 @@ fi
 # 6. Update version scripts
 print_status "Updating version scripts..."
 
-if [ -f "${PROJECT_ROOT}/scripts/update-version-simple.sh" ]; then
-    update_file "${PROJECT_ROOT}/scripts/update-version-simple.sh" \
-        "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
-        "update-version-simple.sh"
+# Get all script files with @version tags
+script_files=""
+if [ -d "${PROJECT_ROOT}/scripts" ]; then
+    # Use a more robust approach to find script files
+    for script_file in "${PROJECT_ROOT}/scripts"/*.sh; do
+        if [ -f "$script_file" ] && grep -q "@version" "$script_file"; then
+            script_files="$script_files $script_file"
+        fi
+    done
 fi
 
-if [ -f "${PROJECT_ROOT}/scripts/build-release.sh" ]; then
-    update_file "${PROJECT_ROOT}/scripts/build-release.sh" \
-        "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
-        "build-release.sh"
+# Update each script file
+if [ -n "$script_files" ]; then
+    script_update_count=0
+    for script_file in $script_files; do
+        script_name=$(basename "$script_file")
+        
+        if update_file "$script_file" \
+            "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
+            "$script_name"; then
+            script_update_count=$((script_update_count + 1))
+        fi
+    done
+    
+    if [ $script_update_count -gt 0 ]; then
+        print_success "Version scripts updated ($script_update_count files)"
+    else
+        print_warning "No script files were updated (pattern not found or files unchanged)"
+    fi
+else
+    print_warning "No script files with @version tags found in scripts/ directory"
 fi
-
-if [ -f "${PROJECT_ROOT}/scripts/check-versions.sh" ]; then
-    update_file "${PROJECT_ROOT}/scripts/check-versions.sh" \
-        "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
-        "check-versions.sh"
-fi
-
-print_success "Version scripts updated"
 
 # 7. Update README.md if it contains version references
 print_status "Checking README.md for version references..."
@@ -308,6 +420,29 @@ fi
 
 echo ""
 print_success "✨ Version update completed successfully!"
+
+# Execute any deferred modifications (like self-modification)
+if [ -f "${PROJECT_ROOT}/.version_update_deferred" ]; then
+    print_status "Executing deferred modifications..."
+    
+    while IFS= read -r command; do
+        if [ -n "$command" ]; then
+            print_status "  Executing: $command"
+            eval "$command"
+            if [ $? -eq 0 ]; then
+                print_status "  ✓ Deferred modification completed"
+            else
+                print_warning "  ⚠ Deferred modification failed"
+            fi
+        fi
+    done < "${PROJECT_ROOT}/.version_update_deferred"
+    
+    # Clean up deferred commands file
+    rm -f "${PROJECT_ROOT}/.version_update_deferred"
+    
+    print_success "Deferred modifications completed"
+fi
+
 echo ""
 print_status "Summary of changes:"
 echo "  • Main plugin file: silver-assist-security.php"

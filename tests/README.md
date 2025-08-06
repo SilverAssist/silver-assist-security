@@ -10,7 +10,8 @@ tests/
 ├── Helpers/
 │   └── TestHelper.php    # Test utility functions
 ├── Unit/                 # Unit tests for individual classes
-│   └── LoginSecurityTest.php
+│   ├── LoginSecurityTest.php
+│   └── GraphQLConfigManagerTest.php  # NEW in v1.0.4
 ├── Integration/          # Integration tests for component interaction
 │   └── AdminPanelTest.php
 ├── Security/            # Security-focused tests
@@ -22,29 +23,27 @@ tests/
 
 ### Unit Tests (`tests/Unit/`)
 Test individual classes and methods in isolation:
-- LoginSecurity functionality
-- Password validation
-- IP detection and tracking
-- Bot detection logic
-- Session management
+- **LoginSecurity functionality**: IP detection, session management, lockout mechanisms
+- **GraphQLConfigManager (v1.0.4)**: Centralized configuration, singleton pattern, caching, rate limiting
+- Password validation and enforcement
+- Bot detection and blocking logic
 - Failed login attempt tracking
-- Lockout mechanisms
 
 ### Integration Tests (`tests/Integration/`)
 Test component interactions and WordPress integration:
-- Admin panel functionality
-- AJAX endpoints
-- Settings management
-- Menu registration
-- Script/style enqueuing
-- Form handling and validation
+- Admin panel functionality with GraphQLConfigManager integration (v1.0.4)
+- AJAX endpoints and real-time updates
+- Settings management through centralized configuration
+- Menu registration and capability checks
+- Script/style enqueuing and dependencies
+- Form handling, validation, and auto-save functionality
 
 ### Security Tests (`tests/Security/`)
 Focused on security implementations:
-- HTTPOnly cookie enforcement
-- GraphQL query validation (when WPGraphQL is active)
-- Security headers
-- Input sanitization
+- HTTPOnly cookie enforcement across all WordPress cookies
+- **GraphQL security with centralized configuration (v1.0.4)**: Query validation, depth limiting, rate limiting
+- Security headers implementation (X-Frame-Options, X-XSS-Protection, CSP)
+- Input sanitization and validation
 - XML-RPC blocking
 - User enumeration protection
 - Version hiding

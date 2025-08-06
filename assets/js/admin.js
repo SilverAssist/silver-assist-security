@@ -6,7 +6,7 @@
  * security status management.
  *
  * @file admin.js
- * @version 1.0.3
+ * @version 1.1.0
  * @author Silver Assist
  * @requires jQuery
  * @since 1.0.0
@@ -247,6 +247,12 @@
                         .html(silverAssistSecurity.strings.saved || "Saved!")
                         .delay(2000)
                         .fadeOut();
+                    
+                    // Update dashboard to reflect changes immediately
+                    setTimeout(() => {
+                        loadSecurityStatus();
+                        loadLoginStats();
+                    }, 500); // Small delay to ensure database is updated
                 } else {
                     // Show error message
                     $(".saving-indicator")
@@ -364,7 +370,7 @@
      * Sets up the real-time security dashboard with initial data loading,
      * auto-refresh intervals, and manual refresh button handling.
      * 
-     * @since 1.0.0
+     * @since 1.0.4
      * @returns {void}
      */
     const initDashboard = () => {
@@ -476,14 +482,117 @@
     const updateSecurityStatusDisplay = data => {
         if (!data) return;
 
-        // Update status indicators
+        // Update status indicators with correct selectors
         $("#login-status").text(data.login_security.status).removeClass().addClass("status-indicator " + data.login_security.status);
-        $("#password-status").text(data.password_security.status).removeClass().addClass("status-indicator " + data.password_security.status);
+        $("#admin-status").text(data.admin_security.status).removeClass().addClass("status-indicator " + data.admin_security.status);
         $("#graphql-status").text(data.graphql_security.status).removeClass().addClass("status-indicator " + data.graphql_security.status);
         $("#general-status").text(data.general_security.status).removeClass().addClass("status-indicator " + data.general_security.status);
 
+        // Update dynamic values that can change with settings
+        updateDynamicDashboardValues(data);
+
         // Update last updated time
         updateLastUpdatedTime();
+    };
+
+    /**
+     * Update dynamic dashboard values based on current settings
+     * 
+     * Updates specific dashboard elements that reflect current configuration
+     * settings like max attempts, lockout duration, and feature statuses.
+     * 
+     * @since 1.0.3
+     * @param {Object} data - Security status data object
+     * @returns {void}
+     */
+    const updateDynamicDashboardValues = data => {
+        if (!data) return;
+
+        // Update Login Security panel values
+        if (data.login_security) {
+            // Update Max Attempts value
+            const maxAttemptsElement = $(".login-security .stat:first-child .stat-value");
+            if (maxAttemptsElement.length) {
+                maxAttemptsElement.text(data.login_security.max_attempts);
+            }
+
+            // Update Lockout duration
+            const lockoutElement = $(".login-security .stat:last-child .stat-value");
+            if (lockoutElement.length && data.login_security.lockout_duration) {
+                lockoutElement.text(Math.round(data.login_security.lockout_duration / 60));
+            }
+        }
+
+        // Update Admin Security panel feature statuses
+        if (data.admin_security) {
+            // Update Password Strength Enforcement status
+            const passwordElement = $(".admin-security .feature-status:first-child .feature-value");
+            if (passwordElement.length) {
+                passwordElement
+                    .removeClass("enabled disabled")
+                    .addClass(data.admin_security.password_strength_enforcement ? "enabled" : "disabled")
+                    .text(data.admin_security.password_strength_enforcement ? 
+                        (silverAssistSecurity.strings.enabled || "Enabled") : 
+                        (silverAssistSecurity.strings.disabled || "Disabled"));
+            }
+
+            // Update Bot Protection status
+            const botElement = $(".admin-security .feature-status:last-child .feature-value");
+            if (botElement.length) {
+                botElement
+                    .removeClass("enabled disabled")
+                    .addClass(data.admin_security.bot_protection ? "enabled" : "disabled")
+                    .text(data.admin_security.bot_protection ? 
+                        (silverAssistSecurity.strings.enabled || "Enabled") : 
+                        (silverAssistSecurity.strings.disabled || "Disabled"));
+            }
+        }
+
+        // Update GraphQL Security panel if enabled
+        if (data.graphql_security && data.graphql_security.enabled) {
+            // Update headless mode indicator
+            const headlessModeElement = $(".graphql-security .mode-value");
+            if (headlessModeElement.length) {
+                headlessModeElement
+                    .removeClass("headless standard")
+                    .addClass(data.graphql_security.headless_mode ? "headless" : "standard")
+                    .text(data.graphql_security.headless_mode ? 
+                        (silverAssistSecurity.strings.headlessCms || "Headless CMS") : 
+                        (silverAssistSecurity.strings.standard || "Standard"));
+            }
+
+            // Update query depth, complexity, and timeout values
+            $(".graphql-security .stat").each(function(index) {
+                const $statValue = $(this).find(".stat-value");
+                if ($statValue.length) {
+                    switch(index) {
+                        case 0: // Max Depth
+                            $statValue.text(data.graphql_security.query_depth_limit);
+                            break;
+                        case 1: // Max Complexity
+                            $statValue.text(data.graphql_security.query_complexity_limit);
+                            break;
+                        case 2: // Timeout
+                            $statValue.text(data.graphql_security.query_timeout + "s");
+                            break;
+                    }
+                }
+            });
+        }
+
+        // Update General Security panel SSL status
+        if (data.general_security) {
+            // Find the SSL/HTTPS feature status (4th feature-status div in general-security)
+            const sslElement = $(".general-security .feature-status:nth-child(4) .feature-value");
+            if (sslElement.length) {
+                sslElement
+                    .removeClass("enabled disabled")
+                    .addClass(data.general_security.ssl_enabled ? "enabled" : "disabled")
+                    .text(data.general_security.ssl_enabled ? 
+                        (silverAssistSecurity.strings.enabled || "Enabled") : 
+                        (silverAssistSecurity.strings.disabled || "Disabled"));
+            }
+        }
     };
 
     /**

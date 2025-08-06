@@ -9,10 +9,12 @@
  * @package SilverAssist\Security\GraphQL
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.0.3
+ * @version 1.1.0
  */
 
 namespace SilverAssist\Security\GraphQL;
+
+use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 
 /**
  * GraphQL Security class
@@ -24,6 +26,12 @@ namespace SilverAssist\Security\GraphQL;
  */
 class GraphQLSecurity
 {
+    /**
+     * Configuration manager instance
+     * 
+     * @var GraphQLConfigManager
+     */
+    private GraphQLConfigManager $config_manager;
 
     /**
      * Maximum allowed query depth
@@ -44,21 +52,21 @@ class GraphQLSecurity
      * 
      * @var int
      */
-    private int $max_aliases = 20;
+    private int $max_aliases;
 
     /**
      * Maximum allowed duplicate directives per query
      * 
      * @var int
      */
-    private int $max_directives = 15;
+    private int $max_directives;
 
     /**
      * Maximum allowed field duplicates
      * 
      * @var int
      */
-    private int $max_field_duplicates = 10;
+    private int $max_field_duplicates;
 
     /**
      * Query execution timeout in seconds
@@ -68,58 +76,37 @@ class GraphQLSecurity
     private int $query_timeout;
 
     /**
-     * Whether to enable relaxed mode for headless CMS usage
-     * 
-     * @var bool
-     */
-    private bool $headless_mode = false;
-
-    /**
      * Constructor
      * 
      * @since 1.0.0
      */
     public function __construct()
     {
+        $this->config_manager = GraphQLConfigManager::getInstance();
         $this->init_configuration();
         $this->init();
     }
 
     /**
-     * Initialize configuration values from saved settings
+     * Initialize configuration values using GraphQLConfigManager
      * 
      * @since 1.0.0
      * @return void
      */
     private function init_configuration(): void
     {
-        // Check if headless mode is enabled
-        $this->headless_mode = (bool) \get_option("silver_assist_graphql_headless_mode", false);
+        // Get configuration from centralized manager
+        $config = $this->config_manager->get_configuration();
 
-        // More generous defaults for headless CMS usage
-        $default_depth = $this->headless_mode ? 20 : 15;
-        $default_complexity = $this->headless_mode ? 1000 : 500;
-        $default_timeout = $this->headless_mode ? 30 : 15;
+        // Set properties from configuration
+        $this->max_query_depth = $config["query_depth_limit"];
+        $this->max_query_complexity = $config["query_complexity_limit"];
+        $this->query_timeout = $config["query_timeout"];
 
-        $this->max_query_depth = (int) \get_option("silver_assist_graphql_query_depth", $default_depth);
-        $this->max_query_complexity = (int) \get_option("silver_assist_graphql_query_complexity", $default_complexity);
-        $this->query_timeout = (int) \get_option("silver_assist_graphql_query_timeout", $default_timeout);
-
-        // Ensure values are within safe ranges (increased for headless usage)
-        $max_depth_limit = $this->headless_mode ? 30 : 25;
-        $max_complexity_limit = $this->headless_mode ? 3000 : 2000;
-        $max_timeout_limit = $this->headless_mode ? 120 : 60;
-
-        $this->max_query_depth = max(5, min($max_depth_limit, $this->max_query_depth));
-        $this->max_query_complexity = max(100, min($max_complexity_limit, $this->max_query_complexity));
-        $this->query_timeout = max(5, min($max_timeout_limit, $this->query_timeout));
-
-        // Adjust limits for headless mode
-        if ($this->headless_mode) {
-            $this->max_aliases = 50;
-            $this->max_directives = 30;
-            $this->max_field_duplicates = 20;
-        }
+        // Set adaptive limits based on headless mode
+        $this->max_aliases = $this->config_manager->get_safe_limit("aliases");
+        $this->max_directives = $this->config_manager->get_safe_limit("directives");
+        $this->max_field_duplicates = $this->config_manager->get_safe_limit("field_duplicates");
     }
 
     /**
@@ -169,8 +156,18 @@ class GraphQLSecurity
      */
     public function disable_introspection_in_production(): void
     {
+        // Use config manager to check WPGraphQL settings
+        $config = $this->config_manager->get_configuration();
+        
+        // If WPGraphQL already has introspection disabled, respect that
+        if (!$config["introspection_enabled"]) {
+            return;
+        }
+
+        // Our additional production checks
         if (defined("WP_ENVIRONMENT_TYPE") && WP_ENVIRONMENT_TYPE === "production") {
             \add_filter("graphql_introspection_enabled", "__return_false");
+            \add_filter("graphql_show_in_graphiql", "__return_false");
 
             \add_action("graphql_register_types", function () {
                 \remove_action("graphql_register_types", ["WPGraphQL\\Type\\Introspection", "register_introspection_fields"]);
@@ -342,7 +339,7 @@ class GraphQLSecurity
     }
 
     /**
-     * Check rate limit for GraphQL requests
+     * Check rate limit for GraphQL requests using ConfigManager
      * 
      * @since 1.0.0
      * @return void
@@ -350,28 +347,42 @@ class GraphQLSecurity
      */
     public function check_rate_limit(): void
     {
+        // Get rate limiting configuration from manager
+        $rate_config = $this->config_manager->get_rate_limiting_config();
+        
         $ip = $this->get_client_ip();
         $rate_limit_key = "graphql_rate_limit_{md5($ip)}";
-
-        // More generous limits for headless CMS usage
-        $max_requests = 100; // requests per minute (increased from 30)
         $time_window = 60; // seconds
 
         // Check if this is likely a build/development request
-        $user_agent = $_SERVER["HTTP_USER_AGENT"] ?? "";
-        $is_likely_build = preg_match("/(next|gatsby|nuxt|build|node|fetch)/i", $user_agent);
-
-        if ($is_likely_build) {
-            $max_requests = 300; // Even more generous for build processes
+        $is_likely_build = $this->is_likely_build_process();
+        
+        // Use appropriate limits based on context
+        if ($this->config_manager->is_headless_mode() || $is_likely_build) {
+            $max_requests = $rate_config["burst_limit"];
+        } else {
+            $max_requests = $rate_config["requests_per_minute"];
         }
 
-        $current_requests = get_transient($rate_limit_key) ?: 0;
+        $current_requests = \get_transient($rate_limit_key) ?: 0;
 
         if ($current_requests >= $max_requests) {
             throw new \GraphQL\Error\UserError("Rate limit exceeded. Please try again later.");
         }
 
-        set_transient($rate_limit_key, $current_requests + 1, $time_window);
+        \set_transient($rate_limit_key, $current_requests + 1, $time_window);
+    }
+
+    /**
+     * Check if request is likely from a build process
+     * 
+     * @since 1.0.4
+     * @return bool
+     */
+    private function is_likely_build_process(): bool
+    {
+        $user_agent = $_SERVER["HTTP_USER_AGENT"] ?? "";
+        return preg_match("/(next|gatsby|nuxt|build|node|fetch)/i", $user_agent);
     }
 
     /**
@@ -627,14 +638,14 @@ class GraphQLSecurity
     }
 
     /**
-     * Check if headless mode is enabled
+     * Check if headless mode is enabled using ConfigManager
      * 
      * @since 1.0.3
      * @return bool
      */
     public function is_headless_mode(): bool
     {
-        return $this->headless_mode;
+        return $this->config_manager->is_headless_mode();
     }
 
     /**
@@ -645,7 +656,7 @@ class GraphQLSecurity
      */
     public function get_headless_recommendations(): array
     {
-        return [
+        $recommendations = [
             "max_query_depth" => 20,
             "max_query_complexity" => 1000,
             "query_timeout" => 30,
@@ -656,6 +667,60 @@ class GraphQLSecurity
                 "Monitor query performance with logging",
                 "Use query complexity analysis tools"
             ]
+        ];
+
+        // Add WPGraphQL-specific recommendations if available
+        if (\class_exists("WPGraphQL") && \function_exists("get_graphql_setting")) {
+            $recommendations["wpgraphql_integration"] = [
+                "current_introspection" => get_graphql_setting("public_introspection_enabled", "off"),
+                "current_batch_enabled" => get_graphql_setting("batch_queries_enabled", "on"),
+                "current_batch_limit" => get_graphql_setting("batch_limit", 10),
+                "current_depth_enabled" => get_graphql_setting("query_depth_enabled", "off"),
+                "current_max_depth" => get_graphql_setting("query_depth_max_depth", 10),
+                "recommendations" => [
+                    "For headless CMS: Enable query depth limiting with max depth 15-20",
+                    "For headless CMS: Keep batch queries enabled with limit 10-20",
+                    "For production: Disable public introspection",
+                    "For production: Disable debug mode",
+                    "Consider authentication restriction based on your use case"
+                ]
+            ];
+        }
+
+        return $recommendations;
+    }
+
+    /**
+     * Get current WPGraphQL configuration status using ConfigManager
+     * 
+     * @since 1.0.4
+     * @return array
+     */
+    public function get_wpgraphql_status(): array
+    {
+        if (!$this->config_manager->is_wpgraphql_available()) {
+            return [
+                "available" => false,
+                "message" => "WPGraphQL plugin not detected"
+            ];
+        }
+
+        $config = $this->config_manager->get_configuration();
+        $integration_status = $this->config_manager->get_integration_status();
+
+        return [
+            "available" => true,
+            "settings" => [
+                "introspection_enabled" => $config["introspection_enabled"],
+                "debug_mode" => $config["debug_mode"],
+                "batch_queries_enabled" => $config["batch_enabled"],
+                "batch_limit" => $config["batch_limit"],
+                "query_depth_enabled" => $config["query_depth_limit"] > 0,
+                "query_depth_limit" => $config["query_depth_limit"],
+                "auth_required" => $config["endpoint_access"] === "restricted"
+            ],
+            "security_status" => $integration_status["security_level"],
+            "recommendations" => $integration_status["recommendations"]
         ];
     }
 }

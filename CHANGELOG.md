@@ -5,6 +5,104 @@ All notable changes to the Silver Assist Security Essentials will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-08-06
+
+### 🚀 Major Architectural Refactoring Release
+
+This release represents a significant architectural improvement focused on eliminating code duplication and implementing centralized configuration management for GraphQL functionality.
+
+### Added
+- **🏗️ GraphQLConfigManager Singleton Architecture** - New centralized configuration management system with complete API
+  - Intelligent rate limiting with WPGraphQL native integration
+  - Configuration caching system (5-minute TTL) for performance optimization
+  - Security level evaluation and recommendations
+  - Headless CMS mode detection and adaptive configuration
+  - Complete separation of concerns from business logic
+- **📋 Comprehensive Testing Framework** - New GraphQLConfigManagerTest with 12 test methods covering all functionality
+  - Singleton pattern validation
+  - Configuration method testing
+  - Caching system verification
+  - WPGraphQL integration testing
+  - Error handling validation
+- **📚 Enhanced Documentation** - Complete refactoring documentation with architectural patterns
+  - GraphQLConfigManager usage patterns in coding instructions
+  - Centralized configuration best practices
+  - Testing methodology improvements
+
+### Changed
+- **♻️ Complete GraphQL Code Deduplication** - Eliminated ~150 lines of duplicated configuration code
+  - AdminPanel refactored to use GraphQLConfigManager for all GraphQL display logic
+  - GraphQLSecurity refactored to use centralized configuration instead of local initialization
+  - Single source of truth for all GraphQL settings and validation
+- **🔧 Enhanced Version Update System** - Improved script capabilities with deferred self-modification
+  - Resolves script execution conflicts during file updates
+  - Robust file processing with comprehensive error handling
+  - Enhanced version consistency checking across all components
+- **⚡ Performance Optimizations** - Centralized caching reduces redundant WPGraphQL detection calls
+  - Smart configuration loading with transient caching
+  - Reduced memory footprint through configuration consolidation
+  - Optimized admin interface with centralized GraphQL data retrieval
+
+### Technical Improvements
+- **🔄 PHP 8+ Modern Patterns** - Systematic adoption of match expressions replacing switch statements
+- **📊 Intelligent Configuration Management** - Adaptive settings based on environment detection
+- **🎯 Enhanced Error Handling** - Comprehensive try-catch blocks with detailed logging
+- **📈 Code Quality Metrics** - Significant reduction in code duplication and complexity
+
+### Migration Notes
+- **✅ Backward Compatibility** - All existing functionality preserved with no breaking changes
+- **🔄 Automatic Migration** - GraphQLConfigManager automatically detects and integrates with existing configurations
+- **⚙️ Configuration Preservation** - All user settings maintained during architectural transition
+
+### Translations
+- **🌍 Updated Spanish Translations** - Complete translation updates for v1.1.0 with new GraphQL terminology
+- **📝 New Translation Strings** - All GraphQLConfigManager messages and interface elements fully translated
+- **🔄 Updated .pot/.po/.mo Files** - Regenerated translation files with WP-CLI for version 1.1.0
+- **🎯 GraphQL Security Terms** - Added translations for "Introspección", "Acceso", "Público", "Restringido"
+
+## [1.0.4] - 2025-08-06
+
+### Added
+- **🏗️ GraphQLConfigManager Centralized Architecture** - New singleton class implementing centralized GraphQL configuration management
+- **🔄 Advanced Version Update System** - Enhanced script with deferred self-modification capabilities and robust file processing
+- **📊 Intelligent GraphQL Rate Limiting** - Adaptive rate limiting based on WPGraphQL configuration and headless mode detection
+- **⚡ Configuration Caching System** - Performance optimization through centralized configuration caching with 5-minute TTL
+- **🎯 Smart Script Auto-Modification** - Automated script self-updating with conflict resolution for executing files
+- **📈 Enhanced Update Feedback** - Detailed file update counters and comprehensive progress reporting during version updates
+
+### Changed
+- **♻️ Complete GraphQL Code Refactoring** - Eliminated ~150 lines of duplicated code between GraphQLSecurity and AdminPanel classes
+- **🔧 Modern PHP 8+ Match Expressions** - Systematically replaced switch statements with match expressions for cleaner code
+- **📚 Enhanced Coding Standards** - Updated comprehensive development guidelines with match vs switch usage patterns
+- **🛠️ Improved Script Robustness** - Replaced problematic find-in-subshells patterns with native bash loops for better reliability
+- **🏷️ Standardized Version Management** - All components now use centralized version update system with automatic consistency checking
+- **📝 Enhanced Documentation** - Complete update of copilot instructions with new architecture patterns and GraphQL centralization requirements
+
+### Fixed
+- **🐛 Script Self-Modification Conflicts** - Resolved chmod +x permission issues preventing scripts from updating themselves during execution
+- **📁 File Processing Reliability** - Fixed subshell loop failures in version update scripts affecting PHP, CSS, and JavaScript file processing
+- **🔍 Version Pattern Detection** - Enhanced version checking to handle multiple @version patterns and documentation references correctly
+- **⚠️ Update Script Error Handling** - Improved error recovery and pattern matching for edge cases in documentation files
+- **🔄 Dependency Loop Prevention** - Eliminated circular dependencies in GraphQL configuration management through singleton pattern
+- **📊 Rate Limiting False Positives** - Fixed GraphQL rate limiting calculations that were incorrectly blocking legitimate requests
+
+### Technical Improvements
+- **🎯 Singleton Pattern Implementation** - GraphQLConfigManager using getInstance() method with proper lifecycle management
+- **🧪 Deferred Command Execution** - Script modification commands queued and executed post-process to avoid file lock conflicts
+- **📦 PSR-4 Namespace Organization** - Enhanced autoloading structure with `SilverAssist\Security\GraphQL\GraphQLConfigManager` pattern
+- **🔄 Centralized Configuration API** - Unified methods: `get_query_depth()`, `get_rate_limit()`, `is_headless_mode()`, `evaluate_security_level()`
+- **⚡ Performance Optimization** - Configuration caching reduces repeated WPGraphQL plugin detection and settings queries
+- **🛡️ Enhanced Security Validation** - Intelligent GraphQL security evaluation with headless CMS mode considerations
+- **📋 Comprehensive Testing Framework** - Bidirectional version update testing (1.0.4 ↔ 1.0.5) validating complete system functionality
+
+### Architecture
+- **🏛️ Modular Component Design** - Clear separation between GraphQL configuration management and security implementation
+- **🔗 Native API Integration** - Seamless integration with WPGraphQL native settings and configuration system
+- **📈 Scalable Configuration System** - Extensible architecture supporting future GraphQL security enhancements
+- **🎮 Developer Experience** - Enhanced development workflow with reliable version management and automated quality assurance
+- **📚 Documentation Standards** - Complete PHPDoc and JSDoc documentation with @since 1.0.4 tags for all new functionality
+- **🔄 Backward Compatibility** - All changes maintain full compatibility with existing WordPress and WPGraphQL installations
+
 ## [1.0.3] - 2025-08-06
 
 ### Added

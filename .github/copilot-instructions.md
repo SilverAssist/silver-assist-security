@@ -21,6 +21,7 @@ The plugin specifically addresses three critical security issues commonly found 
 - **PSR-4 Autoloading**: Namespace-based class loading for better organization
 - **Real-time Dashboard**: Live security monitoring with AJAX updates
 - **Multi-language Support**: Complete i18n implementation (English/Spanish)
+- **WP-CLI**: Required for translation file generation and management (install via `brew install wp-cli`)
 
 ## Project Structure
 
@@ -33,7 +34,9 @@ silver-assist-security/
 │   │   ├── AdminUrlSecurity.php  # Custom admin URL obfuscation
 │   │   ├── GeneralSecurity.php   # HTTPOnly cookies & headers
 │   │   └── LoginSecurity.php     # Brute force protection
-│   └── GraphQL/GraphQLSecurity.php # GraphQL protection
+│   └── GraphQL/
+│       ├── GraphQLConfigManager.php # Centralized GraphQL configuration
+│       └── GraphQLSecurity.php   # GraphQL protection
 ├── assets/                        # Frontend resources
 │   ├── css/admin.css             # Admin panel styling
 │   └── js/admin.js               # Real-time dashboard
@@ -61,6 +64,7 @@ silver-assist-security/
 - Handle AJAX requests for real-time updates
 - Process security configuration form submissions
 - Display security statistics and compliance status
+- Use GraphQLConfigManager for centralized GraphQL configuration
 
 ### 3. Security\LoginSecurity.php
 **Purpose**: Brute force protection, bot blocking, and login security
@@ -93,7 +97,18 @@ silver-assist-security/
 - Security headers (X-Frame-Options, X-XSS-Protection, CSP)
 - WordPress hardening (XML-RPC blocking, version hiding)
 
-### 6. GraphQL\GraphQLSecurity.php
+### 6. GraphQL\GraphQLConfigManager.php
+**Purpose**: Centralized GraphQL configuration management (NEW)
+**Key Responsibilities**:
+- Single source of truth for all GraphQL configurations
+- WPGraphQL plugin detection and integration
+- Headless CMS mode configuration management
+- Intelligent rate limiting configuration
+- Security evaluation and recommendations
+- HTML display generation for admin interface
+- Configuration caching for performance optimization
+
+### 7. GraphQL\GraphQLSecurity.php
 **Purpose**: Comprehensive GraphQL endpoint protection
 **Key Responsibilities**:
 - Introspection blocking in production environments
@@ -123,10 +138,13 @@ silver-assist-security/
 
 ### GraphQL Protection Strategy
 - **Detection**: Automatically detects WPGraphQL plugin installation
+- **Centralized Configuration**: Uses GraphQLConfigManager for unified settings management
 - **Introspection Control**: Disables schema introspection in production
 - **Query Analysis**: Real-time analysis of query depth and complexity
-- **Rate Limiting**: IP-based request throttling with Redis-like transient storage
+- **Intelligent Rate Limiting**: Adaptive limits based on WPGraphQL configuration and headless mode
+- **Native Integration**: Seamless integration with WPGraphQL native settings
 - **Security Headers**: Custom headers for GraphQL-specific protection
+- **Configuration Caching**: Performance optimization through centralized caching
 
 ## Configuration & Settings
 
@@ -293,6 +311,70 @@ private function init_configuration(): void {
 }
 ```
 
+### GraphQL Centralized Configuration Pattern
+All GraphQL configuration must use GraphQLConfigManager for centralized management:
+```php
+// ✅ CORRECT - Use centralized ConfigManager
+use SilverAssist\Security\GraphQL\GraphQLConfigManager;
+
+class GraphQLSecurity {
+    private GraphQLConfigManager $config_manager;
+    
+    public function __construct() {
+        $this->config_manager = GraphQLConfigManager::getInstance();
+    }
+    
+    private function get_rate_limit(): int {
+        return $this->config_manager->get_rate_limit();
+    }
+}
+
+// ✅ CORRECT - AdminPanel using ConfigManager for display
+class AdminPanel {
+    private function get_wpgraphql_current_settings(): array {
+        return GraphQLConfigManager::getInstance()->get_all_configurations();
+    }
+}
+
+// ❌ INCORRECT - Direct configuration duplication
+private function init_configuration(): void {
+    $this->query_depth = (int) get_option('silver_assist_graphql_query_depth', 8);
+    $this->is_wpgraphql_active = class_exists('WPGraphQL');
+    // This duplicates logic that should be centralized
+}
+```
+
+### GraphQLConfigManager Pattern Requirements
+When working with GraphQL configurations, always follow these patterns:
+
+#### **Single Source of Truth**
+- All GraphQL configuration MUST go through GraphQLConfigManager
+- Never duplicate WPGraphQL detection logic
+- Use centralized caching for performance
+
+#### **Singleton Access Pattern**
+```php
+// Always use getInstance() method
+$config_manager = GraphQLConfigManager::getInstance();
+$rate_limit = $config_manager->get_rate_limit();
+$is_headless = $config_manager->is_headless_mode();
+```
+
+#### **Configuration Retrieval Methods**
+```php
+// Centralized methods available in GraphQLConfigManager
+get_query_depth(): int              // Get configured query depth limit
+get_query_complexity(): int         // Get configured complexity limit
+get_query_timeout(): int            // Get configured timeout seconds
+get_rate_limit(): int               // Get intelligent rate limit
+is_wpgraphql_active(): bool         // Check WPGraphQL plugin status
+is_headless_mode(): bool            // Check if in headless CMS mode
+get_wpgraphql_settings(): array     // Get WPGraphQL native settings
+evaluate_security_level(): string   // Get security evaluation
+get_configuration_html(): string    // Get formatted HTML display
+get_all_configurations(): array     // Get complete configuration array
+```
+
 ## Security Implementation Patterns
 
 ### Hook Registration Pattern
@@ -307,17 +389,49 @@ private function init(): void {
 ```
 
 ### GraphQL Security Validation
-GraphQL security uses custom validation rules and request filters:
-- Query depth/complexity validation via `add_custom_validation_rules()`
-- Pre-execution validation via `graphql_request_data` filter
-- Rate limiting with WordPress transients
+GraphQL security uses centralized configuration management and custom validation:
+- **Centralized Configuration**: All settings managed through GraphQLConfigManager
+- **Query Validation**: Depth/complexity validation via `add_custom_validation_rules()`
+- **Pre-execution Filtering**: Request validation via `graphql_request_data` filter
+- **Intelligent Rate Limiting**: Adaptive limits based on WPGraphQL configuration
+- **Native Integration**: Seamless integration with WPGraphQL native settings
 
 ### Rate Limiting Implementation
-Uses WordPress transients for IP-based rate limiting:
+Uses centralized configuration with WordPress transients for IP-based rate limiting:
 ```php
+// ✅ CORRECT - Using centralized rate limit configuration
+$rate_limit = $this->config_manager->get_rate_limit();
+$key = "graphql_rate_limit_{md5($ip)}";
+$requests = get_transient($key) ?: 0;
+
+if ($requests >= $rate_limit) {
+    return new WP_Error('rate_limit_exceeded', 'Rate limit exceeded');
+}
+
+set_transient($key, $requests + 1, 60); // 1 minute window
+
+// ❌ INCORRECT - Hardcoded rate limits
 $key = 'graphql_rate_limit_' . $ip;
 $requests = get_transient($key) ?: 0;
-set_transient($key, $requests + 1, 60); // 1 minute window
+set_transient($key, $requests + 1, 60); // Missing intelligent configuration
+```
+
+### GraphQL Configuration Caching Pattern
+GraphQLConfigManager implements intelligent caching for performance:
+```php
+// Automatic caching in ConfigManager
+private function get_cached_config(string $key, callable $generator): mixed {
+    $cache_key = "graphql_config_{$key}";
+    $cached = get_transient($cache_key);
+    
+    if ($cached === false) {
+        $value = $generator();
+        set_transient($cache_key, $value, 300); // 5 minutes cache
+        return $value;
+    }
+    
+    return $cached;
+}
 ```
 
 ## Admin Panel Patterns
@@ -373,6 +487,7 @@ Admin forms process data with validation and immediate option updates:
 - **Singleton pattern**: `Class_Name::getInstance()` method pattern
 - **WordPress hooks**: `add_action("init", [$this, "method"])` with array callbacks
 - **PHP 8+ Features**: Match expressions, array spread operator, typed properties
+- **Match over Switch**: Use `match` expressions instead of `switch` statements when possible for cleaner, more concise code
 - **Global function calls**: Use `\` prefix **ONLY for WordPress functions** in namespaced context (e.g., `\add_action()`, `\get_option()`, `\is_ssl()`). PHP native functions like `array_key_exists()`, `explode()`, `trim()`, `sprintf()` do NOT need the `\` prefix.
 - **WordPress i18n**: All user-facing strings MUST use WordPress i18n functions (`__()`, `esc_html__()`, `esc_attr__()`, `_e()`, `esc_html_e()`) with text domain `"silver-assist-security"`
 
@@ -560,6 +675,77 @@ $transient_key = "login_attempts_" . md5($ip);
 $option_name = "_transient_timeout_" . $lockout_key;
 ```
 
+### Match vs Switch Statement Guidelines
+Use PHP 8+ `match` expressions instead of `switch` statements when possible for cleaner, more concise code:
+
+```php
+// ✅ CORRECT - Use match for simple value returns
+return match ($limit_type) {
+    "depth" => $config["query_depth_limit"],
+    "complexity" => $config["query_complexity_limit"],
+    "timeout" => $config["query_timeout"],
+    "aliases" => $is_headless ? 50 : 20,
+    "directives" => $is_headless ? 30 : 15,
+    "field_duplicates" => $is_headless ? 20 : 10,
+    default => 0
+};
+
+// ✅ CORRECT - Use match for assignment
+$status = match ($error_level) {
+    0 => "success",
+    1, 2 => "warning", // Multiple values
+    3, 4, 5 => "error",
+    default => "unknown"
+};
+
+// ❌ INCORRECT - Verbose switch statement for simple returns
+switch ($limit_type) {
+    case "depth":
+        return $config["query_depth_limit"];
+    case "complexity":
+        return $config["query_complexity_limit"];
+    case "timeout":
+        return $config["query_timeout"];
+    case "aliases":
+        return $is_headless ? 50 : 20;
+    case "directives":
+        return $is_headless ? 30 : 15;
+    case "field_duplicates":
+        return $is_headless ? 20 : 10;
+    default:
+        return 0;
+}
+
+// ✅ CORRECT - Use switch for complex logic blocks
+switch ($action_type) {
+    case "validate_login":
+        $this->check_rate_limits($ip);
+        $this->log_attempt($username, $ip);
+        $this->apply_security_headers();
+        break;
+    case "block_request":
+        $this->log_security_event($ip, "blocked");
+        $this->send_404_response();
+        break;
+    default:
+        $this->handle_unknown_action($action_type);
+}
+```
+
+**When to use `match`:**
+- Simple value returns based on conditions
+- Direct assignment of values
+- No complex logic needed in cases
+- All cases return/assign similar data types
+- Prefer strict equality comparison (===)
+
+**When to use `switch`:**
+- Complex logic blocks in each case
+- Multiple statements per case
+- Need for fall-through behavior
+- Side effects or procedure calls
+- Breaking out of loops within cases
+
 ## Development Workflow
 
 ### Composer Scripts
@@ -579,6 +765,7 @@ Use these predefined constants:
 
 ### Translation Support
 - **Text domain**: `"silver-assist-security"` - MANDATORY for all i18n functions
+- **WP-CLI Required**: All translation operations require WP-CLI installation (see WP-CLI Integration section below)
 - **Load translations**: In `Plugin::load_textdomain()` method
 - **PHP i18n functions**: All user-facing strings wrapped in WordPress i18n functions:
   - `__("String", "silver-assist-security")` - Translate and return
@@ -588,6 +775,7 @@ Use these predefined constants:
   - `esc_attr__("String", "silver-assist-security")` - Translate, escape attributes, return
   - `esc_attr_e("String", "silver-assist-security")` - Translate, escape attributes, echo
 - **JavaScript i18n**: Pass translated strings from PHP to JavaScript via `wp_localize_script()`
+- **Complete Workflow**: See "WP-CLI Integration & Translation Management" section for detailed translation procedures
 
 #### PHP i18n Examples
 ```php
@@ -621,6 +809,194 @@ console.log(silverAssistSecurity.strings.loading);
 alert(silverAssistSecurity.strings.confirmDelete);
 $("#status").text(silverAssistSecurity.strings.success);
 ```
+
+### WP-CLI Integration & Translation Management
+
+**🚨 CRITICAL: WP-CLI is REQUIRED for all translation operations. Always verify installation before working with i18n files.**
+
+#### **WP-CLI Installation**
+
+**Check if WP-CLI is installed:**
+```bash
+wp --version
+```
+
+**Install WP-CLI on macOS (Recommended):**
+```bash
+# Using Homebrew (preferred method)
+brew install wp-cli
+
+# Verify installation
+wp --version
+```
+
+**Alternative Installation Methods:**
+```bash
+# Direct download (if Homebrew not available)
+curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+chmod +x wp-cli.phar
+sudo mv wp-cli.phar /usr/local/bin/wp
+
+# Verify installation
+wp --version
+```
+
+#### **Translation File Generation & Management**
+
+**MANDATORY: Always use WP-CLI for translation operations - never edit .pot files manually.**
+
+##### **Step 1: Generate .pot Template File**
+```bash
+# Generate/regenerate .pot file with all translatable strings
+wp i18n make-pot . languages/silver-assist-security.pot --domain=silver-assist-security --exclude=vendor,node_modules,tests
+
+# This scans all PHP files for WordPress i18n functions and creates template
+```
+
+##### **Step 2: Update Existing Translation Files**
+```bash
+# Update existing .po files with new strings from .pot
+wp i18n update-po languages/silver-assist-security.pot languages/silver-assist-security-es_ES.po
+
+# This merges new strings while preserving existing translations
+```
+
+##### **Step 3: Compile Binary Translation Files**
+```bash
+# Compile .po to .mo binary format for WordPress
+wp i18n make-mo languages/silver-assist-security-es_ES.po
+
+# Creates .mo file that WordPress uses for translations
+```
+
+#### **Complete Translation Workflow**
+
+**For Major Updates (new features, version updates):**
+```bash
+# 1. Regenerate .pot file with all new strings
+wp i18n make-pot . languages/silver-assist-security.pot --domain=silver-assist-security --exclude=vendor,node_modules,tests
+
+# 2. Update all existing language files
+wp i18n update-po languages/silver-assist-security.pot languages/silver-assist-security-es_ES.po
+
+# 3. Manually translate new strings in .po files (msgid -> msgstr)
+# Edit languages/silver-assist-security-es_ES.po:
+# msgid "New English String"
+# msgstr "Nueva Cadena en Español"
+
+# 4. Update .po file headers for new version
+# Project-Id-Version: Silver Assist Security Essentials X.X.X
+# POT-Creation-Date: YYYY-MM-DD HH:MM-TIMEZONE
+# PO-Revision-Date: YYYY-MM-DD HH:MM+TIMEZONE
+
+# 5. Compile updated .po files to .mo
+wp i18n make-mo languages/silver-assist-security-es_ES.po
+
+# 6. Verify compilation success
+ls -la languages/*.mo
+```
+
+#### **Translation File Structure**
+```
+languages/
+├── silver-assist-security.pot         # Template file (English source)
+├── silver-assist-security-es_ES.po    # Spanish translation source
+├── silver-assist-security-es_ES.mo    # Spanish compiled binary
+├── silver-assist-security-fr_FR.po    # French translation source (future)
+└── silver-assist-security-fr_FR.mo    # French compiled binary (future)
+```
+
+#### **Translation Standards & Guidelines**
+
+**File Naming Convention:**
+- Template: `{textdomain}.pot`
+- Translation source: `{textdomain}-{locale}.po` 
+- Compiled binary: `{textdomain}-{locale}.mo`
+- Locale format: `{language}_{country}` (e.g., `es_ES`, `fr_FR`, `de_DE`)
+
+**Spanish Translation Guidelines:**
+```po
+# ✅ CORRECT Spanish translations
+msgid "Security Settings"
+msgstr "Configuración de Seguridad"
+
+msgid "Login Protection"
+msgstr "Protección de Login"
+
+msgid "GraphQL Security"
+msgstr "Seguridad GraphQL"
+
+msgid "Introspection"
+msgstr "Introspección"
+
+msgid "Public"
+msgstr "Público"
+
+msgid "Restricted"
+msgstr "Restringido"
+
+msgid "Headless CMS"
+msgstr "CMS sin Cabeza"
+```
+
+**Version Management in Translation Files:**
+```po
+# Always update header information for new versions
+msgid ""
+msgstr ""
+"Project-Id-Version: Silver Assist Security Essentials 1.1.0\n"
+"POT-Creation-Date: 2025-08-06 10:30-0500\n"
+"PO-Revision-Date: 2025-08-06 10:35+0000\n"
+"Last-Translator: Silver Assist Security Team\n"
+"Language: es_ES\n"
+```
+
+#### **Translation Quality Assurance**
+
+**Before Committing Translation Updates:**
+1. **Verify .pot generation**: Check that all new i18n strings are captured
+2. **Review .po updates**: Ensure new msgid entries have corresponding msgstr translations
+3. **Test .mo compilation**: Verify binary files compile without errors
+4. **Version consistency**: Update Project-Id-Version in .po files
+5. **Character encoding**: Ensure UTF-8 encoding throughout all files
+
+**Common WP-CLI Translation Warnings:**
+```bash
+# These warnings indicate missing translator comments for placeholders
+Warning: The string "New version %s available." contains placeholders but has no "translators:" comment
+
+# Add translator comments in PHP source:
+/* translators: %s: version number */
+__("New version %s available.", "silver-assist-security");
+```
+
+#### **Integration with Development Workflow**
+
+**After Adding New i18n Strings:**
+```bash
+# 1. Update .pot file
+wp i18n make-pot . languages/silver-assist-security.pot --domain=silver-assist-security --exclude=vendor,node_modules,tests
+
+# 2. Update translation files
+wp i18n update-po languages/silver-assist-security.pot languages/silver-assist-security-es_ES.po
+
+# 3. Translate new strings manually
+# 4. Compile translations
+wp i18n make-mo languages/silver-assist-security-es_ES.po
+
+# 5. Commit all changes
+git add languages/
+git commit -m "🌍 Update translations for v1.1.0 with new GraphQL terminology"
+```
+
+**Version Release Checklist - Translations:**
+- [ ] Regenerated .pot file with `wp i18n make-pot`
+- [ ] Updated all .po files with `wp i18n update-po`
+- [ ] Manually translated all new msgid strings
+- [ ] Updated Project-Id-Version in .po file headers
+- [ ] Compiled all .po files to .mo with `wp i18n make-mo`
+- [ ] Verified .mo files exist and have recent timestamps
+- [ ] Tested translations in WordPress admin interface
 
 ## Commit Message Standards
 

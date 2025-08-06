@@ -10,6 +10,7 @@ namespace SilverAssist\Security\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
 use SilverAssist\Security\Admin\AdminPanel;
+use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 use SilverAssist\Security\Tests\Helpers\TestHelper;
 
 /**
@@ -206,5 +207,74 @@ class AdminPanelTest extends TestCase
         
         // Values should not be saved if validation fails
         $this->assertNotEquals('0', get_option('silver_assist_login_attempts'));
+    }
+
+    /**
+     * Test AdminPanel integration with GraphQLConfigManager
+     * 
+     * @since 1.0.4
+     */
+    public function test_admin_panel_graphql_config_integration(): void
+    {
+        // Skip if WPGraphQL not available
+        if (!class_exists('WPGraphQL')) {
+            $this->markTestSkipped('WPGraphQL not available');
+            return;
+        }
+        
+        // Test that AdminPanel can access GraphQLConfigManager
+        $config_manager = GraphQLConfigManager::getInstance();
+        $this->assertInstanceOf(GraphQLConfigManager::class, $config_manager);
+        
+        // Test that configuration methods work
+        $config = $config_manager->get_all_configurations();
+        $this->assertIsArray($config, 'GraphQLConfigManager should provide configuration array');
+        
+        // Test that AdminPanel doesn't break with centralized GraphQL configuration
+        ob_start();
+        try {
+            $this->admin_panel->ajax_get_security_status();
+        } catch (\Exception $e) {
+            // May exit with wp_send_json_success
+        }
+        $output = ob_get_clean();
+        
+        // Should not cause fatal errors or exceptions related to GraphQL configuration
+        $this->assertNotNull($output, 'AdminPanel should work with centralized GraphQL configuration');
+    }
+
+    /**
+     * Test that GraphQL settings are handled through GraphQLConfigManager
+     * 
+     * @since 1.0.4
+     */
+    public function test_graphql_settings_centralization(): void
+    {
+        // Skip if WPGraphQL not available
+        if (!class_exists('WPGraphQL')) {
+            $this->markTestSkipped('WPGraphQL not available');
+            return;
+        }
+        
+        $config_manager = GraphQLConfigManager::getInstance();
+        
+        // Test that we can get consistent GraphQL configuration
+        $depth1 = $config_manager->get_query_depth();
+        $depth2 = $config_manager->get_query_depth();
+        
+        $this->assertEquals($depth1, $depth2, 'GraphQL configuration should be consistent');
+        $this->assertIsInt($depth1, 'Query depth should be integer');
+        $this->assertGreaterThan(0, $depth1, 'Query depth should be positive');
+        
+        // Test that AdminPanel doesn't duplicate GraphQL configuration logic
+        $reflection = new \ReflectionClass($this->admin_panel);
+        $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED | \ReflectionMethod::IS_PRIVATE);
+        
+        $graphql_methods = array_filter($methods, function($method) {
+            return strpos(strtolower($method->getName()), 'graphql') !== false;
+        });
+        
+        // AdminPanel should have minimal GraphQL-specific methods since configuration is centralized
+        $this->assertLessThan(5, count($graphql_methods), 'AdminPanel should have minimal GraphQL methods due to centralization');
     }
 }

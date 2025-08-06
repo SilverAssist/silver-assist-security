@@ -11,7 +11,7 @@
 # @package SilverAssist\Security
 # @since 1.0.0
 # @author Silver Assist
-# @version 1.0.3
+# @version 1.1.0
 ###############################################################################
 
 set -e
@@ -166,21 +166,52 @@ print_header "Documentation Files"
 if [ -f "${PROJECT_ROOT}/HEADER-STANDARDS.md" ]; then
     print_file "HEADER-STANDARDS.md"
     
-    version_count=$(grep -o "@version [0-9]\+\.[0-9]\+\.[0-9]\+" "${PROJECT_ROOT}/HEADER-STANDARDS.md" 2>/dev/null | wc -l | tr -d ' ')
+    # Check for both @version and Version: patterns
+    version_count_at=$(grep -o "@version [0-9]\+\.[0-9]\+\.[0-9]\+" "${PROJECT_ROOT}/HEADER-STANDARDS.md" 2>/dev/null | wc -l | tr -d ' ')
+    version_count_colon=$(grep -o "Version: [0-9]\+\.[0-9]\+\.[0-9]\+" "${PROJECT_ROOT}/HEADER-STANDARDS.md" 2>/dev/null | wc -l | tr -d ' ')
     
-    if [ "$version_count" -gt 0 ]; then
+    # Combine both patterns
+    total_versions=0
+    versions_found=""
+    
+    if [ "$version_count_at" -gt 0 ]; then
+        at_versions=$(grep -o "@version [0-9]\+\.[0-9]\+\.[0-9]\+" "${PROJECT_ROOT}/HEADER-STANDARDS.md" 2>/dev/null | cut -d' ' -f2)
+        versions_found="$versions_found $at_versions"
+        total_versions=$((total_versions + version_count_at))
+    fi
+    
+    if [ "$version_count_colon" -gt 0 ]; then
+        colon_versions=$(grep -o "Version: [0-9]\+\.[0-9]\+\.[0-9]\+" "${PROJECT_ROOT}/HEADER-STANDARDS.md" 2>/dev/null | cut -d' ' -f2)
+        versions_found="$versions_found $colon_versions"
+        total_versions=$((total_versions + version_count_colon))
+    fi
+    
+    if [ "$total_versions" -gt 0 ]; then
         # Get unique versions
-        versions=$(grep -o "@version [0-9]\+\.[0-9]\+\.[0-9]\+" "${PROJECT_ROOT}/HEADER-STANDARDS.md" 2>/dev/null | cut -d' ' -f2 | sort -u)
+        versions=$(echo $versions_found | tr ' ' '\n' | sort -u)
         
+        # Check if all versions match main version
+        all_match=true
         for version in $versions; do
-            if [ "$version" = "$MAIN_VERSION" ]; then
-                print_version "$version ✓"
-            else
-                print_warning "$version (differs from main: $MAIN_VERSION)"
+            if [ "$version" != "$MAIN_VERSION" ]; then
+                all_match=false
+                break
             fi
         done
+        
+        if [ "$all_match" = true ]; then
+            print_version "$MAIN_VERSION ✓"
+        else
+            for version in $versions; do
+                if [ "$version" = "$MAIN_VERSION" ]; then
+                    print_version "$version ✓"
+                else
+                    print_warning "$version (differs from main: $MAIN_VERSION)"
+                fi
+            done
+        fi
     else
-        print_error "No @version tags found"
+        print_error "No version references found in HEADER-STANDARDS.md"
     fi
 else
     print_warning "HEADER-STANDARDS.md not found"

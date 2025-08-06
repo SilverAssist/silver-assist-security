@@ -1,598 +1,811 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Silver Assist
-# This file is distributed under the same license as the Silver Assist Security Essentials package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
-#, fuzzy
+# Copyright (C) 2025 Silver Assist
+# This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Silver Assist Security Essentials 1.0.3\n"
-"Report-Msgid-Bugs-To: support@silverassist.com\n"
-"POT-Creation-Date: 2025-08-05 23:26-0500\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Project-Id-Version: Silver Assist Security Essentials 1.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/silver-assist-security\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-08-06T20:12:47+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: silver-assist-security\n"
 
+#. Plugin Name of the plugin
+#: silver-assist-security.php
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:775
+#: src/Admin/AdminPanel.php:735
+msgid "Silver Assist Security Essentials"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: silver-assist-security.php
+msgid "https://github.com/SilverAssist/silver-assist-security"
+msgstr ""
+
+#. Description of the plugin
+#: silver-assist-security.php
+msgid "Resolves critical security vulnerabilities: WordPress login protection, HTTPOnly cookie implementation, and comprehensive GraphQL security. Addresses security audit findings automatically."
+msgstr ""
+
+#. Author of the plugin
+#: silver-assist-security.php
+msgid "Silver Assist"
+msgstr ""
+
+#. Author URI of the plugin
+#: silver-assist-security.php
+msgid "http://silverassist.com/"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:69
+#: src/Admin/AdminPanel.php:78
+msgid "Silver Assist Security"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:70
+#: src/Admin/AdminPanel.php:79
+msgid "Security Essentials"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:134
+#: src/Admin/AdminPanel.php:143
+msgid "Loading..."
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:135
+#: src/Admin/AdminPanel.php:144
+msgid "Error loading data"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:136
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:783
+#: src/Admin/AdminPanel.php:145
+#: src/Admin/AdminPanel.php:743
+msgid "Last updated:"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:137
+#: src/Admin/AdminPanel.php:146
+msgid "No active threats detected"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:138
+#: src/Admin/AdminPanel.php:147
+msgid "Refreshing..."
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:141
+#: src/Admin/AdminPanel.php:150
+#, php-format
+msgid "New version %s available."
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:142
+#: src/Admin/AdminPanel.php:151
+msgid "Update now"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:143
+#: src/Admin/AdminPanel.php:152
+msgid "Checking..."
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:144
+#: src/Admin/AdminPanel.php:153
+#, php-format
+msgid "New version available: %1$s\\nCurrent version: %2$s"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:145
+#: src/Admin/AdminPanel.php:154
+#, php-format
+msgid "The plugin is up to date with the latest version (%s)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:146
+#: src/Admin/AdminPanel.php:155
+msgid "Error checking for updates:"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:147
+#: src/Admin/AdminPanel.php:156
+msgid "Unknown error"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:148
+#: src/Admin/AdminPanel.php:157
+msgid "Connectivity error while checking for updates"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:150
+#: src/Admin/AdminPanel.php:159
+msgid "Login attempts must be between 1 and 20"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:151
+#: src/Admin/AdminPanel.php:160
+msgid "Lockout duration must be between 60 and 3600 seconds"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:152
+#: src/Admin/AdminPanel.php:161
+msgid "Session timeout must be between 5 and 120 minutes"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:153
+#: src/Admin/AdminPanel.php:162
+msgid "GraphQL query depth must be between 1 and 20"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:154
+#: src/Admin/AdminPanel.php:163
+msgid "GraphQL query complexity must be between 10 and 1000"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:155
+#: src/Admin/AdminPanel.php:164
+msgid "GraphQL query timeout must be between 1 and 30 seconds"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:156
+#: src/Admin/AdminPanel.php:165
+msgid "Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:157
+#: src/Admin/AdminPanel.php:166
+msgid "Use only lowercase letters, numbers, and hyphens (3-30 characters)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:159
+#: src/Admin/AdminPanel.php:168
+msgid "Saving..."
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:160
+#: src/Admin/AdminPanel.php:169
+msgid "Saved!"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:161
+#: src/Admin/AdminPanel.php:170
+msgid "Save failed"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:163
+#: src/Admin/AdminPanel.php:172
+msgid "Failed to check for Silver Assist updates"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:164
+#: src/Admin/AdminPanel.php:173
+msgid "Failed to load security essentials"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:165
+#: src/Admin/AdminPanel.php:174
+msgid "Failed to load login stats"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:167
+#: src/Admin/AdminPanel.php:176
+msgid "IP Hash"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:168
+#: src/Admin/AdminPanel.php:177
+msgid "Blocked Time"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:169
+#: src/Admin/AdminPanel.php:178
+msgid "Remaining"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:170
+#: src/Admin/AdminPanel.php:179
+msgid "min"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:343
+#: src/Admin/AdminPanel.php:357
+msgid "Settings saved automatically"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:349
+#: src/Admin/AdminPanel.php:363
+msgid "Error saving settings"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:714
+#: releases/silver-assist-security/src/Security/LoginSecurity.php:149
+#: src/Admin/AdminPanel.php:674
+#: src/Security/LoginSecurity.php:149
+msgid "Security check failed."
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:749
+#: src/Admin/AdminPanel.php:709
+msgid "Security settings have been saved successfully."
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:780
+#: src/Admin/AdminPanel.php:740
+msgid "Security Status Dashboard"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:787
+#: src/Admin/AdminPanel.php:747
+msgid "Refresh Now"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:796
+#: src/Admin/AdminPanel.php:756
+msgid "Login Security"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:804
+#: src/Admin/AdminPanel.php:764
+msgid "Max Attempts"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:808
+#: src/Admin/AdminPanel.php:768
+msgid "Blocked IPs"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:813
+#: src/Admin/AdminPanel.php:773
+msgid "Lockout (min)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:820
+#: src/Admin/AdminPanel.php:780
+msgid "Admin Security"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:827
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1018
+#: src/Admin/AdminPanel.php:787
+#: src/Admin/AdminPanel.php:992
+msgid "Password Strength Enforcement"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:830
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:875
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:909
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:915
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:921
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1282
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1294
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1306
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1317
+#: src/Admin/AdminPanel.php:181
+#: src/Admin/AdminPanel.php:790
+#: src/Admin/AdminPanel.php:798
+#: src/Admin/AdminPanel.php:842
+#: src/Admin/AdminPanel.php:875
+#: src/Admin/AdminPanel.php:881
+#: src/Admin/AdminPanel.php:887
+#: src/Admin/AdminPanel.php:894
+#: src/GraphQL/GraphQLConfigManager.php:283
+#: src/GraphQL/GraphQLConfigManager.php:292
+#: src/GraphQL/GraphQLConfigManager.php:302
+#: src/GraphQL/GraphQLConfigManager.php:311
+msgid "Enabled"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:830
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:876
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1282
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1294
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1307
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1318
+#: src/Admin/AdminPanel.php:182
+#: src/Admin/AdminPanel.php:790
+#: src/Admin/AdminPanel.php:798
+#: src/Admin/AdminPanel.php:843
+#: src/Admin/AdminPanel.php:894
+#: src/GraphQL/GraphQLConfigManager.php:283
+#: src/GraphQL/GraphQLConfigManager.php:292
+#: src/GraphQL/GraphQLConfigManager.php:303
+#: src/GraphQL/GraphQLConfigManager.php:312
+msgid "Disabled"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:838
+#: src/Admin/AdminPanel.php:806
+msgid "GraphQL Security"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:845
+#: src/Admin/AdminPanel.php:813
+msgid "Mode:"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:849
+#: src/Admin/AdminPanel.php:183
+#: src/Admin/AdminPanel.php:817
+msgid "Headless CMS"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:850
+#: src/Admin/AdminPanel.php:184
+#: src/Admin/AdminPanel.php:818
+msgid "Standard"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:856
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1283
+#: src/Admin/AdminPanel.php:824
+#: src/GraphQL/GraphQLConfigManager.php:284
+msgid "Max Depth"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:861
+#: src/Admin/AdminPanel.php:829
+msgid "Max Complexity"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:866
+#: src/Admin/AdminPanel.php:834
+msgid "Timeout"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:871
+msgid "Introspection:"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:881
+msgid "Access:"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:885
+#: src/Admin/AdminPanel.php:852
+msgid "Public"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:886
+#: src/Admin/AdminPanel.php:853
+msgid "Restricted"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:892
+#: src/Admin/AdminPanel.php:858
+msgid "WPGraphQL plugin not detected"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:900
+#: src/Admin/AdminPanel.php:866
+msgid "General Security"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:907
+#: src/Admin/AdminPanel.php:873
+msgid "HTTPOnly Cookies"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:913
+#: src/Admin/AdminPanel.php:879
+msgid "XML-RPC Protection"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:919
+#: src/Admin/AdminPanel.php:885
+msgid "Version Hiding"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:930
+#: src/Admin/AdminPanel.php:904
+msgid "Active Threats & Blocked IPs"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:934
+#: src/Admin/AdminPanel.php:908
+msgid "Loading blocked IPs..."
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:941
+#: src/Admin/AdminPanel.php:915
+msgid "Security Configuration"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:948
+#: src/Admin/AdminPanel.php:922
+msgid "Login Security Settings"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:953
+#: src/Admin/AdminPanel.php:927
+msgid "Maximum Login Attempts"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:960
+#: src/Admin/AdminPanel.php:934
+msgid "Number of failed login attempts before lockout (1-20)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:967
+#: src/Admin/AdminPanel.php:941
+msgid "Lockout Duration (seconds)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:975
+#: src/Admin/AdminPanel.php:949
+msgid "How long to lock out users after failed attempts (60-3600 seconds)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:982
+#: src/Admin/AdminPanel.php:956
+msgid "Session Timeout (minutes)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:990
+#: src/Admin/AdminPanel.php:964
+msgid "Session timeout duration in minutes (5-120)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:996
+#: src/Admin/AdminPanel.php:795
+#: src/Admin/AdminPanel.php:970
+msgid "Bot Protection"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1001
+#: src/Admin/AdminPanel.php:975
+msgid "Block automated bots and security scanners with 404 responses"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1004
+#: src/Admin/AdminPanel.php:978
+msgid "Detects and blocks common bots, crawlers, and security scanning tools."
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1014
+#: src/Admin/AdminPanel.php:988
+msgid "Password Security Settings"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1024
+#: src/Admin/AdminPanel.php:998
+msgid "Enforce strong password requirements"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1034
+#: src/Admin/AdminPanel.php:1008
+msgid "GraphQL Security Enhancements"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1037
+#: src/Admin/AdminPanel.php:1011
+msgid "WPGraphQL Detected"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1038
+#: src/Admin/AdminPanel.php:1012
+msgid "WPGraphQL has its own security settings. These enhancements work alongside WPGraphQL's native configuration."
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1042
+#: src/Admin/AdminPanel.php:1016
+msgid "Open WPGraphQL Settings"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1049
+#: src/Admin/AdminPanel.php:1023
+msgid "Headless CMS Mode"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1054
+#: src/Admin/AdminPanel.php:1028
+msgid "Enable optimized rate limiting for headless CMS usage"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1057
+#: src/Admin/AdminPanel.php:1031
+msgid "Increases rate limits and timeout handling for better headless CMS performance. Use WPGraphQL's native settings for query depth and complexity."
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1063
+#: src/Admin/AdminPanel.php:1037
+msgid "Enhanced Rate Limiting"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1067
+#: src/Admin/AdminPanel.php:1041
+msgid "Current Rate Limits:"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1069
+#: src/Admin/AdminPanel.php:1043
+msgid "Standard requests: 300/minute"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1071
+#: src/Admin/AdminPanel.php:1045
+msgid "Build processes: 600/minute (auto-detected)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1073
+#: src/Admin/AdminPanel.php:1047
+msgid "Query timeout: Extended for complex operations"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1075
+#: src/Admin/AdminPanel.php:1049
+msgid "Standard requests: 100/minute"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1077
+#: src/Admin/AdminPanel.php:1051
+msgid "Build processes: 300/minute (auto-detected)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1078
+#: src/Admin/AdminPanel.php:1052
+msgid "Query timeout: Standard limits"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1085
+#: src/Admin/AdminPanel.php:1059
+msgid "WPGraphQL Recommendations"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1089
+#: src/Admin/AdminPanel.php:1063
+msgid "For Headless CMS Usage:"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1092
+#: src/Admin/AdminPanel.php:1066
+msgid "✓ Enable Query Depth Limiting with Max Depth: 15-20"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1094
+#: src/Admin/AdminPanel.php:1068
+msgid "✓ Keep Batch Queries enabled with limit: 10-20"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1096
+#: src/Admin/AdminPanel.php:1070
+msgid "✓ Disable Public Introspection in production"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1098
+#: src/Admin/AdminPanel.php:1072
+msgid "✓ Disable GraphQL Debug Mode in production"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1102
+msgid "Authentication Strategy:"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1106
+msgid "⚠️ Important Decision: Endpoint Authentication"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1110
+msgid "Public Frontend (Blog, Portfolio, E-commerce):"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1112
+msgid "❌ DO NOT restrict endpoint to authenticated users"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1114
+msgid "✓ Use query whitelisting for specific operations"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1116
+msgid "✓ Implement IP-based rate limiting (our headless mode)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1121
+msgid "Private Application (Dashboard, Intranet):"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1123
+msgid "✅ Restrict endpoint to authenticated users"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1125
+msgid "✓ Use JWT tokens for frontend authentication"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1127
+msgid "✓ Maximum security for sensitive data"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1134
+#: src/Admin/AdminPanel.php:1076
+msgid "Current WPGraphQL Settings:"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1146
+#: src/Admin/AdminPanel.php:1088
+msgid "Headless CMS Mode Active"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1148
+#: src/Admin/AdminPanel.php:1090
+msgid "✓ Enhanced rate limiting for high-frequency requests"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1150
+#: src/Admin/AdminPanel.php:1092
+msgid "✓ Build process detection (Next.js, Gatsby, etc.)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1152
+#: src/Admin/AdminPanel.php:1094
+msgid "✓ Extended timeouts for complex queries"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1154
+#: src/Admin/AdminPanel.php:1096
+msgid "✓ Optimized for static site generation (SSG/ISR)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1158
+#: src/Admin/AdminPanel.php:1100
+msgid "Configure query depth and complexity limits in WPGraphQL settings for optimal performance."
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1165
+#: src/Admin/AdminPanel.php:1107
+msgid "Save Security Settings"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1200
+#: src/Admin/AdminPanel.php:1142
+msgid "Plugin Updates"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1203
+#: src/Admin/AdminPanel.php:1145
+msgid "Current Version"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1207
+#: src/Admin/AdminPanel.php:1149
+msgid "Latest Version"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1213
+#: src/Admin/AdminPanel.php:1155
+msgid "Update Available!"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1217
+#: src/Admin/AdminPanel.php:1159
+msgid "Up to date"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1222
+#: src/Admin/AdminPanel.php:1164
+msgid "Repository"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1233
+#: src/Admin/AdminPanel.php:1175
+msgid "Check for Updates"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1237
+#: src/Admin/AdminPanel.php:1179
+msgid "Go to Updates"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1254
+#: src/GraphQL/GraphQLConfigManager.php:262
+msgid "WPGraphQL not active"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1266
+#: src/GraphQL/GraphQLConfigManager.php:270
+msgid "RESTRICTED"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1267
+#: src/GraphQL/GraphQLConfigManager.php:271
+msgid "PUBLIC"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1271
+#: src/GraphQL/GraphQLConfigManager.php:275
+msgid "Endpoint Access"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1281
+#: src/GraphQL/GraphQLConfigManager.php:282
+msgid "Query Depth Limiting"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1293
+#: src/GraphQL/GraphQLConfigManager.php:291
+msgid "Batch Queries"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1295
+#: src/GraphQL/GraphQLConfigManager.php:293
+msgid "Limit"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1304
+#: src/GraphQL/GraphQLConfigManager.php:300
+msgid "Public Introspection"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1315
+#: src/GraphQL/GraphQLConfigManager.php:309
+msgid "Debug Mode"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1324
+#: src/GraphQL/GraphQLConfigManager.php:232
+msgid "Public introspection enabled (security risk)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1327
+#: src/GraphQL/GraphQLConfigManager.php:239
+msgid "Debug mode enabled (not recommended for production)"
+msgstr ""
+
+#: releases/silver-assist-security/src/Admin/AdminPanel.php:1331
+#: src/GraphQL/GraphQLConfigManager.php:326
+msgid "⚠️ Security Concerns:"
+msgstr ""
+
+#: releases/silver-assist-security/src/Core/Plugin.php:201
 #: src/Core/Plugin.php:201
 msgid "Settings"
 msgstr ""
 
+#: releases/silver-assist-security/src/Security/GeneralSecurity.php:246
 #: src/Security/GeneralSecurity.php:246
 msgid "Invalid login credentials."
 msgstr ""
 
+#: releases/silver-assist-security/src/Security/GeneralSecurity.php:296
 #: src/Security/GeneralSecurity.php:296
 #, php-format
 msgid "Secured by %s"
 msgstr ""
 
+#: releases/silver-assist-security/src/Security/LoginSecurity.php:130
 #: src/Security/LoginSecurity.php:130
 msgid "Website URL (leave blank):"
 msgstr ""
 
-#: src/Security/LoginSecurity.php:149 src/Admin/AdminPanel.php:651
-msgid "Security check failed."
-msgstr ""
-
+#: releases/silver-assist-security/src/Security/LoginSecurity.php:219
 #: src/Security/LoginSecurity.php:219
 #, php-format
 msgid "Too many failed login attempts. Try again in %d minutes."
 msgstr ""
 
-#: src/Security/LoginSecurity.php:324 src/Security/LoginSecurity.php:346
-msgid ""
-"Password must be at least 8 characters long and contain uppercase, "
-"lowercase, numbers, and special characters."
+#: releases/silver-assist-security/src/Security/LoginSecurity.php:324
+#: releases/silver-assist-security/src/Security/LoginSecurity.php:346
+#: src/Security/LoginSecurity.php:324
+#: src/Security/LoginSecurity.php:346
+msgid "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:69
-msgid "Silver Assist Security"
+#: src/Admin/AdminPanel.php:838
+msgid "Introspection"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:70
-msgid "Security Essentials"
+#: src/Admin/AdminPanel.php:848
+msgid "Access"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:134
-msgid "Loading..."
+#: src/Admin/AdminPanel.php:891
+msgid "SSL/HTTPS"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:135
-msgid "Error loading data"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:136 src/Admin/AdminPanel.php:720
-msgid "Last updated:"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:137
-msgid "No active threats detected"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:138
-msgid "Refreshing..."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:141
-#, php-format
-msgid "New version %s available."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:142
-msgid "Update now"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:143
-msgid "Checking..."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:144
-#, php-format
-msgid "New version available: %1$s\\nCurrent version: %2$s"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:145
-#, php-format
-msgid "The plugin is up to date with the latest version (%s)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:146
-msgid "Error checking for updates:"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:147
-msgid "Unknown error"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:148
-msgid "Connectivity error while checking for updates"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:150
-msgid "Login attempts must be between 1 and 20"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:151
-msgid "Lockout duration must be between 60 and 3600 seconds"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:152
-msgid "Session timeout must be between 5 and 120 minutes"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:153
-msgid "GraphQL query depth must be between 1 and 20"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:154
-msgid "GraphQL query complexity must be between 10 and 1000"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:155
-msgid "GraphQL query timeout must be between 1 and 30 seconds"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:156
-msgid ""
-"Custom admin URL must contain only lowercase letters, numbers, and hyphens "
-"(3-30 characters)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:157
-msgid "Use only lowercase letters, numbers, and hyphens (3-30 characters)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:159
-msgid "Saving..."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:160
-msgid "Saved!"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:161
-msgid "Save failed"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:163
-msgid "Failed to check for Silver Assist updates"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:164
-msgid "Failed to load security essentials"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:165
-msgid "Failed to load login stats"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:167
-msgid "IP Hash"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:168
-msgid "Blocked Time"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:169
-msgid "Remaining"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:170
-msgid "min"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:343
-msgid "Settings saved automatically"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:349
-msgid "Error saving settings"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:686
-msgid "Security settings have been saved successfully."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:712
-msgid "Silver Assist Security Essentials"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:717
-msgid "Security Status Dashboard"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:724
-msgid "Refresh Now"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:733
-msgid "Login Security"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:741
-msgid "Max Attempts"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:745
-msgid "Blocked IPs"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:750
-msgid "Lockout (min)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:757
-msgid "Admin Security"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:764 src/Admin/AdminPanel.php:932
-msgid "Password Strength Enforcement"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:767 src/Admin/AdminPanel.php:822
-#: src/Admin/AdminPanel.php:828 src/Admin/AdminPanel.php:834
-#: src/Admin/AdminPanel.php:1174 src/Admin/AdminPanel.php:1186
-#: src/Admin/AdminPanel.php:1198 src/Admin/AdminPanel.php:1209
-msgid "Enabled"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:767 src/Admin/AdminPanel.php:1174
-#: src/Admin/AdminPanel.php:1186 src/Admin/AdminPanel.php:1199
-#: src/Admin/AdminPanel.php:1210
-msgid "Disabled"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:775
-msgid "GraphQL Security"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:782
-msgid "Mode:"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:785
-msgid "Headless CMS"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:786
-msgid "Standard"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:792 src/Admin/AdminPanel.php:1175
-msgid "Max Depth"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:797
-msgid "Max Complexity"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:802
-msgid "Timeout"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:806
-msgid "WPGraphQL plugin not detected"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:813
-msgid "General Security"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:820
-msgid "HTTPOnly Cookies"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:826
-msgid "XML-RPC Protection"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:832
-msgid "Version Hiding"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:843
-msgid "Active Threats & Blocked IPs"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:847
-msgid "Loading blocked IPs..."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:854
-msgid "Security Configuration"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:861
-msgid "Login Security Settings"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:866
-msgid "Maximum Login Attempts"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:873
-msgid "Number of failed login attempts before lockout (1-20)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:880
-msgid "Lockout Duration (seconds)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:888
-msgid "How long to lock out users after failed attempts (60-3600 seconds)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:895
-msgid "Session Timeout (minutes)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:903
-msgid "Session timeout duration in minutes (5-120)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:909
-msgid "Bot Protection"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:915
-msgid "Block automated bots and security scanners with 404 responses"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:918
-msgid "Detects and blocks common bots, crawlers, and security scanning tools."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:928
-msgid "Password Security Settings"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:938
-msgid "Enforce strong password requirements"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:948
-msgid "GraphQL Security Enhancements"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:951
-msgid "WPGraphQL Detected"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:952
-msgid ""
-"WPGraphQL has its own security settings. These enhancements work alongside "
-"WPGraphQL's native configuration."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:954
-msgid "Open WPGraphQL Settings"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:961
-msgid "Headless CMS Mode"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:967
-msgid "Enable optimized rate limiting for headless CMS usage"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:970
-msgid ""
-"Increases rate limits and timeout handling for better headless CMS "
-"performance. Use WPGraphQL's native settings for query depth and complexity."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:976
-msgid "Enhanced Rate Limiting"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:980
-msgid "Current Rate Limits:"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:982
-msgid "Standard requests: 300/minute"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:983
-msgid "Build processes: 600/minute (auto-detected)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:984
-msgid "Query timeout: Extended for complex operations"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:986
-msgid "Standard requests: 100/minute"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:987
-msgid "Build processes: 300/minute (auto-detected)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:988
-msgid "Query timeout: Standard limits"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:995
-msgid "WPGraphQL Recommendations"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:999
-msgid "For Headless CMS Usage:"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1001
-msgid "✓ Enable Query Depth Limiting with Max Depth: 15-20"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1002
-msgid "✓ Keep Batch Queries enabled with limit: 10-20"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1003
-msgid "✓ Disable Public Introspection in production"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1004
-msgid "✓ Disable GraphQL Debug Mode in production"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1007
-msgid "Authentication Strategy:"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1009
-msgid "⚠️ Important Decision: Endpoint Authentication"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1012
-msgid "Public Frontend (Blog, Portfolio, E-commerce):"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1014
-msgid "❌ DO NOT restrict endpoint to authenticated users"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1015
-msgid "✓ Use query whitelisting for specific operations"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1016
-msgid "✓ Implement IP-based rate limiting (our headless mode)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1020
-msgid "Private Application (Dashboard, Intranet):"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1022
-msgid "✅ Restrict endpoint to authenticated users"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1023
-msgid "✓ Use JWT tokens for frontend authentication"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1024
-msgid "✓ Maximum security for sensitive data"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1030
-msgid "Current WPGraphQL Settings:"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1041
-msgid "Headless CMS Mode Active"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1043
-msgid "✓ Enhanced rate limiting for high-frequency requests"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1044
-msgid "✓ Build process detection (Next.js, Gatsby, etc.)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1045
-msgid "✓ Extended timeouts for complex queries"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1046
-msgid "✓ Optimized for static site generation (SSG/ISR)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1049
-msgid ""
-"Configure query depth and complexity limits in WPGraphQL settings for "
-"optimal performance."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1056
-msgid "Save Security Settings"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1091
-msgid "Plugin Updates"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1094
-msgid "Current Version"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1098
-msgid "Latest Version"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1104
-msgid "Update Available!"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1108
-msgid "Up to date"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1113
-msgid "Repository"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1124
-msgid "Check for Updates"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1128
-msgid "Go to Updates"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1145
-msgid "WPGraphQL not active"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1158
-msgid "RESTRICTED"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1159
-msgid "PUBLIC"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1163
-msgid "Endpoint Access"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1173
-msgid "Query Depth Limiting"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1185
-msgid "Batch Queries"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1187
-msgid "Limit"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1196
-msgid "Public Introspection"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1207
-msgid "Debug Mode"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1216
-msgid "Public introspection enabled (security risk)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1219
-msgid "Debug mode enabled (not recommended for production)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1223
-msgid "⚠️ Security Concerns:"
+#: src/GraphQL/GraphQLConfigManager.php:246
+msgid "GraphQL endpoint is publicly accessible"
 msgstr ""
