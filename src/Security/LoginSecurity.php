@@ -14,6 +14,8 @@
 
 namespace SilverAssist\Security\Security;
 
+use SilverAssist\Security\Core\DefaultConfig;
+
 /**
  * Login Security class
  * 
@@ -64,9 +66,9 @@ class LoginSecurity
      */
     private function init_configuration(): void
     {
-        $this->max_attempts = (int) \get_option("silver_assist_login_attempts", 5);
-        $this->lockout_duration = (int) \get_option("silver_assist_lockout_duration", 900);
-        $this->session_timeout = (int) \get_option("silver_assist_session_timeout", 30);
+        $this->max_attempts = (int) DefaultConfig::get_option("silver_assist_login_attempts");
+        $this->lockout_duration = (int) DefaultConfig::get_option("silver_assist_lockout_duration");
+        $this->session_timeout = (int) DefaultConfig::get_option("silver_assist_session_timeout");
     }
 
     /**
@@ -106,7 +108,7 @@ class LoginSecurity
      */
     private function init_password_security(): void
     {
-        $password_strength_enforcement = \get_option("silver_assist_password_strength_enforcement", 1);
+        $password_strength_enforcement = DefaultConfig::get_option("silver_assist_password_strength_enforcement");
 
         if ($password_strength_enforcement) {
             \add_action("user_profile_update_errors", [$this, "validate_password_strength"], 10, 3);
@@ -451,7 +453,7 @@ class LoginSecurity
     public function block_suspicious_bots(): void
     {
         // Check if bot protection is enabled
-        $bot_protection_enabled = \get_option("silver_assist_bot_protection", 1);
+        $bot_protection_enabled = DefaultConfig::get_option("silver_assist_bot_protection");
         if (!$bot_protection_enabled) {
             return;
         }

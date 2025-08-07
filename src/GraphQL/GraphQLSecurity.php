@@ -14,7 +14,9 @@
 
 namespace SilverAssist\Security\GraphQL;
 
-use SilverAssist\Security\GraphQL\GraphQLConfigManager;
+use GraphQL\Error\Error;
+use GraphQL\Error\UserError;
+use GraphQL\Executor\ExecutionResult;
 
 /**
  * GraphQL Security class
@@ -244,13 +246,13 @@ class GraphQLSecurity
      * 
      * @since 1.1.1
      * @param int $max_query_amount The maximum number of nodes to query
-     * @param mixed $source The source object
-     * @param array $args The connection arguments
-     * @param mixed $context The GraphQL context
-     * @param mixed $info The ResolveInfo object
+     * @param mixed $source The source object (optional)
+     * @param array $args The connection arguments (optional)
+     * @param mixed $context The GraphQL context (optional)
+     * @param mixed $info The ResolveInfo object (optional)
      * @return int
      */
-    public function filter_connection_max_query_amount(int $max_query_amount, $source, array $args, $context, $info): int
+    public function filter_connection_max_query_amount(int $max_query_amount, $source = null, array $args = [], $context = null, $info = null): int
     {
         // Use our complexity configuration to adjust connection limits
         $complexity_ratio = $this->max_query_complexity / 100; // Base ratio
@@ -267,13 +269,13 @@ class GraphQLSecurity
      * 
      * @since 1.1.1
      * @param array $query_args The query arguments
-     * @param mixed $source The source object
-     * @param array $args The connection arguments
-     * @param mixed $context The GraphQL context
-     * @param mixed $info The ResolveInfo object
+     * @param mixed $source The source object (optional)
+     * @param array $args The connection arguments (optional)
+     * @param mixed $context The GraphQL context (optional)
+     * @param mixed $info The ResolveInfo object (optional)
      * @return array
      */
-    public function add_complexity_hints_to_connections(array $query_args, $source, array $args, $context, $info): array
+    public function add_complexity_hints_to_connections(array $query_args, $source = null, array $args = [], $context = null, $info = null): array
     {
         // Add complexity metadata for monitoring
         $query_args["_silver_assist_complexity_hint"] = [
@@ -357,7 +359,7 @@ class GraphQLSecurity
                         $complexity_limit = $this->config_manager->get_safe_limit("complexity");
 
                         if ($estimated_complexity > $complexity_limit) {
-                            $context->reportError(new \GraphQL\Error\Error(
+                            $context->reportError(new Error(
                                 sprintf(
                                     /* translators: 1: estimated complexity, 2: maximum allowed complexity */
                                     \__("Query complexity %1\$d exceeds maximum allowed complexity %2\$d", "silver-assist-security"),
@@ -452,7 +454,7 @@ class GraphQLSecurity
      * @param array|null $variables Query variables (optional)
      * @param mixed $context Request context (optional)
      * @return array
-     * @throws \GraphQL\Error\UserError
+     * @throws UserError
      */
     public function validate_query_before_execution(array $request_data, $request = null, ?string $operation_name = null, ?array $variables = null, $context = null): array
     {
@@ -465,7 +467,7 @@ class GraphQLSecurity
         // Check for introspection in production
         if (defined("WP_ENVIRONMENT_TYPE") && WP_ENVIRONMENT_TYPE === "production") {
             if ($this->is_introspection_query($query)) {
-                throw new \GraphQL\Error\UserError(\__("Introspection is disabled in production.", "silver-assist-security"));
+                throw new UserError(\__("Introspection is disabled in production.", "silver-assist-security"));
             }
         }
 
@@ -493,14 +495,14 @@ class GraphQLSecurity
      * @since 1.1.1
      * @param string $query GraphQL query string
      * @return void
-     * @throws \GraphQL\Error\UserError
+     * @throws UserError
      */
     private function validate_query_patterns(string $query): void
     {
         // Check for excessive aliases
         $alias_count = preg_match_all("/\w+\s*:\s*\w+/", $query);
         if ($alias_count > $this->max_aliases) {
-            throw new \GraphQL\Error\UserError(
+            throw new UserError(
                 sprintf(
                     /* translators: 1: number of aliases found, 2: maximum allowed */
                     \__("Query contains too many aliases (%1\$d). Maximum allowed: %2\$d", "silver-assist-security"),
@@ -513,7 +515,7 @@ class GraphQLSecurity
         // Check for excessive directive usage
         $directive_count = preg_match_all("/@\w+/", $query);
         if ($directive_count > $this->max_directives * 2) {
-            throw new \GraphQL\Error\UserError(
+            throw new UserError(
                 sprintf(
                     /* translators: 1: number of directives found, 2: maximum allowed */
                     \__("Query contains too many directives (%1\$d). Maximum allowed: %2\$d", "silver-assist-security"),
@@ -525,7 +527,7 @@ class GraphQLSecurity
 
         // Check for field duplication patterns
         if (preg_match("/(\w+)(\s*\w+\s*)*\{[^}]*\1[^}]*\1/", $query)) {
-            throw new \GraphQL\Error\UserError(
+            throw new UserError(
                 sprintf(
                     /* translators: %d: maximum allowed field duplicates */
                     \__("Query contains excessive field duplication. Maximum allowed: %d", "silver-assist-security"),
@@ -537,7 +539,7 @@ class GraphQLSecurity
         // Check for potential circular queries using configured depth limit
         $depth_pattern = str_repeat("\{[^}]*", $this->max_query_depth + 1);
         if (preg_match("/$depth_pattern/", $query)) {
-            throw new \GraphQL\Error\UserError(
+            throw new UserError(
                 sprintf(
                     /* translators: %d: maximum query depth limit in levels */
                     \__("Query depth exceeds maximum limit of %d levels.", "silver-assist-security"),
@@ -549,7 +551,7 @@ class GraphQLSecurity
         // Check for excessively long queries (potential DoS)
         $max_query_length = $this->max_query_complexity * 100;
         if (strlen($query) > $max_query_length) {
-            throw new \GraphQL\Error\UserError(
+            throw new UserError(
                 sprintf(
                     /* translators: 1: current query length in characters, 2: maximum allowed characters */
                     \__("Query is too large (%1\$d characters). Maximum allowed: %2\$d characters.", "silver-assist-security"),
@@ -639,7 +641,7 @@ class GraphQLSecurity
                 ];
 
                 // Create new ExecutionResult with timeout error
-                return new \GraphQL\Executor\ExecutionResult(
+                return new ExecutionResult(
                     $response_array["data"] ?? null,
                     $response_array["errors"] ?? [],
                     $response_array["extensions"] ?? []
@@ -683,7 +685,7 @@ class GraphQLSecurity
      * 
      * @since 1.1.1
      * @return void
-     * @throws \GraphQL\Error\UserError
+     * @throws UserError
      */
     public function check_rate_limit(): void
     {
@@ -707,7 +709,7 @@ class GraphQLSecurity
         $current_requests = \get_transient($rate_limit_key) ?: 0;
 
         if ($current_requests >= $max_requests) {
-            throw new \GraphQL\Error\UserError(\__("Rate limit exceeded. Please try again later.", "silver-assist-security"));
+            throw new UserError(\__("Rate limit exceeded. Please try again later.", "silver-assist-security"));
         }
 
         \set_transient($rate_limit_key, $current_requests + 1, $time_window);

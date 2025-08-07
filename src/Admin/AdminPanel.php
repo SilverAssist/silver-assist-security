@@ -14,9 +14,9 @@
 
 namespace SilverAssist\Security\Admin;
 
-use SilverAssist\Security\GraphQL\GraphQLConfigManager;
-
 use Exception;
+use SilverAssist\Security\Core\DefaultConfig;
+use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 
 /**
  * Admin Panel class
@@ -392,19 +392,19 @@ class AdminPanel
         $status = [
             "login_security" => [
                 "enabled" => true,
-                "max_attempts" => (int) \get_option("silver_assist_login_attempts", 5),
-                "lockout_duration" => (int) \get_option("silver_assist_lockout_duration", 900),
-                "session_timeout" => (int) \get_option("silver_assist_session_timeout", 30),
+                "max_attempts" => (int) DefaultConfig::get_option("silver_assist_login_attempts"),
+                "lockout_duration" => (int) DefaultConfig::get_option("silver_assist_lockout_duration"),
+                "session_timeout" => (int) DefaultConfig::get_option("silver_assist_session_timeout"),
                 "status" => "active"
             ],
             "admin_security" => [
-                "password_strength_enforcement" => (bool) \get_option("silver_assist_password_strength_enforcement", 1),
-                "bot_protection" => (bool) \get_option("silver_assist_bot_protection", 1),
+                "password_strength_enforcement" => (bool) DefaultConfig::get_option("silver_assist_password_strength_enforcement"),
+                "bot_protection" => (bool) DefaultConfig::get_option("silver_assist_bot_protection"),
                 "status" => $this->get_admin_security_status()
             ],
             "graphql_security" => [
                 "enabled" => class_exists("WPGraphQL"),
-                "headless_mode" => (bool) \get_option("silver_assist_graphql_headless_mode", false),
+                "headless_mode" => (bool) DefaultConfig::get_option("silver_assist_graphql_headless_mode"),
                 "query_depth_limit" => $graphql_config["query_depth_limit"],
                 "query_complexity_limit" => $graphql_config["query_complexity_limit"],
                 "query_timeout" => $graphql_config["query_timeout"],
@@ -447,8 +447,8 @@ class AdminPanel
         return [
             "blocked_ips_count" => $blocked_count,
             "recent_failed_attempts" => $recent_attempts,
-            "lockout_duration_minutes" => round(\get_option("silver_assist_lockout_duration", 900) / 60),
-            "max_attempts" => (int) \get_option("silver_assist_login_attempts", 5),
+            "lockout_duration_minutes" => round(DefaultConfig::get_option("silver_assist_lockout_duration") / 60),
+            "max_attempts" => (int) DefaultConfig::get_option("silver_assist_login_attempts"),
             "last_updated" => current_time("mysql")
         ];
     }
@@ -502,7 +502,7 @@ class AdminPanel
 
                 if ($timeout && is_numeric($timeout) && $timeout > time()) {
                     $remaining = $timeout - time();
-                    $lockout_duration = (int) \get_option("silver_assist_lockout_duration", 900);
+                    $lockout_duration = (int) DefaultConfig::get_option("silver_assist_lockout_duration");
 
                     $blocked_ips[] = [
                         "hash" => $key,
@@ -537,7 +537,7 @@ class AdminPanel
         $count++;
 
         // Password enforcement
-        if (\get_option("silver_assist_password_strength_enforcement", 1))
+        if (DefaultConfig::get_option("silver_assist_password_strength_enforcement"))
             $count++;
 
         // GraphQL security
@@ -558,8 +558,8 @@ class AdminPanel
      */
     private function get_admin_security_status(): string
     {
-        $password_enforcement = (bool) \get_option("silver_assist_password_strength_enforcement", 1);
-        $bot_protection = (bool) \get_option("silver_assist_bot_protection", 1);
+        $password_enforcement = (bool) DefaultConfig::get_option("silver_assist_password_strength_enforcement");
+        $bot_protection = (bool) DefaultConfig::get_option("silver_assist_bot_protection");
 
         // Return active if any admin security feature is enabled
         return ($password_enforcement || $bot_protection) ? "active" : "disabled";
@@ -635,7 +635,7 @@ class AdminPanel
                 "ip_hash" => substr($ip_hash, 0, 8) . "...",
                 "attempts" => $attempts,
                 "timestamp" => current_time("mysql"),
-                "status" => $attempts >= \get_option("silver_assist_login_attempts", 5) ? "blocked" : "monitoring"
+                "status" => $attempts >= DefaultConfig::get_option("silver_assist_login_attempts") ? "blocked" : "monitoring"
             ];
         }
 
@@ -687,19 +687,19 @@ class AdminPanel
         }
 
         // Save login security settings using null coalescing for cleaner code
-        $login_attempts = intval($_POST["silver_assist_login_attempts"] ?? \get_option("silver_assist_login_attempts", 5));
+        $login_attempts = intval($_POST["silver_assist_login_attempts"] ?? DefaultConfig::get_option("silver_assist_login_attempts"));
         if ($_POST["silver_assist_login_attempts"] ?? null) {
             $login_attempts = max(1, min(20, $login_attempts));
             \update_option("silver_assist_login_attempts", $login_attempts);
         }
 
-        $lockout_duration = intval($_POST["silver_assist_lockout_duration"] ?? \get_option("silver_assist_lockout_duration", 900));
+        $lockout_duration = intval($_POST["silver_assist_lockout_duration"] ?? DefaultConfig::get_option("silver_assist_lockout_duration"));
         if ($_POST["silver_assist_lockout_duration"] ?? null) {
             $lockout_duration = max(60, min(3600, $lockout_duration));
             \update_option("silver_assist_lockout_duration", $lockout_duration);
         }
 
-        $session_timeout = intval($_POST["silver_assist_session_timeout"] ?? \get_option("silver_assist_session_timeout", 30));
+        $session_timeout = intval($_POST["silver_assist_session_timeout"] ?? DefaultConfig::get_option("silver_assist_session_timeout"));
         if ($_POST["silver_assist_session_timeout"] ?? null) {
             $session_timeout = max(5, min(120, $session_timeout));
             \update_option("silver_assist_session_timeout", $session_timeout);
@@ -740,12 +740,12 @@ class AdminPanel
     public function render_admin_page(): void
     {
         // Get current values
-        $login_attempts = \get_option("silver_assist_login_attempts", 5);
-        $lockout_duration = \get_option("silver_assist_lockout_duration", 900);
-        $session_timeout = \get_option("silver_assist_session_timeout", 30);
-        $bot_protection = \get_option("silver_assist_bot_protection", 1);
-        $password_strength_enforcement = \get_option("silver_assist_password_strength_enforcement", 1);
-        $graphql_headless_mode = \get_option("silver_assist_graphql_headless_mode", false);
+        $login_attempts = DefaultConfig::get_option("silver_assist_login_attempts");
+        $lockout_duration = DefaultConfig::get_option("silver_assist_lockout_duration");
+        $session_timeout = DefaultConfig::get_option("silver_assist_session_timeout");
+        $bot_protection = DefaultConfig::get_option("silver_assist_bot_protection");
+        $password_strength_enforcement = DefaultConfig::get_option("silver_assist_password_strength_enforcement");
+        $graphql_headless_mode = DefaultConfig::get_option("silver_assist_graphql_headless_mode");
         $graphql_query_timeout = \get_option("silver_assist_graphql_query_timeout", $this->config_manager->get_php_execution_timeout());
 
         // Get initial security status for display

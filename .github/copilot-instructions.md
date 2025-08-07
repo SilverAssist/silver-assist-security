@@ -31,6 +31,7 @@ silver-assist-security/
 │   ├── Admin/AdminPanel.php       # WordPress admin interface
 │   ├── Core/
 │   │   ├── Plugin.php            # Main plugin initialization
+│   │   ├── DefaultConfig.php     # Centralized configuration defaults
 │   │   └── Updater.php           # Automatic GitHub updates
 │   ├── Security/
 │   │   ├── GeneralSecurity.php   # HTTPOnly cookies & headers
@@ -63,7 +64,15 @@ silver-assist-security/
 - Manage plugin lifecycle (activation/deactivation)
 - Coordinate between security modules
 
-### 2. Core\Updater.php
+### 2. Core\DefaultConfig.php
+**Purpose**: Centralized configuration management for all plugin settings
+**Key Responsibilities**:
+- Single source of truth for all plugin default values
+- Eliminates configuration redundancy across components
+- Provides consistent fallback values for all security features
+- Simplifies maintenance and updates to default configurations
+
+### 3. Core\Updater.php
 **Purpose**: Automatic GitHub-based update system
 **Key Responsibilities**:
 - Check for updates from SilverAssist/silver-assist-security repository
@@ -71,7 +80,7 @@ silver-assist-security/
 - Version comparison and update notifications
 - Backup recommendations and update management
 
-### 3. Admin\AdminPanel.php
+### 4. Admin\AdminPanel.php
 **Purpose**: WordPress admin interface for security configuration
 **Key Responsibilities**:
 - Render Security Essentials dashboard page
@@ -79,8 +88,9 @@ silver-assist-security/
 - Process security configuration form submissions
 - Display security statistics and compliance status
 - Use GraphQLConfigManager for centralized GraphQL configuration
+- Use DefaultConfig for consistent configuration handling
 
-### 4. Security\LoginSecurity.php
+### 5. Security\LoginSecurity.php
 **Purpose**: Brute force protection, bot blocking, and login security
 **Key Responsibilities**:
 - IP-based login attempt limiting (1-20 attempts configurable)
@@ -152,18 +162,42 @@ silver-assist-security/
 
 ## Configuration & Settings
 
-### Default Security Configuration
+### Centralized Configuration System
+
+The plugin uses a **two-tier configuration approach** for maximum reliability:
+
+1. **Bootstrap Configuration** (`silver-assist-security.php`): Sets initial database values during plugin activation
+2. **Runtime Configuration** (`src/Core/DefaultConfig.php`): Provides centralized defaults for all classes
+
 ```php
-$default_options = [
-    "silver_assist_login_attempts" => 5,           // Failed logins before lockout
-    "silver_assist_lockout_duration" => 900,       // 15 minutes lockout
-    "silver_assist_session_timeout" => 30,         // 30 minutes session
-    "silver_assist_password_strength_enforcement" => 1, // Strong passwords required
-    "silver_assist_bot_protection" => 1,           // Bot and crawler blocking enabled
-    "silver_assist_graphql_query_depth" => 8,      // Max query depth
-    "silver_assist_graphql_query_complexity" => 100, // Max complexity points
-    "silver_assist_graphql_query_timeout" => 5     // 5 second timeout
-];
+// DefaultConfig.php - Single source of truth for all defaults
+class DefaultConfig {
+    public static function get_defaults(): array {
+        return [
+            "silver_assist_login_attempts" => 5,           // Failed logins before lockout
+            "silver_assist_lockout_duration" => 900,       // 15 minutes lockout
+            "silver_assist_session_timeout" => 30,         // 30 minutes session
+            "silver_assist_password_strength_enforcement" => 1, // Strong passwords required
+            "silver_assist_bot_protection" => 1,           // Bot and crawler blocking enabled
+            "silver_assist_graphql_query_depth" => 8,      // Max query depth
+            "silver_assist_graphql_query_complexity" => 100, // Max complexity points
+            "silver_assist_graphql_query_timeout" => 5,    // 5 second timeout
+            "silver_assist_graphql_headless_mode" => 0     // Headless CMS mode - DISABLED by default
+        ];
+    }
+    
+    public static function get_option(string $option_name) {
+        return get_option($option_name, self::get_default($option_name));
+    }
+}
+```
+
+**Usage Pattern in Classes**:
+```php
+use SilverAssist\Security\Core\DefaultConfig;
+
+// Instead of: get_option("silver_assist_login_attempts", 5)
+// Use:       DefaultConfig::get_option("silver_assist_login_attempts")
 ```
 
 ### Security Essentials Dashboard
@@ -499,7 +533,135 @@ Admin forms process data with validation and immediate option updates:
 - **PHP 8+ Features**: Match expressions, array spread operator, typed properties
 - **Match over Switch**: Use `match` expressions instead of `switch` statements when possible for cleaner, more concise code
 - **Global function calls**: Use `\` prefix **ONLY for WordPress functions** in namespaced context (e.g., `\add_action()`, `\get_option()`, `\is_ssl()`). PHP native functions like `array_key_exists()`, `explode()`, `trim()`, `sprintf()` do NOT need the `\` prefix.
+- **WordPress Function Rule**: ALL WordPress core functions, WordPress API functions, and plugin functions MUST use the `\` prefix when called from within namespaced classes
+- **PHP Native Function Rule**: PHP built-in functions (string, array, math, etc.) should NOT use the `\` prefix as they are automatically resolved
 - **WordPress i18n**: All user-facing strings MUST use WordPress i18n functions (`__()`, `esc_html__()`, `esc_attr__()`, `_e()`, `esc_html_e()`) with text domain `"silver-assist-security"`
+
+### PHP `use` Statement Standards - MANDATORY COMPLIANCE
+
+#### **Import Organization & Ordering**
+- **MANDATORY**: All `use` statements MUST be placed at the top of the file, immediately after the namespace declaration
+- **Alphabetical Ordering**: ALWAYS sort `use` statements alphabetically for consistent organization
+- **No In-Method Imports**: NEVER use fully qualified class names within methods - use `use` statements instead
+- **Same Namespace Rule**: NEVER import classes that are in the same namespace as the current file
+
+#### **Use Statement Examples**
+
+**✅ CORRECT - Alphabetical ordering and proper imports:**
+```php
+<?php
+namespace SilverAssist\Security\GraphQL;
+
+use GraphQL\Error\Error;
+use GraphQL\Error\UserError;
+use GraphQL\Executor\ExecutionResult;
+// Note: GraphQLConfigManager is NOT imported - same namespace
+
+class GraphQLSecurity
+{
+    private GraphQLConfigManager $config_manager; // ✅ Same namespace - direct usage
+    
+    public function throwError(): void
+    {
+        throw new UserError("Error message"); // ✅ Clean usage via import
+    }
+}
+```
+
+**❌ INCORRECT - Wrong ordering and unnecessary imports:**
+```php
+<?php
+namespace SilverAssist\Security\GraphQL;
+
+use SilverAssist\Security\GraphQL\GraphQLConfigManager; // ❌ Same namespace - unnecessary
+use GraphQL\Executor\ExecutionResult;
+use GraphQL\Error\UserError;
+use GraphQL\Error\Error; // ❌ Wrong alphabetical order
+
+class GraphQLSecurity
+{
+    public function throwError(): void
+    {
+        throw new \GraphQL\Error\UserError("Error"); // ❌ Should use import instead
+    }
+}
+```
+
+#### **Namespace Rules & Guidelines**
+
+**Same Namespace - NO Import Needed:**
+```php
+namespace SilverAssist\Security\Core;
+
+// ✅ CORRECT - No use statement needed for DefaultConfig (same namespace)
+class Plugin
+{
+    public function getConfig(): array
+    {
+        return DefaultConfig::get_defaults(); // Direct usage
+    }
+}
+```
+
+**Different Namespace - Import Required:**
+```php
+namespace SilverAssist\Security\Admin;
+
+use SilverAssist\Security\Core\DefaultConfig; // ✅ Required - different namespace
+
+class AdminPanel
+{
+    public function getConfig(): array
+    {
+        return DefaultConfig::get_option("setting_name");
+    }
+}
+```
+
+**External Libraries - Always Import:**
+```php
+namespace SilverAssist\Security\GraphQL;
+
+use GraphQL\Error\Error;           // ✅ External library
+use GraphQL\Error\UserError;       // ✅ External library  
+use GraphQL\Executor\ExecutionResult; // ✅ External library
+
+class GraphQLSecurity
+{
+    public function createError(): Error
+    {
+        return new Error("Message"); // ✅ Clean usage
+    }
+}
+```
+
+#### **Alphabetical Sorting Rules**
+1. **Case-insensitive sorting**: `Error` comes before `ExecutionResult` before `UserError`
+2. **Namespace depth sorting**: Shorter namespaces first, then by alphabetical order
+3. **Group by vendor**: Internal classes first, then external libraries (optional but recommended)
+
+**✅ CORRECT Alphabetical Order:**
+```php
+use GraphQL\Error\Error;
+use GraphQL\Error\UserError;
+use GraphQL\Executor\ExecutionResult;
+use SilverAssist\Security\Core\DefaultConfig;
+```
+
+**❌ INCORRECT Order:**
+```php
+use GraphQL\Executor\ExecutionResult;
+use SilverAssist\Security\Core\DefaultConfig;
+use GraphQL\Error\UserError;
+use GraphQL\Error\Error;
+```
+
+#### **Code Quality Benefits**
+- **Cleaner Code**: No repetitive long namespaces in method bodies
+- **Better Readability**: Clear dependency declarations at the top
+- **Easier Maintenance**: Change namespace in one place instead of throughout the file
+- **IDE Support**: Better autocomplete and refactoring support
+- **Consistency**: Standardized approach across all project files
 
 ### JavaScript Coding Standards
 - **Modern ES6+ Syntax**: MANDATORY use of ES6+ features for all new JavaScript code
@@ -643,21 +805,45 @@ try {
 }
 ```
 
-### Function Prefix Usage Examples
+### Function Prefix Usage Examples - MANDATORY COMPLIANCE
+
+**🚨 CRITICAL RULE: Use `\` prefix for ALL WordPress functions in namespaced context, but NOT for PHP native functions**
+
 ```php
-// ✅ CORRECT - WordPress functions need \ prefix in namespaced context
+// ✅ CORRECT - WordPress functions REQUIRE \ prefix in namespaced context
 \add_action("init", [$this, "method"]);
+\add_filter("graphql_request_data", [$this, "validate"]);
 \get_option("option_name", "default");
+\update_option("option_name", $value);
 \is_ssl();
 \current_user_can("administrator");
+\wp_remote_get($url);
+\current_time("mysql");
+\get_transient($key);
+\set_transient($key, $value, $expiration);
+\class_exists("WPGraphQL");
+\function_exists("get_graphql_setting");
+\defined("WP_DEBUG");
+
+// ✅ CORRECT - WordPress i18n functions REQUIRE \ prefix
+\__("Text to translate", "silver-assist-security");
+\esc_html__("Text to translate", "silver-assist-security");
+\esc_html_e("Text to translate", "silver-assist-security");
 
 // ✅ CORRECT - PHP native functions do NOT need \ prefix
 array_key_exists($key, $array);
 explode(",", $string);
 trim($value);
 sprintf("Hello %s", $name);
-defined("CONSTANT_NAME");
+strlen($string);
+substr($string, 0, 100);
+preg_match("/pattern/", $string);
+json_encode($data);
+md5($string);
+microtime(true);
 header("Content-Type: application/json");
+ini_get("max_execution_time");
+set_time_limit(30);
 
 // ✅ CORRECT - String interpolation examples
 $transient_key = "login_attempts_{md5($ip)}";
@@ -668,11 +854,39 @@ $option_name = "_transient_timeout_{$lockout_key}";
 \array_key_exists($key, $array);
 \explode(",", $string);
 \trim($value);
+\sprintf("Hello %s", $name);
+\strlen($string);
+\json_encode($data);
+
+// ❌ INCORRECT - Missing \ prefix for WordPress functions
+add_action("init", [$this, "method"]);
+get_option("option_name", "default");
+__("Text", "domain");
 
 // ❌ INCORRECT - Avoid concatenation when interpolation is cleaner
 $transient_key = "login_attempts_" . md5($ip);
 $option_name = "_transient_timeout_" . $lockout_key;
 ```
+
+#### **WordPress Functions Categories (ALL need `\` prefix):**
+- **Hooks & Filters**: `\add_action()`, `\add_filter()`, `\remove_action()`, `\remove_filter()`
+- **Options API**: `\get_option()`, `\update_option()`, `\delete_option()`
+- **Transients**: `\get_transient()`, `\set_transient()`, `\delete_transient()`
+- **User Functions**: `\current_user_can()`, `\wp_get_current_user()`, `\is_user_logged_in()`
+- **HTTP API**: `\wp_remote_get()`, `\wp_remote_post()`, `\wp_remote_request()`
+- **Utilities**: `\is_ssl()`, `\current_time()`, `\wp_parse_url()`, `\wp_json_encode()`
+- **Core Checks**: `\class_exists()`, `\function_exists()`, `\defined()`
+- **Internationalization**: `\__()`, `\_e()`, `\esc_html__()`, `\esc_attr__()`
+
+#### **PHP Native Functions Categories (NO `\` prefix needed):**
+- **String Functions**: `strlen()`, `substr()`, `trim()`, `explode()`, `implode()`
+- **Array Functions**: `array_key_exists()`, `array_merge()`, `array_filter()`, `count()`
+- **Regular Expressions**: `preg_match()`, `preg_replace()`, `preg_match_all()`
+- **Data Functions**: `json_encode()`, `json_decode()`, `serialize()`, `unserialize()`
+- **Math Functions**: `max()`, `min()`, `ceil()`, `floor()`, `round()`
+- **Hash Functions**: `md5()`, `sha1()`, `hash()`
+- **Time Functions**: `microtime()`, `time()`, `date()`
+- **System Functions**: `ini_get()`, `set_time_limit()`, `header()`, `error_log()`
 
 ### Match vs Switch Statement Guidelines
 Use PHP 8+ `match` expressions instead of `switch` statements when possible for cleaner, more concise code:

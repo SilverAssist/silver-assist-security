@@ -14,6 +14,8 @@
 
 namespace SilverAssist\Security\GraphQL;
 
+use SilverAssist\Security\Core\DefaultConfig;
+
 /**
  * GraphQL Configuration Manager class
  * 
@@ -106,7 +108,8 @@ class GraphQLConfigManager
   public function is_headless_mode(): bool
   {
     if ($this->headless_mode === null) {
-      $this->headless_mode = (bool) \get_option("silver_assist_graphql_headless_mode", false);
+            // Initialize headless mode from configuration
+      $this->headless_mode = (bool) DefaultConfig::get_option("silver_assist_graphql_headless_mode");
     }
     return $this->headless_mode;
   }
@@ -132,15 +135,13 @@ class GraphQLConfigManager
   public function get_timeout_config(): array
   {
     $php_timeout = $this->get_php_execution_timeout();
-    $current_timeout = (int) \get_option("silver_assist_graphql_query_timeout", 
-      $php_timeout > 0 ? min($php_timeout, 30) : 30
-    );
+    $current_timeout = (int) DefaultConfig::get_option("silver_assist_graphql_query_timeout");
     
     return [
       "php_timeout" => $php_timeout,
       "current_timeout" => $current_timeout,
       "is_unlimited_php" => $php_timeout === 0,
-      "is_using_php_default" => !get_option("silver_assist_graphql_query_timeout"),
+      "is_using_php_default" => !DefaultConfig::get_option("silver_assist_graphql_query_timeout"),
       "recommended_min" => 5,
       "recommended_max" => $php_timeout > 0 ? min($php_timeout, 60) : 60
     ];
@@ -230,10 +231,8 @@ class GraphQLConfigManager
     // Query Complexity (enhanced by our plugin)
     $config["query_complexity_limit"] = $is_headless ? 200 : 100;
 
-    // Query Timeout (our enhancement) - Use PHP setting as base
-    $php_timeout = $this->get_php_execution_timeout();
-    $default_timeout = $php_timeout > 0 ? min($php_timeout, 30) : 30; // Cap at 30 seconds max
-    $config["query_timeout"] = (int) \get_option("silver_assist_graphql_query_timeout", $default_timeout);
+    // Query Timeout (our enhancement) - Use centralized configuration
+    $config["query_timeout"] = (int) DefaultConfig::get_option("silver_assist_graphql_query_timeout");
 
     // Introspection
     $config["introspection_enabled"] = $this->get_wpgraphql_setting("public_introspection_enabled", "off") === "on";

@@ -15,10 +15,10 @@
 namespace SilverAssist\Security\Core;
 
 use SilverAssist\Security\Admin\AdminPanel;
-use SilverAssist\Security\Security\LoginSecurity;
-use SilverAssist\Security\Security\GeneralSecurity;
-use SilverAssist\Security\GraphQL\GraphQLSecurity;
 use SilverAssist\Security\Core\Updater;
+use SilverAssist\Security\GraphQL\GraphQLSecurity;
+use SilverAssist\Security\Security\GeneralSecurity;
+use SilverAssist\Security\Security\LoginSecurity;
 
 /**
  * Main Plugin class
@@ -105,8 +105,8 @@ class Plugin
      */
     private function init(): void
     {
-        // Load text domain for translations
-        \add_action("init", [$this, "load_textdomain"]);
+        // Load text domain for translations immediately
+        $this->load_textdomain();
 
         // Initialize components
         $this->init_admin_panel();

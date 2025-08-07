@@ -67,6 +67,7 @@ spl_autoload_register(function ($class) {
 });
 
 use SilverAssist\Security\Core\Plugin;
+use SilverAssist\Security\Core\DefaultConfig;
 
 /**
  * Main Plugin Bootstrap Class
@@ -84,44 +85,6 @@ class SilverAssistSecurityBootstrap
      * @var SilverAssistSecurityBootstrap|null
      */
     private static ?SilverAssistSecurityBootstrap $instance = null;
-
-    /**
-     * Default plugin options
-     * 
-     * @var array<string, mixed>
-     */
-    private array $default_options = [
-        "silver_assist_login_attempts" => 5,
-        "silver_assist_lockout_duration" => 900, // 15 minutes
-        "silver_assist_session_timeout" => 30, // 30 minutes
-        "silver_assist_password_strength_enforcement" => 1,
-        "silver_assist_bot_protection" => 1, // Enable bot protection by default
-        "silver_assist_custom_admin_url" => "silver-admin", // Custom admin URL slug
-        "silver_assist_hide_admin_urls" => 0, // Hide default admin URLs - DISABLED by default
-        "silver_assist_graphql_query_depth" => 8,
-        "silver_assist_graphql_query_complexity" => 100,
-        "silver_assist_graphql_query_timeout" => 5,
-        "silver_assist_graphql_headless_mode" => 0 // Headless CMS mode - DISABLED by default
-    ];
-
-    /**
-     * Plugin options to remove on uninstall
-     * 
-     * @var array<string>
-     */
-    private array $plugin_options = [
-        "silver_assist_login_attempts",
-        "silver_assist_lockout_duration",
-        "silver_assist_session_timeout",
-        "silver_assist_password_strength_enforcement",
-        "silver_assist_bot_protection",
-        "silver_assist_custom_admin_url",
-        "silver_assist_hide_admin_urls",
-        "silver_assist_graphql_query_depth",
-        "silver_assist_graphql_query_complexity",
-        "silver_assist_graphql_query_timeout",
-        "silver_assist_graphql_headless_mode"
-    ];
 
     /**
      * Constructor
@@ -195,8 +158,8 @@ class SilverAssistSecurityBootstrap
      */
     public function activate(): void
     {
-        // Set default options
-        foreach ($this->default_options as $option => $value) {
+        // Set default options using centralized configuration
+        foreach (DefaultConfig::get_defaults() as $option => $value) {
             if (\get_option($option) === false) {
                 \add_option($option, $value);
             }
@@ -272,10 +235,8 @@ class SilverAssistSecurityBootstrap
      */
     public static function uninstall(): void
     {
-        $instance = new self();
-
-        // Remove all plugin options
-        foreach ($instance->plugin_options as $option) {
+        // Remove all plugin options using centralized configuration
+        foreach (array_keys(DefaultConfig::get_defaults()) as $option) {
             \delete_option($option);
         }
 
