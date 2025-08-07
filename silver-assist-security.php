@@ -27,18 +27,25 @@ if (!defined("ABSPATH")) {
 }
 
 // Define plugin constants
-define('SILVER_ASSIST_SECURITY_VERSION', '1.1.2');
-define('SILVER_ASSIST_SECURITY_PATH', plugin_dir_path(__FILE__));
-define('SILVER_ASSIST_SECURITY_URL', plugin_dir_url(__FILE__));
-define('SILVER_ASSIST_SECURITY_BASENAME', plugin_basename(__FILE__));
+define("SILVER_ASSIST_SECURITY_VERSION", "1.1.2");
+define("SILVER_ASSIST_SECURITY_PATH", plugin_dir_path(__FILE__));
+define("SILVER_ASSIST_SECURITY_URL", plugin_dir_url(__FILE__));
+define("SILVER_ASSIST_SECURITY_BASENAME", plugin_basename(__FILE__));
 
 // Load Composer autoloader for external dependencies
-$composer_autoloader = SILVER_ASSIST_SECURITY_PATH . 'vendor/autoload.php';
+$composer_autoloader = SILVER_ASSIST_SECURITY_PATH . "vendor/autoload.php";
 if (file_exists($composer_autoloader)) {
     require_once $composer_autoloader;
-}
+} else {
+    // Fallback: Load essential classes manually if Composer autoloader is missing
+    $updater_class = SILVER_ASSIST_SECURITY_PATH . "vendor/silverassist/wp-github-updater/src/Updater.php";
+    $config_class = SILVER_ASSIST_SECURITY_PATH . "vendor/silverassist/wp-github-updater/src/UpdaterConfig.php";
 
-/**
+    if (file_exists($updater_class) && file_exists($config_class)) {
+        require_once $config_class;
+        require_once $updater_class;
+    }
+}/**
  * PSR-4 Autoloader for Silver Assist Security Essentials
  * 
  * @param string $class The fully-qualified class name.

@@ -16,6 +16,26 @@ namespace SilverAssist\Security\Core;
 // Prevent direct access
 defined("ABSPATH") or exit;
 
+// Debug: Verificar si las clases están disponibles
+if (!class_exists("SilverAssist\WpGithubUpdater\Updater")) {
+    error_log("Silver Assist Security: WpGithubUpdater\Updater class not found");
+    // Try to load manually as fallback
+    $updater_path = SILVER_ASSIST_SECURITY_PATH . "vendor/silverassist/wp-github-updater/src/Updater.php";
+    if (file_exists($updater_path)) {
+        require_once $updater_path;
+        error_log("Silver Assist Security: Manually loaded Updater class from {$updater_path}");
+    }
+}
+
+if (!class_exists("SilverAssist\WpGithubUpdater\UpdaterConfig")) {
+    error_log("Silver Assist Security: WpGithubUpdater\UpdaterConfig class not found");
+    // Try to load manually as fallback
+    $config_path = SILVER_ASSIST_SECURITY_PATH . "vendor/silverassist/wp-github-updater/src/UpdaterConfig.php";
+    if (file_exists($config_path)) {
+        require_once $config_path;
+        error_log("Silver Assist Security: Manually loaded UpdaterConfig class from {$config_path}");
+    }
+}
 
 use SilverAssist\WpGithubUpdater\Updater as GitHubUpdater;
 use SilverAssist\WpGithubUpdater\UpdaterConfig;
