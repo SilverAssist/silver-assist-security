@@ -14,7 +14,7 @@
 # @package SilverAssist\Security
 # @since 1.0.0
 # @author Silver Assist
-# @version 1.1.1
+# @version 1.1.2
 ###############################################################################
 
 set -e
@@ -111,6 +111,52 @@ if [ -f "composer.json" ]; then
     echo "  ✅ composer.json copied"
 fi
 
+# Copy vendor directory (Composer dependencies) - REQUIRED for external packages
+if [ -d "vendor" ]; then
+    echo -e "${YELLOW}📦 Installing production dependencies...${NC}"
+    
+    # Install only production dependencies (no dev packages)
+    composer install --no-dev --optimize-autoloader --no-scripts --quiet
+    
+    # Create vendor directory in plugin
+    mkdir -p "$PLUGIN_DIR/vendor"
+    
+    # Copy only essential vendor files (exclude unnecessary files)
+    echo -e "${YELLOW}📦 Copying optimized vendor dependencies...${NC}"
+    
+    # Copy Composer autoloader files (essential)
+    cp -r vendor/composer "$PLUGIN_DIR/vendor/"
+    cp vendor/autoload.php "$PLUGIN_DIR/vendor/"
+    
+    # Copy only silverassist packages and their essential files
+    if [ -d "vendor/silverassist" ]; then
+        mkdir -p "$PLUGIN_DIR/vendor/silverassist"
+        
+        # Copy each silverassist package, excluding unnecessary files
+        for package_dir in vendor/silverassist/*/; do
+            if [ -d "$package_dir" ]; then
+                package_name=$(basename "$package_dir")
+                dest_dir="$PLUGIN_DIR/vendor/silverassist/$package_name"
+                mkdir -p "$dest_dir"
+                
+                # Copy essential files only
+                [ -f "$package_dir/composer.json" ] && cp "$package_dir/composer.json" "$dest_dir/"
+                [ -d "$package_dir/src" ] && cp -r "$package_dir/src" "$dest_dir/"
+                
+                echo "    ✅ silverassist/$package_name (optimized)"
+            fi
+        done
+    fi
+    
+    echo "  ✅ vendor/ directory copied (production dependencies - optimized)"
+    
+    # Restore dev dependencies after build
+    composer install --quiet
+    echo "  ✅ Development dependencies restored"
+else
+    echo -e "${RED}⚠️  Warning: vendor/ directory not found. Run 'composer install' first.${NC}"
+fi
+
 echo ""
 
 # Create releases directory if it doesn't exist
@@ -119,7 +165,7 @@ mkdir -p "$PROJECT_ROOT/releases"
 # Create the ZIP file directly in releases directory
 echo -e "${YELLOW}🗜️  Creating ZIP archive...${NC}"
 cd "$TEMP_DIR"
-zip -r "$ZIP_NAME" silver-assist-security/ -x "*.DS_Store*" "*.git*" "*node_modules*" "*.log*" "*vendor*" "*.tmp*" "*scripts*" "*.github*" "*tests*" "*.idea*" "*.vscode*" "*HEADER-STANDARDS.md*" "*MIGRATION.md*" "*phpunit.xml*" "*.phpcs.xml*"
+zip -r "$ZIP_NAME" silver-assist-security/ -x "*.DS_Store*" "*.git*" "*node_modules*" "*.log*" "*.tmp*" "*scripts*" "*.github*" "*tests*" "*.idea*" "*.vscode*" "*HEADER-STANDARDS.md*" "*MIGRATION.md*" "*phpunit.xml*" "*.phpcs.xml*"
 
 # Move ZIP directly to releases directory (no copy in project root)
 mv "$ZIP_NAME" "$PROJECT_ROOT/releases/"

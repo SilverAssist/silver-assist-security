@@ -3,7 +3,7 @@
  * Plugin Name: Silver Assist Security Essentials
  * Plugin URI: https://github.com/SilverAssist/silver-assist-security
  * Description: Resolves critical security vulnerabilities: WordPress login protection, HTTPOnly cookie implementation, and comprehensive GraphQL security. Addresses security audit findings automatically.
- * Version: 1.1.1
+ * Version: 1.1.2
  * Author: Silver Assist
  * Author URI: http://silverassist.com/
  * Text Domain: silver-assist-security
@@ -18,7 +18,7 @@
  * @package SilverAssist\Security
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.1
+ * @version 1.1.2
  */
 
 // Prevent direct access
@@ -27,10 +27,16 @@ if (!defined("ABSPATH")) {
 }
 
 // Define plugin constants
-define('SILVER_ASSIST_SECURITY_VERSION', '1.1.1');
+define('SILVER_ASSIST_SECURITY_VERSION', '1.1.2');
 define('SILVER_ASSIST_SECURITY_PATH', plugin_dir_path(__FILE__));
 define('SILVER_ASSIST_SECURITY_URL', plugin_dir_url(__FILE__));
 define('SILVER_ASSIST_SECURITY_BASENAME', plugin_basename(__FILE__));
+
+// Load Composer autoloader for external dependencies
+$composer_autoloader = SILVER_ASSIST_SECURITY_PATH . 'vendor/autoload.php';
+if (file_exists($composer_autoloader)) {
+    require_once $composer_autoloader;
+}
 
 /**
  * PSR-4 Autoloader for Silver Assist Security Essentials
@@ -94,6 +100,7 @@ class SilverAssistSecurityBootstrap
     private function __construct()
     {
         $this->init_hooks();
+        $this->init_plugin();
     }
 
     /**
@@ -122,9 +129,6 @@ class SilverAssistSecurityBootstrap
         register_activation_hook(__FILE__, [$this, "activate"]);
         register_deactivation_hook(__FILE__, [$this, "deactivate"]);
         register_uninstall_hook(__FILE__, [__CLASS__, "uninstall"]);
-
-        // Initialize plugin
-        \add_action("plugins_loaded", [$this, "init_plugin"]);
     }
 
     /**

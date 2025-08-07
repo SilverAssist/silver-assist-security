@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Core
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.1
+ * @version 1.1.2
  */
 
 namespace SilverAssist\Security\Core;
@@ -94,52 +94,73 @@ class Plugin
      */
     private function __construct()
     {
-        $this->init();
-    }
-
-    /**
-     * Initialize plugin components
-     * 
-     * @since 1.1.1
-     * @return void
-     */
-    private function init(): void
-    {
-        // Load text domain for translations immediately
-        $this->load_textdomain();
+        // Load text domain for translations (safe to call here since we're in init hook)
+        \add_action("init", [$this, "load_textdomain"]);
 
         // Initialize components
-        $this->init_admin_panel();
-        $this->init_security_components();
-        $this->init_graphql_security();
-        $this->init_updater();
+        \add_action("init", [$this, "init_admin_panel"]);
+        \add_action("init", [$this, "init_security_components"]);
+        \add_action("init", [$this, "init_graphql_security"]);
+        \add_action("init", [$this, "init_updater"]);
 
         // Add plugin action links
         \add_filter("plugin_action_links_" . SILVER_ASSIST_SECURITY_BASENAME, [$this, "add_action_links"]);
     }
 
     /**
-     * Load plugin text domain
-     * 
+     * Load plugin textdomain for translations
+     *
      * @since 1.1.1
      * @return void
      */
     public function load_textdomain(): void
     {
-        \load_plugin_textdomain(
-            "silver-assist-security",
-            false,
-            dirname(SILVER_ASSIST_SECURITY_BASENAME) . "/languages"
-        );
-    }
+        // Default languages directory for silver-assist-security
+        $lang_dir = SILVER_ASSIST_SECURITY_PATH . "/languages/";
 
+        /**
+         * Filters the languages directory path for Silver Assist Security
+         *
+         * @param string $lang_dir The languages directory path
+         * @since 1.1.1
+         */
+        $lang_dir = \apply_filters("silver_assist_security_languages_directory", $lang_dir);
+
+        // Get user locale (WordPress 6.5+ always has get_user_locale)
+        $get_locale = \get_user_locale();
+
+        /**
+         * Language locale filter for Silver Assist Security
+         *
+         * @param string $get_locale The locale to use with get_user_locale()
+         * @param string $domain     The text domain
+         * @since 1.1.1
+         */
+        $locale = \apply_filters("plugin_locale", $get_locale, "silver-assist-security");
+        $mofile = sprintf("%1\$s-%2\$s.mo", "silver-assist-security", $locale);
+
+        // Setup paths to current locale file
+        $mofile_local = $lang_dir . $mofile;
+        $mofile_global = WP_LANG_DIR . "/silver-assist-security/" . $mofile;
+
+        if (file_exists($mofile_global)) {
+            // Look in global /wp-content/languages/silver-assist-security/ folder first
+            \load_textdomain("silver-assist-security", $mofile_global);
+        } elseif (file_exists($mofile_local)) {
+            // Look in local /wp-content/plugins/silver-assist-security/languages/ folder
+            \load_textdomain("silver-assist-security", $mofile_local);
+        } else {
+            // Load the default language files as fallback
+            \load_plugin_textdomain("silver-assist-security", false, dirname(plugin_basename(SILVER_ASSIST_SECURITY_PATH . "/silver-assist-security.php")) . "/languages/");
+        }
+    }
     /**
      * Initialize admin panel
      * 
      * @since 1.1.1
      * @return void
      */
-    private function init_admin_panel(): void
+    public function init_admin_panel(): void
     {
         if (\is_admin()) {
             $this->admin_panel = new AdminPanel();
@@ -152,7 +173,7 @@ class Plugin
      * @since 1.1.1
      * @return void
      */
-    private function init_security_components(): void
+    public function init_security_components(): void
     {
         $this->login_security = new LoginSecurity();
         $this->general_security = new GeneralSecurity();
@@ -164,7 +185,7 @@ class Plugin
      * @since 1.1.1
      * @return void
      */
-    private function init_graphql_security(): void
+    public function init_graphql_security(): void
     {
         // Only initialize if WPGraphQL is active
         if (\class_exists("WPGraphQL")) {
@@ -178,7 +199,7 @@ class Plugin
      * @since 1.1.1
      * @return void
      */
-    private function init_updater(): void
+    public function init_updater(): void
     {
         $this->updater = new Updater(
             SILVER_ASSIST_SECURITY_PATH . "silver-assist-security.php",

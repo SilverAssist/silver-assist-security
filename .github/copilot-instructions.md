@@ -273,6 +273,7 @@ use SilverAssist\Security\Core\DefaultConfig;
 - **Login Issues**: Verify IP not blocked, check session timeouts
 - **Performance Issues**: Review rate limiting settings and query limits
 - **Admin Access**: Ensure proper WordPress capabilities
+- **Translation Loading Warning (WordPress 6.7+)**: Use proper `init` hook timing and multi-location translation loading system (see Translation Support section for complete implementation)
 
 ### Debug Information
 - **Error Logging**: Use WordPress debug logging for troubleshooting
@@ -989,6 +990,93 @@ Use these predefined constants:
   - `esc_attr_e("String", "silver-assist-security")` - Translate, escape attributes, echo
 - **JavaScript i18n**: Pass translated strings from PHP to JavaScript via `wp_localize_script()`
 - **Complete Workflow**: See "WP-CLI Integration & Translation Management" section for detailed translation procedures
+
+#### WordPress 6.7+ Translation Loading Requirements
+
+**🚨 CRITICAL: WordPress 6.7+ requires proper textdomain loading timing to avoid "translation loading too early" warnings.**
+
+The plugin implements a robust multi-location translation loading system to ensure compatibility:
+
+##### **Implementation Pattern**
+```php
+/**
+ * Load plugin textdomain for translations - WordPress 6.7+ compatible
+ *
+ * @since 1.1.1
+ * @return void
+ */
+public function load_textdomain(): void
+{
+    // Default languages directory for silver-assist-security
+    $lang_dir = SILVER_ASSIST_SECURITY_PATH . "/languages/";
+
+    /**
+     * Filters the languages directory path for Silver Assist Security
+     *
+     * @param string $lang_dir The languages directory path
+     * @since 1.1.1
+     */
+    $lang_dir = \apply_filters("silver_assist_security_languages_directory", $lang_dir);
+
+    // Get user locale (WordPress 6.5+ always has get_user_locale)
+    $get_locale = \get_user_locale();
+
+    /**
+     * Language locale filter for Silver Assist Security
+     *
+     * @param string $get_locale The locale to use with get_user_locale()
+     * @param string $domain     The text domain
+     * @since 1.1.1
+     */
+    $locale = \apply_filters("plugin_locale", $get_locale, "silver-assist-security");
+    $mofile = sprintf("%1\$s-%2\$s.mo", "silver-assist-security", $locale);
+
+    // Setup paths to current locale file
+    $mofile_local = $lang_dir . $mofile;
+    $mofile_global = WP_LANG_DIR . "/silver-assist-security/" . $mofile;
+
+    if (file_exists($mofile_global)) {
+        // Look in global /wp-content/languages/silver-assist-security/ folder first
+        \load_textdomain("silver-assist-security", $mofile_global);
+    } elseif (file_exists($mofile_local)) {
+        // Look in local /wp-content/plugins/silver-assist-security/languages/ folder
+        \load_textdomain("silver-assist-security", $mofile_local);
+    } else {
+        // Load the default language files as fallback
+        \load_plugin_textdomain("silver-assist-security", false, dirname(plugin_basename(SILVER_ASSIST_SECURITY_PATH . "/silver-assist-security.php")) . "/languages/");
+    }
+}
+```
+
+##### **Key Features:**
+- **Multi-location Search**: Checks global WordPress languages directory first, then plugin directory, then fallback
+- **User Locale Support**: Uses `get_user_locale()` for better user experience
+- **Filter Integration**: Provides customizable filters for directory path and locale detection
+- **Proper Timing**: Loaded via `init` hook to comply with WordPress 6.7+ timing requirements
+- **Fallback System**: Three-tier fallback ensures translations always load even if preferred location fails
+
+##### **Hook Registration:**
+```php
+// In Plugin constructor - proper timing for WordPress 6.7+
+\add_action("init", [$this, "load_textdomain"]);
+```
+
+##### **Translation Directory Structure:**
+```
+/wp-content/languages/silver-assist-security/  ← Global (checked first)
+└── silver-assist-security-es_ES.mo
+
+/wp-content/plugins/silver-assist-security/languages/  ← Local (fallback)
+├── silver-assist-security.pot
+├── silver-assist-security-es_ES.po
+└── silver-assist-security-es_ES.mo
+```
+
+**Resolves WordPress 6.7+ Issues:**
+- ✅ Eliminates "translation loading too early" warnings
+- ✅ Provides proper multi-location fallback system
+- ✅ Ensures compatibility with WordPress automatic translation updates
+- ✅ Maintains compatibility with WordPress 6.5+ requirements
 
 #### PHP i18n Examples
 ```php

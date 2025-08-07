@@ -5,6 +5,72 @@ All notable changes to Silver Assist Security Essentials will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-08-07
+
+### 🚀 Major Features
+
+#### GitHub Updater Package Integration
+- **External Package**: Migrated to reusable `silverassist/wp-github-updater` Composer package
+- **Code Reusability**: Centralized update logic for use across multiple Silver Assist plugins
+- **Optimized Distribution**: Smart vendor directory inclusion with production-only dependencies
+- **Automatic Updates**: Seamless GitHub-based plugin updates with no breaking changes
+
+#### WordPress 6.7+ Translation Compatibility
+- **Multi-location Loading**: Robust translation system supporting global and local language directories
+- **Proper Hook Timing**: Fixed "translation loading too early" warnings with `init` hook integration
+- **Fallback System**: Three-tier translation loading (global → local → fallback) for maximum compatibility
+- **User Locale Support**: Enhanced user experience with `get_user_locale()` integration
+
+### 🔧 Technical Improvements
+
+#### Build System Optimization
+- **Smart Vendor Copying**: Only essential files included in distribution ZIP (excludes tests, docs, .git)
+- **Production Dependencies**: Automated `composer install --no-dev` during build process
+- **Size Optimization**: Reduced ZIP size while maintaining full functionality (~98KB optimized)
+- **Autoloader Integration**: Seamless Composer autoloader integration with custom PSR-4 loader
+
+#### Code Architecture
+- **Updater Class Refactoring**: Simplified to extend external package with minimal configuration
+- **Dependency Management**: Clean separation between development and production dependencies
+- **Package Configuration**: Centralized updater configuration with plugin-specific settings
+
+### 📦 Distribution & Installation
+
+#### Enhanced ZIP Generation
+- **Automatic Vendor Inclusion**: Build script intelligently includes only necessary Composer dependencies
+- **Self-contained Installation**: Plugin ZIP includes all required external packages
+- **WordPress Compatibility**: No manual Composer installation required by end users
+- **Clean Architecture**: Maintains plugin folder structure without version suffixes
+
+### 🛠️ Developer Experience
+
+#### Package Management
+- **Composer Integration**: Full support for external packages in WordPress plugin context
+- **Development Workflow**: Maintained separate dev/production dependency management
+- **Build Automation**: One-command release generation with optimized output
+
+### 🌍 Internationalization
+
+#### Translation System Enhancements
+- **WordPress 6.7+ Ready**: Resolved all translation loading warnings
+- **Filter Integration**: Customizable translation directory and locale detection
+- **Performance Optimized**: Efficient translation file loading with proper caching
+
+### 🔒 Security & Stability
+
+#### Code Quality
+- **Type Safety**: Maintained strict PHP 8+ type declarations throughout refactoring
+- **Error Handling**: Robust error handling for Composer autoloader integration
+- **WordPress Standards**: Full compliance maintained with coding standards
+
+### 💫 Backward Compatibility
+
+- **Zero Breaking Changes**: All existing functionality preserved
+- **API Consistency**: No changes to public plugin interfaces
+- **Configuration Preservation**: All user settings maintained during updates
+
+---
+
 ## [1.1.1] - 2025-08-06
 
 ### Overview

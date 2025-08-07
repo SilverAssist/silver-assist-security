@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Admin
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.1
+ * @version 1.1.2
  */
 
 namespace SilverAssist\Security\Admin;
