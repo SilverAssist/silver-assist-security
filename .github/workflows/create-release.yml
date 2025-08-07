@@ -19,6 +19,18 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.1"
+                  extensions: mbstring, xml, ctype, json, tokenizer
+                  coverage: none
+
+            - name: Install Composer dependencies
+              run: |
+                  composer install --no-dev --optimize-autoloader --no-interaction
+                  echo "✅ Composer dependencies installed successfully"
+
             - name: Extract version from tag or input
               id: version
               run: |
