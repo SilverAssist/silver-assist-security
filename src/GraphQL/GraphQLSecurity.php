@@ -330,7 +330,23 @@ class GraphQLSecurity
                 $this->config_manager = $config_manager;
             }
 
-            public function __invoke($context): array
+            /**
+             * Get the validation rule name
+             * 
+             * @return string
+             */
+            public function getName(): string
+            {
+                return "SilverAssistComplexityValidation";
+            }
+
+            /**
+             * Get visitor function for GraphQL validation
+             * 
+             * @param mixed $context Validation context
+             * @return array
+             */
+            public function getVisitor($context): array
             {
                 return [
                     "DocumentNode" => function ($node) use ($context) {
@@ -352,6 +368,17 @@ class GraphQLSecurity
                         }
                     }
                 ];
+            }
+
+            /**
+             * Get SDL visitor (not used in this context)
+             * 
+             * @param mixed $context SDL validation context
+             * @return array
+             */
+            public function getSDLVisitor($context): array
+            {
+                return [];
             }
 
             /**
@@ -568,42 +595,73 @@ class GraphQLSecurity
      * Enforce query timeout using GraphQL execution tracking
      * 
      * @since 1.1.0
-     * @param array $response GraphQL response
+     * @param mixed $response GraphQL response (ExecutionResult object or array)
      * @param mixed $schema GraphQL schema
      * @param string|null $operation Operation name
-     * @param string $query Query string
+     * @param string|null $query Query string (can be null in some GraphQL contexts)
      * @param array|null $variables Query variables
-     * @return array
+     * @return mixed
      */
-    public function enforce_query_timeout(array $response, $schema, ?string $operation, string $query, ?array $variables): array
+    public function enforce_query_timeout($response, $schema, ?string $operation, ?string $query, ?array $variables)
     {
         $execution_time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
 
         // Check if query execution exceeded our timeout
         if ($execution_time > $this->query_timeout) {
+            $query_preview = $query ? substr($query, 0, 100) . "..." : "Unknown query";
             error_log(sprintf(
                 "GraphQL query timeout exceeded: %.2fs (limit: %ds) - Query: %s",
                 $execution_time,
                 $this->query_timeout,
-                substr($query, 0, 100) . "..."
+                $query_preview
             ));
 
-            // Add timeout error to response
-            if (!isset($response["errors"])) {
-                $response["errors"] = [];
-            }
+            // Handle both ExecutionResult object and array response formats
+            if (is_object($response) && method_exists($response, "toArray")) {
+                // Convert ExecutionResult to array for manipulation
+                $response_array = $response->toArray();
+                
+                // Add timeout error to response
+                if (!isset($response_array["errors"])) {
+                    $response_array["errors"] = [];
+                }
 
-            $response["errors"][] = [
-                "message" => sprintf(
-                    /* translators: %d: timeout limit in seconds */
-                    \__("Query execution timeout exceeded (%ds limit)", "silver-assist-security"),
-                    $this->query_timeout
-                ),
-                "extensions" => [
-                    "code" => "QUERY_TIMEOUT",
-                    "execution_time" => $execution_time
-                ]
-            ];
+                $response_array["errors"][] = [
+                    "message" => sprintf(
+                        /* translators: %d: timeout limit in seconds */
+                        \__("Query execution timeout exceeded (%ds limit)", "silver-assist-security"),
+                        $this->query_timeout
+                    ),
+                    "extensions" => [
+                        "code" => "QUERY_TIMEOUT",
+                        "execution_time" => $execution_time
+                    ]
+                ];
+
+                // Create new ExecutionResult with timeout error
+                return new \GraphQL\Executor\ExecutionResult(
+                    $response_array["data"] ?? null,
+                    $response_array["errors"] ?? [],
+                    $response_array["extensions"] ?? []
+                );
+            } elseif (is_array($response)) {
+                // Handle array response format
+                if (!isset($response["errors"])) {
+                    $response["errors"] = [];
+                }
+
+                $response["errors"][] = [
+                    "message" => sprintf(
+                        /* translators: %d: timeout limit in seconds */
+                        \__("Query execution timeout exceeded (%ds limit)", "silver-assist-security"),
+                        $this->query_timeout
+                    ),
+                    "extensions" => [
+                        "code" => "QUERY_TIMEOUT",
+                        "execution_time" => $execution_time
+                    ]
+                ];
+            }
         }
 
         return $response;
@@ -703,27 +761,32 @@ class GraphQLSecurity
      * Log GraphQL requests for monitoring
      * 
      * @since 1.0.0
-     * @param array $response GraphQL response
+     * @param mixed $response GraphQL response (ExecutionResult object or array)
      * @param mixed $schema GraphQL schema
      * @param string|null $operation Operation name
-     * @param string $query Query string
+     * @param string|null $query Query string (can be null in some GraphQL contexts)
      * @param array|null $variables Query variables
-     * @return array
+     * @return mixed
      */
-    public function log_graphql_requests(array $response, $schema, ?string $operation, string $query, ?array $variables): array
+    public function log_graphql_requests($response, $schema, ?string $operation, ?string $query, ?array $variables)
     {
+        // Convert ExecutionResult to array for analysis if needed
+        $response_array = is_object($response) && method_exists($response, "toArray") ? 
+            $response->toArray() : 
+            (is_array($response) ? $response : []);
+
         $log_data = [
             "timestamp" => \current_time("mysql"),
             "ip" => $this->get_client_ip(),
             "operation" => $operation,
-            "query_length" => strlen($query),
-            "has_errors" => !empty($response["errors"]),
+            "query_length" => $query ? strlen($query) : 0,
+            "has_errors" => !empty($response_array["errors"]),
             "execution_time" => microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"],
             "user_agent" => $_SERVER["HTTP_USER_AGENT"] ?? ""
         ];
 
-        // Log suspicious patterns
-        if ($this->is_suspicious_query($query)) {
+        // Log suspicious patterns (only if query is not null)
+        if ($query && $this->is_suspicious_query($query)) {
             $log_data["suspicious"] = true;
             $log_data["query_preview"] = substr($query, 0, 200) . "...";
             error_log("SECURITY: Suspicious GraphQL query - " . json_encode($log_data));
