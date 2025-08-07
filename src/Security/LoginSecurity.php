@@ -7,9 +7,9 @@
  * Provides protection against brute force attacks and unauthorized access.
  *
  * @package SilverAssist\Security\Security
- * @since 1.0.0
+ * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.0
+ * @version 1.1.1
  */
 
 namespace SilverAssist\Security\Security;
@@ -19,7 +19,7 @@ namespace SilverAssist\Security\Security;
  * 
  * Handles login attempt limiting, lockouts, and login form security
  * 
- * @since 1.0.0
+ * @since 1.1.1
  */
 class LoginSecurity
 {
@@ -48,7 +48,7 @@ class LoginSecurity
     /**
      * Constructor
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      */
     public function __construct()
     {
@@ -59,7 +59,7 @@ class LoginSecurity
     /**
      * Initialize configuration
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function init_configuration(): void
@@ -72,7 +72,7 @@ class LoginSecurity
     /**
      * Initialize login security
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function init(): void
@@ -101,7 +101,7 @@ class LoginSecurity
     /**
      * Initialize password security features
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function init_password_security(): void
@@ -117,7 +117,7 @@ class LoginSecurity
     /**
      * Add security fields to login form
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function add_login_form_security(): void
@@ -135,7 +135,7 @@ class LoginSecurity
     /**
      * Setup login protection
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function setup_login_protection(): void
@@ -160,7 +160,7 @@ class LoginSecurity
     /**
      * Handle failed login attempt
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param string $username Username that failed login
      * @return void
      */
@@ -191,7 +191,7 @@ class LoginSecurity
     /**
      * Check if user is locked out
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param \WP_User|\WP_Error|null $user User object or error
      * @param string $username Username
      * @param string $password Password
@@ -229,7 +229,7 @@ class LoginSecurity
     /**
      * Handle successful login
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param string $user_login Username
      * @param \WP_User $user User object
      * @return void
@@ -246,7 +246,7 @@ class LoginSecurity
     /**
      * Setup session timeout
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function setup_session_timeout(): void
@@ -282,7 +282,7 @@ class LoginSecurity
     /**
      * Set session timeout
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function set_session_timeout(): void
@@ -295,7 +295,7 @@ class LoginSecurity
     /**
      * Clear login attempts for current IP
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function clear_login_attempts(): void
@@ -308,7 +308,7 @@ class LoginSecurity
     /**
      * Validate password strength
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param \WP_Error $errors Errors object
      * @param bool $update Whether this is a user update
      * @param \WP_User $user User object
@@ -331,7 +331,7 @@ class LoginSecurity
     /**
      * Validate password strength on reset
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param \WP_Error $errors Errors object
      * @param \WP_User $user User object
      * @return void
@@ -353,7 +353,7 @@ class LoginSecurity
     /**
      * Check if password is strong
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param string $password Password to check
      * @return bool
      */
@@ -390,7 +390,7 @@ class LoginSecurity
     /**
      * Get client IP address
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return string
      */
     private function get_client_ip(): string
@@ -422,7 +422,7 @@ class LoginSecurity
     /**
      * Get remaining lockout time
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param string $lockout_key Lockout transient key
      * @return int Remaining time in seconds
      */
@@ -445,7 +445,7 @@ class LoginSecurity
     /**
      * Block suspicious bots and crawlers from accessing login page
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function block_suspicious_bots(): void
@@ -523,7 +523,7 @@ class LoginSecurity
     /**
      * Track bot behavior for additional security measures
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function track_bot_behavior(): void
@@ -559,7 +559,7 @@ class LoginSecurity
     /**
      * Send 404 Not Found response to bots
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function send_404_response(): void
@@ -595,7 +595,7 @@ class LoginSecurity
     /**
      * Check if IP is in extended bot block list
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param string $ip IP address to check
      * @return bool True if blocked
      */

@@ -8,7 +8,7 @@ This is a **WordPress security plugin** that resolves critical security vulnerab
 
 The plugin specifically addresses three critical security issues commonly found in WordPress security assessments:
 
-1. **WordPress Admin Login Page Exposure**: Implements comprehensive brute force protection with IP-based login attempt limiting, session timeout management, user enumeration protection, strong password enforcement, advanced bot/crawler blocking with 404 responses to automated reconnaissance tools, and custom admin URL obfuscation to hide default WordPress admin paths.
+1. **WordPress Admin Login Page Exposure**: Implements comprehensive brute force protection with IP-based login attempt limiting, session timeout management, user enumeration protection, strong password enforcement, advanced bot/crawler blocking with 404 responses to automated reconnaissance tools, and security scanner blocking.
 
 2. **HTTPOnly Cookie Flag Missing**: Automatically implements HTTPOnly flags for all WordPress cookies, secure cookies for HTTPS sites, SameSite protection against CSRF attacks, and enhanced session cookie security.
 
@@ -29,11 +29,12 @@ The plugin specifically addresses three critical security issues commonly found 
 silver-assist-security/
 ├── src/                           # PSR-4 source code
 │   ├── Admin/AdminPanel.php       # WordPress admin interface
-│   ├── Core/Plugin.php           # Main plugin initialization
+│   ├── Core/
+│   │   ├── Plugin.php            # Main plugin initialization
+│   │   └── Updater.php           # Automatic GitHub updates
 │   ├── Security/
-│   │   ├── AdminUrlSecurity.php  # Custom admin URL obfuscation
 │   │   ├── GeneralSecurity.php   # HTTPOnly cookies & headers
-│   │   └── LoginSecurity.php     # Brute force protection
+│   │   └── LoginSecurity.php     # Brute force protection & bot blocking
 │   └── GraphQL/
 │       ├── GraphQLConfigManager.php # Centralized GraphQL configuration
 │       └── GraphQLSecurity.php   # GraphQL protection
@@ -44,6 +45,11 @@ silver-assist-security/
 │   ├── silver-assist-security.pot # Translation template
 │   ├── silver-assist-security-es_ES.po # Spanish translations
 │   └── silver-assist-security-es_ES.mo # Compiled Spanish
+├── tests/                         # Unit and integration tests
+│   ├── Unit/                     # Unit tests
+│   ├── Integration/              # Integration tests
+│   ├── Security/                 # Security tests
+│   └── Helpers/                  # Test helper classes
 └── silver-assist-security.php    # Main plugin file
 ```
 
@@ -57,7 +63,15 @@ silver-assist-security/
 - Manage plugin lifecycle (activation/deactivation)
 - Coordinate between security modules
 
-### 2. Admin\AdminPanel.php
+### 2. Core\Updater.php
+**Purpose**: Automatic GitHub-based update system
+**Key Responsibilities**:
+- Check for updates from SilverAssist/silver-assist-security repository
+- Download and install plugin updates
+- Version comparison and update notifications
+- Backup recommendations and update management
+
+### 3. Admin\AdminPanel.php
 **Purpose**: WordPress admin interface for security configuration
 **Key Responsibilities**:
 - Render Security Essentials dashboard page
@@ -66,7 +80,7 @@ silver-assist-security/
 - Display security statistics and compliance status
 - Use GraphQLConfigManager for centralized GraphQL configuration
 
-### 3. Security\LoginSecurity.php
+### 4. Security\LoginSecurity.php
 **Purpose**: Brute force protection, bot blocking, and login security
 **Key Responsibilities**:
 - IP-based login attempt limiting (1-20 attempts configurable)
@@ -78,16 +92,6 @@ silver-assist-security/
 - 404 responses to automated reconnaissance tools
 - Security scanner blocking (Nmap, Nikto, WPScan, etc.)
 
-### 4. Security\AdminUrlSecurity.php
-**Purpose**: Custom admin URL obfuscation and default URL blocking
-**Key Responsibilities**:
-- Custom admin URL routing (default: /silver-admin/)
-- Complete blocking of default WordPress admin URLs (/wp-login.php, /wp-admin/)
-- 404 responses to requests for standard admin paths
-- URL slug validation and security
-- Admin access redirection and route management
-- Recovery mechanisms for custom URL access
-
 ### 5. Security\GeneralSecurity.php
 **Purpose**: HTTPOnly cookies and general WordPress hardening
 **Key Responsibilities**:
@@ -98,7 +102,7 @@ silver-assist-security/
 - WordPress hardening (XML-RPC blocking, version hiding)
 
 ### 6. GraphQL\GraphQLConfigManager.php
-**Purpose**: Centralized GraphQL configuration management (NEW)
+**Purpose**: Centralized GraphQL configuration management
 **Key Responsibilities**:
 - Single source of truth for all GraphQL configurations
 - WPGraphQL plugin detection and integration
@@ -156,8 +160,6 @@ $default_options = [
     "silver_assist_session_timeout" => 30,         // 30 minutes session
     "silver_assist_password_strength_enforcement" => 1, // Strong passwords required
     "silver_assist_bot_protection" => 1,           // Bot and crawler blocking enabled
-    "silver_assist_custom_admin_url" => "silver-admin", // Custom admin URL slug
-    "silver_assist_hide_admin_urls" => 1,          // Hide default admin URLs
     "silver_assist_graphql_query_depth" => 8,      // Max query depth
     "silver_assist_graphql_query_complexity" => 100, // Max complexity points
     "silver_assist_graphql_query_timeout" => 5     // 5 second timeout
@@ -600,7 +602,7 @@ function initFormValidation() {
 /**
  * Handle failed login attempts and apply security measures
  *
- * @since 1.0.0
+ * @since 1.1.1
  * @param string $username The username that failed login
  * @param WP_Error $error The login error object
  * @return void
@@ -617,23 +619,12 @@ public function handle_failed_login(string $username, WP_Error $error): void
  * Initialize form validation for security settings
  * 
  * Validates all form inputs including login attempts, session timeout,
- * GraphQL settings, and custom admin URL formatting.
+ * and GraphQL settings.
  * 
- * @since 1.0.0
+ * @since 1.1.1
  * @returns {void}
  */
 function initFormValidation() {
-    // Implementation
-}
-
-/**
- * Validate custom admin URL input in real-time
- * 
- * @since 1.0.0
- * @param {Event} event - The input event
- * @returns {boolean} True if valid, false otherwise
- */
-function validateCustomAdminUrl(event) {
     // Implementation
 }
 ```

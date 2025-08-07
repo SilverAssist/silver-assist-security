@@ -6,9 +6,9 @@
  * Provides seamless WordPress admin updates without requiring authentication tokens.
  *
  * @package SilverAssist\Security\Core
- * @since 1.0.0
+ * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.0
+ * @version 1.1.1
  */
 
 namespace SilverAssist\Security\Core;

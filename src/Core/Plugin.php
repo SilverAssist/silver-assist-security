@@ -7,9 +7,9 @@
  * Implements singleton pattern for centralized management.
  *
  * @package SilverAssist\Security\Core
- * @since 1.0.0
+ * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.0
+ * @version 1.1.1
  */
 
 namespace SilverAssist\Security\Core;
@@ -25,7 +25,7 @@ use SilverAssist\Security\Core\Updater;
  * 
  * Handles plugin initialization and coordination between components
  * 
- * @since 1.0.0
+ * @since 1.1.1
  */
 class Plugin
 {
@@ -75,7 +75,7 @@ class Plugin
     /**
      * Get plugin instance (Singleton pattern)
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return Plugin
      */
     public static function getInstance(): Plugin
@@ -90,7 +90,7 @@ class Plugin
     /**
      * Private constructor to enforce singleton pattern
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      */
     private function __construct()
     {
@@ -100,7 +100,7 @@ class Plugin
     /**
      * Initialize plugin components
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function init(): void
@@ -121,7 +121,7 @@ class Plugin
     /**
      * Load plugin text domain
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function load_textdomain(): void
@@ -136,7 +136,7 @@ class Plugin
     /**
      * Initialize admin panel
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function init_admin_panel(): void
@@ -149,7 +149,7 @@ class Plugin
     /**
      * Initialize security components
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function init_security_components(): void
@@ -161,7 +161,7 @@ class Plugin
     /**
      * Initialize GraphQL security
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function init_graphql_security(): void
@@ -175,7 +175,7 @@ class Plugin
     /**
      * Initialize updater
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function init_updater(): void
@@ -189,7 +189,7 @@ class Plugin
     /**
      * Add plugin action links
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param array $links Existing action links
      * @return array Modified action links
      */
@@ -209,7 +209,7 @@ class Plugin
     /**
      * Get admin panel instance
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return AdminPanel|null
      */
     public function get_admin_panel(): ?AdminPanel
@@ -220,7 +220,7 @@ class Plugin
     /**
      * Get login security instance
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return LoginSecurity|null
      */
     public function get_login_security(): ?LoginSecurity
@@ -231,7 +231,7 @@ class Plugin
     /**
      * Get general security instance
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return GeneralSecurity|null
      */
     public function get_general_security(): ?GeneralSecurity
@@ -242,7 +242,7 @@ class Plugin
     /**
      * Get GraphQL security instance
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return GraphQLSecurity|null
      */
     public function get_graphql_security(): ?GraphQLSecurity
@@ -253,7 +253,7 @@ class Plugin
     /**
      * Get updater instance
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return Updater|null
      */
     public function get_updater(): ?Updater

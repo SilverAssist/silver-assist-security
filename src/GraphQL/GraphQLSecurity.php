@@ -7,9 +7,9 @@
  * against GraphQL-specific attacks and resource exhaustion.
  *
  * @package SilverAssist\Security\GraphQL
- * @since 1.0.0
+ * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.0
+ * @version 1.1.1
  */
 
 namespace SilverAssist\Security\GraphQL;
@@ -22,7 +22,7 @@ use SilverAssist\Security\GraphQL\GraphQLConfigManager;
  * Handles GraphQL security features including query depth/complexity limits,
  * rate limiting, introspection control, and security validations
  * 
- * @since 1.0.0
+ * @since 1.1.1
  */
 class GraphQLSecurity
 {
@@ -78,7 +78,7 @@ class GraphQLSecurity
     /**
      * Constructor
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      */
     public function __construct()
     {
@@ -90,7 +90,7 @@ class GraphQLSecurity
     /**
      * Initialize configuration values using GraphQLConfigManager
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function init_configuration(): void
@@ -112,7 +112,7 @@ class GraphQLSecurity
     /**
      * Initialize GraphQL security features
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function init(): void
@@ -134,7 +134,7 @@ class GraphQLSecurity
     /**
      * Initialize GraphQL security features
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function init_graphql_security(): void
@@ -151,7 +151,7 @@ class GraphQLSecurity
     /**
      * Disable introspection in production
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function disable_introspection_in_production(): void
@@ -178,7 +178,7 @@ class GraphQLSecurity
     /**
      * Add security validations integrating with WPGraphQL native features
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function add_security_validations(): void
@@ -196,7 +196,7 @@ class GraphQLSecurity
     /**
      * Integrate with WPGraphQL's native query depth validation
      * 
-     * @since 1.1.0
+     * @since 1.1.1
      * @return void
      */
     private function integrate_with_wpgraphql_depth_validation(): void
@@ -227,7 +227,7 @@ class GraphQLSecurity
     /**
      * Enhance WPGraphQL's connection limits for complexity estimation
      * 
-     * @since 1.1.0
+     * @since 1.1.1
      * @return void
      */
     private function enhance_wpgraphql_connection_limits(): void
@@ -242,7 +242,7 @@ class GraphQLSecurity
     /**
      * Filter WPGraphQL's connection max query amount based on complexity estimation
      * 
-     * @since 1.1.0
+     * @since 1.1.1
      * @param int $max_query_amount The maximum number of nodes to query
      * @param mixed $source The source object
      * @param array $args The connection arguments
@@ -265,7 +265,7 @@ class GraphQLSecurity
     /**
      * Add complexity hints to GraphQL connections
      * 
-     * @since 1.1.0
+     * @since 1.1.1
      * @param array $query_args The query arguments
      * @param mixed $source The source object
      * @param array $args The connection arguments
@@ -288,7 +288,7 @@ class GraphQLSecurity
     /**
      * Estimate connection complexity based on arguments
      * 
-     * @since 1.1.0
+     * @since 1.1.1
      * @param array $args Connection arguments
      * @return int Estimated complexity points
      */
@@ -313,7 +313,7 @@ class GraphQLSecurity
     /**
      * Add custom validation rules with WPGraphQL integration
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param array $validation_rules Existing validation rules
      * @return array Modified validation rules
      */
@@ -438,14 +438,14 @@ class GraphQLSecurity
     /**
      * Add custom validation rules
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param array $rules Existing validation rules
      * @return array
      */
     /**
      * Validate query before execution
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param array $request_data Request data including query
      * @param mixed $request HTTP request object (optional)
      * @param string|null $operation_name GraphQL operation name (optional)
@@ -478,7 +478,7 @@ class GraphQLSecurity
     /**
      * Check if query is introspection
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param string $query GraphQL query string
      * @return bool
      */
@@ -490,7 +490,7 @@ class GraphQLSecurity
     /**
      * Validate query patterns for security issues
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param string $query GraphQL query string
      * @return void
      * @throws \GraphQL\Error\UserError
@@ -563,7 +563,7 @@ class GraphQLSecurity
     /**
      * Set execution timeout
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function set_execution_timeout(): void
@@ -594,7 +594,7 @@ class GraphQLSecurity
     /**
      * Enforce query timeout using GraphQL execution tracking
      * 
-     * @since 1.1.0
+     * @since 1.1.1
      * @param mixed $response GraphQL response (ExecutionResult object or array)
      * @param mixed $schema GraphQL schema
      * @param string|null $operation Operation name
@@ -670,7 +670,7 @@ class GraphQLSecurity
     /**
      * Setup GraphQL rate limiting
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function setup_graphql_rate_limiting(): void
@@ -681,7 +681,7 @@ class GraphQLSecurity
     /**
      * Check rate limit for GraphQL requests using ConfigManager
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      * @throws \GraphQL\Error\UserError
      */
@@ -716,7 +716,7 @@ class GraphQLSecurity
     /**
      * Check if request is likely from a build process
      * 
-     * @since 1.1.0
+     * @since 1.1.1
      * @return bool
      */
     private function is_likely_build_process(): bool
@@ -728,7 +728,7 @@ class GraphQLSecurity
     /**
      * Get client IP address
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return string
      */
     private function get_client_ip(): string
@@ -760,7 +760,7 @@ class GraphQLSecurity
     /**
      * Log GraphQL requests for monitoring
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param mixed $response GraphQL response (ExecutionResult object or array)
      * @param mixed $schema GraphQL schema
      * @param string|null $operation Operation name
@@ -803,7 +803,7 @@ class GraphQLSecurity
     /**
      * Check if query contains suspicious patterns
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param string $query The GraphQL query to analyze
      * @return bool
      */
@@ -834,7 +834,7 @@ class GraphQLSecurity
     /**
      * Add GraphQL security headers
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function add_graphql_security_headers(): void
@@ -855,7 +855,7 @@ class GraphQLSecurity
     /**
      * Validate query depth (placeholder for GraphQL validation rules)
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param mixed $context GraphQL context
      * @return array
      */
@@ -872,7 +872,7 @@ class GraphQLSecurity
      * 2. Use enhanced proxy validation for complexity estimation
      * 3. Integrate with WPGraphQL's connection limits and rate limiting
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param mixed $context GraphQL context
      * @return array
      */
@@ -891,7 +891,7 @@ class GraphQLSecurity
     /**
      * Validate aliases (placeholder for GraphQL validation rules)
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param mixed $context GraphQL context
      * @return array
      */
@@ -903,7 +903,7 @@ class GraphQLSecurity
     /**
      * Validate directives (placeholder for GraphQL validation rules)
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param mixed $context GraphQL context
      * @return array
      */
@@ -915,7 +915,7 @@ class GraphQLSecurity
     /**
      * Validate field duplicates (placeholder for GraphQL validation rules)
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param mixed $context GraphQL context
      * @return array
      */
@@ -927,7 +927,7 @@ class GraphQLSecurity
     /**
      * Get current GraphQL query depth limit
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return int
      */
     public function get_max_query_depth(): int
@@ -938,7 +938,7 @@ class GraphQLSecurity
     /**
      * Get current GraphQL query complexity limit
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return int
      */
     public function get_max_query_complexity(): int
@@ -949,7 +949,7 @@ class GraphQLSecurity
     /**
      * Get current GraphQL query timeout
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return int
      */
     public function get_query_timeout(): int
@@ -960,7 +960,7 @@ class GraphQLSecurity
     /**
      * Refresh configuration values
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function refresh_configuration(): void
@@ -971,7 +971,7 @@ class GraphQLSecurity
     /**
      * Enable headless CMS mode with relaxed security settings
      * 
-     * @since 1.0.3
+     * @since 1.1.1
      * @return void
      */
     public function enable_headless_mode(): void
@@ -984,7 +984,7 @@ class GraphQLSecurity
     /**
      * Disable headless CMS mode and use standard security settings
      * 
-     * @since 1.0.3
+     * @since 1.1.1
      * @return void
      */
     public function disable_headless_mode(): void
@@ -997,7 +997,7 @@ class GraphQLSecurity
     /**
      * Check if headless mode is enabled using ConfigManager
      * 
-     * @since 1.0.3
+     * @since 1.1.1
      * @return bool
      */
     public function is_headless_mode(): bool
@@ -1008,7 +1008,7 @@ class GraphQLSecurity
     /**
      * Get recommended settings for headless CMS usage
      * 
-     * @since 1.0.3
+     * @since 1.1.1
      * @return array
      */
     public function get_headless_recommendations(): array
@@ -1050,7 +1050,7 @@ class GraphQLSecurity
     /**
      * Get current WPGraphQL configuration status using ConfigManager
      * 
-     * @since 1.1.0
+     * @since 1.1.1
      * @return array
      */
     public function get_wpgraphql_status(): array

@@ -3,7 +3,7 @@
  * Plugin Name: Silver Assist Security Essentials
  * Plugin URI: https://github.com/SilverAssist/silver-assist-security
  * Description: Resolves critical security vulnerabilities: WordPress login protection, HTTPOnly cookie implementation, and comprehensive GraphQL security. Addresses security audit findings automatically.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: Silver Assist
  * Author URI: http://silverassist.com/
  * Text Domain: silver-assist-security
@@ -16,9 +16,9 @@
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  *
  * @package SilverAssist\Security
- * @since 1.0.0
+ * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.0
+ * @version 1.1.1
  */
 
 // Prevent direct access
@@ -27,7 +27,7 @@ if (!defined("ABSPATH")) {
 }
 
 // Define plugin constants
-define('SILVER_ASSIST_SECURITY_VERSION', '1.1.0');
+define('SILVER_ASSIST_SECURITY_VERSION', '1.1.1');
 define('SILVER_ASSIST_SECURITY_PATH', plugin_dir_path(__FILE__));
 define('SILVER_ASSIST_SECURITY_URL', plugin_dir_url(__FILE__));
 define('SILVER_ASSIST_SECURITY_BASENAME', plugin_basename(__FILE__));
@@ -73,7 +73,7 @@ use SilverAssist\Security\Core\Plugin;
  * 
  * Handles plugin initialization, activation, deactivation, and uninstall hooks
  * 
- * @since 1.0.0
+ * @since 1.1.1
  */
 class SilverAssistSecurityBootstrap
 {
@@ -126,7 +126,7 @@ class SilverAssistSecurityBootstrap
     /**
      * Constructor
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      */
     private function __construct()
     {
@@ -136,7 +136,7 @@ class SilverAssistSecurityBootstrap
     /**
      * Get singleton instance
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return SilverAssistSecurityBootstrap
      */
     public static function getInstance(): SilverAssistSecurityBootstrap
@@ -150,7 +150,7 @@ class SilverAssistSecurityBootstrap
     /**
      * Initialize WordPress hooks
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function init_hooks(): void
@@ -167,7 +167,7 @@ class SilverAssistSecurityBootstrap
     /**
      * Initialize the Silver Assist Security Essentials
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function init_plugin(): void
@@ -190,7 +190,7 @@ class SilverAssistSecurityBootstrap
     /**
      * Plugin activation handler
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function activate(): void
@@ -216,7 +216,7 @@ class SilverAssistSecurityBootstrap
      * This prevents immediate logout after plugin activation by setting
      * last_activity timestamp for users who are currently logged in.
      * 
-     * @since 1.0.3
+     * @since 1.1.1
      * @return void
      */
     private function initialize_user_last_activity(): void
@@ -248,7 +248,7 @@ class SilverAssistSecurityBootstrap
     /**
      * Plugin deactivation handler
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function deactivate(): void
@@ -267,7 +267,7 @@ class SilverAssistSecurityBootstrap
     /**
      * Plugin uninstall handler
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public static function uninstall(): void

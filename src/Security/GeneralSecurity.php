@@ -7,9 +7,9 @@
  * Provides foundational security measures for WordPress installations.
  *
  * @package SilverAssist\Security\Security
- * @since 1.0.0
+ * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.0
+ * @version 1.1.1
  */
 
 namespace SilverAssist\Security\Security;
@@ -19,7 +19,7 @@ namespace SilverAssist\Security\Security;
  * 
  * Handles general WordPress security features like headers, version hiding, etc.
  * 
- * @since 1.0.0
+ * @since 1.1.1
  */
 class GeneralSecurity
 {
@@ -27,7 +27,7 @@ class GeneralSecurity
     /**
      * Constructor
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      */
     public function __construct()
     {
@@ -37,7 +37,7 @@ class GeneralSecurity
     /**
      * Initialize general security features
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function init(): void
@@ -84,7 +84,7 @@ class GeneralSecurity
     /**
      * Add security headers
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function add_security_headers(): void
@@ -107,7 +107,7 @@ class GeneralSecurity
     /**
      * Remove WordPress version
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return string
      */
     public function remove_version(): string
@@ -118,7 +118,7 @@ class GeneralSecurity
     /**
      * Remove unnecessary headers
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function remove_unnecessary_headers(): void
@@ -142,7 +142,7 @@ class GeneralSecurity
     /**
      * Remove version query string from static resources
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param string $src Source URL
      * @return string
      */
@@ -157,7 +157,7 @@ class GeneralSecurity
     /**
      * Remove XML-RPC methods
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param array $methods XML-RPC methods
      * @return array
      */
@@ -169,7 +169,7 @@ class GeneralSecurity
     /**
      * Configure secure cookies
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function configure_secure_cookies(): void
@@ -193,7 +193,7 @@ class GeneralSecurity
     /**
      * Force secure cookies
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param bool $secure Current secure flag
      * @return bool
      */
@@ -205,7 +205,7 @@ class GeneralSecurity
     /**
      * Disable user enumeration
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function disable_user_enumeration(): void
@@ -238,7 +238,7 @@ class GeneralSecurity
     /**
      * Hide login errors
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return string
      */
     public function hide_login_errors(): string
@@ -249,7 +249,7 @@ class GeneralSecurity
     /**
      * Remove admin bar for non-admins
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function remove_admin_bar_for_non_admins(): void
@@ -262,7 +262,7 @@ class GeneralSecurity
     /**
      * Disable file editing
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function disable_file_editing(): void
@@ -275,7 +275,7 @@ class GeneralSecurity
     /**
      * Remove WordPress logo from admin bar
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function remove_wp_logo(): void
@@ -287,7 +287,7 @@ class GeneralSecurity
     /**
      * Change admin footer text
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return string
      */
     public function change_admin_footer(): string
@@ -302,7 +302,7 @@ class GeneralSecurity
     /**
      * Get client IP address
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return string
      */
     public function get_client_ip(): string

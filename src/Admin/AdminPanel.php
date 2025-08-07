@@ -7,9 +7,9 @@
  * Provides comprehensive settings management and validation.
  *
  * @package SilverAssist\Security\Admin
- * @since 1.0.0
+ * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.0
+ * @version 1.1.1
  */
 
 namespace SilverAssist\Security\Admin;
@@ -23,7 +23,7 @@ use Exception;
  * 
  * Handles the WordPress admin interface for security configuration
  * 
- * @since 1.0.0
+ * @since 1.1.1
  */
 class AdminPanel
 {
@@ -37,7 +37,7 @@ class AdminPanel
     /**
      * Constructor
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      */
     public function __construct()
     {
@@ -48,7 +48,7 @@ class AdminPanel
     /**
      * Initialize admin panel
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function init(): void
@@ -69,7 +69,7 @@ class AdminPanel
     /**
      * Add admin menu item
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function add_admin_menu(): void
@@ -86,7 +86,7 @@ class AdminPanel
     /**
      * Register plugin settings
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function register_settings(): void
@@ -108,7 +108,7 @@ class AdminPanel
     /**
      * Enqueue admin scripts and styles
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @param string $hook_suffix Current admin page hook suffix
      * @return void
      */
@@ -201,7 +201,7 @@ class AdminPanel
     /**
      * AJAX handler for security status
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function ajax_get_security_status(): void
@@ -233,7 +233,7 @@ class AdminPanel
     /**
      * AJAX handler for login statistics
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function ajax_get_login_stats(): void
@@ -265,7 +265,7 @@ class AdminPanel
     /**
      * AJAX handler for blocked IPs
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function ajax_get_blocked_ips(): void
@@ -297,7 +297,7 @@ class AdminPanel
     /**
      * AJAX handler for security logs
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function ajax_get_security_logs(): void
@@ -329,7 +329,7 @@ class AdminPanel
     /**
      * AJAX handler for auto-save functionality
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function ajax_auto_save(): void
@@ -381,7 +381,7 @@ class AdminPanel
     /**
      * Get overall security status
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return array Security status data
      */
     private function get_security_status(): array
@@ -431,7 +431,7 @@ class AdminPanel
     /**
      * Get login statistics
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return array Login statistics
      */
     private function get_login_statistics(): array
@@ -456,7 +456,7 @@ class AdminPanel
     /**
      * Get blocked IPs list
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return array List of blocked IPs with details
      */
     private function get_blocked_ips(): array
@@ -526,7 +526,7 @@ class AdminPanel
     /**
      * Count active security features
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return int Number of active features
      */
     private function count_active_features(): int
@@ -553,7 +553,7 @@ class AdminPanel
     /**
      * Get admin security status based on feature activation
      * 
-     * @since 1.0.1
+     * @since 1.1.1
      * @return string Status (active|disabled)
      */
     private function get_admin_security_status(): string
@@ -568,7 +568,7 @@ class AdminPanel
     /**
      * Get count of blocked IPs
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return int Number of currently blocked IPs
      */
     private function get_blocked_ips_count(): int
@@ -588,7 +588,7 @@ class AdminPanel
     /**
      * Get recent failed login attempts count
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return int Number of failed attempts in last 24 hours
      */
     private function get_recent_failed_attempts(): int
@@ -608,7 +608,7 @@ class AdminPanel
     /**
      * Get recent security logs
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return array Recent security events
      */
     private function get_recent_security_logs(): array
@@ -672,7 +672,7 @@ class AdminPanel
     /**
      * Save security settings
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function save_security_settings(): void
@@ -734,7 +734,7 @@ class AdminPanel
     /**
      * Render admin page
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     public function render_admin_page(): void
@@ -1165,7 +1165,7 @@ class AdminPanel
      * Displays current plugin version, latest available version, update status,
      * and provides manual update checking functionality with GitHub integration.
      * 
-     * @since 1.0.0
+     * @since 1.1.1
      * @return void
      */
     private function render_updates_section(): void
@@ -1233,7 +1233,7 @@ class AdminPanel
     /**
      * Get current WPGraphQL settings for display using ConfigManager
      * 
-     * @since 1.0.3
+     * @since 1.1.1
      * @return string HTML display of current settings
      */
     private function get_wpgraphql_current_settings(): string
