@@ -5,6 +5,21 @@ All notable changes to Silver Assist Security Essentials will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2025-08-07
+
+### 🔧 Minor Improvements
+
+#### Updated Dependencies
+- **silverassist/wp-github-updater**: Updated to v1.0.1 with improved changelog formatting
+- **Enhanced Changelog Display**: Better HTML rendering of markdown in WordPress plugin update modal
+- **Improved User Experience**: More readable release notes during automatic updates
+
+#### Project Configuration
+- **Git Attributes**: Added comprehensive `.gitattributes` file for better release management
+- **Cross-platform Compatibility**: Consistent line endings (LF) across all platforms
+- **Cleaner Archives**: GitHub automatic releases now exclude development files
+- **Binary File Handling**: Proper Git configuration for images and compiled files
+
 ## [1.1.2] - 2025-08-07
 
 ### 🚀 Major Features

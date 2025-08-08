@@ -1,0 +1,68 @@
+# Silver Assist Security Essentials - Git Attributes Configuration
+# Controls which files are included in Git archives and exports
+
+# Export-ignore attributes - these files won't be included in GitHub release archives
+.gitattributes export-ignore
+.gitignore export-ignore
+.github/ export-ignore
+tests/ export-ignore
+phpunit.xml.dist export-ignore
+composer.json export-ignore
+composer.lock export-ignore
+vendor/ export-ignore
+
+# Development and build files
+scripts/ export-ignore
+releases/ export-ignore
+HEADER-STANDARDS.md export-ignore
+
+# IDE and editor files
+.vscode/ export-ignore
+.idea/ export-ignore
+*.sublime-project export-ignore
+*.sublime-workspace export-ignore
+.DS_Store export-ignore
+Thumbs.db export-ignore
+
+# Log files
+*.log export-ignore
+error_log export-ignore
+
+# Backup files
+*.bak export-ignore
+*.backup export-ignore
+*~ export-ignore
+*.tmp export-ignore
+*.temp export-ignore
+
+# Language file working copies (keep compiled .mo files)
+languages/*.po~ export-ignore
+
+# Documentation that's not needed in distribution
+README.md
+CHANGELOG.md
+LICENSE
+
+# Line ending configuration for cross-platform compatibility
+*.php text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binary files
+*.mo binary
+*.zip binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+
+# Force text treatment for specific files
+.htaccess text
+*.htaccess text
