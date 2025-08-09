@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2025-08-08T20:30:00+00:00\n"
-"PO-Revision-Date: 2025-08-08 20:30+0000\n"
+"PO-Revision-Date: 2025-08-08 20:35+0000\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Textdomain-Support: yes\n"
@@ -16,14 +16,14 @@ msgstr ""
 
 #. Plugin Name of the plugin
 #: silver-assist-security.php
-#: src/Admin/AdminPanel.php:898
+#: src/Admin/AdminPanel.php:833
 msgid "Silver Assist Security Essentials"
 msgstr "Silver Assist Security Essentials"
 
 #. Plugin URI of the plugin
 #: silver-assist-security.php
 msgid "https://github.com/SilverAssist/silver-assist-security"
-msgstr ""
+msgstr "https://github.com/SilverAssist/silver-assist-security"
 
 #. Description of the plugin
 #: silver-assist-security.php
@@ -33,162 +33,163 @@ msgstr "Resuelve vulnerabilidades críticas de seguridad: protección de login d
 #. Author of the plugin
 #: silver-assist-security.php
 msgid "Silver Assist"
-msgstr ""
+msgstr "Silver Assist"
 
 #. Author URI of the plugin
 #: silver-assist-security.php
 msgid "http://silverassist.com/"
+msgstr "http://silverassist.com/"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:103
+#: src/Admin/AdminPanel.php:80
 msgid "Silver Assist Security"
 msgstr "Silver Assist Security"
 
-#: src/Admin/AdminPanel.php:104
+#: src/Admin/AdminPanel.php:81
 msgid "Security Essentials"
 msgstr "Seguridad Esencial"
 
-#: src/Admin/AdminPanel.php:174
+#: src/Admin/AdminPanel.php:151
 msgid "Loading..."
 msgstr "Cargando..."
 
-#: src/Admin/AdminPanel.php:175
+#: src/Admin/AdminPanel.php:152
 msgid "Error loading data"
 msgstr "Error al cargar datos"
 
-#: src/Admin/AdminPanel.php:176
-#: src/Admin/AdminPanel.php:906
+#: src/Admin/AdminPanel.php:153
+#: src/Admin/AdminPanel.php:841
 msgid "Last updated:"
 msgstr "Última actualización:"
 
-#: src/Admin/AdminPanel.php:177
+#: src/Admin/AdminPanel.php:154
 msgid "No active threats detected"
 msgstr "No se detectaron amenazas activas"
 
-#: src/Admin/AdminPanel.php:178
+#: src/Admin/AdminPanel.php:155
 msgid "Refreshing..."
 msgstr "Actualizando..."
 
 #. translators: %s: new version number
-#: src/Admin/AdminPanel.php:183
+#: src/Admin/AdminPanel.php:160
 #, php-format
 msgid "New version %s available."
 msgstr "Nueva versión %s disponible."
 
-#: src/Admin/AdminPanel.php:184
+#: src/Admin/AdminPanel.php:161
 msgid "Update now"
 msgstr "Actualizar ahora"
 
-#: src/Admin/AdminPanel.php:185
+#: src/Admin/AdminPanel.php:162
 msgid "Checking..."
 msgstr "Verificando..."
 
 #. translators: %1$s: new version number, %2$s: current version number
-#: src/Admin/AdminPanel.php:188
+#: src/Admin/AdminPanel.php:165
 #, php-format
 msgid "New version available: %1$s\\nCurrent version: %2$s"
 msgstr "Nueva versión disponible: %1$s\\nVersión actual: %2$s"
 
 #. translators: %s: current version number
-#: src/Admin/AdminPanel.php:191
+#: src/Admin/AdminPanel.php:168
 #, php-format
 msgid "The plugin is up to date with the latest version (%s)"
 msgstr "El plugin está actualizado a la última versión (%s)"
 
-#: src/Admin/AdminPanel.php:192
+#: src/Admin/AdminPanel.php:169
 msgid "Error checking for updates:"
 msgstr "Error al verificar actualizaciones:"
 
-#: src/Admin/AdminPanel.php:193
+#: src/Admin/AdminPanel.php:170
 msgid "Unknown error"
 msgstr "Error desconocido"
 
-#: src/Admin/AdminPanel.php:194
+#: src/Admin/AdminPanel.php:171
 msgid "Connectivity error while checking for updates"
 msgstr "Error de conectividad al verificar actualizaciones"
 
-#: src/Admin/AdminPanel.php:196
+#: src/Admin/AdminPanel.php:173
 msgid "Login attempts must be between 1 and 20"
 msgstr "Los intentos de login deben estar entre 1 y 20"
 
-#: src/Admin/AdminPanel.php:197
+#: src/Admin/AdminPanel.php:174
 msgid "Lockout duration must be between 60 and 3600 seconds"
 msgstr "La duración del bloqueo debe estar entre 60 y 3600 segundos"
 
-#: src/Admin/AdminPanel.php:198
+#: src/Admin/AdminPanel.php:175
 msgid "Session timeout must be between 5 and 120 minutes"
 msgstr "El timeout de sesión debe estar entre 5 y 120 minutos"
 
-#: src/Admin/AdminPanel.php:199
+#: src/Admin/AdminPanel.php:176
 msgid "GraphQL query depth must be between 1 and 20"
 msgstr "La profundidad de consulta GraphQL debe estar entre 1 y 20"
 
-#: src/Admin/AdminPanel.php:200
+#: src/Admin/AdminPanel.php:177
 msgid "GraphQL query complexity must be between 10 and 1000"
 msgstr "La complejidad de consulta GraphQL debe estar entre 10 y 1000"
 
 #. translators: %d: maximum timeout in seconds based on PHP limit
-#: src/Admin/AdminPanel.php:203
+#: src/Admin/AdminPanel.php:180
 #, fuzzy,php-format
 msgid "GraphQL query timeout must be between 1 and %d seconds (PHP limit)"
 msgstr "El timeout de consulta GraphQL debe estar entre 1 y 30 segundos"
 
-#: src/Admin/AdminPanel.php:206
+#: src/Admin/AdminPanel.php:183
 msgid "Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)"
 msgstr "La URL de admin personalizada debe contener solo letras minúsculas, números y guiones (3-30 caracteres)"
 
-#: src/Admin/AdminPanel.php:207
+#: src/Admin/AdminPanel.php:184
 msgid "Use only lowercase letters, numbers, and hyphens (3-30 characters)"
 msgstr "Use solo letras minúsculas, números y guiones (3-30 caracteres)"
 
-#: src/Admin/AdminPanel.php:217
+#: src/Admin/AdminPanel.php:194
 msgid "Saving..."
 msgstr "Guardando..."
 
-#: src/Admin/AdminPanel.php:218
+#: src/Admin/AdminPanel.php:195
 msgid "Saved!"
 msgstr "¡Guardado!"
 
-#: src/Admin/AdminPanel.php:219
+#: src/Admin/AdminPanel.php:196
 msgid "Save failed"
 msgstr "Error al guardar"
 
-#: src/Admin/AdminPanel.php:221
+#: src/Admin/AdminPanel.php:198
 msgid "Failed to check for Silver Assist updates"
 msgstr "Error al verificar actualizaciones de Silver Assist"
 
-#: src/Admin/AdminPanel.php:222
+#: src/Admin/AdminPanel.php:199
 msgid "Failed to load security essentials"
 msgstr "Error al cargar elementos de seguridad"
 
-#: src/Admin/AdminPanel.php:223
+#: src/Admin/AdminPanel.php:200
 msgid "Failed to load login stats"
 msgstr "Error al cargar estadísticas de login"
 
-#: src/Admin/AdminPanel.php:225
+#: src/Admin/AdminPanel.php:202
 msgid "IP Hash"
 msgstr "Hash IP"
 
-#: src/Admin/AdminPanel.php:226
+#: src/Admin/AdminPanel.php:203
 msgid "Blocked Time"
 msgstr "Tiempo Bloqueado"
 
-#: src/Admin/AdminPanel.php:227
+#: src/Admin/AdminPanel.php:204
 msgid "Remaining"
 msgstr "Restante"
 
-#: src/Admin/AdminPanel.php:228
+#: src/Admin/AdminPanel.php:205
 msgid "min"
 msgstr "min"
 
-#: src/Admin/AdminPanel.php:230
-#: src/Admin/AdminPanel.php:953
-#: src/Admin/AdminPanel.php:961
-#: src/Admin/AdminPanel.php:1005
-#: src/Admin/AdminPanel.php:1037
-#: src/Admin/AdminPanel.php:1043
-#: src/Admin/AdminPanel.php:1049
-#: src/Admin/AdminPanel.php:1055
+#: src/Admin/AdminPanel.php:207
+#: src/Admin/AdminPanel.php:888
+#: src/Admin/AdminPanel.php:896
+#: src/Admin/AdminPanel.php:940
+#: src/Admin/AdminPanel.php:972
+#: src/Admin/AdminPanel.php:978
+#: src/Admin/AdminPanel.php:984
+#: src/Admin/AdminPanel.php:990
 #: src/GraphQL/GraphQLConfigManager.php:319
 #: src/GraphQL/GraphQLConfigManager.php:328
 #: src/GraphQL/GraphQLConfigManager.php:338
@@ -196,11 +197,11 @@ msgstr "min"
 msgid "Enabled"
 msgstr "Habilitado"
 
-#: src/Admin/AdminPanel.php:231
-#: src/Admin/AdminPanel.php:953
-#: src/Admin/AdminPanel.php:961
-#: src/Admin/AdminPanel.php:1006
-#: src/Admin/AdminPanel.php:1055
+#: src/Admin/AdminPanel.php:208
+#: src/Admin/AdminPanel.php:888
+#: src/Admin/AdminPanel.php:896
+#: src/Admin/AdminPanel.php:941
+#: src/Admin/AdminPanel.php:990
 #: src/GraphQL/GraphQLConfigManager.php:319
 #: src/GraphQL/GraphQLConfigManager.php:328
 #: src/GraphQL/GraphQLConfigManager.php:339
@@ -208,356 +209,356 @@ msgstr "Habilitado"
 msgid "Disabled"
 msgstr "Deshabilitado"
 
-#: src/Admin/AdminPanel.php:232
-#: src/Admin/AdminPanel.php:980
+#: src/Admin/AdminPanel.php:209
+#: src/Admin/AdminPanel.php:915
 msgid "Headless CMS"
 msgstr "CMS sin Cabeza"
 
-#: src/Admin/AdminPanel.php:233
-#: src/Admin/AdminPanel.php:981
+#: src/Admin/AdminPanel.php:210
+#: src/Admin/AdminPanel.php:916
 msgid "Standard"
 msgstr "Estándar"
 
-#: src/Admin/AdminPanel.php:406
+#: src/Admin/AdminPanel.php:383
 msgid "Settings saved automatically"
 msgstr "Configuración guardada automáticamente"
 
-#: src/Admin/AdminPanel.php:412
+#: src/Admin/AdminPanel.php:389
 msgid "Error saving settings"
 msgstr "Error al guardar configuración"
 
-#: src/Admin/AdminPanel.php:812
+#: src/Admin/AdminPanel.php:747
 #: src/Security/LoginSecurity.php:151
 msgid "Security check failed."
 msgstr "Verificación de seguridad falló."
 
-#: src/Admin/AdminPanel.php:871
+#: src/Admin/AdminPanel.php:806
 msgid "Security settings have been saved successfully."
 msgstr "La configuración de seguridad se ha guardado exitosamente."
 
-#: src/Admin/AdminPanel.php:903
+#: src/Admin/AdminPanel.php:838
 msgid "Security Status Dashboard"
 msgstr "Panel de Estado de Seguridad"
 
-#: src/Admin/AdminPanel.php:910
+#: src/Admin/AdminPanel.php:845
 msgid "Refresh Now"
 msgstr "Actualizar Ahora"
 
-#: src/Admin/AdminPanel.php:919
+#: src/Admin/AdminPanel.php:854
 msgid "Login Security"
 msgstr "Seguridad de Login"
 
-#: src/Admin/AdminPanel.php:927
+#: src/Admin/AdminPanel.php:862
 msgid "Max Attempts"
 msgstr "Intentos Máx."
 
-#: src/Admin/AdminPanel.php:931
+#: src/Admin/AdminPanel.php:866
 msgid "Blocked IPs"
 msgstr "IPs Bloqueadas"
 
-#: src/Admin/AdminPanel.php:936
+#: src/Admin/AdminPanel.php:871
 msgid "Lockout (min)"
 msgstr "Bloqueo (min)"
 
-#: src/Admin/AdminPanel.php:943
+#: src/Admin/AdminPanel.php:878
 msgid "Admin Security"
 msgstr "Seguridad de Administración"
 
-#: src/Admin/AdminPanel.php:950
-#: src/Admin/AdminPanel.php:1153
+#: src/Admin/AdminPanel.php:885
+#: src/Admin/AdminPanel.php:1088
 msgid "Password Strength Enforcement"
 msgstr "Aplicación de Fortaleza de Contraseña"
 
-#: src/Admin/AdminPanel.php:958
-#: src/Admin/AdminPanel.php:1131
+#: src/Admin/AdminPanel.php:893
+#: src/Admin/AdminPanel.php:1066
 msgid "Bot Protection"
 msgstr "Protección contra Bots"
 
-#: src/Admin/AdminPanel.php:969
+#: src/Admin/AdminPanel.php:904
 msgid "GraphQL Security"
 msgstr "Seguridad GraphQL"
 
-#: src/Admin/AdminPanel.php:976
+#: src/Admin/AdminPanel.php:911
 msgid "Mode:"
 msgstr "Modo:"
 
-#: src/Admin/AdminPanel.php:987
+#: src/Admin/AdminPanel.php:922
 #: src/GraphQL/GraphQLConfigManager.php:320
 msgid "Max Depth"
 msgstr "Profundidad Máx."
 
-#: src/Admin/AdminPanel.php:992
+#: src/Admin/AdminPanel.php:927
 msgid "Max Complexity"
 msgstr "Complejidad Máx."
 
-#: src/Admin/AdminPanel.php:997
+#: src/Admin/AdminPanel.php:932
 msgid "Timeout"
 msgstr "Timeout"
 
-#: src/Admin/AdminPanel.php:1001
+#: src/Admin/AdminPanel.php:936
 msgid "Introspection"
 msgstr "Introspección"
 
-#: src/Admin/AdminPanel.php:1010
+#: src/Admin/AdminPanel.php:945
 msgid "Access"
 msgstr "Acceso"
 
-#: src/Admin/AdminPanel.php:1014
+#: src/Admin/AdminPanel.php:949
 msgid "Public"
 msgstr "Público"
 
-#: src/Admin/AdminPanel.php:1015
+#: src/Admin/AdminPanel.php:950
 msgid "Restricted"
 msgstr "Restringido"
 
-#: src/Admin/AdminPanel.php:1020
+#: src/Admin/AdminPanel.php:955
 msgid "WPGraphQL plugin not detected"
 msgstr "Plugin WPGraphQL no detectado"
 
-#: src/Admin/AdminPanel.php:1028
+#: src/Admin/AdminPanel.php:963
 msgid "General Security"
 msgstr "Seguridad General"
 
-#: src/Admin/AdminPanel.php:1035
+#: src/Admin/AdminPanel.php:970
 msgid "HTTPOnly Cookies"
 msgstr "Cookies HTTPOnly"
 
-#: src/Admin/AdminPanel.php:1041
+#: src/Admin/AdminPanel.php:976
 msgid "XML-RPC Protection"
 msgstr "Protección XML-RPC"
 
-#: src/Admin/AdminPanel.php:1047
+#: src/Admin/AdminPanel.php:982
 msgid "Version Hiding"
 msgstr "Ocultación de Versión"
 
-#: src/Admin/AdminPanel.php:1052
+#: src/Admin/AdminPanel.php:987
 msgid "SSL/HTTPS"
 msgstr "SSL/HTTPS"
 
-#: src/Admin/AdminPanel.php:1065
+#: src/Admin/AdminPanel.php:1000
 msgid "Active Threats & Blocked IPs"
 msgstr "Amenazas Activas e IPs Bloqueadas"
 
-#: src/Admin/AdminPanel.php:1069
+#: src/Admin/AdminPanel.php:1004
 msgid "Loading blocked IPs..."
 msgstr "Cargando IPs bloqueadas..."
 
-#: src/Admin/AdminPanel.php:1076
+#: src/Admin/AdminPanel.php:1011
 msgid "Security Configuration"
 msgstr "Configuración de Seguridad"
 
-#: src/Admin/AdminPanel.php:1083
+#: src/Admin/AdminPanel.php:1018
 msgid "Login Security Settings"
 msgstr "Configuración de Seguridad de Login"
 
-#: src/Admin/AdminPanel.php:1088
+#: src/Admin/AdminPanel.php:1023
 msgid "Maximum Login Attempts"
 msgstr "Intentos Máximos de Login"
 
-#: src/Admin/AdminPanel.php:1095
+#: src/Admin/AdminPanel.php:1030
 msgid "Number of failed login attempts before lockout (1-20)"
 msgstr "Número de intentos de login fallidos antes del bloqueo (1-20)"
 
-#: src/Admin/AdminPanel.php:1102
+#: src/Admin/AdminPanel.php:1037
 msgid "Lockout Duration (seconds)"
 msgstr "Duración del Bloqueo (segundos)"
 
-#: src/Admin/AdminPanel.php:1110
+#: src/Admin/AdminPanel.php:1045
 msgid "How long to lock out users after failed attempts (60-3600 seconds)"
 msgstr "Cuánto tiempo bloquear usuarios después de intentos fallidos (60-3600 segundos)"
 
-#: src/Admin/AdminPanel.php:1117
+#: src/Admin/AdminPanel.php:1052
 msgid "Session Timeout (minutes)"
 msgstr "Timeout de Sesión (minutos)"
 
-#: src/Admin/AdminPanel.php:1125
+#: src/Admin/AdminPanel.php:1060
 msgid "Session timeout duration in minutes (5-120)"
 msgstr "Duración del timeout de sesión en minutos (5-120)"
 
-#: src/Admin/AdminPanel.php:1136
+#: src/Admin/AdminPanel.php:1071
 msgid "Block automated bots and security scanners with 404 responses"
 msgstr "Bloquear bots automatizados y escáneres de seguridad con respuestas 404"
 
-#: src/Admin/AdminPanel.php:1139
+#: src/Admin/AdminPanel.php:1074
 msgid "Detects and blocks common bots, crawlers, and security scanning tools."
 msgstr "Detecta y bloquea bots comunes, rastreadores y herramientas de escaneo de seguridad."
 
-#: src/Admin/AdminPanel.php:1149
+#: src/Admin/AdminPanel.php:1084
 msgid "Password Security Settings"
 msgstr "Configuración de Seguridad de Contraseñas"
 
-#: src/Admin/AdminPanel.php:1159
+#: src/Admin/AdminPanel.php:1094
 msgid "Enforce strong password requirements"
 msgstr "Aplicar requisitos de contraseñas fuertes"
 
-#: src/Admin/AdminPanel.php:1230
+#: src/Admin/AdminPanel.php:1165
 msgid "GraphQL Security Enhancements"
 msgstr "Mejoras de Seguridad GraphQL"
 
-#: src/Admin/AdminPanel.php:1233
+#: src/Admin/AdminPanel.php:1168
 msgid "WPGraphQL Detected"
 msgstr "WPGraphQL Detectado"
 
-#: src/Admin/AdminPanel.php:1234
+#: src/Admin/AdminPanel.php:1169
 msgid "WPGraphQL has its own security settings. These enhancements work alongside WPGraphQL's native configuration."
 msgstr "WPGraphQL tiene sus propias configuraciones de seguridad. Estas mejoras funcionan junto con la configuración nativa de WPGraphQL."
 
-#: src/Admin/AdminPanel.php:1238
+#: src/Admin/AdminPanel.php:1173
 msgid "Open WPGraphQL Settings"
 msgstr "Abrir Configuración de WPGraphQL"
 
-#: src/Admin/AdminPanel.php:1245
+#: src/Admin/AdminPanel.php:1180
 msgid "Headless CMS Mode"
 msgstr "Modo CMS sin Cabeza"
 
-#: src/Admin/AdminPanel.php:1250
+#: src/Admin/AdminPanel.php:1185
 msgid "Enable optimized rate limiting for headless CMS usage"
 msgstr "Habilitar limitación de velocidad optimizada para uso de CMS sin cabeza"
 
-#: src/Admin/AdminPanel.php:1253
+#: src/Admin/AdminPanel.php:1188
 msgid "Increases rate limits and timeout handling for better headless CMS performance. Use WPGraphQL's native settings for query depth and complexity."
 msgstr "Incrementa los límites de velocidad y manejo de timeout para mejor rendimiento de CMS sin cabeza. Usa las configuraciones nativas de WPGraphQL para profundidad y complejidad de consultas."
 
-#: src/Admin/AdminPanel.php:1259
+#: src/Admin/AdminPanel.php:1194
 #, fuzzy
 msgid "GraphQL Query Timeout"
 msgstr "Seguridad GraphQL"
 
-#: src/Admin/AdminPanel.php:1267
-#: src/Admin/AdminPanel.php:1271
+#: src/Admin/AdminPanel.php:1202
+#: src/Admin/AdminPanel.php:1206
 msgid "seconds"
-msgstr ""
+msgstr "segundos"
 
-#: src/Admin/AdminPanel.php:1269
+#: src/Admin/AdminPanel.php:1204
 #, fuzzy
 msgid "PHP Limit:"
 msgstr "Límite"
 
-#: src/Admin/AdminPanel.php:1273
+#: src/Admin/AdminPanel.php:1208
 msgid "Maximum time allowed for GraphQL query execution. Cannot exceed PHP execution time limit."
-msgstr ""
+msgstr "Tiempo máximo permitido para ejecución de consultas GraphQL. No puede exceder el límite de tiempo de ejecución de PHP."
 
-#: src/Admin/AdminPanel.php:1281
+#: src/Admin/AdminPanel.php:1216
 msgid "Enhanced Rate Limiting"
 msgstr "Limitación de Velocidad Mejorada"
 
-#: src/Admin/AdminPanel.php:1285
+#: src/Admin/AdminPanel.php:1220
 msgid "Current Rate Limits:"
 msgstr "Límites de Velocidad Actuales:"
 
-#: src/Admin/AdminPanel.php:1287
+#: src/Admin/AdminPanel.php:1222
 msgid "Standard requests: 300/minute"
 msgstr "Solicitudes estándar: 300/minuto"
 
-#: src/Admin/AdminPanel.php:1289
+#: src/Admin/AdminPanel.php:1224
 msgid "Build processes: 600/minute (auto-detected)"
 msgstr "Procesos de construcción: 600/minuto (auto-detectado)"
 
-#: src/Admin/AdminPanel.php:1291
+#: src/Admin/AdminPanel.php:1226
 msgid "Query timeout: Extended for complex operations"
 msgstr "Timeout de consulta: Extendido para operaciones complejas"
 
-#: src/Admin/AdminPanel.php:1293
+#: src/Admin/AdminPanel.php:1228
 msgid "Standard requests: 100/minute"
 msgstr "Solicitudes estándar: 100/minuto"
 
-#: src/Admin/AdminPanel.php:1295
+#: src/Admin/AdminPanel.php:1230
 msgid "Build processes: 300/minute (auto-detected)"
 msgstr "Procesos de construcción: 300/minuto (auto-detectado)"
 
-#: src/Admin/AdminPanel.php:1296
+#: src/Admin/AdminPanel.php:1231
 msgid "Query timeout: Standard limits"
 msgstr "Timeout de consulta: Límites estándar"
 
-#: src/Admin/AdminPanel.php:1303
+#: src/Admin/AdminPanel.php:1238
 msgid "WPGraphQL Recommendations"
 msgstr "Recomendaciones de WPGraphQL"
 
-#: src/Admin/AdminPanel.php:1307
+#: src/Admin/AdminPanel.php:1242
 msgid "For Headless CMS Usage:"
 msgstr "Para Uso de CMS sin Cabeza:"
 
-#: src/Admin/AdminPanel.php:1310
+#: src/Admin/AdminPanel.php:1245
 msgid "✓ Enable Query Depth Limiting with Max Depth: 15-20"
 msgstr "✓ Habilitar Limitación de Profundidad de Consulta con Profundidad Máx: 15-20"
 
-#: src/Admin/AdminPanel.php:1312
+#: src/Admin/AdminPanel.php:1247
 msgid "✓ Keep Batch Queries enabled with limit: 10-20"
 msgstr "✓ Mantener Consultas por Lotes habilitadas con límite: 10-20"
 
-#: src/Admin/AdminPanel.php:1314
+#: src/Admin/AdminPanel.php:1249
 msgid "✓ Disable Public Introspection in production"
 msgstr "✓ Deshabilitar Introspección Pública en producción"
 
-#: src/Admin/AdminPanel.php:1316
+#: src/Admin/AdminPanel.php:1251
 msgid "✓ Disable GraphQL Debug Mode in production"
 msgstr "✓ Deshabilitar Modo Debug de GraphQL en producción"
 
-#: src/Admin/AdminPanel.php:1320
+#: src/Admin/AdminPanel.php:1255
 msgid "Current WPGraphQL Settings:"
 msgstr "Configuraciones Actuales de WPGraphQL:"
 
-#: src/Admin/AdminPanel.php:1332
+#: src/Admin/AdminPanel.php:1267
 msgid "Headless CMS Mode Active"
 msgstr "Modo CMS sin Cabeza Activo"
 
-#: src/Admin/AdminPanel.php:1334
+#: src/Admin/AdminPanel.php:1269
 msgid "✓ Enhanced rate limiting for high-frequency requests"
 msgstr "✓ Limitación de velocidad mejorada para solicitudes de alta frecuencia"
 
-#: src/Admin/AdminPanel.php:1336
+#: src/Admin/AdminPanel.php:1271
 msgid "✓ Build process detection (Next.js, Gatsby, etc.)"
 msgstr "✓ Detección de procesos de construcción (Next.js, Gatsby, etc.)"
 
-#: src/Admin/AdminPanel.php:1338
+#: src/Admin/AdminPanel.php:1273
 msgid "✓ Extended timeouts for complex queries"
 msgstr "✓ Timeouts extendidos para consultas complejas"
 
-#: src/Admin/AdminPanel.php:1340
+#: src/Admin/AdminPanel.php:1275
 msgid "✓ Optimized for static site generation (SSG/ISR)"
 msgstr "✓ Optimizado para generación de sitios estáticos (SSG/ISR)"
 
-#: src/Admin/AdminPanel.php:1344
+#: src/Admin/AdminPanel.php:1279
 msgid "Configure query depth and complexity limits in WPGraphQL settings for optimal performance."
 msgstr "Configura los límites de profundidad y complejidad de consultas en las configuraciones de WPGraphQL para rendimiento óptimo."
 
-#: src/Admin/AdminPanel.php:1351
+#: src/Admin/AdminPanel.php:1286
 msgid "Save Security Settings"
 msgstr "Guardar Configuración de Seguridad"
 
-#: src/Admin/AdminPanel.php:1386
+#: src/Admin/AdminPanel.php:1321
 msgid "Plugin Updates"
 msgstr "Actualizaciones del Plugin"
 
-#: src/Admin/AdminPanel.php:1389
+#: src/Admin/AdminPanel.php:1324
 msgid "Current Version"
 msgstr "Versión Actual"
 
-#: src/Admin/AdminPanel.php:1393
+#: src/Admin/AdminPanel.php:1328
 msgid "Latest Version"
 msgstr "Última Versión"
 
-#: src/Admin/AdminPanel.php:1399
+#: src/Admin/AdminPanel.php:1334
 msgid "Update Available!"
 msgstr "¡Actualización Disponible!"
 
-#: src/Admin/AdminPanel.php:1403
+#: src/Admin/AdminPanel.php:1338
 msgid "Up to date"
 msgstr "Actualizado"
 
-#: src/Admin/AdminPanel.php:1408
+#: src/Admin/AdminPanel.php:1343
 msgid "Repository"
 msgstr "Repositorio"
 
-#: src/Admin/AdminPanel.php:1419
+#: src/Admin/AdminPanel.php:1354
 msgid "Check for Updates"
 msgstr "Verificar Actualizaciones"
 
-#: src/Admin/AdminPanel.php:1423
+#: src/Admin/AdminPanel.php:1358
 msgid "Go to Updates"
 msgstr "Ir a Actualizaciones"
 
-#: src/Core/Plugin.php:231
+#: src/Core/Plugin.php:233
 msgid "Settings"
 msgstr "Configuración"
 
@@ -647,139 +648,142 @@ msgstr "✓ Deshabilitar Introspección Pública en producción"
 #: src/GraphQL/GraphQLSecurity.php:533
 #, php-format
 msgid "Query contains excessive field duplication. Maximum allowed: %d"
-msgstr ""
+msgstr "La consulta contiene duplicación excesiva de campos. Máximo permitido: %d"
 
 #. translators: %d: maximum query depth limit in levels
 #: src/GraphQL/GraphQLSecurity.php:545
 #, php-format
 msgid "Query depth exceeds maximum limit of %d levels."
-msgstr ""
+msgstr "La profundidad de la consulta excede el límite máximo de %d niveles."
 
 #. translators: %d: timeout limit in seconds
 #: src/GraphQL/GraphQLSecurity.php:634
 #: src/GraphQL/GraphQLSecurity.php:658
 #, php-format
 msgid "Query execution timeout exceeded (%ds limit)"
-msgstr ""
+msgstr "Tiempo de ejecución de consulta excedido (límite %ds)"
 
 #: src/GraphQL/GraphQLSecurity.php:712
 msgid "Rate limit exceeded. Please try again later."
-msgstr ""
+msgstr "Límite de velocidad excedido. Intente nuevamente más tarde."
 
 #. translators: 1: estimated complexity, 2: maximum allowed complexity
 #: src/GraphQL/GraphQLSecurity.php:365
 #, php-format
 msgid "Query complexity %1$d exceeds maximum allowed complexity %2$d"
-msgstr ""
+msgstr "La complejidad de consulta %1$d excede la complejidad máxima permitida %2$d"
 
 #. translators: 1: number of aliases found, 2: maximum allowed
 #: src/GraphQL/GraphQLSecurity.php:508
 #, php-format
 msgid "Query contains too many aliases (%1$d). Maximum allowed: %2$d"
-msgstr ""
+msgstr "La consulta contiene demasiados alias (%1$d). Máximo permitido: %2$d"
 
 #. translators: 1: number of directives found, 2: maximum allowed
 #: src/GraphQL/GraphQLSecurity.php:521
 #, php-format
 msgid "Query contains too many directives (%1$d). Maximum allowed: %2$d"
-msgstr ""
+msgstr "La consulta contiene demasiadas directivas (%1$d). Máximo permitido: %2$d"
 
 #. translators: 1: current query length in characters, 2: maximum allowed characters
 #: src/GraphQL/GraphQLSecurity.php:557
 #, php-format
 msgid "Query is too large (%1$d characters). Maximum allowed: %2$d characters."
-msgstr ""
+msgstr "La consulta es demasiado grande (%1$d caracteres). Máximo permitido: %2$d caracteres."
 
-#: src/Admin/AdminPanel.php:209
+#: src/Admin/AdminPanel.php:186
 msgid "Validating..."
 msgstr "Validando..."
 
-#: src/Admin/AdminPanel.php:210
+#: src/Admin/AdminPanel.php:187
 msgid "✓ Path is valid"
 msgstr "✓ Ruta válida"
 
-#: src/Admin/AdminPanel.php:211
-#: src/Admin/AdminPanel.php:457
+#: src/Admin/AdminPanel.php:188
+#: src/Core/PathValidator.php:76
 msgid "Path must be at least 3 characters long"
 msgstr "La ruta debe tener al menos 3 caracteres"
 
-#: src/Admin/AdminPanel.php:212
-#: src/Admin/AdminPanel.php:461
+#: src/Admin/AdminPanel.php:189
+#: src/Core/PathValidator.php:82
 msgid "Path must be 50 characters or less"
 msgstr "La ruta debe tener 50 caracteres o menos"
 
-#: src/Admin/AdminPanel.php:213
+#: src/Admin/AdminPanel.php:190
 msgid "This path contains forbidden keywords"
 msgstr "Esta ruta contiene palabras clave prohibidas"
 
-#: src/Admin/AdminPanel.php:214
-#: src/Admin/AdminPanel.php:482
+#: src/Admin/AdminPanel.php:191
+#: src/Core/PathValidator.php:89
 msgid "Path can only contain letters, numbers, hyphens, and underscores"
 msgstr "La ruta solo puede contener letras, números, guiones y guiones bajos"
 
-#: src/Admin/AdminPanel.php:215
-#: src/Admin/AdminPanel.php:443
+#: src/Admin/AdminPanel.php:192
+#: src/Core/PathValidator.php:69
 msgid "Path cannot be empty"
 msgstr "La ruta no puede estar vacía"
 
 #. translators: %s: forbidden path keyword
-#: src/Admin/AdminPanel.php:470
+#: src/Core/PathValidator.php:127
+#: src/Core/PathValidator.php:139
+#: src/Core/PathValidator.php:155
+#: src/Core/PathValidator.php:168
 #, php-format
 msgid "Path cannot contain \"%s\" for security reasons"
 msgstr "La ruta no puede contener \"%s\" por razones de seguridad"
 
-#: src/Admin/AdminPanel.php:488
+#: src/Core/PathValidator.php:105
 msgid "Path is valid"
 msgstr "La ruta es válida"
 
-#: src/Admin/AdminPanel.php:501
+#: src/Admin/AdminPanel.php:436
 msgid "Error validating path"
 msgstr "Error al validar la ruta"
 
-#: src/Admin/AdminPanel.php:1168
+#: src/Admin/AdminPanel.php:1103
 msgid "Admin Hide Security"
 msgstr "Seguridad de Ocultación de Admin"
 
-#: src/Admin/AdminPanel.php:1170
+#: src/Admin/AdminPanel.php:1105
 msgid "Hide WordPress admin and login pages from unauthorized users by redirecting to custom URLs."
 msgstr "Oculta las páginas de administración y login de WordPress de usuarios no autorizados redirigiendo a URLs personalizadas."
 
-#: src/Admin/AdminPanel.php:1176
+#: src/Admin/AdminPanel.php:1111
 msgid "Enable Admin Hiding"
 msgstr "Habilitar Ocultación de Admin"
 
-#: src/Admin/AdminPanel.php:1181
+#: src/Admin/AdminPanel.php:1116
 msgid "Hide /wp-admin and /wp-login.php from unauthorized users"
 msgstr "Ocultar /wp-admin y /wp-login.php de usuarios no autorizados"
 
-#: src/Admin/AdminPanel.php:1184
+#: src/Admin/AdminPanel.php:1119
 msgid "When enabled, direct access to WordPress admin URLs will return 404 errors. Use the custom path below to access the admin area."
 msgstr "Cuando está habilitado, el acceso directo a URLs de administración de WordPress devolverá errores 404. Usa la ruta personalizada abajo para acceder al área de administración."
 
-#: src/Admin/AdminPanel.php:1191
+#: src/Admin/AdminPanel.php:1126
 msgid "Custom Admin Path"
 msgstr "Ruta de Admin Personalizada"
 
-#: src/Admin/AdminPanel.php:1199
+#: src/Admin/AdminPanel.php:1134
 msgid "Custom path to access the admin area (e.g., 'my-secret-admin'). Avoid common words like 'admin', 'login', etc."
 msgstr "Ruta personalizada para acceder al área de administración (ej: 'mi-admin-secreto'). Evita palabras comunes como 'admin', 'login', etc."
 
-#: src/Admin/AdminPanel.php:1202
+#: src/Admin/AdminPanel.php:1137
 msgid "Current admin URL:"
 msgstr "URL de admin actual:"
 
-#: src/Admin/AdminPanel.php:1214
+#: src/Admin/AdminPanel.php:1149
 msgid "Important Security Notice"
 msgstr "Aviso de Seguridad Importante"
 
-#: src/Admin/AdminPanel.php:1217
+#: src/Admin/AdminPanel.php:1152
 msgid "Save your custom admin URL in a secure location before enabling this feature."
 msgstr "Guarda tu URL de admin personalizada en un lugar seguro antes de habilitar esta característica."
 
-#: src/Admin/AdminPanel.php:1219
+#: src/Admin/AdminPanel.php:1154
 msgid "If you forget the custom path, you can disable this feature via FTP by editing the database."
 msgstr "Si olvidas la ruta personalizada, puedes deshabilitar esta característica vía FTP editando la base de datos."
 
-#: src/Admin/AdminPanel.php:1221
+#: src/Admin/AdminPanel.php:1156
 msgid "This feature adds an extra layer of security but should be used alongside strong passwords and other security measures."
 msgstr "Esta característica agrega una capa extra de seguridad pero debe usarse junto con contraseñas fuertes y otras medidas de seguridad."
