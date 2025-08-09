@@ -6,7 +6,7 @@
  * security status management.
  *
  * @file admin.js
- * @version 1.1.2
+ * @version 1.1.4
  * @author Silver Assist
  * @requires jQuery
  * @since 1.0.0
@@ -33,6 +33,9 @@
 
         // Initialize GraphQL timeout slider
         initGraphQLTimeoutSlider();
+
+        // Initialize admin path validation
+        initAdminPathValidation();
 
         // Initialize dashboard
         initDashboard();
@@ -91,6 +94,25 @@
             if (graphqlTimeout && (graphqlTimeout < 1 || graphqlTimeout > phpTimeout)) {
                 errors.push(silverAssistSecurity.strings.graphqlTimeoutError || `GraphQL query timeout must be between 1 and ${phpTimeout} seconds`);
                 isValid = false;
+            }
+
+            // Validate admin path if present and admin hide is enabled
+            const adminHideEnabled = $("#silver_assist_admin_hide_enabled").is(":checked");
+            const adminPath = $("#silver_assist_admin_hide_path").val();
+
+            if (adminHideEnabled && adminPath) {
+                // Check if current validation indicator shows invalid state
+                const validationIndicator = $("#admin-path-validation");
+                if (validationIndicator.length && validationIndicator.hasClass("invalid")) {
+                    errors.push(silverAssistSecurity.strings.pathForbidden || "Admin path contains invalid characters or forbidden keywords");
+                    isValid = false;
+                } else if (adminPath.length < 3) {
+                    errors.push(silverAssistSecurity.strings.pathTooShort || "Admin path must be at least 3 characters long");
+                    isValid = false;
+                } else if (adminPath.length > 50) {
+                    errors.push(silverAssistSecurity.strings.pathTooLong || "Admin path must be 50 characters or less");
+                    isValid = false;
+                }
             }
 
             if (!isValid) {
@@ -251,7 +273,7 @@
                         .html(silverAssistSecurity.strings.saved || "Saved!")
                         .delay(2000)
                         .fadeOut();
-                    
+
                     // Update dashboard to reflect changes immediately
                     setTimeout(() => {
                         loadSecurityStatus();
@@ -535,8 +557,8 @@
                 passwordElement
                     .removeClass("enabled disabled")
                     .addClass(data.admin_security.password_strength_enforcement ? "enabled" : "disabled")
-                    .text(data.admin_security.password_strength_enforcement ? 
-                        (silverAssistSecurity.strings.enabled || "Enabled") : 
+                    .text(data.admin_security.password_strength_enforcement ?
+                        (silverAssistSecurity.strings.enabled || "Enabled") :
                         (silverAssistSecurity.strings.disabled || "Disabled"));
             }
 
@@ -546,8 +568,8 @@
                 botElement
                     .removeClass("enabled disabled")
                     .addClass(data.admin_security.bot_protection ? "enabled" : "disabled")
-                    .text(data.admin_security.bot_protection ? 
-                        (silverAssistSecurity.strings.enabled || "Enabled") : 
+                    .text(data.admin_security.bot_protection ?
+                        (silverAssistSecurity.strings.enabled || "Enabled") :
                         (silverAssistSecurity.strings.disabled || "Disabled"));
             }
         }
@@ -560,16 +582,16 @@
                 headlessModeElement
                     .removeClass("headless standard")
                     .addClass(data.graphql_security.headless_mode ? "headless" : "standard")
-                    .text(data.graphql_security.headless_mode ? 
-                        (silverAssistSecurity.strings.headlessCms || "Headless CMS") : 
+                    .text(data.graphql_security.headless_mode ?
+                        (silverAssistSecurity.strings.headlessCms || "Headless CMS") :
                         (silverAssistSecurity.strings.standard || "Standard"));
             }
 
             // Update query depth, complexity, and timeout values
-            $(".graphql-security .stat").each(function(index) {
+            $(".graphql-security .stat").each(function (index) {
                 const $statValue = $(this).find(".stat-value");
                 if ($statValue.length) {
-                    switch(index) {
+                    switch (index) {
                         case 0: // Max Depth
                             $statValue.text(data.graphql_security.query_depth_limit);
                             break;
@@ -592,8 +614,8 @@
                 sslElement
                     .removeClass("enabled disabled")
                     .addClass(data.general_security.ssl_enabled ? "enabled" : "disabled")
-                    .text(data.general_security.ssl_enabled ? 
-                        (silverAssistSecurity.strings.enabled || "Enabled") : 
+                    .text(data.general_security.ssl_enabled ?
+                        (silverAssistSecurity.strings.enabled || "Enabled") :
                         (silverAssistSecurity.strings.disabled || "Disabled"));
             }
         }
@@ -707,24 +729,161 @@
 
         if (timeoutSlider.length && timeoutDisplay.length) {
             // Update display value when slider changes
-            timeoutSlider.on("input", function() {
+            timeoutSlider.on("input", function () {
                 timeoutDisplay.text($(this).val());
             });
 
             // Update validation on change
-            timeoutSlider.on("change", function() {
+            timeoutSlider.on("change", function () {
                 const value = parseInt($(this).val());
                 const maxValue = parseInt($(this).attr("max"));
-                
+
                 if (value > maxValue) {
                     $(this).val(maxValue);
                     timeoutDisplay.text(maxValue);
-                    
+
                     // Show warning
                     const warningMessage = "GraphQL timeout cannot exceed PHP execution time limit (" + maxValue + "s)";
                     showValidationErrors([warningMessage]);
                 }
             });
+        }
+    };
+
+    /**
+     * Initialize real-time admin path validation
+     * 
+     * Provides instant feedback for admin path input validation
+     * while the user types, without requiring form submission.
+     * 
+     * @since 1.1.4
+     * @returns {void}
+     */
+    const initAdminPathValidation = () => {
+        const pathInput = $("#silver_assist_admin_hide_path");
+
+        if (!pathInput.length) {
+            return; // Admin path input not found
+        }
+
+        let validationTimeout;
+        let validationIndicator = null;
+
+        // Create validation indicator element
+        const createValidationIndicator = () => {
+            if (!validationIndicator) {
+                validationIndicator = $(`<div id="admin-path-validation" class="validation-indicator"></div>`);
+                pathInput.after(validationIndicator);
+            }
+            return validationIndicator;
+        };
+
+        // Update validation indicator
+        const updateValidationIndicator = (type, message) => {
+            const indicator = createValidationIndicator();
+
+            indicator.removeClass("validating valid invalid")
+                .addClass(type)
+                .html(message);
+
+            // Update input styling
+            pathInput.removeClass("validation-valid validation-invalid validation-validating")
+                .addClass(`validation-${type}`);
+
+            // Update preview URL if valid
+            if (type === "valid" && message.includes("✓")) {
+                updatePathPreview(pathInput.val());
+            }
+        };
+
+        // Update path preview URL
+        const updatePathPreview = (path) => {
+            const previewElement = $("code:contains('" + window.location.origin + "')").first();
+            if (previewElement.length && path) {
+                const sanitizedPath = path.toLowerCase().replace(/[^a-zA-Z0-9-_]/g, "");
+                const homeUrl = window.location.origin;
+                previewElement.text(`${homeUrl}/${sanitizedPath}`);
+            }
+        };
+
+        // Validate path via AJAX
+        const validatePath = (path) => {
+            if (!path || path.length === 0) {
+                updateValidationIndicator("invalid", silverAssistSecurity.strings.pathEmpty || "Path cannot be empty");
+                return;
+            }
+
+            // Show validating state
+            updateValidationIndicator("validating", silverAssistSecurity.strings.pathValidating || "Validating...");
+
+            $.ajax({
+                url: silverAssistSecurity.ajaxurl,
+                type: "POST",
+                data: {
+                    action: "silver_assist_validate_admin_path",
+                    nonce: silverAssistSecurity.nonce,
+                    path: path
+                },
+                success: response => {
+                    if (response.success) {
+                        updateValidationIndicator("valid", silverAssistSecurity.strings.pathValid || "✓ Path is valid");
+                        updatePathPreview(response.data.sanitized_path);
+                    } else {
+                        let errorMessage = response.data.message;
+
+                        // Use localized error messages based on error type
+                        switch (response.data.type) {
+                            case "empty":
+                                errorMessage = silverAssistSecurity.strings.pathEmpty || errorMessage;
+                                break;
+                            case "too_short":
+                                errorMessage = silverAssistSecurity.strings.pathTooShort || errorMessage;
+                                break;
+                            case "too_long":
+                                errorMessage = silverAssistSecurity.strings.pathTooLong || errorMessage;
+                                break;
+                            case "forbidden":
+                                errorMessage = silverAssistSecurity.strings.pathForbidden || errorMessage;
+                                break;
+                            case "invalid_chars":
+                                errorMessage = silverAssistSecurity.strings.pathInvalidChars || errorMessage;
+                                break;
+                        }
+
+                        updateValidationIndicator("invalid", `✗ ${errorMessage}`);
+                    }
+                },
+                error: () => {
+                    updateValidationIndicator("invalid", "✗ " + (silverAssistSecurity.strings.error || "Validation error"));
+                }
+            });
+        };
+
+        // Attach real-time validation
+        pathInput.on("input", function () {
+            const path = $(this).val().trim();
+
+            // Clear previous validation timeout
+            clearTimeout(validationTimeout);
+
+            // Set new validation timeout (500ms delay for better UX)
+            validationTimeout = setTimeout(() => {
+                validatePath(path);
+            }, 500);
+        });
+
+        // Validate on focus lost
+        pathInput.on("blur", function () {
+            const path = $(this).val().trim();
+            clearTimeout(validationTimeout);
+            if (path) {
+                validatePath(path);
+            }
+        });
+
+        // Initial validation if field has value
+        if (pathInput.val()) {
+            validatePath(pathInput.val());
         }
     };
 

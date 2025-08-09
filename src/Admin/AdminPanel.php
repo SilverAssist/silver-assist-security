@@ -9,13 +9,14 @@
  * @package SilverAssist\Security\Admin
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.2
+ * @version 1.1.4
  */
 
 namespace SilverAssist\Security\Admin;
 
 use Exception;
 use SilverAssist\Security\Core\DefaultConfig;
+use SilverAssist\Security\Core\PathValidator;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 
 /**
@@ -64,6 +65,7 @@ class AdminPanel
         \add_action("wp_ajax_silver_assist_get_blocked_ips", [$this, "ajax_get_blocked_ips"]);
         \add_action("wp_ajax_silver_assist_get_security_logs", [$this, "ajax_get_security_logs"]);
         \add_action("wp_ajax_silver_assist_auto_save", [$this, "ajax_auto_save"]);
+        \add_action("wp_ajax_silver_assist_validate_admin_path", [$this, "ajax_validate_admin_path"]);
     }
 
     /**
@@ -96,6 +98,10 @@ class AdminPanel
         \register_setting("silver_assist_security_login", "silver_assist_lockout_duration");
         \register_setting("silver_assist_security_login", "silver_assist_session_timeout");
         \register_setting("silver_assist_security_login", "silver_assist_bot_protection");
+
+        // Admin Hide Settings
+        \register_setting("silver_assist_security_admin_hide", "silver_assist_admin_hide_enabled");
+        \register_setting("silver_assist_security_admin_hide", "silver_assist_admin_hide_path");
 
         // Password Settings
         \register_setting("silver_assist_security_password", "silver_assist_password_strength_enforcement");
@@ -149,15 +155,15 @@ class AdminPanel
                 "refreshing" => __("Refreshing...", "silver-assist-security"),
                 "updateUrl" => \admin_url("update-core.php"),
                 // Version check strings
-                "newVersionAvailable" => 
+                "newVersionAvailable" =>
                     /* translators: %s: new version number */
                     __("New version %s available.", "silver-assist-security"),
                 "updateNow" => __("Update now", "silver-assist-security"),
                 "checking" => __("Checking...", "silver-assist-security"),
-                "newVersionFound" => 
+                "newVersionFound" =>
                     /* translators: %1$s: new version number, %2$s: current version number */
                     __("New version available: %1\$s\\nCurrent version: %2\$s", "silver-assist-security"),
-                "upToDate" => 
+                "upToDate" =>
                     /* translators: %s: current version number */
                     __("The plugin is up to date with the latest version (%s)", "silver-assist-security"),
                 "checkError" => __("Error checking for updates:", "silver-assist-security"),
@@ -176,6 +182,14 @@ class AdminPanel
                 ),
                 "customUrlPatternError" => __("Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)", "silver-assist-security"),
                 "urlPatternError" => __("Use only lowercase letters, numbers, and hyphens (3-30 characters)", "silver-assist-security"),
+                // Admin path validation strings
+                "pathValidating" => __("Validating...", "silver-assist-security"),
+                "pathValid" => __("✓ Path is valid", "silver-assist-security"),
+                "pathTooShort" => __("Path must be at least 3 characters long", "silver-assist-security"),
+                "pathTooLong" => __("Path must be 50 characters or less", "silver-assist-security"),
+                "pathForbidden" => __("This path contains forbidden keywords", "silver-assist-security"),
+                "pathInvalidChars" => __("Path can only contain letters, numbers, hyphens, and underscores", "silver-assist-security"),
+                "pathEmpty" => __("Path cannot be empty", "silver-assist-security"),
                 // Auto-save strings
                 "saving" => __("Saving...", "silver-assist-security"),
                 "saved" => __("Saved!", "silver-assist-security"),
@@ -373,6 +387,53 @@ class AdminPanel
         } catch (Exception $e) {
             \wp_send_json_error([
                 "message" => \__("Error saving settings", "silver-assist-security"),
+                "error" => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * AJAX handler for admin path validation
+     *
+     * @since 1.1.4
+     * @return void
+     */
+    public function ajax_validate_admin_path(): void
+    {
+        try {
+            // Verify nonce
+            if (!\wp_verify_nonce($_POST["nonce"] ?? "", "silver_assist_security_ajax")) {
+                \wp_send_json_error(["message" => "Security check failed"]);
+                return;
+            }
+
+            // Check user permissions
+            if (!\current_user_can("manage_options")) {
+                \wp_send_json_error(["message" => "Insufficient permissions"]);
+                return;
+            }
+
+            $path = \sanitize_text_field($_POST["path"] ?? "");
+
+            // Use centralized PathValidator for validation
+            $validation_result = PathValidator::validate_admin_path($path);
+
+            if ($validation_result["is_valid"]) {
+                \wp_send_json_success([
+                    "message" => $validation_result["error_message"], // Contains success message
+                    "preview_url" => \home_url("/" . $path),
+                    "sanitized_path" => $validation_result["sanitized_path"]
+                ]);
+            } else {
+                \wp_send_json_error([
+                    "message" => $validation_result["error_message"],
+                    "type" => $validation_result["error_type"]
+                ]);
+            }
+
+        } catch (Exception $e) {
+            \wp_send_json_error([
+                "message" => \__("Error validating path", "silver-assist-security"),
                 "error" => $e->getMessage()
             ]);
         }
@@ -711,6 +772,22 @@ class AdminPanel
         // Save password settings
         \update_option("silver_assist_password_strength_enforcement", (int) ($_POST["silver_assist_password_strength_enforcement"] ?? 0));
 
+        // Save Admin Hide settings
+        $admin_hide_enabled = (int) ($_POST["silver_assist_admin_hide_enabled"] ?? 0);
+        \update_option("silver_assist_admin_hide_enabled", $admin_hide_enabled);
+
+        $admin_hide_path = \sanitize_title($_POST["silver_assist_admin_hide_path"] ?? "silver-admin");
+        if (!empty($admin_hide_path) && $this->validate_admin_hide_path($admin_hide_path)) {
+            \update_option("silver_assist_admin_hide_path", $admin_hide_path);
+        } else {
+            \update_option("silver_assist_admin_hide_path", "silver-admin");
+        }
+
+        // Flush rewrite rules when admin hide settings change
+        if ($admin_hide_enabled) {
+            \flush_rewrite_rules();
+        }
+
         // Save GraphQL settings  
         // Save headless mode setting
         \update_option("silver_assist_graphql_headless_mode", (int) ($_POST["silver_assist_graphql_headless_mode"] ?? 0));
@@ -865,8 +942,7 @@ class AdminPanel
                                     </span>
                                 </div>
                                 <div class="feature-status">
-                                    <span
-                                        class="feature-name"><?php esc_html_e("Access", "silver-assist-security"); ?></span>
+                                    <span class="feature-name"><?php esc_html_e("Access", "silver-assist-security"); ?></span>
                                     <span
                                         class="feature-value <?php echo $security_status["graphql_security"]["endpoint_access"] === "public" ? "disabled" : "enabled"; ?>">
                                         <?php echo $security_status["graphql_security"]["endpoint_access"] === "public" ?
@@ -908,8 +984,7 @@ class AdminPanel
                                     class="feature-value enabled"><?php esc_html_e("Enabled", "silver-assist-security"); ?></span>
                             </div>
                             <div class="feature-status">
-                                <span
-                                    class="feature-name"><?php esc_html_e("SSL/HTTPS", "silver-assist-security"); ?></span>
+                                <span class="feature-name"><?php esc_html_e("SSL/HTTPS", "silver-assist-security"); ?></span>
                                 <span
                                     class="feature-value <?php echo $security_status["general_security"]["ssl_enabled"] ? "enabled" : "disabled"; ?>">
                                     <?php echo $security_status["general_security"]["ssl_enabled"] ? esc_html__("Enabled", "silver-assist-security") : esc_html__("Disabled", "silver-assist-security"); ?>
@@ -1023,6 +1098,67 @@ class AdminPanel
                         </table>
                     </div>
 
+                    <!-- Admin Hide Security Settings -->
+                    <div class="card">
+                        <h2><?php esc_html_e("Admin Hide Security", "silver-assist-security"); ?></h2>
+                        <p class="description">
+                            <?php esc_html_e("Hide WordPress admin and login pages from unauthorized users by redirecting to custom URLs.", "silver-assist-security"); ?>
+                        </p>
+
+                        <table class="form-table">
+                            <tr>
+                                <th scope="row">
+                                    <?php esc_html_e("Enable Admin Hiding", "silver-assist-security"); ?>
+                                </th>
+                                <td>
+                                    <label>
+                                        <input type="checkbox" name="silver_assist_admin_hide_enabled" value="1" <?php checked(DefaultConfig::get_option("silver_assist_admin_hide_enabled"), 1); ?> />
+                                        <?php esc_html_e("Hide /wp-admin and /wp-login.php from unauthorized users", "silver-assist-security"); ?>
+                                    </label>
+                                    <p class="description">
+                                        <?php esc_html_e("When enabled, direct access to WordPress admin URLs will return 404 errors. Use the custom path below to access the admin area.", "silver-assist-security"); ?>
+                                    </p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">
+                                    <label for="silver_assist_admin_hide_path">
+                                        <?php esc_html_e("Custom Admin Path", "silver-assist-security"); ?>
+                                    </label>
+                                </th>
+                                <td>
+                                    <input type="text" id="silver_assist_admin_hide_path" name="silver_assist_admin_hide_path"
+                                        value="<?php echo esc_attr(DefaultConfig::get_option("silver_assist_admin_hide_path")); ?>"
+                                        placeholder="silver-admin" maxlength="50" />
+                                    <p class="description">
+                                        <?php esc_html_e("Custom path to access the admin area (e.g., 'my-secret-admin'). Avoid common words like 'admin', 'login', etc.", "silver-assist-security"); ?>
+                                        <br>
+                                        <?php if (DefaultConfig::get_option("silver_assist_admin_hide_enabled")): ?>
+                                            <strong><?php esc_html_e("Current admin URL:", "silver-assist-security"); ?></strong>
+                                            <code><?php echo esc_url(home_url("/" . DefaultConfig::get_option("silver_assist_admin_hide_path"))); ?></code>
+                                        <?php endif; ?>
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div class="admin-hide-warning"
+                            style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 15px 0;">
+                            <h4 style="margin-top: 0; color: #856404;">
+                                <span class="dashicons dashicons-warning" style="color: #ffc107;"></span>
+                                <?php esc_html_e("Important Security Notice", "silver-assist-security"); ?>
+                            </h4>
+                            <ul style="color: #856404; margin-bottom: 0;">
+                                <li><?php esc_html_e("Save your custom admin URL in a secure location before enabling this feature.", "silver-assist-security"); ?>
+                                </li>
+                                <li><?php esc_html_e("If you forget the custom path, you can disable this feature via FTP by editing the database.", "silver-assist-security"); ?>
+                                </li>
+                                <li><?php esc_html_e("This feature adds an extra layer of security but should be used alongside strong passwords and other security measures.", "silver-assist-security"); ?>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
                     <!-- GraphQL Security Settings -->
                     <?php if (class_exists("WPGraphQL")): ?>
                         <div class="card">
@@ -1058,18 +1194,15 @@ class AdminPanel
                                         <?php esc_html_e("GraphQL Query Timeout", "silver-assist-security"); ?>
                                     </th>
                                     <td>
-                                        <input type="range" 
-                                               name="silver_assist_graphql_query_timeout" 
-                                               id="silver_assist_graphql_query_timeout"
-                                               min="1" 
-                                               max="<?php echo esc_attr($this->config_manager->get_php_execution_timeout()); ?>" 
-                                               value="<?php echo esc_attr($graphql_query_timeout); ?>" 
-                                               step="1" />
+                                        <input type="range" name="silver_assist_graphql_query_timeout"
+                                            id="silver_assist_graphql_query_timeout" min="1"
+                                            max="<?php echo esc_attr($this->config_manager->get_php_execution_timeout()); ?>"
+                                            value="<?php echo esc_attr($graphql_query_timeout); ?>" step="1" />
                                         <span id="graphql-timeout-value"><?php echo esc_html($graphql_query_timeout); ?></span>
                                         <?php esc_html_e("seconds", "silver-assist-security"); ?>
                                         <p class="description">
-                                            <strong><?php esc_html_e("PHP Limit:", "silver-assist-security"); ?></strong> 
-                                            <?php echo esc_html($this->config_manager->get_php_execution_timeout()); ?> 
+                                            <strong><?php esc_html_e("PHP Limit:", "silver-assist-security"); ?></strong>
+                                            <?php echo esc_html($this->config_manager->get_php_execution_timeout()); ?>
                                             <?php esc_html_e("seconds", "silver-assist-security"); ?>
                                             <br>
                                             <?php esc_html_e("Maximum time allowed for GraphQL query execution. Cannot exceed PHP execution time limit.", "silver-assist-security"); ?>
@@ -1178,10 +1311,10 @@ class AdminPanel
             return;
         }
 
-        $current_version = $updater->get_current_version();
-        $latest_version = $updater->get_latest_version();
-        $update_available = $updater->is_update_available();
-        $github_repo = $updater->get_github_repo();
+        $current_version = $updater->getCurrentVersion();
+        $latest_version = $updater->getLatestVersion();
+        $update_available = $updater->isUpdateAvailable();
+        $github_repo = $updater->getGithubRepo();
 
         ?>
             <div class="card">
@@ -1239,5 +1372,29 @@ class AdminPanel
     private function get_wpgraphql_current_settings(): string
     {
         return $this->config_manager->get_settings_display();
+    }
+
+    /**
+     * Validate admin hide path using centralized PathValidator
+     *
+     * @since 1.1.4
+     * @param string $path The path to validate
+     * @return bool True if path is valid
+     */
+    private function validate_admin_hide_path(string $path): bool
+    {
+        $result = PathValidator::validate_admin_path($path);
+        return $result["is_valid"];
+    }
+
+    /**
+     * Get list of forbidden admin path keywords
+     *
+     * @since 1.1.4
+     * @return array<string> List of forbidden path keywords
+     */
+    public function get_forbidden_admin_paths(): array
+    {
+        return PathValidator::get_forbidden_paths();
     }
 }

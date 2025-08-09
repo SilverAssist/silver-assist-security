@@ -13,7 +13,7 @@
 # @package SilverAssist\Security
 # @since 1.0.0
 # @author Silver Assist
-# @version 1.1.2
+# @version 1.1.4
 ###############################################################################
 
 set -e  # Exit on any error
@@ -354,7 +354,7 @@ if [ -f "${PROJECT_ROOT}/HEADER-STANDARDS.md" ]; then
         "s/\\* Version: [0-9]+\\.[0-9]+\\.[0-9]+/\\* Version: ${NEW_VERSION}/g" \
         "header standards example version references" || true
     
-    # Update documentation text references (e.g., "v1.0.0**: Use both `@since 1.0.0` and `@version 1.1.2`")
+    # Update documentation text references (e.g., "v1.0.0**: Use both `@since 1.0.0` and `@version 1.1.4`")
     if grep -q "Use both.*@version [0-9]\+\.[0-9]\+\.[0-9]\+" "${PROJECT_ROOT}/HEADER-STANDARDS.md"; then
         update_file "${PROJECT_ROOT}/HEADER-STANDARDS.md" \
             "s/(Use both.*@version )[0-9]+\\.[0-9]+\\.[0-9]+/\\1${NEW_VERSION}/g" \

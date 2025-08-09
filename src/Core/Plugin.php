@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Core
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.2
+ * @version 1.1.4
  */
 
 namespace SilverAssist\Security\Core;
@@ -17,6 +17,7 @@ namespace SilverAssist\Security\Core;
 use SilverAssist\Security\Admin\AdminPanel;
 use SilverAssist\Security\Core\Updater;
 use SilverAssist\Security\GraphQL\GraphQLSecurity;
+use SilverAssist\Security\Security\AdminHideSecurity;
 use SilverAssist\Security\Security\GeneralSecurity;
 use SilverAssist\Security\Security\LoginSecurity;
 
@@ -59,6 +60,13 @@ class Plugin
     private ?GeneralSecurity $general_security = null;
 
     /**
+     * Admin hide security instance
+     * 
+     * @var AdminHideSecurity|null
+     */
+    private ?AdminHideSecurity $admin_hide_security = null;
+
+    /**
      * GraphQL security instance
      * 
      * @var GraphQLSecurity|null
@@ -94,12 +102,14 @@ class Plugin
      */
     private function __construct()
     {
+        // Initialize security components early (before setup_theme)
+        \add_action("plugins_loaded", [$this, "init_security_components"], 1);
+
         // Load text domain for translations (safe to call here since we're in init hook)
         \add_action("init", [$this, "load_textdomain"]);
 
         // Initialize components
         \add_action("init", [$this, "init_admin_panel"]);
-        \add_action("init", [$this, "init_security_components"]);
         \add_action("init", [$this, "init_graphql_security"]);
         \add_action("init", [$this, "init_updater"]);
 
@@ -177,6 +187,7 @@ class Plugin
     {
         $this->login_security = new LoginSecurity();
         $this->general_security = new GeneralSecurity();
+        $this->admin_hide_security = new AdminHideSecurity();
     }
 
     /**

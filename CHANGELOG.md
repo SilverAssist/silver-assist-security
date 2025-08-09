@@ -5,6 +5,77 @@ All notable changes to Silver Assist Security Essentials will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2025-08-08
+
+### 🔒 Major Security Features
+
+#### Admin URL Hide Security
+- **WordPress Admin Protection**: Hide `/wp-admin` and `/wp-login.php` from unauthorized users with custom URLs
+- **404 Redirect Protection**: Direct access to standard admin URLs returns 404 errors for enhanced security
+- **Custom Path Configuration**: User-configurable admin access paths (e.g., `/my-secret-admin`)
+- **Security Keyword Filtering**: Prevents use of common, easily guessable paths like 'admin', 'login', 'dashboard'
+- **Rewrite Rules Integration**: Seamless WordPress rewrite rules for custom admin access
+
+#### Real-Time Path Validation
+- **Live Input Validation**: Instant feedback while typing custom admin paths without form submission
+- **AJAX Validation System**: Server-side validation with immediate user feedback
+- **Visual Indicators**: Color-coded validation states (validating, valid, invalid) with animations
+- **Smart Error Messages**: Specific error messages for different validation failures
+- **Preview URL Generation**: Real-time preview of custom admin URL as user types
+
+### 🔧 Technical Enhancements
+
+#### Code Optimization & Architecture
+- **Unified Query Parameter Handling**: Implements `build_query_with_token()` method for consistent URL manipulation across admin hiding features
+- **DRY Principle Implementation**: Clean architecture with `do_redirect_with_token()` and `add_token_to_url()` using shared parameter handling logic
+- **Production-Ready Code**: Built with clean, production-optimized code without debug logging for optimal performance
+- **Reusable Forbidden Paths**: Centralized `$forbidden_admin_paths` class property for consistent validation
+- **Public API**: Getter method `get_forbidden_admin_paths()` for external access
+- **Performance Optimization**: Cached validation results and efficient AJAX responses
+
+#### User Experience Improvements
+- **Interactive Form Validation**: Enhanced form validation with admin path checks before submission
+- **Responsive Design**: Mobile-optimized validation indicators and error messages
+- **Progressive Enhancement**: Graceful degradation for users with JavaScript disabled
+- **Auto-Save Integration**: Admin path validation integrated with existing auto-save functionality
+
+#### Code Quality & Architecture
+- **Method Design**: Implements reusable `build_query_with_token()` method for query parameter handling
+- **Parameter Deduplication**: Built-in automatic removal of duplicate auth tokens in URL parameters
+- **Flexible Input Handling**: Unified method supports both array (`$_GET`) and string query parameter sources
+- **Clean Implementation**: Efficient codebase design following DRY principles from inception
+- **Production Standards**: Built with production-ready code standards and no debug statements
+
+### 🌍 Internationalization Updates
+
+#### Spanish Translation Expansion
+- **Complete Admin Hide Interface**: All new admin hiding features fully translated to Spanish
+- **Real-Time Validation Messages**: Localized error messages and validation feedback
+- **Security Notices**: Important security warnings translated for Spanish-speaking users
+- **Updated Translation Files**: Version 1.1.4 with 15+ new translated strings
+
+#### Translation System Enhancement
+- **WP-CLI Integration**: Automated translation file generation and compilation
+- **Binary Compilation**: Updated `.mo` files for WordPress production use
+- **Version Consistency**: All translation files updated to match plugin version 1.1.4
+- **Clean File Structure**: Removed backup files for optimized distribution
+
+### 🛡️ Security Considerations
+
+#### Admin Hide Security Warnings
+- **User Education**: Clear security notices about proper usage and limitations
+- **Recovery Instructions**: Guidance for users who forget custom admin paths
+- **Database Recovery**: Instructions for FTP-based feature disabling if needed
+- **Layered Security Reminder**: Emphasis on using with strong passwords and other security measures
+
+#### Validation Security
+- **Input Sanitization**: All user inputs properly sanitized using WordPress functions
+- **Nonce Verification**: CSRF protection for all AJAX validation requests
+- **Permission Checks**: Administrative capability verification for security operations
+- **Error Handling**: Comprehensive error handling with secure fallback responses
+- **Production Security**: Complete removal of debug statements prevents information disclosure
+- **URL Parameter Security**: Enhanced auth token handling prevents parameter manipulation
+
 ## [1.1.3] - 2025-08-07
 
 ### 🔧 Minor Improvements

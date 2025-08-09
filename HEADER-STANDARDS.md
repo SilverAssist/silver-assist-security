@@ -6,7 +6,7 @@
 Plugin Name: Silver Assist Security Suite
 Plugin URI: https://github.com/SilverAssist/silver-assist-security
 Description: Comprehensive security suite for Silver Assist - includes login security, GraphQL protection, and admin configuration panel
-Version: 1.1.2
+Version: 1.1.4
 Author: Silver Assist
 Author URI: http://silverassist.com/
 Text Domain: silver-assist-security

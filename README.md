@@ -1,12 +1,12 @@
 # Silver Assist Security Essentials
 
-A comprehensive WordPress security plugin designed to resolve critical security vulnerabilities identified in security assessments, specifically targeting login protection, HTTPOnly cookie implementation, and GraphQL security misconfigurations.
+A comprehensive WordPress security plugin designed to resolve critical security vulnerabilities identified in security assessments, specifically targeting admin protection (login security & URL hiding), HTTPOnly cookie implementation, and GraphQL security misconfigurations.
 
 ## 🛡️ Overview
 
 **Silver Assist Security Essentials** addresses three critical security vulnerabilities commonly found in WordPress security audits:
 
-1. **WordPress Admin Login Page Exposure** - Protects against brute force attacks and unauthorized access attempts
+1. **WordPress Admin Protection & Access Control** - Comprehensive protection against brute force attacks, unauthorized access, and admin discovery
 2. **Missing HTTPOnly Flag on Cookies** - Prevents XSS attacks from accessing authentication cookies  
 3. **GraphQL Security Misconfigurations** - Comprehensive protection against DoS attacks, introspection abuse, and resource exhaustion
 
@@ -14,16 +14,20 @@ This plugin automatically implements enterprise-level security measures without 
 
 ## 🎯 Security Issues Resolved
 
-### 🔐 WordPress Admin Login Page Security
-**Problem**: Publicly accessible login page vulnerable to brute force attacks, user enumeration, bot crawling  
-**Solution**: 
-- IP-based login attempt limiting (configurable 1-20 attempts)
-- Session timeout management (5-120 minutes)
-- User enumeration protection via login error standardization
-- Strong password enforcement (12+ characters, mixed case, numbers, symbols)
+### 🔐 WordPress Admin Protection & Access Control
+**Problem**: Publicly accessible admin area vulnerable to brute force attacks, user enumeration, bot crawling, and automated discovery
+**Solution**:
+- **Login Protection**: IP-based login attempt limiting (configurable 1-20 attempts)
+- **Session Management**: Session timeout management (5-120 minutes)
+- **User Enumeration Protection**: Login error standardization prevents user discovery
+- **Strong Password Enforcement**: Mandatory complex passwords (12+ characters, mixed case, numbers, symbols)
 - **Bot and Crawler Protection**: Automatic blocking of suspicious crawlers, scanners, and automated tools
 - **Anti-Reconnaissance**: Blocks security scanning tools (Nmap, Nikto, WPScan, Nuclei, etc.)
 - **Rate Limiting**: Prevents rapid-fire login attempts from automated scripts
+- **Custom Admin URLs**: Configure personalized admin access paths (e.g., `/my-secure-admin`)
+- **404 Redirect Protection**: Direct access to standard admin URLs returns 404 errors to hide admin existence
+- **Real-Time Path Validation**: Live feedback while typing custom paths with security keyword filtering
+- **Intelligent Path Blocking**: Prevents use of obvious paths like 'admin', 'login', 'dashboard', 'wp-admin'
 
 ### 🍪 HTTPOnly Cookie Flag Missing
 **Problem**: Cookies accessible to client-side JavaScript, vulnerable to XSS attacks  
@@ -106,6 +110,7 @@ The plugin starts protecting your website immediately after activation:
 ✅ **File editing** is disabled in admin  
 ✅ **XML-RPC** is blocked  
 ✅ **User enumeration** is prevented  
+✅ **Admin URL hiding** (optional - requires configuration)  
 
 ### Configuration Dashboard
 Access your security control panel at **Settings → Security Essentials**
@@ -123,10 +128,17 @@ Access your security control panel at **Settings → Security Essentials**
 - ✅ **Rate Limiting**: 30 requests/minute per IP (automatic)
 - ✅ **Introspection**: Disabled in production (automatic)
 
+**Admin URL Hide Configuration** *(Optional Security Layer)*
+- 🔧 **Enable Admin Hiding**: Toggle on/off admin URL protection
+- 🔧 **Custom Admin Path**: Set your personalized admin access URL (e.g., 'my-secure-admin')
+- ✅ **Real-Time Validation**: Live feedback prevents weak or forbidden paths
+- ✅ **404 Protection**: Standard admin URLs automatically return "Not Found" errors
+- ⚠️ **Recovery Instructions**: Built-in guidance for users who forget their custom paths
+
 ### Security Compliance Verification
 After configuration, your website will be protected against the three critical security issues:
 
-✅ **Login Page Protected**: Login page is protected with attempt limiting and user enumeration prevention  
+✅ **Admin Protection**: Complete admin area protection with login security, URL hiding, and access control  
 ✅ **HTTPOnly Cookies**: All cookies have HTTPOnly flags to prevent XSS exploitation  
 ✅ **GraphQL Secured**: GraphQL endpoint has comprehensive DoS protection and introspection disabled  
 

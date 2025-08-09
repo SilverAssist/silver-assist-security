@@ -7,7 +7,7 @@
  * @package SilverAssist\Security\Core
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.2
+ * @version 1.1.4
  */
 
 namespace SilverAssist\Security\Core;
@@ -35,6 +35,8 @@ class DefaultConfig
       "silver_assist_session_timeout" => 30, // 30 minutes
       "silver_assist_password_strength_enforcement" => 1,
       "silver_assist_bot_protection" => 1,
+      "silver_assist_admin_hide_enabled" => 0, // Admin hiding disabled by default for security
+      "silver_assist_admin_hide_path" => "silver-admin", // Custom admin path
       "silver_assist_graphql_query_depth" => 8,
       "silver_assist_graphql_query_complexity" => 100,
       "silver_assist_graphql_query_timeout" => 30, // Dynamic: Based on PHP timeout, capped at 30s

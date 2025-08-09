@@ -10,7 +10,7 @@
  * @author Silver Assist
  * @copyright Copyright (c) 2025, Silver Assist
  * @license GPL v2 or later
- * @version 1.1.2
+ * @version 1.1.4
  */
 
 /* =============================================================================
@@ -799,4 +799,111 @@
 .silver-assist-security-admin input[type="checkbox"]:checked + label {
     color: #00a32a;
     font-weight: 500;
+}
+
+/* =============================================================================
+   REAL-TIME VALIDATION STYLES
+   ============================================================================= */
+
+/* Admin Path Validation */
+.validation-indicator {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-block;
+    min-width: 200px;
+    transition: all 0.3s ease;
+}
+
+.validation-indicator.validating {
+    background: #f0f6fc;
+    color: #0073aa;
+    border: 1px solid #c3c4c7;
+    animation: validationPulse 1.5s ease-in-out infinite;
+}
+
+.validation-indicator.valid {
+    background: #d5e7d5;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+.validation-indicator.invalid {
+    background: #f8d7da;
+    color: #842029;
+    border: 1px solid #f5c2c7;
+}
+
+/* Input field validation states */
+input.validation-validating {
+    border-color: #0073aa !important;
+    box-shadow: 0 0 0 1px #0073aa20 !important;
+}
+
+input.validation-valid {
+    border-color: #4caf50 !important;
+    box-shadow: 0 0 0 1px #4caf5020 !important;
+}
+
+input.validation-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 1px #dc354520 !important;
+}
+
+/* Validation pulse animation */
+@keyframes validationPulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Responsive validation indicator */
+@media (max-width: 768px) {
+    .validation-indicator {
+        display: block;
+        min-width: auto;
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Enhanced form field spacing for validation */
+.silver-assist-security-admin .form-table td {
+    position: relative;
+}
+
+.silver-assist-security-admin .form-table td input[type="text"] + .validation-indicator {
+    display: block;
+    margin-top: 8px;
+}
+
+/* Path preview styling improvements */
+.silver-assist-security-admin code {
+    background: #f6f7f7;
+    border: 1px solid #c3c4c7;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: Consolas, Monaco, monospace;
+    font-size: 13px;
+    color: #2c3338;
+    display: inline-block;
+    margin-top: 5px;
+    transition: all 0.3s ease;
+}
+
+.silver-assist-security-admin input.validation-valid + .validation-indicator + * code {
+    background: #e8f5e8;
+    border-color: #4caf50;
+    color: #2e7d32;
+}
+
+.silver-assist-security-admin input.validation-invalid + .validation-indicator + * code {
+    background: #ffeaea;
+    border-color: #dc3545;
+    color: #842029;
 }
