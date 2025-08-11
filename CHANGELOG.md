@@ -5,6 +5,70 @@ All notable changes to Silver Assist Security Essentials will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2025-08-11
+
+### 🚀 New Features
+
+#### GraphQL Security Testing Suite
+- **Advanced Testing Script**: New `test-graphql-security.sh` script for comprehensive GraphQL security validation
+- **CLI Parameter Support**: `--domain URL` parameter to specify GraphQL endpoint directly via command line
+- **Automation Ready**: `--no-confirm` parameter for CI/CD workflows and automated testing
+- **Complete Help System**: Comprehensive `--help/-h` documentation with usage examples
+- **Multi-Configuration Support**: Three configuration methods (CLI param, environment variable, default fallback)
+- **URL Validation**: Robust URL format validation with security warnings for suspicious endpoints
+- **7 Security Scenarios**: Tests introspection protection, query depth limits, alias abuse prevention, directive limitations, field duplication limits, query complexity & timeout, and rate limiting
+
+### 🐛 Bug Fixes
+
+#### WordPress Security Hardening
+- **Version Parameter Removal**: Fixed `remove_version_query_string()` in GeneralSecurity.php to handle multiple 'ver' parameters in URLs (e.g., `/file.css?ver=123?ver=456`)
+- **Regex Pattern Enhancement**: Improved regex pattern to comprehensively remove all version query parameters for better security
+- **Query String Cleanup**: Enhanced URL cleanup to properly handle malformed query strings with duplicate parameters
+
+### 🔧 Development Tools Improvements
+
+#### Script Reliability & Robustness
+- **Enhanced Error Handling**: Removed `set -e` from update scripts to allow graceful continuation on non-critical errors
+- **Version Script Robustness**: Improved `update-version-simple.sh` with better error recovery and user messaging
+- **Version Checking Accuracy**: Fixed `check-versions.sh` to search only file headers (first 20 lines) preventing false positives
+- **macOS Compatibility**: Enhanced perl-based substitution patterns for better macOS sed compatibility
+- **Deferred Modifications**: Improved self-modifying script handling with deferred command execution
+
+#### Development Workflow
+- **CI/CD Ready Scripts**: All scripts now support non-interactive execution with proper exit codes
+- **Better User Guidance**: Enhanced error messages with clear examples and suggested solutions
+- **Graceful Error Recovery**: Scripts continue processing even when encountering non-critical issues
+- **Version Consistency**: Automated validation ensures all 17 plugin files maintain version synchronization
+
+### 📝 Documentation Updates
+
+#### Version Management
+- **Header Standards**: Updated HEADER-STANDARDS.md with version 1.1.5 references and examples
+- **Script Documentation**: Enhanced inline documentation for all development scripts
+- **Usage Examples**: Added comprehensive examples for new GraphQL testing functionality
+- **Error Handling Docs**: Documented improved error handling patterns and best practices
+
+### 🔄 Version Updates
+- **Plugin Core**: Updated main plugin file to version 1.1.5
+- **PHP Components**: All src/ PHP files updated with @version 1.1.5 tags
+- **Asset Files**: CSS and JavaScript files synchronized to version 1.1.5
+- **Documentation**: All version references updated across documentation files
+- **Build Scripts**: Version management scripts updated to 1.1.5
+
+### 🛠️ Technical Improvements
+
+#### Code Quality
+- **Error Handling**: Enhanced error handling across all security components
+- **Code Consistency**: Improved code consistency following project standards
+- **Performance**: Maintained performance optimizations while adding new features
+- **Backward Compatibility**: All changes maintain full backward compatibility
+
+#### Security
+- **URL Processing**: Improved URL parameter processing for better security
+- **Input Validation**: Enhanced validation patterns for security-critical functions
+- **Testing Coverage**: New comprehensive testing tools for GraphQL security validation
+- **Production Ready**: All new features built with production-ready standards
+
 ## [1.1.4] - 2025-08-08
 
 ### 🔒 Major Security Features

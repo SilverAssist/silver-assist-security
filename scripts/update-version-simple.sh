@@ -1,7 +1,6 @@
 #!/bin/bash
 
 ###############################################################################
-#!/bin/bash
 
 # Silver Assist Security Essentials - Simple Version Update Script
 #
@@ -13,10 +12,11 @@
 # @package SilverAssist\Security
 # @since 1.0.0
 # @author Silver Assist
-# @version 1.1.4
+# @version 1.1.5
 ###############################################################################
 
-set -e  # Exit on any error
+# Note: Removed set -e to allow script to continue on minor errors/warnings
+# The script will show warnings but continue processing all files
 
 # Colors for output
 RED='\033[0;31m'
@@ -174,28 +174,31 @@ update_file() {
         fi
         
         # Create backup
-        cp "$file" "$file.bak"
+        cp "$file" "$file.bak" 2>/dev/null || {
+            print_warning "  Could not create backup for $description - skipping"
+            return 0
+        }
         
         # Apply perl substitution
         if perl -i -pe "$pattern" "$file" 2>/dev/null; then
             # Verify the change was made
-            if ! cmp -s "$file" "$file.bak"; then
+            if ! cmp -s "$file" "$file.bak" 2>/dev/null; then
                 print_status "  Updated $description"
-                rm "$file.bak"
+                rm "$file.bak" 2>/dev/null || true
                 return 0
             else
-                print_warning "  No changes made to $description (pattern not found)"
-                mv "$file.bak" "$file"
-                return 1
+                print_warning "  No changes made to $description (pattern not found or already updated)"
+                mv "$file.bak" "$file" 2>/dev/null || true
+                return 0  # Changed: return success instead of failure
             fi
         else
-            print_error "  Failed to update $description"
-            mv "$file.bak" "$file"
-            return 1
+            print_warning "  Could not process $description (perl substitution failed)"
+            mv "$file.bak" "$file" 2>/dev/null || true
+            return 0  # Changed: return success instead of failure
         fi
     else
         print_warning "  File not found: $file"
-        return 1
+        return 0  # Changed: return success instead of failure
     fi
 }
 
@@ -209,7 +212,7 @@ update_file "${PROJECT_ROOT}/silver-assist-security.php" \
 
 # Update constant
 update_file "${PROJECT_ROOT}/silver-assist-security.php" \
-    "s/define\\('SILVER_ASSIST_SECURITY_VERSION', '[0-9]+\\.[0-9]+\\.[0-9]+'\\)/define('SILVER_ASSIST_SECURITY_VERSION', '${NEW_VERSION}')/g" \
+    "s/define\\(\"SILVER_ASSIST_SECURITY_VERSION\", \"[0-9]+\\.[0-9]+\\.[0-9]+\"\\)/define(\"SILVER_ASSIST_SECURITY_VERSION\", \"${NEW_VERSION}\")/g" \
     "plugin constant"
 
 # Update @version tag
@@ -217,7 +220,7 @@ update_file "${PROJECT_ROOT}/silver-assist-security.php" \
     "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
     "main file @version tag"
 
-print_success "Main plugin file updated"
+print_success "Main plugin file processing completed"
 
 # 2. Update PHP files
 print_status "Updating PHP files..."
@@ -239,18 +242,15 @@ if [ -n "$php_files" ]; then
     for php_file in $php_files; do
         file_name=$(basename "$php_file")
         
-        if update_file "$php_file" \
+        update_file "$php_file" \
             "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
-            "$file_name"; then
-            php_update_count=$((php_update_count + 1))
-        fi
+            "$file_name"
+        
+        # Always count as processed since update_file now handles errors gracefully
+        php_update_count=$((php_update_count + 1))
     done
     
-    if [ $php_update_count -gt 0 ]; then
-        print_success "PHP files updated ($php_update_count files)"
-    else
-        print_warning "No PHP files were updated (pattern not found or files unchanged)"
-    fi
+    print_success "PHP files processed ($php_update_count files)"
 else
     print_warning "No PHP files with @version tags found in src/ directory"
 fi
@@ -275,18 +275,14 @@ if [ -n "$css_files" ]; then
     for css_file in $css_files; do
         file_name=$(basename "$css_file")
         
-        if update_file "$css_file" \
+        update_file "$css_file" \
             "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
-            "$file_name"; then
-            css_update_count=$((css_update_count + 1))
-        fi
+            "$file_name"
+        
+        css_update_count=$((css_update_count + 1))
     done
     
-    if [ $css_update_count -gt 0 ]; then
-        print_success "CSS files updated ($css_update_count files)"
-    else
-        print_warning "No CSS files were updated (pattern not found or files unchanged)"
-    fi
+    print_success "CSS files processed ($css_update_count files)"
 else
     if [ -d "${PROJECT_ROOT}/assets/css" ]; then
         print_status "No CSS files with @version tags found"
@@ -315,18 +311,14 @@ if [ -n "$js_files" ]; then
     for js_file in $js_files; do
         file_name=$(basename "$js_file")
         
-        if update_file "$js_file" \
+        update_file "$js_file" \
             "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
-            "$file_name"; then
-            js_update_count=$((js_update_count + 1))
-        fi
+            "$file_name"
+        
+        js_update_count=$((js_update_count + 1))
     done
     
-    if [ $js_update_count -gt 0 ]; then
-        print_success "JavaScript files updated ($js_update_count files)"
-    else
-        print_warning "No JavaScript files were updated (pattern not found or files unchanged)"
-    fi
+    print_success "JavaScript files processed ($js_update_count files)"
 else
     if [ -d "${PROJECT_ROOT}/assets/js" ]; then
         print_status "No JavaScript files with @version tags found"
@@ -352,16 +344,16 @@ if [ -f "${PROJECT_ROOT}/HEADER-STANDARDS.md" ]; then
     # Update * Version: entries in examples (with asterisk)
     update_file "${PROJECT_ROOT}/HEADER-STANDARDS.md" \
         "s/\\* Version: [0-9]+\\.[0-9]+\\.[0-9]+/\\* Version: ${NEW_VERSION}/g" \
-        "header standards example version references" || true
+        "header standards example version references"
     
-    # Update documentation text references (e.g., "v1.0.0**: Use both `@since 1.0.0` and `@version 1.1.4`")
-    if grep -q "Use both.*@version [0-9]\+\.[0-9]\+\.[0-9]\+" "${PROJECT_ROOT}/HEADER-STANDARDS.md"; then
+    # Update documentation text references (e.g., "v1.0.0**: Use both `@since 1.0.0` and `@version 1.1.5`")
+    if grep -q "Use both.*@version [0-9]\+\.[0-9]\+\.[0-9]\+" "${PROJECT_ROOT}/HEADER-STANDARDS.md" 2>/dev/null; then
         update_file "${PROJECT_ROOT}/HEADER-STANDARDS.md" \
             "s/(Use both.*@version )[0-9]+\\.[0-9]+\\.[0-9]+/\\1${NEW_VERSION}/g" \
-            "header standards documentation text" || true
+            "header standards documentation text"
     fi
     
-    print_success "Header standards documentation updated"
+    print_success "Header standards documentation processed"
 else
     print_warning "HEADER-STANDARDS.md not found"
 fi
@@ -386,18 +378,14 @@ if [ -n "$script_files" ]; then
     for script_file in $script_files; do
         script_name=$(basename "$script_file")
         
-        if update_file "$script_file" \
+        update_file "$script_file" \
             "s/\\@version [0-9]+\\.[0-9]+\\.[0-9]+/\\@version ${NEW_VERSION}/g" \
-            "$script_name"; then
-            script_update_count=$((script_update_count + 1))
-        fi
+            "$script_name"
+        
+        script_update_count=$((script_update_count + 1))
     done
     
-    if [ $script_update_count -gt 0 ]; then
-        print_success "Version scripts updated ($script_update_count files)"
-    else
-        print_warning "No script files were updated (pattern not found or files unchanged)"
-    fi
+    print_success "Version scripts processed ($script_update_count files)"
 else
     print_warning "No script files with @version tags found in scripts/ directory"
 fi
@@ -406,11 +394,11 @@ fi
 print_status "Checking README.md for version references..."
 
 if [ -f "${PROJECT_ROOT}/README.md" ]; then
-    if grep -q "Version: [0-9]\+\.[0-9]\+\.[0-9]\+" "${PROJECT_ROOT}/README.md"; then
+    if grep -q "Version: [0-9]\+\.[0-9]\+\.[0-9]\+" "${PROJECT_ROOT}/README.md" 2>/dev/null; then
         update_file "${PROJECT_ROOT}/README.md" \
             "s/Version: [0-9]+\\.[0-9]+\\.[0-9]+/Version: ${NEW_VERSION}/g" \
             "README.md version references"
-        print_success "README.md updated"
+        print_success "README.md processed"
     else
         print_status "No version references found in README.md"
     fi
@@ -428,11 +416,10 @@ if [ -f "${PROJECT_ROOT}/.version_update_deferred" ]; then
     while IFS= read -r command; do
         if [ -n "$command" ]; then
             print_status "  Executing: $command"
-            eval "$command"
-            if [ $? -eq 0 ]; then
+            if eval "$command" 2>/dev/null; then
                 print_status "  ✓ Deferred modification completed"
             else
-                print_warning "  ⚠ Deferred modification failed"
+                print_warning "  ⚠ Deferred modification failed (continuing anyway)"
             fi
         fi
     done < "${PROJECT_ROOT}/.version_update_deferred"

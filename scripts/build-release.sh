@@ -1,8 +1,6 @@
 #!/bin/bash
 
 ###############################################################################
-#!/bin/bash
-
 # Silver Assist Security Essentials - Release ZIP Creator
 #
 # Creates a properly structured ZIP file for WordPress plugin distribution
@@ -14,7 +12,7 @@
 # @package SilverAssist\Security
 # @since 1.0.0
 # @author Silver Assist
-# @version 1.1.4
+# @version 1.1.5
 ###############################################################################
 
 set -e

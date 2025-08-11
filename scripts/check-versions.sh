@@ -11,7 +11,7 @@
 # @package SilverAssist\Security
 # @since 1.0.0
 # @author Silver Assist
-# @version 1.1.4
+# @version 1.1.5
 ###############################################################################
 
 set -e
@@ -98,7 +98,12 @@ find "${PROJECT_ROOT}/src" -name "*.php" -type f | sort | while read -r file; do
     relative_path=${file#$PROJECT_ROOT/}
     print_file "$relative_path"
     
-    version=$(grep -o "@version [0-9]\+\.[0-9]\+\.[0-9]\+" "$file" 2>/dev/null | cut -d' ' -f2)
+    # Only search in first 20 lines for @version tag in header comments
+    version=$(head -n 20 "$file" | grep -o "# @version [0-9]\+\.[0-9]\+\.[0-9]\+" 2>/dev/null | cut -d' ' -f3)
+    # Fallback to standard @version in docblock comments (without #)
+    if [ -z "$version" ]; then
+        version=$(head -n 20 "$file" | grep -o " \* @version [0-9]\+\.[0-9]\+\.[0-9]\+" 2>/dev/null | cut -d' ' -f4)
+    fi
     
     if [ -n "$version" ]; then
         if [ "$version" = "$MAIN_VERSION" ]; then
@@ -107,7 +112,7 @@ find "${PROJECT_ROOT}/src" -name "*.php" -type f | sort | while read -r file; do
             print_warning "$version (differs from main: $MAIN_VERSION)"
         fi
     else
-        print_error "No @version tag found"
+        print_error "No @version tag found in header"
     fi
 done
 
@@ -119,7 +124,8 @@ if [ -d "${PROJECT_ROOT}/assets/css" ]; then
         filename=$(basename "$file")
         print_file "$filename"
         
-        version=$(grep -o "@version [0-9]\+\.[0-9]\+\.[0-9]\+" "$file" 2>/dev/null | cut -d' ' -f2)
+        # Only search in first 20 lines for @version tag in header comments
+        version=$(head -n 20 "$file" | grep -o " \* @version [0-9]\+\.[0-9]\+\.[0-9]\+" 2>/dev/null | cut -d' ' -f4)
         
         if [ -n "$version" ]; then
             if [ "$version" = "$MAIN_VERSION" ]; then
@@ -128,7 +134,7 @@ if [ -d "${PROJECT_ROOT}/assets/css" ]; then
                 print_warning "$version (differs from main: $MAIN_VERSION)"
             fi
         else
-            print_error "No @version tag found"
+            print_error "No @version tag found in header"
         fi
     done
 else
@@ -143,7 +149,8 @@ if [ -d "${PROJECT_ROOT}/assets/js" ]; then
         filename="assets/js/$(basename "$file")"
         print_file "$filename"
         
-        version=$(grep -o "@version [0-9]\+\.[0-9]\+\.[0-9]\+" "$file" 2>/dev/null | cut -d' ' -f2)
+        # Only search in first 20 lines for @version tag in header comments
+        version=$(head -n 20 "$file" | grep -o " \* @version [0-9]\+\.[0-9]\+\.[0-9]\+" 2>/dev/null | cut -d' ' -f4)
         
         if [ -n "$version" ]; then
             if [ "$version" = "$MAIN_VERSION" ]; then
@@ -152,7 +159,7 @@ if [ -d "${PROJECT_ROOT}/assets/js" ]; then
                 print_warning "$version (differs from main: $MAIN_VERSION)"
             fi
         else
-            print_error "No @version tag found"
+            print_error "No @version tag found in header"
         fi
     done
 else
@@ -243,7 +250,8 @@ find "${PROJECT_ROOT}/scripts" -name "*.sh" -type f | sort | while read -r file;
     filename="scripts/$(basename "$file")"
     print_file "$filename"
     
-    version=$(grep -o "@version [0-9]\+\.[0-9]\+\.[0-9]\+" "$file" 2>/dev/null | cut -d' ' -f2)
+    # Only search in first 20 lines for @version tag in header comments
+    version=$(head -n 20 "$file" | grep -o "# @version [0-9]\+\.[0-9]\+\.[0-9]\+" 2>/dev/null | cut -d' ' -f3)
     
     if [ -n "$version" ]; then
         if [ "$version" = "$MAIN_VERSION" ]; then
@@ -252,7 +260,7 @@ find "${PROJECT_ROOT}/scripts" -name "*.sh" -type f | sort | while read -r file;
             print_warning "$version (differs from main: $MAIN_VERSION)"
         fi
     else
-        print_error "No @version tag found"
+        print_error "No @version tag found in header"
     fi
 done
 
@@ -279,7 +287,12 @@ if [ -n "$MAIN_VERSION" ]; then
     # Check PHP files
     while IFS= read -r file; do
         total_files=$((total_files + 1))
-        version=$(grep -o "@version [0-9]\+\.[0-9]\+\.[0-9]\+" "$file" 2>/dev/null | cut -d' ' -f2)
+        # Only search in first 20 lines for @version tag in header comments
+        version=$(head -n 20 "$file" | grep -o "# @version [0-9]\+\.[0-9]\+\.[0-9]\+" 2>/dev/null | cut -d' ' -f3)
+        # Fallback to standard @version in docblock comments (without #)
+        if [ -z "$version" ]; then
+            version=$(head -n 20 "$file" | grep -o " \* @version [0-9]\+\.[0-9]\+\.[0-9]\+" 2>/dev/null | cut -d' ' -f4)
+        fi
         if [ "$version" = "$MAIN_VERSION" ]; then
             matching_files=$((matching_files + 1))
         fi
@@ -288,7 +301,7 @@ if [ -n "$MAIN_VERSION" ]; then
     # Check CSS files
     while IFS= read -r file; do
         total_files=$((total_files + 1))
-        version=$(grep -o "@version [0-9]\+\.[0-9]\+\.[0-9]\+" "$file" 2>/dev/null | cut -d' ' -f2)
+        version=$(head -n 20 "$file" | grep -o " \* @version [0-9]\+\.[0-9]\+\.[0-9]\+" 2>/dev/null | cut -d' ' -f4)
         if [ "$version" = "$MAIN_VERSION" ]; then
             matching_files=$((matching_files + 1))
         fi
@@ -297,7 +310,7 @@ if [ -n "$MAIN_VERSION" ]; then
     # Check JS files
     while IFS= read -r file; do
         total_files=$((total_files + 1))
-        version=$(grep -o "@version [0-9]\+\.[0-9]\+\.[0-9]\+" "$file" 2>/dev/null | cut -d' ' -f2)
+        version=$(head -n 20 "$file" | grep -o " \* @version [0-9]\+\.[0-9]\+\.[0-9]\+" 2>/dev/null | cut -d' ' -f4)
         if [ "$version" = "$MAIN_VERSION" ]; then
             matching_files=$((matching_files + 1))
         fi
@@ -306,7 +319,7 @@ if [ -n "$MAIN_VERSION" ]; then
     # Check scripts
     while IFS= read -r file; do
         total_files=$((total_files + 1))
-        version=$(grep -o "@version [0-9]\+\.[0-9]\+\.[0-9]\+" "$file" 2>/dev/null | cut -d' ' -f2)
+        version=$(head -n 20 "$file" | grep -o "# @version [0-9]\+\.[0-9]\+\.[0-9]\+" 2>/dev/null | cut -d' ' -f3)
         if [ "$version" = "$MAIN_VERSION" ]; then
             matching_files=$((matching_files + 1))
         fi
