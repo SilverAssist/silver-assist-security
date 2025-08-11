@@ -150,7 +150,7 @@ class Plugin
         $mofile = sprintf("%1\$s-%2\$s.mo", "silver-assist-security", $locale);
 
         // Setup paths to current locale file
-        $mofile_local = $lang_dir . $mofile;
+        $mofile_local = "{$lang_dir}{$mofile}";
         $mofile_global = WP_LANG_DIR . "/silver-assist-security/" . $mofile;
 
         if (file_exists($mofile_global)) {

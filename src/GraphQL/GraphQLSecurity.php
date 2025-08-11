@@ -622,7 +622,7 @@ class GraphQLSecurity
             if (is_object($response) && method_exists($response, "toArray")) {
                 // Convert ExecutionResult to array for manipulation
                 $response_array = $response->toArray();
-                
+
                 // Add timeout error to response
                 if (!isset($response_array["errors"])) {
                     $response_array["errors"] = [];
@@ -773,8 +773,8 @@ class GraphQLSecurity
     public function log_graphql_requests($response, $schema, ?string $operation, ?string $query, ?array $variables)
     {
         // Convert ExecutionResult to array for analysis if needed
-        $response_array = is_object($response) && method_exists($response, "toArray") ? 
-            $response->toArray() : 
+        $response_array = is_object($response) && method_exists($response, "toArray") ?
+            $response->toArray() :
             (is_array($response) ? $response : []);
 
         $log_data = [

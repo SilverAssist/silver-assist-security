@@ -142,15 +142,30 @@ class GeneralSecurity
     /**
      * Remove version query string from static resources
      * 
+     * Removes all "ver" query parameters from URLs, including multiple instances
+     * like "/file.css?ver=123?ver=456" to prevent version disclosure.
+     * 
      * @since 1.1.1
      * @param string $src Source URL
-     * @return string
+     * @return string URL with all version parameters removed
      */
     public function remove_version_query_string(string $src): string
     {
-        if (strpos($src, "ver=")) {
-            $src = \remove_query_arg("ver", $src);
+        // Check if URL contains any version parameters
+        if (strpos($src, "ver=") !== false) {
+            // Remove all occurrences of ver parameter using regex
+            // This handles both ?ver= and &ver= patterns
+            $src = preg_replace("/[\?&]ver=[^&]*/", "", $src);
+
+            // Clean up any remaining orphaned ? or & at the end
+            $src = rtrim($src, "?&");
+
+            // If we have parameters but no ?, add it back
+            if (strpos($src, "&") !== false && strpos($src, "?") === false) {
+                $src = str_replace("&", "?", $src);
+            }
         }
+
         return $src;
     }
 
