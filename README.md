@@ -201,4 +201,4 @@ Yes! Go to **Settings → Security Essentials** to configure login attempt limit
 
 ---
 
-*Silver Assist Security Essentials - Complete WordPress Security Protection*
+**Made with ❤️ by [Silver Assist](https://silverassist.com)**
