@@ -18,6 +18,7 @@ use Exception;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\PathValidator;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
+use SilverAssist\Security\Core\Plugin;
 
 /**
  * Admin Panel class
@@ -1304,7 +1305,7 @@ class AdminPanel
     private function render_updates_section(): void
     {
         // Get updater instance from Plugin
-        $plugin = \SilverAssist\Security\Core\Plugin::getInstance();
+        $plugin = Plugin::getInstance();
         $updater = $plugin->get_updater();
 
         if (!$updater) {
