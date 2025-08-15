@@ -12,8 +12,8 @@
  * Requires at least: 6.5
  * Tested up to: 6.4
  * Network: false
- * License: GPL v2 or later
- * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * License: Polyform Noncommercial License 1.0.0
+ * License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
  *
  * @package SilverAssist\Security
  * @since 1.1.1

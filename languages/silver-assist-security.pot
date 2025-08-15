@@ -1,5 +1,5 @@
-# Copyright (C) 2025 Silver Assist
-# This file is distributed under the GPL v2 or later.
+# Copyright (C) 2025 Silver Assist Security Essentials
+# This file is distributed under the Polyform Noncommercial License 1.0.0.
 msgid ""
 msgstr ""
 "Project-Id-Version: Silver Assist Security Essentials 1.1.4\n"

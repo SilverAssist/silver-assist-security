@@ -97,7 +97,7 @@ jobs:
                   - **File**: silver-assist-security-v$VERSION.zip
                   - **Size**: ~$PACKAGE_SIZE
                   - **Release Date**: $DATE
-                  - **License**: Proprietary
+                  - **License**: Polyform Noncommercial License 1.0.0
                   - **Repository**: https://github.com/SilverAssist/silver-assist-security
 
                   ## Installation Package Contents
@@ -210,7 +210,7 @@ jobs:
                   ## Package Information
                   - **File**: silver-assist-security-v$VERSION.zip
                   - **Size**: ~${{ steps.package.outputs.package_size_kb }}
-                  - **License**: Proprietary
+                  - **License**: Polyform Noncommercial License 1.0.0
 
                   ## Installation
                   1. Download the ZIP file below
