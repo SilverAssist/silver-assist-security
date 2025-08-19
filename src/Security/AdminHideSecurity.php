@@ -8,7 +8,7 @@
  * @package SilverAssist\Security\Security
  * @since 1.1.4
  * @author Silver Assist
- * @version 1.1.5
+ * @version 1.1.6
  */
 
 namespace SilverAssist\Security\Security;
@@ -114,8 +114,17 @@ class AdminHideSecurity
     {
         $action = $_REQUEST["action"] ?? "";
 
-        // Allow postpass action (password protected posts)
-        if ($action === "postpass") {
+        // Allow specific actions that should work without admin hide protection
+        $allowed_actions = [
+            "postpass",    // Password protected posts
+            "resetpass",   // Reset password form after clicking email link
+            "rp",          // Reset password request
+            "lostpassword", // Lost password form
+            "retrievepassword", // Retrieve password (alias for lostpassword)
+            "checkemail"   // Check email confirmation page
+        ];
+
+        if (in_array($action, $allowed_actions)) {
             return;
         }
 
@@ -166,6 +175,11 @@ class AdminHideSecurity
      */
     public function handle_specific_page_requests(): void
     {
+        // Double-check if admin hiding is enabled
+        if (!$this->admin_hide_enabled) {
+            return;
+        }
+        
         // Skip if doing cron or AJAX
         if (\wp_doing_cron() || \wp_doing_ajax()) {
             return;
@@ -260,8 +274,17 @@ class AdminHideSecurity
     {
         $action = $_REQUEST["action"] ?? "";
 
-        // Allow postpass action (password protected posts)
-        if ($action === "postpass") {
+        // Allow specific actions that should work without admin hide protection
+        $allowed_actions = [
+            "postpass",    // Password protected posts
+            "resetpass",   // Reset password form after clicking email link
+            "rp",          // Reset password request
+            "lostpassword", // Lost password form
+            "retrievepassword", // Retrieve password (alias for lostpassword)
+            "checkemail"   // Check email confirmation page
+        ];
+
+        if (in_array($action, $allowed_actions)) {
             return;
         }
 
@@ -365,14 +388,36 @@ class AdminHideSecurity
      */
     public function filter_generated_url(string $url, string $path): string
     {
+        // Double-check if admin hiding is enabled
+        if (!$this->admin_hide_enabled) {
+            return $url;
+        }
+        
         [$clean_path] = explode("?", $path);
 
         if ($clean_path === "wp-login.php") {
-            if (strpos($path, "action=postpass") !== false) {
-                return $url; // No special handling for password-protected posts
-            } elseif (strpos($path, "action=register") !== false) {
+            // List of actions that should not get access tokens (they need to work normally)
+            $allowed_actions = [
+                "postpass",        // Password protected posts
+                "resetpass",       // Reset password form after clicking email link
+                "rp",              // Reset password request
+                "lostpassword",    // Lost password form
+                "retrievepassword", // Retrieve password (alias for lostpassword)
+                "checkemail"       // Check email confirmation page
+            ];
+            
+            // Check if this path contains any of the allowed actions
+            foreach ($allowed_actions as $action) {
+                if (strpos($path, "action={$action}") !== false) {
+                    return $url; // Don't add tokens to these actions
+                }
+            }
+            
+            // Special handling for registration
+            if (strpos($path, "action=register") !== false) {
                 $url = $this->add_token_to_url($url, "register");
             } else {
+                // Only add token to login attempts, not password reset flows
                 $url = $this->add_token_to_url($url, "login");
             }
         }
@@ -390,6 +435,11 @@ class AdminHideSecurity
      */
     public function filter_admin_url(string $url, string $path): string
     {
+        // Double-check if admin hiding is enabled
+        if (!$this->admin_hide_enabled) {
+            return $url;
+        }
+        
         // Add token to profile update URLs
         if (strpos($path, "profile.php?newuseremail=") === 0) {
             $url = $this->add_token_to_url($url, "login");
@@ -407,6 +457,11 @@ class AdminHideSecurity
      */
     public function filter_redirect(string $location): string
     {
+        // Double-check if admin hiding is enabled
+        if (!$this->admin_hide_enabled) {
+            return $location;
+        }
+        
         return $this->filter_generated_url($location, $location);
     }
 
@@ -533,6 +588,11 @@ class AdminHideSecurity
      */
     public function handle_logout_redirect(string $redirect_to, string $requested_redirect_to, $user): string
     {
+        // Double-check if admin hiding is enabled
+        if (!$this->admin_hide_enabled) {
+            return $redirect_to;
+        }
+        
         // Generate validation token for the logout redirect
         $validation_token = $this->get_access_token("login");
 

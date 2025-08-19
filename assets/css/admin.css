@@ -10,7 +10,7 @@
  * @author Silver Assist
  * @copyright Copyright (c) 2025, Silver Assist
  * @license Polyform Noncommercial License 1.0.0
- * @version 1.1.5
+ * @version 1.1.6
  */
 
 /* =============================================================================
@@ -18,62 +18,62 @@
    ============================================================================= */
 
 .silver-assist-dashboard {
-    background: #f0f0f1;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    background: var(--silver-bg-secondary);
+    padding: var(--silver-spacing-xl);
+    border-radius: var(--silver-radius-lg);
+    margin-bottom: var(--silver-spacing-xxxl);
+    box-shadow: var(--silver-shadow-base);
 }
 
 .dashboard-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #ddd;
+    margin-bottom: var(--silver-spacing-xxl);
+    padding-bottom: var(--silver-spacing-lg);
+    border-bottom: 2px solid var(--silver-border-secondary);
 }
 
 .dashboard-header h2 {
     margin: 0;
-    color: #1d2327;
-    font-size: 24px;
-    font-weight: 600;
+    color: var(--silver-text-primary);
+    font-size: var(--silver-font-size-huge);
+    font-weight: var(--silver-font-weight-semibold);
 }
 
 .dashboard-refresh {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: var(--silver-spacing-lg);
 }
 
 .last-updated {
-    font-size: 13px;
-    color: #666;
+    font-size: var(--silver-font-size-base);
+    color: var(--silver-text-muted);
 }
 
 #last-updated-time {
-    font-weight: 600;
-    color: #1d2327;
+    font-weight: var(--silver-font-weight-semibold);
+    color: var(--silver-text-primary);
 }
 
 #refresh-dashboard {
-    background: #0073aa;
-    color: white;
+    background: var(--silver-primary-blue);
+    color: var(--silver-bg-primary);
     border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
+    padding: var(--silver-spacing-sm) var(--silver-spacing-lg);
+    border-radius: var(--silver-radius-base);
     cursor: pointer;
-    font-size: 13px;
-    transition: background-color 0.2s;
+    font-size: var(--silver-font-size-base);
+    transition: background-color var(--silver-transition-fast);
 }
 
 #refresh-dashboard:hover {
-    background: #005a87;
+    background: var(--silver-primary-blue-hover);
 }
 
 #refresh-dashboard:disabled {
-    background: #ccc;
+    background: var(--silver-disabled-bg);
     cursor: not-allowed;
 }
 

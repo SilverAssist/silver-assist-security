@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Security
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.5
+ * @version 1.1.6
  */
 
 namespace SilverAssist\Security\Security;
@@ -48,12 +48,28 @@ class LoginSecurity
     private int $session_timeout;
 
     /**
+     * Plugin URL for assets
+     * 
+     * @var string
+     */
+    private string $plugin_url;
+
+    /**
+     * Plugin version for cache busting
+     * 
+     * @var string
+     */
+    private string $plugin_version;
+
+    /**
      * Constructor
      * 
      * @since 1.1.1
      */
     public function __construct()
     {
+        $this->plugin_url = SILVER_ASSIST_SECURITY_URL;
+        $this->plugin_version = SILVER_ASSIST_SECURITY_VERSION;
         $this->init_configuration();
         $this->init();
     }
@@ -98,6 +114,64 @@ class LoginSecurity
 
         // Password reset security
         $this->init_password_security();
+
+        // Add password strength JavaScript for live validation
+        \add_action("admin_enqueue_scripts", [$this, "enqueue_password_scripts"]);
+    }
+
+    /**
+     * Enqueue password strength scripts for live validation
+     * 
+     * @since 1.1.5
+     * @param string $hook_suffix Current admin page hook suffix
+     * @return void
+     */
+    public function enqueue_password_scripts(string $hook_suffix): void
+    {
+        // Only load on user profile pages
+        if (!in_array($hook_suffix, ["profile.php", "user-edit.php", "user-new.php"])) {
+            return;
+        }
+
+        // Check if password strength enforcement is enabled
+        if (!DefaultConfig::get_option("silver_assist_password_strength_enforcement")) {
+            return;
+        }
+
+        // Enqueue WordPress password strength meter
+        \wp_enqueue_script("password-strength-meter");
+
+        // Enqueue CSS variables
+        \wp_enqueue_style(
+            "silver-assist-variables",
+            "{$this->plugin_url}assets/css/variables.css",
+            [],
+            $this->plugin_version
+        );
+
+        // Enqueue custom password validation styles
+        \wp_enqueue_style(
+            "silver-assist-password-validation",
+            "{$this->plugin_url}assets/css/password-validation.css",
+            ["silver-assist-variables"],
+            $this->plugin_version
+        );
+
+        // Enqueue custom password validation script
+        \wp_enqueue_script(
+            "silver-assist-password-validation",
+            "{$this->plugin_url}assets/js/password-validation.js",
+            ["jquery", "password-strength-meter"],
+            $this->plugin_version,
+            true
+        );
+
+        // Localize script with translated error message
+        \wp_localize_script("silver-assist-password-validation", "silverAssistSecurity", [
+            "passwordError" => \__("Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.", "silver-assist-security"),
+            "passwordSuccess" => \__("Password meets security requirements", "silver-assist-security"),
+            "hideWeakConfirmation" => true // Flag to indicate weak password confirmation should be hidden
+        ]);
     }
 
     /**

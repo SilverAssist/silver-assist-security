@@ -3,13 +3,13 @@
  * Silver Assist Security Suite - Core Plugin Controller
  *
  * Main plugin controller that orchestrates all security components including
- * login security, GraphQL protection, general security features, and admin panel.
+ * login security, GraphQL prot    ral security features, and admin panel.
  * Implements singleton pattern for centralized management.
  *
  * @package SilverAssist\Security\Core
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.5
+ * @version 1.1.6
  */
 
 namespace SilverAssist\Security\Core;
@@ -164,6 +164,7 @@ class Plugin
             \load_plugin_textdomain("silver-assist-security", false, dirname(plugin_basename(SILVER_ASSIST_SECURITY_PATH . "/silver-assist-security.php")) . "/languages/");
         }
     }
+
     /**
      * Initialize admin panel
      * 
@@ -180,14 +181,19 @@ class Plugin
     /**
      * Initialize security components
      * 
-     * @since 1.1.1
+     * @since 1.0.0
      * @return void
      */
     public function init_security_components(): void
     {
         $this->login_security = new LoginSecurity();
         $this->general_security = new GeneralSecurity();
-        $this->admin_hide_security = new AdminHideSecurity();
+
+        // Only initialize AdminHideSecurity if it's enabled
+        $admin_hide_enabled = (bool) DefaultConfig::get_option("silver_assist_admin_hide_enabled");
+        if ($admin_hide_enabled) {
+            $this->admin_hide_security = new AdminHideSecurity();
+        }
     }
 
     /**

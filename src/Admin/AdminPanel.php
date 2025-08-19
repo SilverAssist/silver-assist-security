@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Admin
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.5
+ * @version 1.1.6
  */
 
 namespace SilverAssist\Security\Admin;
@@ -37,12 +37,28 @@ class AdminPanel
     private GraphQLConfigManager $config_manager;
 
     /**
+     * Plugin URL for assets
+     * 
+     * @var string
+     */
+    private string $plugin_url;
+
+    /**
+     * Plugin version for cache busting
+     * 
+     * @var string
+     */
+    private string $plugin_version;
+
+    /**
      * Constructor
      * 
      * @since 1.1.1
      */
     public function __construct()
     {
+        $this->plugin_url = SILVER_ASSIST_SECURITY_URL;
+        $this->plugin_version = SILVER_ASSIST_SECURITY_VERSION;
         $this->config_manager = GraphQLConfigManager::getInstance();
         $this->init();
     }
@@ -126,17 +142,24 @@ class AdminPanel
         }
 
         \wp_enqueue_style(
-            "silver-assist-security-admin",
-            SILVER_ASSIST_SECURITY_URL . "assets/css/admin.css",
+            "silver-assist-variables",
+            "{$this->plugin_url}assets/css/variables.css",
             [],
-            SILVER_ASSIST_SECURITY_VERSION
+            $this->plugin_version
+        );
+
+        \wp_enqueue_style(
+            "silver-assist-security-admin",
+            "{$this->plugin_url}assets/css/admin.css",
+            ["silver-assist-variables"],
+            $this->plugin_version
         );
 
         \wp_enqueue_script(
             "silver-assist-security-admin",
-            SILVER_ASSIST_SECURITY_URL . "assets/js/admin.js",
+            "{$this->plugin_url}assets/js/admin.js",
             ["jquery"],
-            SILVER_ASSIST_SECURITY_VERSION,
+            $this->plugin_version,
             true
         );
 
