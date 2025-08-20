@@ -387,10 +387,10 @@ class LoginSecurity
      * @since 1.1.1
      * @param \WP_Error $errors Errors object
      * @param bool $update Whether this is a user update
-     * @param \WP_User $user User object
+     * @param \stdClass|\WP_User $user User object (stdClass for new users, WP_User for updates)
      * @return void
      */
-    public function validate_password_strength(\WP_Error $errors, bool $update, \WP_User $user): void
+    public function validate_password_strength(\WP_Error $errors, bool $update, \stdClass|\WP_User $user): void
     {
         if (isset($_POST["pass1"]) && !empty($_POST["pass1"])) {
             $password = $_POST["pass1"];
@@ -409,10 +409,10 @@ class LoginSecurity
      * 
      * @since 1.1.1
      * @param \WP_Error $errors Errors object
-     * @param \WP_User $user User object
+     * @param \stdClass|\WP_User $user User object (can be stdClass or WP_User depending on context)
      * @return void
      */
-    public function validate_password_strength_reset(\WP_Error $errors, \WP_User $user): void
+    public function validate_password_strength_reset(\WP_Error $errors, \stdClass|\WP_User $user): void
     {
         if (isset($_POST["pass1"]) && !empty($_POST["pass1"])) {
             $password = $_POST["pass1"];
