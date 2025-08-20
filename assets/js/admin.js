@@ -15,6 +15,46 @@
 (($ => {
     "use strict";
 
+    // ========================================
+    // TIMING CONSTANTS
+    // ========================================
+
+    /**
+     * Admin panel timing constants
+     * 
+     * Centralized timeout values for consistent user experience
+     * and easy maintenance of timing behavior across admin features.
+     * 
+     * @since 1.1.6
+     */
+    const TIMING = {
+        AUTO_SAVE_DELAY: 2000,          // Auto-save delay after input changes (ms)
+        VALIDATION_DEBOUNCE: 500,       // Real-time validation debounce (ms)
+        ERROR_DISPLAY: 5000,            // Error message display duration (ms)
+        SUCCESS_DISPLAY: 2000,          // Success message display duration (ms)
+        LONG_ERROR_DISPLAY: 3000,       // Long error message display duration (ms)
+        DASHBOARD_REFRESH: 2000,        // Dashboard refresh button delay (ms)
+        DATABASE_UPDATE_DELAY: 500      // Small delay for database update completion (ms)
+    };
+
+    /**
+     * Form validation constants
+     * 
+     * Centralized validation limits for all security settings form fields.
+     * These values must match the server-side validation limits.
+     * 
+     * @since 1.1.6
+     */
+    const VALIDATION_LIMITS = {
+        LOGIN_ATTEMPTS: { min: 1, max: 20 },           // Failed login attempts before lockout
+        LOCKOUT_DURATION: { min: 60, max: 3600 },     // Lockout duration in seconds (1 min - 1 hour)
+        SESSION_TIMEOUT: { min: 5, max: 120 },        // Session timeout in minutes (5 min - 2 hours)
+        GRAPHQL_QUERY_DEPTH: { min: 1, max: 20 },     // GraphQL query depth limit
+        GRAPHQL_QUERY_COMPLEXITY: { min: 10, max: 1000 }, // GraphQL query complexity limit
+        GRAPHQL_QUERY_TIMEOUT: { min: 1, max: null }, // GraphQL timeout (max determined by PHP limit)
+        ADMIN_PATH_LENGTH: { min: 3, max: 50 }        // Admin path character length limits
+    };
+
     $(() => {
         // Add security admin class to wrap
         $(".wrap").addClass("silver-assist-security-admin");
@@ -45,72 +85,86 @@
      * Initialize form validation for security settings
      * 
      * Validates all form inputs including login attempts, session timeout,
-     * and GraphQL settings.
+     * and GraphQL settings using centralized validation limits.
      * 
      * @since 1.0.0
      * @returns {void}
      */
     const initFormValidation = () => {
+        // Use destructuring for cleaner object access
+        const { strings = {}, phpExecutionTimeout = 30 } = silverAssistSecurity || {};
+
+        // Destructure validation limits for cleaner code
+        const {
+            LOGIN_ATTEMPTS,
+            LOCKOUT_DURATION,
+            SESSION_TIMEOUT,
+            GRAPHQL_QUERY_DEPTH,
+            GRAPHQL_QUERY_COMPLEXITY,
+            GRAPHQL_QUERY_TIMEOUT,
+            ADMIN_PATH_LENGTH
+        } = VALIDATION_LIMITS;
+
         $("form").on("submit", e => {
             let isValid = true;
             const errors = [];
 
-            // Validate login attempts
+            // Validate login attempts using destructured limits
             const loginAttempts = $("#silver_assist_login_attempts").val();
-            if (loginAttempts < 1 || loginAttempts > 20) {
-                errors.push(silverAssistSecurity.strings.loginAttemptsError || "Login attempts must be between 1 and 20");
+            if (loginAttempts < LOGIN_ATTEMPTS.min || loginAttempts > LOGIN_ATTEMPTS.max) {
+                errors.push(strings.loginAttemptsError || `Login attempts must be between ${LOGIN_ATTEMPTS.min} and ${LOGIN_ATTEMPTS.max}`);
                 isValid = false;
             }
 
-            // Validate lockout duration
+            // Validate lockout duration using destructured limits
             const lockoutDuration = $("#silver_assist_lockout_duration").val();
-            if (lockoutDuration < 60 || lockoutDuration > 3600) {
-                errors.push(silverAssistSecurity.strings.lockoutDurationError || "Lockout duration must be between 60 and 3600 seconds");
+            if (lockoutDuration < LOCKOUT_DURATION.min || lockoutDuration > LOCKOUT_DURATION.max) {
+                errors.push(strings.lockoutDurationError || `Lockout duration must be between ${LOCKOUT_DURATION.min} and ${LOCKOUT_DURATION.max} seconds`);
                 isValid = false;
             }
 
-            // Validate session timeout
+            // Validate session timeout using destructured limits
             const sessionTimeout = $("#silver_assist_session_timeout").val();
-            if (sessionTimeout < 5 || sessionTimeout > 120) {
-                errors.push(silverAssistSecurity.strings.sessionTimeoutError || "Session timeout must be between 5 and 120 minutes");
+            if (sessionTimeout < SESSION_TIMEOUT.min || sessionTimeout > SESSION_TIMEOUT.max) {
+                errors.push(strings.sessionTimeoutError || `Session timeout must be between ${SESSION_TIMEOUT.min} and ${SESSION_TIMEOUT.max} minutes`);
                 isValid = false;
             }
 
-            // Validate GraphQL settings if they exist
+            // Validate GraphQL settings if they exist using destructured limits
             const graphqlDepth = $("#silver_assist_graphql_query_depth").val();
-            if (graphqlDepth && (graphqlDepth < 1 || graphqlDepth > 20)) {
-                errors.push(silverAssistSecurity.strings.graphqlDepthError || "GraphQL query depth must be between 1 and 20");
+            if (graphqlDepth && (graphqlDepth < GRAPHQL_QUERY_DEPTH.min || graphqlDepth > GRAPHQL_QUERY_DEPTH.max)) {
+                errors.push(strings.graphqlDepthError || `GraphQL query depth must be between ${GRAPHQL_QUERY_DEPTH.min} and ${GRAPHQL_QUERY_DEPTH.max}`);
                 isValid = false;
             }
 
             const graphqlComplexity = $("#silver_assist_graphql_query_complexity").val();
-            if (graphqlComplexity && (graphqlComplexity < 10 || graphqlComplexity > 1000)) {
-                errors.push(silverAssistSecurity.strings.graphqlComplexityError || "GraphQL query complexity must be between 10 and 1000");
+            if (graphqlComplexity && (graphqlComplexity < GRAPHQL_QUERY_COMPLEXITY.min || graphqlComplexity > GRAPHQL_QUERY_COMPLEXITY.max)) {
+                errors.push(strings.graphqlComplexityError || `GraphQL query complexity must be between ${GRAPHQL_QUERY_COMPLEXITY.min} and ${GRAPHQL_QUERY_COMPLEXITY.max}`);
                 isValid = false;
             }
 
             const graphqlTimeout = $("#silver_assist_graphql_query_timeout").val();
-            const phpTimeout = silverAssistSecurity.phpExecutionTimeout || 30;
-            if (graphqlTimeout && (graphqlTimeout < 1 || graphqlTimeout > phpTimeout)) {
-                errors.push(silverAssistSecurity.strings.graphqlTimeoutError || `GraphQL query timeout must be between 1 and ${phpTimeout} seconds`);
+            const maxGraphqlTimeout = GRAPHQL_QUERY_TIMEOUT.max || phpExecutionTimeout;
+            if (graphqlTimeout && (graphqlTimeout < GRAPHQL_QUERY_TIMEOUT.min || graphqlTimeout > maxGraphqlTimeout)) {
+                errors.push(strings.graphqlTimeoutError || `GraphQL query timeout must be between ${GRAPHQL_QUERY_TIMEOUT.min} and ${maxGraphqlTimeout} seconds`);
                 isValid = false;
             }
 
-            // Validate admin path if present and admin hide is enabled
+            // Validate admin path if present and admin hide is enabled using destructured limits
             const adminHideEnabled = $("#silver_assist_admin_hide_enabled").is(":checked");
             const adminPath = $("#silver_assist_admin_hide_path").val();
 
             if (adminHideEnabled && adminPath) {
                 // Check if current validation indicator shows invalid state
-                const validationIndicator = $("#admin-path-validation");
-                if (validationIndicator.length && validationIndicator.hasClass("invalid")) {
-                    errors.push(silverAssistSecurity.strings.pathForbidden || "Admin path contains invalid characters or forbidden keywords");
+                const $validationIndicator = $("#admin-path-validation");
+                if ($validationIndicator.length && $validationIndicator.hasClass("invalid")) {
+                    errors.push(strings.pathForbidden || "Admin path contains invalid characters or forbidden keywords");
                     isValid = false;
-                } else if (adminPath.length < 3) {
-                    errors.push(silverAssistSecurity.strings.pathTooShort || "Admin path must be at least 3 characters long");
+                } else if (adminPath.length < ADMIN_PATH_LENGTH.min) {
+                    errors.push(strings.pathTooShort || `Admin path must be at least ${ADMIN_PATH_LENGTH.min} characters long`);
                     isValid = false;
-                } else if (adminPath.length > 50) {
-                    errors.push(silverAssistSecurity.strings.pathTooLong || "Admin path must be 50 characters or less");
+                } else if (adminPath.length > ADMIN_PATH_LENGTH.max) {
+                    errors.push(strings.pathTooLong || `Admin path must be ${ADMIN_PATH_LENGTH.max} characters or less`);
                     isValid = false;
                 }
             }
@@ -133,6 +187,9 @@
      * @returns {void}
      */
     const showValidationErrors = errors => {
+        // Destructure timing constants for cleaner code
+        const { ERROR_DISPLAY } = TIMING;
+
         let errorHtml = "<div class=\"notice notice-error is-dismissible\"><ul>";
         errors.forEach(error => {
             errorHtml += `<li>${error}</li>`;
@@ -141,10 +198,10 @@
 
         $(".wrap h1").after(errorHtml);
 
-        // Auto-dismiss after 5 seconds
+        // Auto-dismiss after configured time using destructured constant
         setTimeout(() => {
             $(".notice-error").fadeOut();
-        }, 5000);
+        }, ERROR_DISPLAY);
     };
 
     /**
@@ -200,6 +257,9 @@
      * @returns {void}
      */
     const initAutoSave = () => {
+        // Destructure timing constants for cleaner code
+        const { AUTO_SAVE_DELAY } = TIMING;
+
         let saveTimeout;
         const $form = $("form");
 
@@ -209,10 +269,10 @@
             // Show saving indicator
             showSavingIndicator();
 
-            // Auto-save after 2 seconds of inactivity
+            // Auto-save after configured delay using destructured constant
             saveTimeout = setTimeout(() => {
                 autoSaveSettings();
-            }, 2000);
+            }, AUTO_SAVE_DELAY);
         });
     };
 
@@ -226,8 +286,11 @@
      * @returns {void}
      */
     const showSavingIndicator = () => {
+        // Use destructuring for cleaner string access
+        const { strings = {} } = silverAssistSecurity || {};
+
         if (!$(".saving-indicator").length) {
-            $("form").append(`<div class="saving-indicator" style="position: fixed; top: 32px; right: 20px; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 9999;">${silverAssistSecurity.strings.saving || "Saving..."}</div>`);
+            $("form").append(`<div class="saving-indicator" style="position: fixed; top: 32px; right: 20px; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 9999;">${strings.saving || "Saving..."}</div>`);
         }
     };
 
@@ -241,6 +304,9 @@
      * @returns {void}
      */
     const autoSaveSettings = () => {
+        // Destructure timing constants for cleaner code
+        const { SUCCESS_DISPLAY, LONG_ERROR_DISPLAY, DATABASE_UPDATE_DELAY } = TIMING;
+
         const $form = $("form");
         const formData = {};
 
@@ -258,41 +324,47 @@
             }
         });
 
+        // Use destructuring for cleaner object access
+        const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
+
         // Add action and nonce
         formData.action = "silver_assist_auto_save";
-        formData.nonce = silverAssistSecurity.nonce;
+        formData.nonce = nonce;
 
         $.ajax({
-            url: silverAssistSecurity.ajaxurl,
+            url: ajaxurl,
             type: "POST",
             data: formData,
             success: response => {
-                if (response.success) {
-                    // Normal save indication
+                // Use destructuring for response handling
+                const { success, data = {} } = response || {};
+
+                if (success) {
+                    // Normal save indication using destructured timing
                     $(".saving-indicator")
-                        .html(silverAssistSecurity.strings.saved || "Saved!")
-                        .delay(2000)
+                        .html(strings.saved || "Saved!")
+                        .delay(SUCCESS_DISPLAY)
                         .fadeOut();
 
                     // Update dashboard to reflect changes immediately
                     setTimeout(() => {
                         loadSecurityStatus();
                         loadLoginStats();
-                    }, 500); // Small delay to ensure database is updated
+                    }, DATABASE_UPDATE_DELAY);
                 } else {
-                    // Show error message
+                    // Show error message using destructured timing
                     $(".saving-indicator")
-                        .html(response.data.message || (silverAssistSecurity.strings.saveFailed || "Save failed"))
+                        .html(data.message || (strings.saveFailed || "Save failed"))
                         .addClass("error")
-                        .delay(3000)
+                        .delay(LONG_ERROR_DISPLAY)
                         .fadeOut();
                 }
             },
             error: () => {
                 $(".saving-indicator")
-                    .html(silverAssistSecurity.strings.saveFailed || "Save failed")
+                    .html(strings.saveFailed || "Save failed")
                     .addClass("error")
-                    .delay(3000)
+                    .delay(LONG_ERROR_DISPLAY)
                     .fadeOut();
             }
         });
@@ -338,20 +410,26 @@
      * @returns {void}
      */
     const checkSilverAssistVersion = () => {
-        $.post(silverAssistSecurity.ajaxurl, {
+        // Use destructuring for cleaner object access
+        const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
+
+        $.post(ajaxurl, {
             action: "silver_assist_security_check_version",
-            nonce: silverAssistSecurity.nonce
+            nonce: nonce
         }, response => {
-            if (response.success && response.data.update_available) {
+            // Use destructuring for response handling
+            const { success, data = {} } = response || {};
+
+            if (success && data.update_available) {
                 const updateNotice = `<div class="notice notice-info is-dismissible">` +
                     `<p><strong>Silver Assist Security Essentials:</strong> ` +
-                    silverAssistSecurity.strings.newVersionAvailable.replace("%s", response.data.latest_version) + ` ` +
-                    `<a href="${silverAssistSecurity.strings.updateUrl}">${silverAssistSecurity.strings.updateNow}</a></p>` +
+                    strings.newVersionAvailable.replace("%s", data.latest_version) + ` ` +
+                    `<a href="${strings.updateUrl}">${strings.updateNow}</a></p>` +
                     `</div>`;
                 $(".wrap h1").after(updateNotice);
             }
         }).fail(() => {
-            console.log(silverAssistSecurity.strings.updateCheckFailed || "Failed to check for Silver Assist updates");
+            console.log(strings.updateCheckFailed || "Failed to check for Silver Assist updates");
         });
     };
 
@@ -364,26 +442,32 @@
         const $button = $(e.target);
         const originalText = $button.text();
 
-        $button.text(silverAssistSecurity.strings.checking).prop("disabled", true);
+        // Use destructuring for cleaner object access
+        const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
 
-        $.post(silverAssistSecurity.ajaxurl, {
+        $button.text(strings.checking).prop("disabled", true);
+
+        $.post(ajaxurl, {
             action: "silver_assist_security_check_version",
-            nonce: silverAssistSecurity.nonce
+            nonce: nonce
         })
             .done(response => {
-                if (response.success) {
-                    if (response.data.update_available) {
-                        alert(silverAssistSecurity.strings.newVersionFound.replace("%1$s", response.data.latest_version).replace("%2$s", response.data.current_version));
+                // Use destructuring for response handling
+                const { success, data = {} } = response || {};
+
+                if (success) {
+                    if (data.update_available) {
+                        alert(strings.newVersionFound.replace("%1$s", data.latest_version).replace("%2$s", data.current_version));
                         location.reload(); // Reload to show update notice
                     } else {
-                        alert(silverAssistSecurity.strings.upToDate.replace("%s", response.data.current_version));
+                        alert(strings.upToDate.replace("%s", data.current_version));
                     }
                 } else {
-                    alert(silverAssistSecurity.strings.checkError + " " + (response.data.message || silverAssistSecurity.strings.unknownError));
+                    alert(strings.checkError + " " + (data.message || strings.unknownError));
                 }
             })
             .fail(() => {
-                alert(silverAssistSecurity.strings.connectivityError);
+                alert(strings.connectivityError);
             })
             .always(() => {
                 $button.text(originalText).prop("disabled", false);
@@ -433,15 +517,21 @@
     const loadSecurityStatus = () => {
         if (typeof silverAssistSecurity === "undefined") return;
 
-        $.post(silverAssistSecurity.ajaxurl, {
+        // Use destructuring for cleaner object access
+        const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
+
+        $.post(ajaxurl, {
             action: "silver_assist_get_security_status",
-            nonce: silverAssistSecurity.nonce
+            nonce: nonce
         }, response => {
-            if (response.success) {
-                updateSecurityStatusDisplay(response.data);
+            // Use destructuring for response handling
+            const { success, data } = response || {};
+
+            if (success) {
+                updateSecurityStatusDisplay(data);
             }
         }).fail(() => {
-            console.log(silverAssistSecurity.strings.securityStatusFailed || "Failed to load security status");
+            console.log(strings.securityStatusFailed || "Failed to load security status");
         });
     };
 
@@ -457,15 +547,21 @@
     const loadLoginStats = () => {
         if (typeof silverAssistSecurity === "undefined") return;
 
-        $.post(silverAssistSecurity.ajaxurl, {
+        // Use destructuring for cleaner object access
+        const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
+
+        $.post(ajaxurl, {
             action: "silver_assist_get_login_stats",
-            nonce: silverAssistSecurity.nonce
+            nonce: nonce
         }, response => {
-            if (response.success) {
-                updateLoginStatsDisplay(response.data);
+            // Use destructuring for response handling
+            const { success, data } = response || {};
+
+            if (success) {
+                updateLoginStatsDisplay(data);
             }
         }).fail(() => {
-            console.log(silverAssistSecurity.strings.loginStatsFailed || "Failed to load login stats");
+            console.log(strings.loginStatsFailed || "Failed to load login stats");
         });
     };
 
@@ -481,17 +577,27 @@
     const loadBlockedIPs = () => {
         if (typeof silverAssistSecurity === "undefined") return;
 
-        $.post(silverAssistSecurity.ajaxurl, {
+        // Use destructuring for cleaner object access
+        const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
+
+        // Local constant for DOM element used in this function
+        const $blockedIpsListSelector = $("#blocked-ips-list");
+
+        $.post(ajaxurl, {
             action: "silver_assist_get_blocked_ips",
-            nonce: silverAssistSecurity.nonce
+            nonce: nonce
         }, response => {
-            if (response.success) {
-                updateBlockedIPsDisplay(response.data);
+            // Use destructuring for response handling
+            const { success, data } = response || {};
+
+            if (success) {
+                updateBlockedIPsDisplay(data);
             } else {
-                $("#blocked-ips-list").html(`<p class="no-threats">${silverAssistSecurity.strings.noThreats || "No active threats detected"}</p>`);
+                $blockedIpsListSelector.html(`<p class="no-threats">${strings.noThreats || "No active threats detected"}</p>`);
             }
         }).fail(() => {
-            $("#blocked-ips-list").html(`<p class="error">${silverAssistSecurity.strings.error || "Error loading data"}</p>`);
+            
+            $blockedIpsListSelector.html(`<p class="error">${strings.error || "Error loading data"}</p>`);
         });
     };
 
@@ -534,32 +640,41 @@
     const updateDynamicDashboardValues = data => {
         if (!data) return;
 
+        // Use destructuring for cleaner object access
+        const { strings = {} } = silverAssistSecurity || {};
+
         // Update Login Security panel values
         if (data.login_security) {
+            // Use destructuring for nested data
+            const { max_attempts, lockout_duration } = data.login_security;
+
             // Update Max Attempts value
             const $maxAttemptsElement = $(".login-security .stat:first-child .stat-value");
             if ($maxAttemptsElement.length) {
-                $maxAttemptsElement.text(data.login_security.max_attempts);
+                $maxAttemptsElement.text(max_attempts);
             }
 
             // Update Lockout duration
             const $lockoutElement = $(".login-security .stat:last-child .stat-value");
-            if ($lockoutElement.length && data.login_security.lockout_duration) {
-                $lockoutElement.text(Math.round(data.login_security.lockout_duration / 60));
+            if ($lockoutElement.length && lockout_duration) {
+                $lockoutElement.text(Math.round(lockout_duration / 60));
             }
         }
 
         // Update Admin Security panel feature statuses
         if (data.admin_security) {
+            // Use destructuring for nested data
+            const { password_strength_enforcement, bot_protection } = data.admin_security;
+
             // Update Password Strength Enforcement status
             const $passwordElement = $(".admin-security .feature-status:first-child .feature-value");
             if ($passwordElement.length) {
                 $passwordElement
                     .removeClass("enabled disabled")
-                    .addClass(data.admin_security.password_strength_enforcement ? "enabled" : "disabled")
-                    .text(data.admin_security.password_strength_enforcement ?
-                        (silverAssistSecurity.strings.enabled || "Enabled") :
-                        (silverAssistSecurity.strings.disabled || "Disabled"));
+                    .addClass(password_strength_enforcement ? "enabled" : "disabled")
+                    .text(password_strength_enforcement ?
+                        (strings.enabled || "Enabled") :
+                        (strings.disabled || "Disabled"));
             }
 
             // Update Bot Protection status
@@ -567,24 +682,32 @@
             if ($botElement.length) {
                 $botElement
                     .removeClass("enabled disabled")
-                    .addClass(data.admin_security.bot_protection ? "enabled" : "disabled")
-                    .text(data.admin_security.bot_protection ?
-                        (silverAssistSecurity.strings.enabled || "Enabled") :
-                        (silverAssistSecurity.strings.disabled || "Disabled"));
+                    .addClass(bot_protection ? "enabled" : "disabled")
+                    .text(bot_protection ?
+                        (strings.enabled || "Enabled") :
+                        (strings.disabled || "Disabled"));
             }
         }
 
         // Update GraphQL Security panel if enabled
         if (data.graphql_security && data.graphql_security.enabled) {
+            // Use destructuring for nested data
+            const {
+                headless_mode,
+                query_depth_limit,
+                query_complexity_limit,
+                query_timeout
+            } = data.graphql_security;
+
             // Update headless mode indicator
             const $headlessModeElement = $(".graphql-security .mode-value");
             if ($headlessModeElement.length) {
                 $headlessModeElement
                     .removeClass("headless standard")
-                    .addClass(data.graphql_security.headless_mode ? "headless" : "standard")
-                    .text(data.graphql_security.headless_mode ?
-                        (silverAssistSecurity.strings.headlessCms || "Headless CMS") :
-                        (silverAssistSecurity.strings.standard || "Standard"));
+                    .addClass(headless_mode ? "headless" : "standard")
+                    .text(headless_mode ?
+                        (strings.headlessCms || "Headless CMS") :
+                        (strings.standard || "Standard"));
             }
 
             // Update query depth, complexity, and timeout values
@@ -593,13 +716,13 @@
                 if ($statValue.length) {
                     switch (index) {
                         case 0: // Max Depth
-                            $statValue.text(data.graphql_security.query_depth_limit);
+                            $statValue.text(query_depth_limit);
                             break;
                         case 1: // Max Complexity
-                            $statValue.text(data.graphql_security.query_complexity_limit);
+                            $statValue.text(query_complexity_limit);
                             break;
                         case 2: // Timeout
-                            $statValue.text(data.graphql_security.query_timeout + "s");
+                            $statValue.text(query_timeout + "s");
                             break;
                     }
                 }
@@ -608,15 +731,18 @@
 
         // Update General Security panel SSL status
         if (data.general_security) {
+            // Use destructuring for nested data
+            const { ssl_enabled } = data.general_security;
+
             // Find the SSL/HTTPS feature status (4th feature-status div in general-security)
             const $sslElement = $(".general-security .feature-status:nth-child(4) .feature-value");
             if ($sslElement.length) {
                 $sslElement
                     .removeClass("enabled disabled")
-                    .addClass(data.general_security.ssl_enabled ? "enabled" : "disabled")
-                    .text(data.general_security.ssl_enabled ?
-                        (silverAssistSecurity.strings.enabled || "Enabled") :
-                        (silverAssistSecurity.strings.disabled || "Disabled"));
+                    .addClass(ssl_enabled ? "enabled" : "disabled")
+                    .text(ssl_enabled ?
+                        (strings.enabled || "Enabled") :
+                        (strings.disabled || "Disabled"));
             }
         }
     };
@@ -650,29 +776,36 @@
      */
     const updateBlockedIPsDisplay = data => {
         const $container = $("#blocked-ips-list");
+        const $threatCountSelector = $("#threat-count");
+
+        // Use destructuring for cleaner object access
+        const { strings = {} } = silverAssistSecurity || {};
 
         if (!data || data.length === 0) {
-            $container.html(`<p class="no-threats">${silverAssistSecurity.strings.noThreats || "No active threats detected"}</p>`);
-            $("#threat-count").text("0");
+            $container.html(`<p class="no-threats">${strings.noThreats || "No active threats detected"}</p>`);
+            $threatCountSelector.text("0");
             return;
         }
 
         let html = "<div class=\"blocked-ips-table\">";
         html += "<table class=\"wp-list-table widefat fixed striped\">";
-        html += `<thead><tr><th>${silverAssistSecurity.strings.ipHash}</th><th>${silverAssistSecurity.strings.blockedTime}</th><th>${silverAssistSecurity.strings.remaining}</th></tr></thead>`;
+        html += `<thead><tr><th>${strings.ipHash}</th><th>${strings.blockedTime}</th><th>${strings.remaining}</th></tr></thead>`;
         html += "<tbody>";
 
         data.forEach(ip => {
+            // Use destructuring for cleaner object access
+            const { hash, blocked_at, remaining_minutes } = ip;
+
             html += "<tr>";
-            html += `<td>${ip.hash.substring(0, 8)}...</td>`;
-            html += `<td>${ip.blocked_at}</td>`;
-            html += `<td>${ip.remaining_minutes} ${silverAssistSecurity.strings.minutes}</td>`;
+            html += `<td>${hash.substring(0, 8)}...</td>`;
+            html += `<td>${blocked_at}</td>`;
+            html += `<td>${remaining_minutes} ${strings.minutes}</td>`;
             html += "</tr>";
         });
 
         html += "</tbody></table></div>";
         $container.html(html);
-        $("#threat-count").text(data.length);
+        $threatCountSelector.text(data.length);
     };
 
     /**
@@ -685,6 +818,9 @@
      * @returns {void}
      */
     const refreshDashboard = () => {
+        // Destructure timing constants for cleaner code
+        const { DASHBOARD_REFRESH } = TIMING;
+
         const $button = $("#refresh-dashboard");
         const originalText = $button.text();
 
@@ -696,7 +832,7 @@
 
         setTimeout(() => {
             $button.text(originalText).prop("disabled", false);
-        }, 2000);
+        }, DASHBOARD_REFRESH);
     };
 
     /**
@@ -760,6 +896,9 @@
      * @returns {void}
      */
     const initAdminPathValidation = () => {
+        // Destructure timing constants for cleaner code
+        const { VALIDATION_DEBOUNCE } = TIMING;
+
         const $pathInput = $("#silver_assist_admin_hide_path");
 
         if (!$pathInput.length) {
@@ -859,17 +998,17 @@
             });
         };
 
-        // Attach real-time validation
+        // Attach real-time validation using destructured timing constant
         $pathInput.on("input", function () {
             const path = $(this).val().trim();
 
             // Clear previous validation timeout
             clearTimeout(validationTimeout);
 
-            // Set new validation timeout (500ms delay for better UX)
+            // Set new validation timeout using destructured constant
             validationTimeout = setTimeout(() => {
                 validatePath(path);
-            }, 500);
+            }, VALIDATION_DEBOUNCE);
         });
 
         // Validate on focus lost

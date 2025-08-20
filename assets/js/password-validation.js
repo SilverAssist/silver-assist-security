@@ -14,6 +14,25 @@
 (($ => {
     "use strict";
 
+    // ========================================
+    // TIMING CONSTANTS
+    // ========================================
+    
+    /**
+     * Password validation timing constants
+     * 
+     * Centralized timeout values for consistent user experience
+     * and easy maintenance of timing behavior.
+     * 
+     * @since 1.1.6
+     */
+    const TIMING = {
+        VALIDATION_DEBOUNCE: 300,     // Debounce delay for input validation (ms)
+        HIDE_ON_INACTIVITY: 8000,    // Hide message after inactivity period (ms)
+        HIDE_ON_BLUR: 5000,          // Hide message when field loses focus (ms)
+        FADE_OUT_DURATION: 400       // Smooth fade out animation duration (ms)
+    };
+
     /**
      * Initialize password validation on document ready
      *
@@ -79,6 +98,9 @@
      * @returns {void}
      */
     const bindValidationEvents = ($passwordField, $confirmField) => {
+        // Destructure timing constants for cleaner code
+        const { VALIDATION_DEBOUNCE, HIDE_ON_INACTIVITY, HIDE_ON_BLUR } = TIMING;
+        
         // Primary password field validation
         $passwordField.on("input keyup paste", function () {
             // Clear existing timeouts
@@ -88,11 +110,11 @@
             this.validationTimeout = setTimeout(() => {
                 validatePassword($passwordField.val());
 
-                // Set timeout to hide message after period of inactivity
+                // Set timeout to hide message after period of inactivity using destructured constant
                 this.hideTimeout = setTimeout(() => {
                     hideValidationMessage();
-                }, 8000); // Hide after 8 seconds of inactivity
-            }, 300);
+                }, HIDE_ON_INACTIVITY);
+            }, VALIDATION_DEBOUNCE);
         });
 
         // Confirmation field validation
@@ -104,10 +126,10 @@
                 // WordPress handles password match validation, we just trigger our validation
                 validatePassword($passwordField.val());
 
-                // Set timeout to hide message after period of inactivity
+                // Set timeout to hide message after period of inactivity using destructured constant
                 $passwordField[0].hideTimeout = setTimeout(() => {
                     hideValidationMessage();
-                }, 8000); // Hide after 8 seconds of inactivity
+                }, HIDE_ON_INACTIVITY);
             }
         });
 
@@ -116,13 +138,13 @@
             clearTimeout($passwordField[0].hideTimeout);
         });
 
-        // Start hide timer when user leaves password fields
+        // Start hide timer when user leaves password fields using destructured constant
         $passwordField.add($confirmField).on("blur", function () {
             const $container = $("#silver-assist-password-validation");
             if ($container.is(":visible")) {
                 $passwordField[0].hideTimeout = setTimeout(() => {
                     hideValidationMessage();
-                }, 5000); // Hide after 5 seconds when field loses focus
+                }, HIDE_ON_BLUR);
             }
         });
     };
@@ -164,10 +186,13 @@
      * @returns {void}
      */
     const hideValidationMessage = () => {
+        // Destructure timing constants for cleaner code
+        const { FADE_OUT_DURATION } = TIMING;
+        
         const $validationContainer = $("#silver-assist-password-validation");
 
         if ($validationContainer.is(":visible")) {
-            $validationContainer.fadeOut(400, function () {
+            $validationContainer.fadeOut(FADE_OUT_DURATION, function () {
                 // Clear any remaining classes after hiding
                 $(this).removeClass("success error warning");
             });
@@ -216,9 +241,9 @@
      * @returns {void}
      */
     const showSuccessMessage = $container => {
-        // Use localized message from silverAssistSecurity object
-        const successMessage = window.silverAssistSecurity?.passwordSuccess ||
-            "Password meets security requirements";
+        // Use destructuring for cleaner object access
+        const { passwordSuccess } = window.silverAssistSecurity || {};
+        const successMessage = passwordSuccess || "Password meets security requirements";
 
         // Stop any ongoing fade animations and show immediately
         $container.stop(true, false);
@@ -241,8 +266,9 @@
      * @returns {void}
      */
     const showErrorMessage = $container => {
-        // Use localized message from silverAssistSecurity object
-        const errorMessage = window.silverAssistSecurity?.passwordError ||
+        // Use destructuring for cleaner object access
+        const { passwordError } = window.silverAssistSecurity || {};
+        const errorMessage = passwordError || 
             "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.";
 
         // Stop any ongoing fade animations and show immediately

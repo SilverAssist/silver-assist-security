@@ -737,88 +737,141 @@ use GraphQL\Error\Error;
 - **Arrow functions**: Use `const functionName = () => {}` instead of `function functionName() {}`
 - **Template literals**: Use backticks and `${variable}` interpolation instead of string concatenation
 - **const/let declarations**: Use `const` for constants and `let` for variables, avoid `var`
-- **Destructuring**: Use object/array destructuring where appropriate
+- **Destructuring**: Use object/array destructuring where appropriate for cleaner code and better readability
 - **JSDoc documentation**: ALL functions must have complete JSDoc documentation in English
 - **WordPress i18n**: Use WordPress i18n in JavaScript via localized script data passed from PHP
 - **jQuery dependency**: Use jQuery patterns for WordPress compatibility with ES6 arrow functions
 - **Consistent naming**: Use camelCase for variables and functions
 - **jQuery element variables**: MANDATORY use of `$` prefix for all jQuery element variables (e.g., `const $passwordField = $("#field")`)
 - **Timeout variables**: Use descriptive names for timeout variables (e.g., `validationTimeout`, `hideTimeout`, `saveTimeout`)
+- **Timing constants**: MANDATORY centralized timing constants in TIMING object at file top for all setTimeout/setInterval values
+- **Validation constants**: MANDATORY centralized validation limits in VALIDATION_LIMITS object for form validation ranges
 - **Error handling**: Use try-catch blocks for AJAX calls and complex operations
 - **Module pattern**: Use IIFE with arrow functions: `(($ => { /* code */ }))(jQuery);`
 
 #### ES6+ JavaScript Examples
 ```javascript
-// ✅ CORRECT: ES6 arrow functions with const and jQuery $ prefix
-const initFormValidation = () => {
-    const errors = [];
-    const $form = $("form");
-    const $passwordField = $("#pass1");
-    let validationTimeout;
-    
-    $form.on("submit", e => {
-        let isValid = true;
-        
-        // Template literals for string interpolation
-        const errorHtml = `<div class="notice notice-error">${errorMessage}</div>`;
-        
-        // Clear timeout variables properly
-        clearTimeout(validationTimeout);
-        
-        // Arrow functions in callbacks
-        errors.forEach(error => {
-            console.log(`Error: ${error}`);
-        });
-    });
-    
-    // Timeout variable usage with descriptive naming
-    $passwordField.on("input", function() {
-        clearTimeout(this.validationTimeout);
-        
-        this.validationTimeout = setTimeout(() => {
-            validatePassword($passwordField.val());
-        }, 300);
-    });
-};
-
-// ✅ CORRECT: Modern AJAX with arrow functions and jQuery prefixes
-const autoSaveSettings = () => {
-    const $form = $("form");
-    const $saveIndicator = $(".saving-indicator");
-    const formData = $form.serialize();
-    
-    $.ajax({
-        url: silverAssistSecurity.ajaxurl,
-        type: "POST",
-        data: {
-            action: "silver_assist_auto_save",
-            nonce: silverAssistSecurity.nonce,
-            form_data: formData
-        },
-        success: response => {
-            $saveIndicator.html("Saved!").delay(2000).fadeOut();
-        },
-        error: () => {
-            $saveIndicator.html("Save failed").addClass("error");
-        }
-    });
-};
-
-// ✅ CORRECT: ES6 module pattern with jQuery prefixes
+// ✅ CORRECT: ES6 arrow functions with const, jQuery $ prefix, and centralized constants
 (($ => {
     "use strict";
-    
-    $(() => {
-        const $body = $("body");
-        const $document = $(document);
+
+    // Centralized timing constants at file top
+    const TIMING = {
+        VALIDATION_DEBOUNCE: 300,     // Input validation debounce (ms)
+        HIDE_ON_INACTIVITY: 8000,    // Hide message after inactivity (ms)
+        HIDE_ON_BLUR: 5000,          // Hide message on field blur (ms)
+        FADE_OUT_DURATION: 400,      // Animation duration (ms)
+        AUTO_SAVE_DELAY: 2000        // Auto-save delay (ms)
+    };
+
+    // Centralized validation limits for form validation
+    const VALIDATION_LIMITS = {
+        LOGIN_ATTEMPTS: { min: 1, max: 20 },
+        LOCKOUT_DURATION: { min: 60, max: 3600 },
+        SESSION_TIMEOUT: { min: 5, max: 120 },
+        GRAPHQL_QUERY_DEPTH: { min: 1, max: 20 },
+        GRAPHQL_QUERY_COMPLEXITY: { min: 10, max: 1000 },
+        ADMIN_PATH_LENGTH: { min: 3, max: 50 }
+    };
+
+    const initFormValidation = () => {
+        // Use destructuring for cleaner object access
+        const { strings = {}, phpExecutionTimeout = 30 } = silverAssistSecurity || {};
+        const errors = [];
+        const $form = $("form");
+        const $passwordField = $("#pass1");
+        let validationTimeout;
         
-        initFormValidation();
-        initAutoSave();
-    });
-    
+        $form.on("submit", e => {
+            let isValid = true;
+            
+            // Use centralized validation limits instead of hardcoded values
+            const loginAttempts = $("#login_attempts").val();
+            if (loginAttempts < VALIDATION_LIMITS.LOGIN_ATTEMPTS.min || 
+                loginAttempts > VALIDATION_LIMITS.LOGIN_ATTEMPTS.max) {
+                errors.push(`Login attempts must be between ${VALIDATION_LIMITS.LOGIN_ATTEMPTS.min} and ${VALIDATION_LIMITS.LOGIN_ATTEMPTS.max}`);
+                isValid = false;
+            }
+            
+            // Template literals for string interpolation
+            const errorHtml = `<div class="notice notice-error">${errorMessage}</div>`;
+            
+            // Clear timeout variables properly
+            clearTimeout(validationTimeout);
+            
+            // Arrow functions in callbacks
+            errors.forEach(error => {
+                console.log(`Error: ${error}`);
+            });
+        });
+        
+        // Timeout variable usage with descriptive naming and timing constants
+        $passwordField.on("input", function() {
+            clearTimeout(this.validationTimeout);
+            
+            this.validationTimeout = setTimeout(() => {
+                validatePassword($passwordField.val());
+                
+                // Use timing constants instead of hardcoded values
+                this.hideTimeout = setTimeout(() => {
+                    hideValidationMessage();
+                }, TIMING.HIDE_ON_INACTIVITY);
+            }, TIMING.VALIDATION_DEBOUNCE);
+        });
+    };
+
+    // ✅ CORRECT: Modern AJAX with destructuring, arrow functions and jQuery prefixes
+    const autoSaveSettings = () => {
+        const $form = $("form");
+        const $saveIndicator = $(".saving-indicator");
+        const formData = $form.serialize();
+        let saveTimeout;
+        
+        // Use destructuring for cleaner object access
+        const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
+        
+        // Use timing constants for consistent delays
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            $.ajax({
+                url: ajaxurl,
+                type: "POST",
+                data: {
+                    action: "silver_assist_auto_save",
+                    nonce: nonce,
+                    form_data: formData
+                },
+                success: response => {
+                    // Use destructuring for response handling
+                    const { success, data = {} } = response || {};
+                    
+                    if (success) {
+                        $saveIndicator.html(strings.saved || "Saved!")
+                            .delay(TIMING.AUTO_SAVE_DELAY)
+                            .fadeOut(TIMING.FADE_OUT_DURATION);
+                    } else {
+                        $saveIndicator.html(data.message || strings.saveFailed).addClass("error");
+                    }
+                },
+                error: () => {
+                    $saveIndicator.html(strings.saveFailed || "Save failed").addClass("error");
+                }
+            });
+        }, TIMING.AUTO_SAVE_DELAY);
+    };
+
+    // ✅ CORRECT: Object destructuring for password validation
+    const showValidationMessage = $container => {
+        // Use destructuring for cleaner object access
+        const { passwordSuccess } = window.silverAssistSecurity || {};
+        const successMessage = passwordSuccess || "Default message";
+        
+        $container.html(`✓ ${successMessage}`).show();
+    };
+
 }))(jQuery);
 
-// ❌ INCORRECT: Old function syntax and missing jQuery prefixes
+// ❌ INCORRECT: Old function syntax, missing jQuery prefixes, hardcoded timing, no destructuring
 function initFormValidation() {
     var errors = [];
     var form = $("form"); // Missing $ prefix
@@ -831,21 +884,26 @@ function initFormValidation() {
         // String concatenation instead of template literals
         var errorHtml = "<div class=\"notice\">" + errorMessage + "</div>";
         
-        // Old function syntax in callbacks
+        // Hardcoded timing values instead of constants
+        timeout = setTimeout(function() {
+            validatePassword(passwordField.val());
+        }, 300); // ❌ Hardcoded value
+        
+        // Auto-hide with hardcoded timing
+        setTimeout(function() {
+            hideMessage();
+        }, 5000); // ❌ Hardcoded value
+        
+        // Old function syntax in callbacks, no destructuring
         errors.forEach(function(error) {
             console.log("Error: " + error);
         });
+        
+        // No destructuring for object access
+        var message = silverAssistSecurity.strings.errorMessage;
+        var ajaxUrl = silverAssistSecurity.ajaxurl;
     });
 }
-
-// ❌ INCORRECT: Old module pattern and missing jQuery conventions
-(function($) {
-    $(document).ready(function() {
-        var form = $("form"); // Missing $ prefix
-        var timeout; // Non-descriptive variable name
-        initFormValidation();
-    });
-})(jQuery);
 ```
 
 ### Documentation Standards
