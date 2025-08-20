@@ -126,12 +126,13 @@ class AdminHideSecurity
 
         // Allow specific actions that should work without admin hide protection
         $allowed_actions = [
-            "postpass",    // Password protected posts
-            "resetpass",   // Reset password form after clicking email link
-            "rp",          // Reset password request
+            "postpass",     // Password protected posts
+            "resetpass",    // Reset password form after clicking email link
+            "rp",           // Reset password request
             "lostpassword", // Lost password form
             "retrievepassword", // Retrieve password (alias for lostpassword)
-            "checkemail"   // Check email confirmation page
+            "checkemail",   // Check email confirmation page
+            "logout"        // Logout action
         ];
 
         if (in_array($action, $allowed_actions)) {
@@ -247,7 +248,7 @@ class AdminHideSecurity
             in_array($clean_request_path, ["wp-login.php", "wp-login"]) ||
             strpos($clean_request_path, "wp-login.php") !== false
         ) {
-            $this->handle_canonical_login_page();
+            $this->handle_login_page_access();
         } elseif (
             $clean_request_path === "wp-admin" || strpos($clean_request_path, "wp-admin/") === 0 ||
             strpos($clean_request_path, "wp-admin") === 0
@@ -272,34 +273,6 @@ class AdminHideSecurity
 
         // Redirect to login with token
         $this->do_redirect_with_token("login", "wp-login.php");
-    }
-
-    /**
-     * Handle request for canonical login page (wp-login.php)
-     *
-     * @since 1.1.4
-     * @return void
-     */
-    private function handle_canonical_login_page(): void
-    {
-        $action = $_REQUEST["action"] ?? "";
-
-        // Allow specific actions that should work without admin hide protection
-        $allowed_actions = [
-            "postpass",    // Password protected posts
-            "resetpass",   // Reset password form after clicking email link
-            "rp",          // Reset password request
-            "lostpassword", // Lost password form
-            "retrievepassword", // Retrieve password (alias for lostpassword)
-            "checkemail"   // Check email confirmation page
-        ];
-
-        if (in_array($action, $allowed_actions)) {
-            return;
-        }
-
-        // Block access if not validated
-        $this->block_access("login");
     }
 
     /**
