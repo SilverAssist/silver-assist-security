@@ -872,7 +872,7 @@ class AdminPanel
                 </div>
 
                 <!-- Security Status Cards -->
-                <div class="dashboard-cards">
+                <div class="silver-stats-grid">
                     <div class="status-card login-security">
                         <div class="card-header">
                             <h3><?php esc_html_e("Login Security", "silver-assist-security"); ?></h3>

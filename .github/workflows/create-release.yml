@@ -31,6 +31,56 @@ jobs:
                   composer install --no-dev --optimize-autoloader --no-interaction
                   echo "✅ Composer dependencies installed successfully"
 
+            - name: Validate wp-github-updater package
+              run: |
+                  echo "🔍 Validating wp-github-updater package version..."
+                  
+                  # Check if package exists
+                  if ! composer show silverassist/wp-github-updater > /dev/null 2>&1; then
+                    echo "❌ silverassist/wp-github-updater package not found!"
+                    echo "This package is CRITICAL for automatic updates functionality."
+                    exit 1
+                  fi
+                  
+                  # Show current version
+                  CURRENT_VERSION=$(composer show silverassist/wp-github-updater | grep '^versions' | awk '{print $2}' | sed 's/\*//')
+                  echo "📦 Current wp-github-updater version: $CURRENT_VERSION"
+                  
+                  # Check for available updates
+                  echo "🔍 Checking for package updates..."
+                  OUTDATED=$(composer outdated silverassist/wp-github-updater --format=json 2>/dev/null || echo "[]")
+                  
+                  if [ "$OUTDATED" != "[]" ] && [ "$OUTDATED" != "" ]; then
+                    echo "⚠️  WARNING: wp-github-updater package may have updates available"
+                    echo "Consider updating before release: composer update silverassist/wp-github-updater"
+                    echo "Current workflow will continue with existing version: $CURRENT_VERSION"
+                  else
+                    echo "✅ wp-github-updater package is up to date: $CURRENT_VERSION"
+                  fi
+                  
+                  # Validate package integrity
+                  echo "🔧 Validating package integrity..."
+                  composer validate --no-check-all --no-check-publish
+                  echo "✅ Package integrity validated successfully"
+                  
+                  # Verify updater functionality files exist
+                  if [ -f "vendor/silverassist/wp-github-updater/src/Updater.php" ]; then
+                    echo "✅ Updater.php found - update functionality available"
+                  else
+                    echo "❌ Updater.php not found - update functionality may be broken!"
+                    exit 1
+                  fi
+                  
+                  # Verify config file exists
+                  if [ -f "vendor/silverassist/wp-github-updater/src/UpdaterConfig.php" ]; then
+                    echo "✅ UpdaterConfig.php found - configuration available"
+                  else
+                    echo "❌ UpdaterConfig.php not found - configuration may be broken!"
+                    exit 1
+                  fi
+                  
+                  echo "✅ wp-github-updater package validation completed successfully"
+
             - name: Extract version from tag or input
               id: version
               run: |
@@ -228,6 +278,7 @@ jobs:
                   - WordPress hardening (XML-RPC blocking, version hiding)
                   - Real-time security dashboard with live statistics
                   - Multi-language support with comprehensive admin panel
+                  - **Automatic GitHub Updates** - Powered by silverassist/wp-github-updater package
                   EOF
 
             - name: Create GitHub Release
@@ -265,3 +316,8 @@ jobs:
                   echo "- Advanced login security" >> $GITHUB_STEP_SUMMARY
                   echo "- WordPress hardening features" >> $GITHUB_STEP_SUMMARY
                   echo "- Real-time security monitoring" >> $GITHUB_STEP_SUMMARY
+                  echo "- Automatic GitHub updates (silverassist/wp-github-updater)" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### Package Dependencies" >> $GITHUB_STEP_SUMMARY
+                  UPDATER_VERSION=$(composer show silverassist/wp-github-updater | grep '^versions' | awk '{print $2}' | sed 's/\*//' || echo "Not found")
+                  echo "- **wp-github-updater**: $UPDATER_VERSION" >> $GITHUB_STEP_SUMMARY

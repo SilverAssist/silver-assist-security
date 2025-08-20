@@ -1,225 +1,275 @@
 /**
  * Silver Assist Security Essentials - CSS Variables
  *
- * Centralized CSS custom properties (variables) for consistent styling
- * across all plugin components. Defines color palette, spacing, typography,
- * and component-specific values used throughout the admin interface.
+ * Modern CSS design system with CSS custom properties, logical properties,
+ * fluid typography, and responsive design tokens for consistent styling
+ * across all components with international support.
  *
- * @file variables.css
- * @version 1.1.6
- * @author Silver Assist
+ * @package SilverAssist\Security
  * @since 1.1.5
+ * @author Silver Assist
+ * @copyright Copyright (c) 2025, Silver Assist
+ * @license Polyform Noncommercial License 1.0.0
+ * @version 1.1.6
  */
 
 :root {
-    /* =============================================================================
-       COLOR PALETTE - MAIN COLORS
-       ============================================================================= */
-    
-    /* Primary Colors */
-    --silver-primary-blue: #0073aa;
-    --silver-primary-blue-hover: #005a87;
-    --silver-primary-blue-light: #f0f6fc;
-    --silver-primary-blue-alpha: #0073aa20;
-    
-    /* Text Colors */
-    --silver-text-primary: #1d2327;
-    --silver-text-secondary: #50575e;
-    --silver-text-muted: #666;
-    --silver-text-light: #2c3338;
-    
-    /* Background Colors */
-    --silver-bg-primary: #ffffff;
-    --silver-bg-secondary: #f0f0f1;
-    --silver-bg-tertiary: #f8f9fa;
-    --silver-bg-code: #f6f7f7;
-    
-    /* Border Colors */
-    --silver-border-primary: #c3c4c7;
-    --silver-border-secondary: #ddd;
-    --silver-border-light: #e1e4e7;
-    --silver-border-lighter: #f1f2f3;
-    --silver-border-lightest: #f0f0f0;
-    --silver-border-dark: #000000;
-    
-    /* =============================================================================
-       STATUS COLORS - SUCCESS, ERROR, WARNING
-       ============================================================================= */
-    
-    /* Success Colors */
-    --silver-success-primary: #46b450;
-    --silver-success-secondary: #4caf50;
-    --silver-success-tertiary: #2e7d32;
-    --silver-success-light: #00a32a;
-    --silver-success-bg: #f0f8f0;
-    --silver-success-bg-light: #d4edda;
-    --silver-success-bg-lighter: #d5e7d5;
-    --silver-success-bg-lightest: #e8f5e8;
-    --silver-success-border: #155724;
-    --silver-success-border-light: #c3e6cb;
-    --silver-success-border-lighter: #a5d6a7;
-    --silver-success-text: #155724;
-    --silver-success-alpha: #4caf5020;
-    
-    /* Error Colors */
-    --silver-error-primary: #dc3232;
-    --silver-error-secondary: #dc3545;
-    --silver-error-tertiary: #d63638;
-    --silver-error-bg: #fcf2f2;
-    --silver-error-bg-light: #f8d7da;
-    --silver-error-bg-lighter: #fff2f2;
-    --silver-error-bg-lightest: #ffeaea;
-    --silver-error-border: #721c24;
-    --silver-error-border-light: #f5c6cb;
-    --silver-error-border-lighter: #f5c2c7;
-    --silver-error-text: #721c24;
-    --silver-error-text-secondary: #842029;
-    --silver-error-alpha: #dc354520;
-    
-    /* Warning Colors */
-    --silver-warning-primary: #ffb900;
-    --silver-warning-secondary: #856404;
-    --silver-warning-bg: #fff8e5;
-    --silver-warning-bg-light: #fff3cd;
-    --silver-warning-border: #ffeaa7;
-    --silver-warning-border-light: #bee5eb;
-    --silver-warning-text: #856404;
-    
-    /* Info Colors */
-    --silver-info-primary: #3582c4;
-    --silver-info-bg: #d1ecf1;
-    --silver-info-text: #0c5460;
-    
-    /* =============================================================================
-       COMPONENT SPECIFIC COLORS
-       ============================================================================= */
-    
-    /* GraphQL/Headless Mode Colors */
-    --silver-headless-bg: #e1f5fe;
-    --silver-headless-text: #01579b;
-    --silver-standard-bg: #f3e5f5;
-    --silver-standard-text: #4a148c;
-    
-    /* Disabled/Inactive Colors */
-    --silver-disabled-bg: #ccc;
-    --silver-disabled-text: #666;
-    
-    /* Dark Mode Colors */
-    --silver-dark-error-bg: #2c1810;
-    --silver-dark-error-border: #f56565;
-    --silver-dark-error-text: #fed7d7;
-    --silver-dark-success-bg: #1a2f1a;
-    --silver-dark-success-border: #68d391;
-    --silver-dark-success-text: #c6f6d5;
-    --silver-dark-warning-bg: #2d2017;
-    --silver-dark-warning-border: #f6e05e;
-    --silver-dark-warning-text: #faf089;
-    
-    /* =============================================================================
-       SPACING VARIABLES
-       ============================================================================= */
-    
-    --silver-spacing-xs: 4px;
-    --silver-spacing-sm: 8px;
-    --silver-spacing-md: 12px;
-    --silver-spacing-lg: 15px;
-    --silver-spacing-xl: 20px;
-    --silver-spacing-xxl: 25px;
-    --silver-spacing-xxxl: 30px;
-    
-    /* =============================================================================
-       TYPOGRAPHY VARIABLES
-       ============================================================================= */
-    
-    --silver-font-family-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-    --silver-font-family-mono: Consolas, Monaco, "Courier New", monospace;
-    
-    --silver-font-size-xs: 11px;
-    --silver-font-size-sm: 12px;
-    --silver-font-size-base: 13px;
-    --silver-font-size-md: 14px;
-    --silver-font-size-lg: 16px;
-    --silver-font-size-xl: 18px;
-    --silver-font-size-xxl: 20px;
-    --silver-font-size-xxxl: 22px;
-    --silver-font-size-huge: 24px;
-    
-    --silver-font-weight-normal: 400;
-    --silver-font-weight-medium: 500;
-    --silver-font-weight-semibold: 600;
-    --silver-font-weight-bold: 700;
-    
-    --silver-line-height-tight: 1.2;
-    --silver-line-height-base: 1.4;
-    --silver-line-height-relaxed: 1.6;
-    
-    /* =============================================================================
-       BORDER RADIUS VARIABLES
-       ============================================================================= */
-    
-    --silver-radius-sm: 3px;
-    --silver-radius-base: 4px;
-    --silver-radius-md: 6px;
-    --silver-radius-lg: 8px;
-    --silver-radius-pill: 20px;
-    --silver-radius-circle: 50%;
-    
-    /* =============================================================================
-       SHADOW VARIABLES
-       ============================================================================= */
-    
-    --silver-shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-    --silver-shadow-base: 0 2px 4px rgba(0,0,0,0.05);
-    --silver-shadow-md: 0 2px 8px rgba(0,0,0,0.08);
-    --silver-shadow-lg: 0 4px 12px rgba(0,0,0,0.12);
-    --silver-shadow-xl: 0 2px 8px rgba(0,0,0,0.3);
-    
-    /* =============================================================================
-       TRANSITION VARIABLES
-       ============================================================================= */
-    
-    --silver-transition-fast: 0.2s;
-    --silver-transition-base: 0.3s;
-    --silver-transition-slow: 0.5s;
-    --silver-transition-ease: ease;
-    --silver-transition-ease-in-out: ease-in-out;
-    
-    /* =============================================================================
-       COMPONENT SIZE VARIABLES
-       ============================================================================= */
-    
-    /* Toggle Switch */
-    --silver-toggle-width: 50px;
-    --silver-toggle-height: 24px;
-    --silver-toggle-thumb-size: 18px;
-    --silver-toggle-thumb-offset: 3px;
-    --silver-toggle-thumb-translate: 26px;
-    
-    /* Form Elements */
-    --silver-input-width-sm: 100px;
-    --silver-input-width-md: 200px;
-    --silver-input-width-lg: 280px;
-    
-    /* Card Elements */
-    --silver-card-min-width: 250px;
-    --silver-card-min-width-lg: 280px;
-    --silver-card-max-width: 700px;
-    
-    /* =============================================================================
-       Z-INDEX VARIABLES
-       ============================================================================= */
-    
-    --silver-z-tooltip: 1000;
-    --silver-z-modal: 1050;
-    --silver-z-dropdown: 1100;
-}
+   /* =============================================================================
+      COLOR PALETTE - MAIN COLORS
+      ============================================================================= */
 
-/* =============================================================================
-   RESPONSIVE BREAKPOINTS
-   ============================================================================= */
+   /* Primary Colors */
+   --silver-primary-blue: #0073aa;
+   --silver-primary-blue-hover: #005a87;
+   --silver-primary-blue-light: #f0f6fc;
+   --silver-primary-blue-alpha: #0073aa20;
 
-:root {
-    --silver-breakpoint-sm: 480px;
-    --silver-breakpoint-md: 768px;
-    --silver-breakpoint-lg: 1200px;
+   /* Text Colors */
+   --silver-text-primary: #1d2327;
+   --silver-text-secondary: #50575e;
+   --silver-text-muted: #666;
+   --silver-text-light: #2c3338;
+
+   /* Background Colors */
+   --silver-bg-primary: #ffffff;
+   --silver-bg-secondary: #f0f0f1;
+   --silver-bg-tertiary: #f8f9fa;
+   --silver-bg-code: #f6f7f7;
+
+   /* Border Colors */
+   --silver-border-primary: #c3c4c7;
+   --silver-border-secondary: #ddd;
+   --silver-border-light: #e1e4e7;
+   --silver-border-lighter: #f1f2f3;
+   --silver-border-lightest: #f0f0f0;
+   --silver-border-dark: #000000;
+
+   /* =============================================================================
+      STATUS COLORS - SUCCESS, ERROR, WARNING
+      ============================================================================= */
+
+   /* Success Colors */
+   --silver-success-primary: #46b450;
+   --silver-success-secondary: #4caf50;
+   --silver-success-tertiary: #2e7d32;
+   --silver-success-light: #00a32a;
+   --silver-success-bg: #f0f8f0;
+   --silver-success-bg-light: #d4edda;
+   --silver-success-bg-lighter: #d5e7d5;
+   --silver-success-bg-lightest: #e8f5e8;
+   --silver-success-border: #155724;
+   --silver-success-border-light: #c3e6cb;
+   --silver-success-border-lighter: #a5d6a7;
+   --silver-success-text: #155724;
+   --silver-success-alpha: #4caf5020;
+
+   /* Error Colors */
+   --silver-error-primary: #dc3232;
+   --silver-error-secondary: #dc3545;
+   --silver-error-tertiary: #d63638;
+   --silver-error-bg: #fcf2f2;
+   --silver-error-bg-light: #f8d7da;
+   --silver-error-bg-lighter: #fff2f2;
+   --silver-error-bg-lightest: #ffeaea;
+   --silver-error-border: #721c24;
+   --silver-error-border-light: #f5c6cb;
+   --silver-error-border-lighter: #f5c2c7;
+   --silver-error-text: #721c24;
+   --silver-error-text-secondary: #842029;
+   --silver-error-alpha: #dc354520;
+
+   /* Warning Colors */
+   --silver-warning-primary: #ffb900;
+   --silver-warning-secondary: #856404;
+   --silver-warning-bg: #fff8e5;
+   --silver-warning-bg-light: #fff3cd;
+   --silver-warning-border: #ffeaa7;
+   --silver-warning-border-light: #bee5eb;
+   --silver-warning-text: #856404;
+
+   /* Info Colors */
+   --silver-info-primary: #3582c4;
+   --silver-info-bg: #d1ecf1;
+   --silver-info-text: #0c5460;
+
+   /* =============================================================================
+      COMPONENT SPECIFIC COLORS
+      ============================================================================= */
+
+   /* GraphQL/Headless Mode Colors */
+   --silver-headless-bg: #e1f5fe;
+   --silver-headless-text: #01579b;
+   --silver-standard-bg: #f3e5f5;
+   --silver-standard-text: #4a148c;
+
+   /* Disabled/Inactive Colors */
+   --silver-disabled-bg: #ccc;
+   --silver-disabled-text: #666;
+
+   /* Dark Mode Colors */
+   --silver-dark-error-bg: #2c1810;
+   --silver-dark-error-border: #f56565;
+   --silver-dark-error-text: #fed7d7;
+   --silver-dark-success-bg: #1a2f1a;
+   --silver-dark-success-border: #68d391;
+   --silver-dark-success-text: #c6f6d5;
+   --silver-dark-warning-bg: #2d2017;
+   --silver-dark-warning-border: #f6e05e;
+   --silver-dark-warning-text: #faf089;
+
+   /* =============================================================================
+      SPACING VARIABLES
+      ============================================================================= */
+
+   --silver-spacing-xs: 4px;
+   --silver-spacing-sm: 8px;
+   --silver-spacing-md: 12px;
+   --silver-spacing-lg: 15px;
+   --silver-spacing-xl: 20px;
+   --silver-spacing-xxl: 25px;
+   --silver-spacing-xxxl: 30px;
+
+   /* =============================================================================
+      TYPOGRAPHY VARIABLES
+      ============================================================================= */
+
+   --silver-font-family-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+   --silver-font-family-mono: Consolas, Monaco, "Courier New", monospace;
+
+   /* Typography Scale */
+   --silver-font-size-xs: 0.75rem;
+   /* 12px */
+   --silver-font-size-sm: 0.8125rem;
+   /* 13px */
+   --silver-font-size-base: 1rem;
+   /* 16px */
+   --silver-font-size-lg: 1.125rem;
+   /* 18px */
+   --silver-font-size-xl: 1.25rem;
+   /* 20px */
+   --silver-font-size-2xl: 1.5rem;
+   /* 24px */
+   --silver-font-size-3xl: 1.875rem;
+   /* 30px */
+
+   /* Font Weights */
+   --silver-font-weight-normal: 400;
+   --silver-font-weight-medium: 500;
+   --silver-font-weight-semibold: 600;
+   --silver-font-weight-bold: 700;
+
+   /* Letter Spacing */
+   --silver-letter-spacing-tight: 0.3px;
+   --silver-letter-spacing-normal: 0.5px;
+   --silver-letter-spacing-wide: 0.8px;
+
+   /* Line Heights */
+   --silver-line-height-tight: 1.2;
+   --silver-line-height-base: 1.4;
+   --silver-line-height-relaxed: 1.6;
+
+   /* =============================================================================
+      BORDER WIDTH VARIABLES
+      ============================================================================= */
+
+   --silver-border-width-thin: 1px;
+   --silver-border-width-base: 2px;
+   --silver-border-width-thick: 4px;
+   --silver-border-width-thicker: 6px;
+
+   /* =============================================================================
+      BORDER RADIUS VARIABLES
+      ============================================================================= */
+
+   --silver-radius-sm: 3px;
+   --silver-radius-base: 4px;
+   --silver-radius-md: 6px;
+   --silver-radius-lg: 8px;
+   --silver-radius-pill: 20px;
+   --silver-radius-circle: 50%;
+
+   /* =============================================================================
+      SHADOW VARIABLES
+      ============================================================================= */
+
+   --silver-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+   --silver-shadow-base: 0 2px 4px rgba(0, 0, 0, 0.05);
+   --silver-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+   --silver-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.12);
+   --silver-shadow-xl: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+   /* =============================================================================
+      TRANSITION VARIABLES
+      ============================================================================= */
+
+   --silver-transition-fast: 0.2s;
+   --silver-transition-base: 0.3s;
+   --silver-transition-slow: 0.5s;
+   --silver-transition-ease: ease;
+   --silver-transition-ease-in-out: ease-in-out;
+
+   /* =============================================================================
+      COMPONENT SIZE VARIABLES
+      ============================================================================= */
+
+   /* Toggle Switch */
+   --silver-toggle-width: 50px;
+   --silver-toggle-height: 24px;
+   --silver-toggle-thumb-size: 18px;
+   --silver-toggle-thumb-offset: 3px;
+   --silver-toggle-thumb-translate: 26px;
+
+   /* Form Elements */
+   --silver-input-width-sm: 100px;
+   --silver-input-width-md: 200px;
+   --silver-input-width-lg: 280px;
+
+   /* Card Elements */
+   --silver-card-min-width: 250px;
+   --silver-card-min-width-lg: 280px;
+   --silver-card-max-width: 700px;
+
+   /* =============================================================================
+      Z-INDEX VARIABLES
+      ============================================================================= */
+
+   --silver-z-tooltip: 1000;
+   --silver-z-modal: 1050;
+   --silver-z-dropdown: 1100;
+
+   /* =============================================================================
+      RESPONSIVE BREAKPOINTS
+      ============================================================================= */
+
+   --silver-breakpoint-sm: 480px;
+   --silver-breakpoint-md: 768px;
+   --silver-breakpoint-lg: 1200px;
+
+   /* =============================================================================
+      MODERN CSS FUNCTIONS - FLUID DESIGN
+      ============================================================================= */
+
+   /* Fluid spacing and typography */
+   --silver-fluid-spacing: clamp(1rem, 2.5vw, 2rem);
+   --silver-fluid-spacing-sm: clamp(0.5rem, 1.5vw, 1rem);
+   --silver-fluid-spacing-lg: clamp(1.5rem, 4vw, 3rem);
+   
+   /* Responsive gap using clamp */
+   --silver-responsive-gap: clamp(var(--silver-spacing-md), 3vw, var(--silver-spacing-xl));
+   
+   /* Fluid typography */
+   --silver-font-size-fluid-sm: clamp(0.75rem, 2vw, 1rem);
+   --silver-font-size-fluid-base: clamp(1rem, 2.5vw, 1.125rem);
+   --silver-font-size-fluid-lg: clamp(1.125rem, 3vw, 1.5rem);
+   --silver-font-size-fluid-xl: clamp(1.5rem, 4vw, 3rem);
+
+   /* =============================================================================
+      LOGICAL PROPERTIES SUPPORT
+      ============================================================================= */
+
+   /* Spacing for logical properties */
+   --silver-space-inline: var(--silver-spacing-md);
+   --silver-space-block: var(--silver-spacing-sm);
+   --silver-space-inline-lg: var(--silver-spacing-xl);
+   --silver-space-block-lg: var(--silver-spacing-lg);
 }

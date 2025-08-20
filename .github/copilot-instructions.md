@@ -32,16 +32,23 @@ silver-assist-security/
 │   ├── Core/
 │   │   ├── Plugin.php            # Main plugin initialization
 │   │   ├── DefaultConfig.php     # Centralized configuration defaults
+│   │   ├── PathValidator.php     # Path validation utilities
 │   │   └── Updater.php           # Automatic GitHub updates
 │   ├── Security/
 │   │   ├── GeneralSecurity.php   # HTTPOnly cookies & headers
-│   │   └── LoginSecurity.php     # Brute force protection & bot blocking
+│   │   ├── LoginSecurity.php     # Brute force protection & bot blocking
+│   │   └── AdminHideSecurity.php # Admin login page protection
 │   └── GraphQL/
 │       ├── GraphQLConfigManager.php # Centralized GraphQL configuration
 │       └── GraphQLSecurity.php   # GraphQL protection
 ├── assets/                        # Frontend resources
-│   ├── css/admin.css             # Admin panel styling
-│   └── js/admin.js               # Real-time dashboard
+│   ├── css/
+│   │   ├── variables.css         # CSS custom properties system
+│   │   ├── admin.css             # Admin panel styling
+│   │   └── password-validation.css # Password strength validation styles
+│   └── js/
+│       ├── admin.js              # Real-time dashboard functionality
+│       └── password-validation.js # Password strength validation
 ├── languages/                     # Internationalization
 │   ├── silver-assist-security.pot # Translation template
 │   ├── silver-assist-security-es_ES.po # Spanish translations
@@ -51,6 +58,8 @@ silver-assist-security/
 │   ├── Integration/              # Integration tests
 │   ├── Security/                 # Security tests
 │   └── Helpers/                  # Test helper classes
+├── vendor/                        # Composer dependencies
+│   └── silverassist/wp-github-updater/ # GitHub update system
 └── silver-assist-security.php    # Main plugin file
 ```
 
@@ -265,6 +274,64 @@ use SilverAssist\Security\Core\DefaultConfig;
 - **Security Testing**: Full security audit before release
 - **Documentation**: Update README and CHANGELOG
 - **Backup Recommendations**: Always advise users to backup before updates
+
+### Production Dependencies & Version Management
+
+#### wp-github-updater Composer Package
+
+**🚨 CRITICAL: Before creating any new release version, ALWAYS verify that the `silverassist/wp-github-updater` package is updated to the latest available version.**
+
+##### **Package Overview**
+- **Repository**: `silverassist/wp-github-updater`
+- **Purpose**: Provides automatic GitHub-based update functionality for WordPress plugins
+- **Location**: `vendor/silverassist/wp-github-updater/`
+- **Integration**: Used by `src/Core/Updater.php` for automatic plugin updates
+
+##### **Pre-Release Validation Checklist**
+```bash
+# 1. Check current package version
+composer show silverassist/wp-github-updater
+
+# 2. Update to latest version
+composer update silverassist/wp-github-updater
+
+# 3. Verify package integrity
+composer validate
+
+# 4. Test update functionality
+# Navigate to WordPress Admin > Updates to verify plugin update detection works
+```
+
+##### **Version Validation Commands**
+```bash
+# Check for available updates
+composer outdated silverassist/wp-github-updater
+
+# Update specific package
+composer require silverassist/wp-github-updater:^1.0
+
+# Verify update was successful
+composer info silverassist/wp-github-updater
+```
+
+##### **Integration Requirements**
+- **Core Dependency**: The `Updater.php` class depends on this package for GitHub API integration
+- **Update Notifications**: Package handles WordPress admin update notifications
+- **Version Comparison**: Manages semantic version comparison for update detection
+- **Security**: Provides secure download and installation of plugin updates
+
+##### **Troubleshooting Package Issues**
+- **Update Failures**: Check GitHub API rate limits and repository access
+- **Version Conflicts**: Ensure compatibility with WordPress and PHP versions
+- **Autoloader Issues**: Run `composer dump-autoload` after package updates
+- **Missing Package**: Reinstall with `composer install --no-dev` for production
+
+##### **Release Workflow Integration**
+1. **Pre-Release**: Update `silverassist/wp-github-updater` to latest version
+2. **Testing**: Verify update detection works in WordPress admin
+3. **Version Bump**: Update plugin version in main file and package
+4. **Release**: Create GitHub release with proper tagging
+5. **Validation**: Test automatic update process from previous version
 
 ## Troubleshooting Guide
 
@@ -1463,6 +1530,384 @@ error_log(sprintf(
 ```
 
 ## Asset Management
-- Admin CSS/JS: Enqueued only on plugin admin pages
-- Version using plugin version constant for cache busting
-- Dependencies: jQuery for admin JavaScript functionality
+
+### CSS Architecture & Design System
+
+The plugin implements a comprehensive CSS variables system for consistent styling across all components.
+
+#### CSS Variables System (`assets/css/variables.css`)
+
+**🎨 MANDATORY: All CSS styling MUST use CSS custom properties instead of hardcoded values for maintainability and consistency.**
+
+##### **Color Palette Variables**
+```css
+/* Primary Colors */
+--silver-primary-blue: #0073aa;
+--silver-primary-blue-hover: #005a87;
+--silver-primary-blue-light: #f0f6fc;
+
+/* Status Colors - Success/Error/Warning */
+--silver-success-primary: #46b450;
+--silver-success-bg: #d4edda;
+--silver-success-border: #c3e6cb;
+--silver-success-text: #155724;
+
+--silver-error-primary: #dc3232;
+--silver-error-bg: #f8d7da;
+--silver-error-border: #f5c6cb;
+--silver-error-text: #721c24;
+
+--silver-warning-primary: #ffb900;
+--silver-warning-bg: #fff3cd;
+--silver-warning-text: #856404;
+
+/* Text & Background Colors */
+--silver-text-primary: #1d2327;
+--silver-text-secondary: #50575e;
+--silver-bg-primary: #ffffff;
+--silver-bg-secondary: #f0f0f1;
+--silver-border-primary: #c3c4c7;
+```
+
+##### **Typography Variables**
+```css
+/* Font Families */
+--silver-font-family-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+--silver-font-family-mono: Consolas, Monaco, "Courier New", monospace;
+
+/* Typography Scale */
+--silver-font-size-xs: 0.75rem;    /* 12px */
+--silver-font-size-sm: 0.8125rem;  /* 13px */
+--silver-font-size-base: 1rem;     /* 16px */
+--silver-font-size-lg: 1.125rem;   /* 18px */
+--silver-font-size-xl: 1.25rem;    /* 20px */
+
+/* Font Weights */
+--silver-font-weight-normal: 400;
+--silver-font-weight-medium: 500;
+--silver-font-weight-semibold: 600;
+--silver-font-weight-bold: 700;
+
+/* Letter Spacing & Line Height */
+--silver-letter-spacing-tight: 0.3px;
+--silver-letter-spacing-normal: 0.5px;
+--silver-line-height-base: 1.4;
+--silver-line-height-relaxed: 1.6;
+```
+
+##### **Spacing & Layout Variables**
+```css
+/* Spacing Scale */
+--silver-spacing-xs: 4px;
+--silver-spacing-sm: 8px;
+--silver-spacing-md: 12px;
+--silver-spacing-lg: 15px;
+--silver-spacing-xl: 20px;
+--silver-spacing-xxl: 25px;
+
+/* Border Width */
+--silver-border-width-thin: 1px;
+--silver-border-width-base: 2px;
+--silver-border-width-thick: 4px;
+--silver-border-width-thicker: 6px;
+
+/* Border Radius */
+--silver-radius-sm: 3px;
+--silver-radius-base: 4px;
+--silver-radius-md: 6px;
+--silver-radius-lg: 8px;
+--silver-radius-pill: 20px;
+
+/* Shadows */
+--silver-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+--silver-shadow-base: 0 2px 4px rgba(0, 0, 0, 0.05);
+--silver-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+--silver-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.12);
+```
+
+##### **Component-Specific Variables**
+```css
+/* Toggle Switch Components */
+--silver-toggle-width: 50px;
+--silver-toggle-height: 24px;
+--silver-toggle-thumb-size: 18px;
+
+/* Form Elements */
+--silver-input-width-sm: 100px;
+--silver-input-width-md: 200px;
+--silver-input-width-lg: 280px;
+
+/* GraphQL/Headless Mode Colors */
+--silver-headless-bg: #e1f5fe;
+--silver-headless-text: #01579b;
+--silver-standard-bg: #f3e5f5;
+--silver-standard-text: #4a148c;
+
+/* Transitions */
+--silver-transition-fast: 0.2s;
+--silver-transition-base: 0.3s;
+--silver-transition-ease: ease;
+```
+
+##### **Responsive Breakpoints**
+```css
+--silver-breakpoint-sm: 480px;
+--silver-breakpoint-md: 768px;
+--silver-breakpoint-lg: 1200px;
+```
+
+#### CSS Development Standards
+
+**✅ CORRECT Usage Pattern:**
+```css
+/* Use CSS variables for all styling */
+.security-card {
+    background-color: var(--silver-bg-primary);
+    border: var(--silver-border-width-thin) solid var(--silver-border-primary);
+    border-radius: var(--silver-radius-md);
+    padding: var(--silver-spacing-lg);
+    font-size: var(--silver-font-size-base);
+    color: var(--silver-text-primary);
+    box-shadow: var(--silver-shadow-sm);
+    transition: all var(--silver-transition-base) var(--silver-transition-ease);
+}
+
+.success-notice {
+    background-color: var(--silver-success-bg);
+    border-left: var(--silver-border-width-thick) solid var(--silver-success-border);
+    color: var(--silver-success-text);
+    padding: var(--silver-spacing-md) var(--silver-spacing-lg);
+}
+
+.validation-message {
+    border: var(--silver-border-width-base) solid var(--silver-primary-blue);
+    outline: var(--silver-border-width-base) solid var(--silver-primary-blue);
+}
+```
+
+**❌ INCORRECT - Never use hardcoded values:**
+```css
+.security-card {
+    background-color: #ffffff;        /* Use var(--silver-bg-primary) */
+    border: 1px solid #c3c4c7;      /* Use var(--silver-border-width-thin) solid var(--silver-border-primary) */
+    border-radius: 6px;              /* Use var(--silver-radius-md) */
+    padding: 15px;                   /* Use var(--silver-spacing-lg) */
+    font-size: 14px;                 /* Use var(--silver-font-size-sm) */
+    color: #1d2327;                  /* Use var(--silver-text-primary) */
+}
+
+.validation-message {
+    border-left: 4px solid #0073aa;  /* Use var(--silver-border-width-thick) solid var(--silver-primary-blue) */
+    outline: 2px solid #0073aa;      /* Use var(--silver-border-width-base) solid var(--silver-primary-blue) */
+}
+```
+
+#### Variable Categories & Usage Guidelines
+
+**🎨 Color Variables:**
+- **Status Colors**: Use `--silver-success-*`, `--silver-error-*`, `--silver-warning-*` for all status indicators
+- **Text Colors**: Use `--silver-text-*` for all text elements
+- **Background Colors**: Use `--silver-bg-*` for all background elements
+- **Border Colors**: Use `--silver-border-*` for all border elements
+
+**📐 Spacing Variables:**
+- **Padding/Margin**: Use `--silver-spacing-*` scale (xs to xxxl)
+- **Border Width**: Use `--silver-border-width-*` for all border thickness (thin/base/thick/thicker)
+- **Border Radius**: Use `--silver-radius-*` for all rounded corners
+- **Shadows**: Use `--silver-shadow-*` for consistent depth
+
+**🔤 Typography Variables:**
+- **Font Sizes**: Use `--silver-font-size-*` scale (xs to 3xl)
+- **Font Weights**: Use `--silver-font-weight-*` for consistent weights
+- **Line Heights**: Use `--silver-line-height-*` for text spacing
+
+**⚡ Animation Variables:**
+- **Transitions**: Use `--silver-transition-*` for consistent timing
+- **Durations**: Use predefined fast/base/slow durations
+
+#### Development Workflow Integration
+
+**CSS File Loading Order:**
+1. `variables.css` - Load first to define all custom properties
+2. `admin.css` - Main admin styles using variables
+3. `password-validation.css` - Feature-specific styles using variables
+
+**Build Process:**
+- All CSS files automatically enqueued with cache-busting version numbers
+- Variables are globally available through `:root` selector
+- Responsive breakpoints defined as CSS variables for consistency
+
+### Modern CSS Examples for Future Development
+
+The plugin implements cutting-edge CSS techniques for maintainable and international-friendly styling. Here are practical examples for future developers:
+
+#### **CSS Nesting with Container Queries**
+```css
+/* Modern security card with nested selectors and container-based responsiveness */
+.modern-security-card {
+    background: var(--silver-bg-primary);
+    border: var(--silver-border-width-thin) solid var(--silver-border-primary);
+    border-radius: var(--silver-radius-lg);
+    padding: var(--silver-fluid-spacing);
+    container-type: inline-size;
+    
+    /* Nested selectors for better organization */
+    h3 {
+        font-size: var(--silver-font-size-fluid-lg);
+        margin-block-end: var(--silver-spacing-md);
+        
+        /* Container queries within nested elements */
+        @container (max-width: 300px) {
+            font-size: var(--silver-font-size-base);
+        }
+    }
+    
+    .status-badge {
+        padding-inline: var(--silver-space-inline);
+        padding-block: var(--silver-space-block);
+        border-radius: var(--silver-radius-base);
+        
+        &.success {
+            background: var(--silver-success-bg-light);
+            color: var(--silver-success-text);
+        }
+        
+        &.error {
+            background: var(--silver-error-bg-light);
+            color: var(--silver-error-text);
+        }
+    }
+    
+    /* Responsive layout based on container, not viewport */
+    @container (min-width: 400px) {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: var(--silver-spacing-lg);
+        align-items: center;
+    }
+}
+```
+
+#### **Logical Properties for International Support**
+```css
+/* RTL/LTR friendly form styling */
+.rtl-friendly-form {
+    .form-field {
+        margin-block-end: var(--silver-spacing-lg);
+        
+        label {
+            display: block;
+            margin-block-end: var(--silver-spacing-sm);
+            font-weight: var(--silver-font-weight-semibold);
+        }
+        
+        input {
+            inline-size: 100%;
+            padding-inline: var(--silver-spacing-md);
+            padding-block: var(--silver-spacing-sm);
+            border: var(--silver-border-width-thin) solid var(--silver-border-secondary);
+            border-radius: var(--silver-radius-base);
+            
+            &:focus {
+                border-inline-start: var(--silver-border-width-thick) solid var(--silver-primary-blue);
+                outline: var(--silver-border-width-base) solid var(--silver-primary-blue);
+                outline-offset: 1px;
+            }
+        }
+    }
+}
+```
+
+#### **Fluid Typography with clamp()**
+```css
+/* Responsive typography that scales smoothly */
+.fluid-typography-example {
+    h1 { font-size: var(--silver-font-size-fluid-xl); }
+    h2 { font-size: var(--silver-font-size-fluid-lg); }
+    p { font-size: var(--silver-font-size-fluid-base); }
+    
+    .responsive-container {
+        padding: var(--silver-fluid-spacing);
+        gap: var(--silver-responsive-gap);
+    }
+}
+```
+
+#### **Utility Classes Pattern**
+```css
+/* Reusable utility classes with logical properties */
+.utility-demo {
+    /* Flow utility for consistent vertical spacing */
+    .content-section {
+        & > * + * {
+            margin-block-start: var(--silver-spacing-xl);
+        }
+    }
+    
+    /* Cluster utility for flexible layouts */
+    .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--silver-spacing-md);
+        justify-content: flex-end;
+        align-items: center;
+    }
+    
+    /* Surface utility for consistent card styling */
+    .info-card {
+        background: var(--silver-bg-secondary);
+        border: var(--silver-border-width-thin) solid var(--silver-border-primary);
+        border-radius: var(--silver-radius-md);
+        padding: var(--silver-spacing-xl);
+    }
+    
+    /* Logical property utilities for RTL support */
+    .highlighted-section {
+        border-inline-start: var(--silver-border-width-thick) solid var(--silver-primary-blue);
+        padding-inline: var(--silver-space-inline-lg);
+        margin-block-end: var(--silver-spacing-xl);
+    }
+}
+```
+
+#### **Advanced Container Query Layouts**
+```css
+/* Container-based responsive layouts */
+@container (min-width: 600px) {
+    .advanced-layout {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: var(--silver-spacing-xl);
+        
+        .sidebar {
+            padding-inline-start: var(--silver-spacing-lg);
+            border-inline-start: var(--silver-border-width-thin) solid var(--silver-border-light);
+        }
+    }
+}
+
+@container (max-width: 599px) {
+    .advanced-layout {
+        .sidebar {
+            margin-block-start: var(--silver-spacing-lg);
+            padding-block-start: var(--silver-spacing-lg);
+            border-block-start: var(--silver-border-width-thin) solid var(--silver-border-light);
+        }
+    }
+}
+```
+
+#### **Modern CSS Benefits Implemented**
+- **Container Queries**: Components respond to their container, not the viewport
+- **Logical Properties**: Automatic RTL/LTR support without separate stylesheets
+- **CSS Nesting**: Better code organization and maintainability
+- **Fluid Design**: Typography and spacing that adapts smoothly across devices
+- **CSS Layers**: Better control over cascade and specificity
+- **Utility Classes**: Reusable components for consistent design
+
+### Asset Loading & Performance
+
+- **Admin CSS/JS**: Enqueued only on plugin admin pages
+- **Version using plugin version constant for cache busting
+- **Dependencies**: jQuery for admin JavaScript functionality
+- **CSS Variables**: Centralized design system for consistent styling
