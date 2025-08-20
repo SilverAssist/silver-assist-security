@@ -742,31 +742,50 @@ use GraphQL\Error\Error;
 - **WordPress i18n**: Use WordPress i18n in JavaScript via localized script data passed from PHP
 - **jQuery dependency**: Use jQuery patterns for WordPress compatibility with ES6 arrow functions
 - **Consistent naming**: Use camelCase for variables and functions
+- **jQuery element variables**: MANDATORY use of `$` prefix for all jQuery element variables (e.g., `const $passwordField = $("#field")`)
+- **Timeout variables**: Use descriptive names for timeout variables (e.g., `validationTimeout`, `hideTimeout`, `saveTimeout`)
 - **Error handling**: Use try-catch blocks for AJAX calls and complex operations
 - **Module pattern**: Use IIFE with arrow functions: `(($ => { /* code */ }))(jQuery);`
 
 #### ES6+ JavaScript Examples
 ```javascript
-// ✅ CORRECT: ES6 arrow functions with const
+// ✅ CORRECT: ES6 arrow functions with const and jQuery $ prefix
 const initFormValidation = () => {
     const errors = [];
+    const $form = $("form");
+    const $passwordField = $("#pass1");
+    let validationTimeout;
     
-    $("form").on("submit", e => {
+    $form.on("submit", e => {
         let isValid = true;
         
         // Template literals for string interpolation
         const errorHtml = `<div class="notice notice-error">${errorMessage}</div>`;
+        
+        // Clear timeout variables properly
+        clearTimeout(validationTimeout);
         
         // Arrow functions in callbacks
         errors.forEach(error => {
             console.log(`Error: ${error}`);
         });
     });
+    
+    // Timeout variable usage with descriptive naming
+    $passwordField.on("input", function() {
+        clearTimeout(this.validationTimeout);
+        
+        this.validationTimeout = setTimeout(() => {
+            validatePassword($passwordField.val());
+        }, 300);
+    });
 };
 
-// ✅ CORRECT: Modern AJAX with arrow functions
+// ✅ CORRECT: Modern AJAX with arrow functions and jQuery prefixes
 const autoSaveSettings = () => {
-    const formData = $("form").serialize();
+    const $form = $("form");
+    const $saveIndicator = $(".saving-indicator");
+    const formData = $form.serialize();
     
     $.ajax({
         url: silverAssistSecurity.ajaxurl,
@@ -777,31 +796,37 @@ const autoSaveSettings = () => {
             form_data: formData
         },
         success: response => {
-            $(".saving-indicator").html("Saved!").delay(2000).fadeOut();
+            $saveIndicator.html("Saved!").delay(2000).fadeOut();
         },
         error: () => {
-            $(".saving-indicator").html("Save failed").addClass("error");
+            $saveIndicator.html("Save failed").addClass("error");
         }
     });
 };
 
-// ✅ CORRECT: ES6 module pattern
+// ✅ CORRECT: ES6 module pattern with jQuery prefixes
 (($ => {
     "use strict";
     
     $(() => {
+        const $body = $("body");
+        const $document = $(document);
+        
         initFormValidation();
         initAutoSave();
     });
     
 }))(jQuery);
 
-// ❌ INCORRECT: Old function syntax
+// ❌ INCORRECT: Old function syntax and missing jQuery prefixes
 function initFormValidation() {
     var errors = [];
+    var form = $("form"); // Missing $ prefix
+    var passwordField = $("#pass1"); // Missing $ prefix
     
-    $("form").on("submit", function(e) {
+    form.on("submit", function(e) {
         var isValid = true;
+        var timeout; // Non-descriptive timeout variable name
         
         // String concatenation instead of template literals
         var errorHtml = "<div class=\"notice\">" + errorMessage + "</div>";
@@ -813,9 +838,11 @@ function initFormValidation() {
     });
 }
 
-// ❌ INCORRECT: Old module pattern
+// ❌ INCORRECT: Old module pattern and missing jQuery conventions
 (function($) {
     $(document).ready(function() {
+        var form = $("form"); // Missing $ prefix
+        var timeout; // Non-descriptive variable name
         initFormValidation();
     });
 })(jQuery);

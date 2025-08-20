@@ -38,18 +38,18 @@
      * @returns {void}
      */
     const initPasswordValidation = () => {
-        const passwordField = $("#pass1");
-        const confirmField = $("#pass2");
+        const $passwordField = $("#pass1");
+        const $confirmField = $("#pass2");
 
-        if (!passwordField.length) {
+        if (!$passwordField.length) {
             return;
         }
 
         // Create validation UI
-        createValidationUI(passwordField);
+        createValidationUI($passwordField);
 
         // Bind validation events
-        bindValidationEvents(passwordField, confirmField);
+        bindValidationEvents($passwordField, $confirmField);
     };
 
     /**
@@ -59,12 +59,12 @@
      * for displaying real-time validation feedback.
      *
      * @since 1.1.5
-     * @param {jQuery} passwordField - The password input field
+     * @param {jQuery} $passwordField - The password input field
      * @returns {void}
      */
-    const createValidationUI = passwordField => {
-        const validationContainer = $('<div id="silver-assist-password-validation" class="password-validation-message"></div>');
-        passwordField.closest("tr").after($('<tr><td colspan="2"></td></tr>').find("td").append(validationContainer).end());
+    const createValidationUI = $passwordField => {
+        const $validationContainer = $('<div id="silver-assist-password-validation" class="password-validation-message"></div>');
+        $passwordField.closest("tr").after($('<tr><td colspan="2"></td></tr>').find("td").append($validationContainer).end());
     };
 
     /**
@@ -74,25 +74,55 @@
      * with debounced validation to improve performance.
      *
      * @since 1.1.5
-     * @param {jQuery} passwordField - The password input field
-     * @param {jQuery} confirmField - The password confirmation field
+     * @param {jQuery} $passwordField - The password input field
+     * @param {jQuery} $confirmField - The password confirmation field
      * @returns {void}
      */
-    const bindValidationEvents = (passwordField, confirmField) => {
+    const bindValidationEvents = ($passwordField, $confirmField) => {
         // Primary password field validation
-        passwordField.on("input keyup paste", function() {
-            // Debounce validation to avoid excessive calls
+        $passwordField.on("input keyup paste", function () {
+            // Clear existing timeouts
             clearTimeout(this.validationTimeout);
+            clearTimeout(this.hideTimeout);
+
             this.validationTimeout = setTimeout(() => {
-                validatePassword(passwordField.val());
+                validatePassword($passwordField.val());
+
+                // Set timeout to hide message after period of inactivity
+                this.hideTimeout = setTimeout(() => {
+                    hideValidationMessage();
+                }, 8000); // Hide after 8 seconds of inactivity
             }, 300);
         });
 
         // Confirmation field validation
-        confirmField.on("input keyup paste", () => {
-            if (passwordField.val() && confirmField.val()) {
+        $confirmField.on("input keyup paste", () => {
+            if ($passwordField.val() && $confirmField.val()) {
+                // Clear any hide timeout when user is actively typing
+                clearTimeout($passwordField[0].hideTimeout);
+
                 // WordPress handles password match validation, we just trigger our validation
-                validatePassword(passwordField.val());
+                validatePassword($passwordField.val());
+
+                // Set timeout to hide message after period of inactivity
+                $passwordField[0].hideTimeout = setTimeout(() => {
+                    hideValidationMessage();
+                }, 8000); // Hide after 8 seconds of inactivity
+            }
+        });
+
+        // Clear timeouts when user focuses on password fields (actively editing)
+        $passwordField.add($confirmField).on("focus", function () {
+            clearTimeout($passwordField[0].hideTimeout);
+        });
+
+        // Start hide timer when user leaves password fields
+        $passwordField.add($confirmField).on("blur", function () {
+            const $container = $("#silver-assist-password-validation");
+            if ($container.is(":visible")) {
+                $passwordField[0].hideTimeout = setTimeout(() => {
+                    hideValidationMessage();
+                }, 5000); // Hide after 5 seconds when field loses focus
             }
         });
     };
@@ -108,19 +138,39 @@
      * @returns {void}
      */
     const validatePassword = password => {
-        const validationContainer = $("#silver-assist-password-validation");
+        const $validationContainer = $("#silver-assist-password-validation");
 
         if (!password) {
-            validationContainer.hide();
+            $validationContainer.hide();
             return;
         }
 
         const validation = validatePasswordStrength(password);
 
         if (validation.valid) {
-            showSuccessMessage(validationContainer);
+            showSuccessMessage($validationContainer);
         } else {
-            showErrorMessage(validationContainer);
+            showErrorMessage($validationContainer);
+        }
+    };
+
+    /**
+     * Hide validation message with smooth transition
+     *
+     * Smoothly hides the password validation message after a period of inactivity.
+     * Uses fadeOut for better user experience.
+     *
+     * @since 1.1.6
+     * @returns {void}
+     */
+    const hideValidationMessage = () => {
+        const $validationContainer = $("#silver-assist-password-validation");
+
+        if ($validationContainer.is(":visible")) {
+            $validationContainer.fadeOut(400, function () {
+                // Clear any remaining classes after hiding
+                $(this).removeClass("success error warning");
+            });
         }
     };
 
@@ -162,15 +212,18 @@
      * Uses localized success message from PHP.
      *
      * @since 1.1.5
-     * @param {jQuery} container - The validation message container
+     * @param {jQuery} $container - The validation message container
      * @returns {void}
      */
-    const showSuccessMessage = container => {
+    const showSuccessMessage = $container => {
         // Use localized message from silverAssistSecurity object
-        const successMessage = window.silverAssistSecurity?.passwordSuccess || 
+        const successMessage = window.silverAssistSecurity?.passwordSuccess ||
             "Password meets security requirements";
 
-        container
+        // Stop any ongoing fade animations and show immediately
+        $container.stop(true, false);
+
+        $container
             .removeClass("error warning")
             .addClass("success")
             .html(`✓ ${successMessage}`)
@@ -184,15 +237,18 @@
      * Uses localized error message from PHP.
      *
      * @since 1.1.5
-     * @param {jQuery} container - The validation message container
+     * @param {jQuery} $container - The validation message container
      * @returns {void}
      */
-    const showErrorMessage = container => {
+    const showErrorMessage = $container => {
         // Use localized message from silverAssistSecurity object
-        const errorMessage = window.silverAssistSecurity?.passwordError || 
+        const errorMessage = window.silverAssistSecurity?.passwordError ||
             "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.";
 
-        container
+        // Stop any ongoing fade animations and show immediately
+        $container.stop(true, false);
+
+        $container
             .removeClass("success warning")
             .addClass("error")
             .html(`✗ ${errorMessage}`)
@@ -221,7 +277,7 @@
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeType === 1) { // Element node
                         const $node = $(node);
-                        
+
                         // Check if the added node or its children have pw-weak class
                         if ($node.hasClass("pw-weak") || $node.find(".pw-weak").length) {
                             $node.filter(".pw-weak").hide();

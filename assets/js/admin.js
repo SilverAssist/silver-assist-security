@@ -537,24 +537,24 @@
         // Update Login Security panel values
         if (data.login_security) {
             // Update Max Attempts value
-            const maxAttemptsElement = $(".login-security .stat:first-child .stat-value");
-            if (maxAttemptsElement.length) {
-                maxAttemptsElement.text(data.login_security.max_attempts);
+            const $maxAttemptsElement = $(".login-security .stat:first-child .stat-value");
+            if ($maxAttemptsElement.length) {
+                $maxAttemptsElement.text(data.login_security.max_attempts);
             }
 
             // Update Lockout duration
-            const lockoutElement = $(".login-security .stat:last-child .stat-value");
-            if (lockoutElement.length && data.login_security.lockout_duration) {
-                lockoutElement.text(Math.round(data.login_security.lockout_duration / 60));
+            const $lockoutElement = $(".login-security .stat:last-child .stat-value");
+            if ($lockoutElement.length && data.login_security.lockout_duration) {
+                $lockoutElement.text(Math.round(data.login_security.lockout_duration / 60));
             }
         }
 
         // Update Admin Security panel feature statuses
         if (data.admin_security) {
             // Update Password Strength Enforcement status
-            const passwordElement = $(".admin-security .feature-status:first-child .feature-value");
-            if (passwordElement.length) {
-                passwordElement
+            const $passwordElement = $(".admin-security .feature-status:first-child .feature-value");
+            if ($passwordElement.length) {
+                $passwordElement
                     .removeClass("enabled disabled")
                     .addClass(data.admin_security.password_strength_enforcement ? "enabled" : "disabled")
                     .text(data.admin_security.password_strength_enforcement ?
@@ -563,9 +563,9 @@
             }
 
             // Update Bot Protection status
-            const botElement = $(".admin-security .feature-status:last-child .feature-value");
-            if (botElement.length) {
-                botElement
+            const $botElement = $(".admin-security .feature-status:last-child .feature-value");
+            if ($botElement.length) {
+                $botElement
                     .removeClass("enabled disabled")
                     .addClass(data.admin_security.bot_protection ? "enabled" : "disabled")
                     .text(data.admin_security.bot_protection ?
@@ -577,9 +577,9 @@
         // Update GraphQL Security panel if enabled
         if (data.graphql_security && data.graphql_security.enabled) {
             // Update headless mode indicator
-            const headlessModeElement = $(".graphql-security .mode-value");
-            if (headlessModeElement.length) {
-                headlessModeElement
+            const $headlessModeElement = $(".graphql-security .mode-value");
+            if ($headlessModeElement.length) {
+                $headlessModeElement
                     .removeClass("headless standard")
                     .addClass(data.graphql_security.headless_mode ? "headless" : "standard")
                     .text(data.graphql_security.headless_mode ?
@@ -609,9 +609,9 @@
         // Update General Security panel SSL status
         if (data.general_security) {
             // Find the SSL/HTTPS feature status (4th feature-status div in general-security)
-            const sslElement = $(".general-security .feature-status:nth-child(4) .feature-value");
-            if (sslElement.length) {
-                sslElement
+            const $sslElement = $(".general-security .feature-status:nth-child(4) .feature-value");
+            if ($sslElement.length) {
+                $sslElement
                     .removeClass("enabled disabled")
                     .addClass(data.general_security.ssl_enabled ? "enabled" : "disabled")
                     .text(data.general_security.ssl_enabled ?
@@ -724,23 +724,23 @@
      * @returns {void}
      */
     const initGraphQLTimeoutSlider = () => {
-        const timeoutSlider = $("#silver_assist_graphql_query_timeout");
-        const timeoutDisplay = $("#graphql-timeout-value");
+        const $timeoutSlider = $("#silver_assist_graphql_query_timeout");
+        const $timeoutDisplay = $("#graphql-timeout-value");
 
-        if (timeoutSlider.length && timeoutDisplay.length) {
+        if ($timeoutSlider.length && $timeoutDisplay.length) {
             // Update display value when slider changes
-            timeoutSlider.on("input", function () {
-                timeoutDisplay.text($(this).val());
+            $timeoutSlider.on("input", function () {
+                $timeoutDisplay.text($(this).val());
             });
 
             // Update validation on change
-            timeoutSlider.on("change", function () {
+            $timeoutSlider.on("change", function () {
                 const value = parseInt($(this).val());
                 const maxValue = parseInt($(this).attr("max"));
 
                 if (value > maxValue) {
                     $(this).val(maxValue);
-                    timeoutDisplay.text(maxValue);
+                    $timeoutDisplay.text(maxValue);
 
                     // Show warning
                     const warningMessage = "GraphQL timeout cannot exceed PHP execution time limit (" + maxValue + "s)";
@@ -760,49 +760,49 @@
      * @returns {void}
      */
     const initAdminPathValidation = () => {
-        const pathInput = $("#silver_assist_admin_hide_path");
+        const $pathInput = $("#silver_assist_admin_hide_path");
 
-        if (!pathInput.length) {
+        if (!$pathInput.length) {
             return; // Admin path input not found
         }
 
         let validationTimeout;
-        let validationIndicator = null;
+        let $validationIndicator = null;
 
         // Create validation indicator element
         const createValidationIndicator = () => {
-            if (!validationIndicator) {
-                validationIndicator = $(`<div id="admin-path-validation" class="validation-indicator"></div>`);
-                pathInput.after(validationIndicator);
+            if (!$validationIndicator) {
+                $validationIndicator = $(`<div id="admin-path-validation" class="validation-indicator"></div>`);
+                $pathInput.after($validationIndicator);
             }
-            return validationIndicator;
+            return $validationIndicator;
         };
 
         // Update validation indicator
         const updateValidationIndicator = (type, message) => {
-            const indicator = createValidationIndicator();
+            const $indicator = createValidationIndicator();
 
-            indicator.removeClass("validating valid invalid")
+            $indicator.removeClass("validating valid invalid")
                 .addClass(type)
                 .html(message);
 
             // Update input styling
-            pathInput.removeClass("validation-valid validation-invalid validation-validating")
+            $pathInput.removeClass("validation-valid validation-invalid validation-validating")
                 .addClass(`validation-${type}`);
 
             // Update preview URL if valid
             if (type === "valid" && message.includes("✓")) {
-                updatePathPreview(pathInput.val());
+                updatePathPreview($pathInput.val());
             }
         };
 
         // Update path preview URL
         const updatePathPreview = (path) => {
-            const previewElement = $("code:contains('" + window.location.origin + "')").first();
-            if (previewElement.length && path) {
+            const $previewElement = $("code:contains('" + window.location.origin + "')").first();
+            if ($previewElement.length && path) {
                 const sanitizedPath = path.toLowerCase().replace(/[^a-zA-Z0-9-_]/g, "");
                 const homeUrl = window.location.origin;
-                previewElement.text(`${homeUrl}/${sanitizedPath}`);
+                $previewElement.text(`${homeUrl}/${sanitizedPath}`);
             }
         };
 
@@ -860,7 +860,7 @@
         };
 
         // Attach real-time validation
-        pathInput.on("input", function () {
+        $pathInput.on("input", function () {
             const path = $(this).val().trim();
 
             // Clear previous validation timeout
@@ -873,7 +873,7 @@
         });
 
         // Validate on focus lost
-        pathInput.on("blur", function () {
+        $pathInput.on("blur", function () {
             const path = $(this).val().trim();
             clearTimeout(validationTimeout);
             if (path) {
@@ -882,8 +882,8 @@
         });
 
         // Initial validation if field has value
-        if (pathInput.val()) {
-            validatePath(pathInput.val());
+        if ($pathInput.val()) {
+            validatePath($pathInput.val());
         }
     };
 

@@ -321,7 +321,6 @@
         font-size: var(--silver-font-size-sm);
         font-weight: var(--silver-font-weight-medium);
         display: inline-block;
-        min-width: 200px;
         transition: all var(--silver-transition-base) ease;
 
         &.valid {
