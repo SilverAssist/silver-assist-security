@@ -69,6 +69,16 @@ class AdminHideSecurity
      */
     private function init_configuration(): void
     {
+        // Check for emergency disable constant first - this overrides all database settings
+        // Users can add define('SILVER_ASSIST_HIDE_ADMIN', false); to wp-config.php
+        // to regain admin access if they forget their custom admin path
+        if (\defined("SILVER_ASSIST_HIDE_ADMIN") && SILVER_ASSIST_HIDE_ADMIN === false) {
+            $this->admin_hide_enabled = false;
+            $this->custom_admin_path = "silver-admin";
+            $this->validation_param = "silver_auth";
+            return;
+        }
+
         $this->admin_hide_enabled = (bool) DefaultConfig::get_option("silver_assist_admin_hide_enabled");
         $this->custom_admin_path = \sanitize_title(DefaultConfig::get_option("silver_assist_admin_hide_path"));
         $this->validation_param = "silver_auth";

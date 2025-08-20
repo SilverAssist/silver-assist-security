@@ -1175,7 +1175,8 @@ class AdminPanel
                             <ul style="color: #856404; margin-bottom: 0;">
                                 <li><?php esc_html_e("Save your custom admin URL in a secure location before enabling this feature.", "silver-assist-security"); ?>
                                 </li>
-                                <li><?php esc_html_e("If you forget the custom path, you can disable this feature via FTP by editing the database.", "silver-assist-security"); ?>
+                                <li><?php esc_html_e("If you forget the custom path, you can disable this feature via FTP by adding this line to wp-config.php:", "silver-assist-security"); ?>
+                                    <br><code style="background: #f8f9fa; padding: 3px 6px; border-radius: 3px; font-family: monospace;">define('SILVER_ASSIST_HIDE_ADMIN', false);</code>
                                 </li>
                                 <li><?php esc_html_e("This feature adds an extra layer of security but should be used alongside strong passwords and other security measures.", "silver-assist-security"); ?>
                                 </li>

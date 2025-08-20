@@ -390,170 +390,170 @@ msgstr "Configuración de Seguridad de Contraseñas"
 msgid "Enforce strong password requirements"
 msgstr "Aplicar requisitos de contraseñas fuertes"
 
-#: src/Admin/AdminPanel.php:1189
+#: src/Admin/AdminPanel.php:1190
 msgid "GraphQL Security Enhancements"
 msgstr "Mejoras de Seguridad GraphQL"
 
-#: src/Admin/AdminPanel.php:1192
+#: src/Admin/AdminPanel.php:1193
 msgid "WPGraphQL Detected"
 msgstr "WPGraphQL Detectado"
 
-#: src/Admin/AdminPanel.php:1193
+#: src/Admin/AdminPanel.php:1194
 msgid "WPGraphQL has its own security settings. These enhancements work alongside WPGraphQL's native configuration."
 msgstr "WPGraphQL tiene sus propias configuraciones de seguridad. Estas mejoras funcionan junto con la configuración nativa de WPGraphQL."
 
-#: src/Admin/AdminPanel.php:1197
+#: src/Admin/AdminPanel.php:1198
 msgid "Open WPGraphQL Settings"
 msgstr "Abrir Configuración de WPGraphQL"
 
-#: src/Admin/AdminPanel.php:1204
+#: src/Admin/AdminPanel.php:1205
 msgid "Headless CMS Mode"
 msgstr "Modo CMS sin Cabeza"
 
-#: src/Admin/AdminPanel.php:1209
+#: src/Admin/AdminPanel.php:1210
 msgid "Enable optimized rate limiting for headless CMS usage"
 msgstr "Habilitar limitación de velocidad optimizada para uso de CMS sin cabeza"
 
-#: src/Admin/AdminPanel.php:1212
+#: src/Admin/AdminPanel.php:1213
 msgid "Increases rate limits and timeout handling for better headless CMS performance. Use WPGraphQL's native settings for query depth and complexity."
 msgstr "Incrementa los límites de velocidad y manejo de timeout para mejor rendimiento de CMS sin cabeza. Usa las configuraciones nativas de WPGraphQL para profundidad y complejidad de consultas."
 
-#: src/Admin/AdminPanel.php:1218
+#: src/Admin/AdminPanel.php:1219
 #, fuzzy
 msgid "GraphQL Query Timeout"
 msgstr "Seguridad GraphQL"
 
-#: src/Admin/AdminPanel.php:1226
-#: src/Admin/AdminPanel.php:1230
+#: src/Admin/AdminPanel.php:1227
+#: src/Admin/AdminPanel.php:1231
 msgid "seconds"
 msgstr "segundos"
 
-#: src/Admin/AdminPanel.php:1228
+#: src/Admin/AdminPanel.php:1229
 #, fuzzy
 msgid "PHP Limit:"
 msgstr "Límite"
 
-#: src/Admin/AdminPanel.php:1232
+#: src/Admin/AdminPanel.php:1233
 msgid "Maximum time allowed for GraphQL query execution. Cannot exceed PHP execution time limit."
 msgstr "Tiempo máximo permitido para ejecución de consultas GraphQL. No puede exceder el límite de tiempo de ejecución de PHP."
 
-#: src/Admin/AdminPanel.php:1240
+#: src/Admin/AdminPanel.php:1241
 msgid "Enhanced Rate Limiting"
 msgstr "Limitación de Velocidad Mejorada"
 
-#: src/Admin/AdminPanel.php:1244
+#: src/Admin/AdminPanel.php:1245
 msgid "Current Rate Limits:"
 msgstr "Límites de Velocidad Actuales:"
 
-#: src/Admin/AdminPanel.php:1246
+#: src/Admin/AdminPanel.php:1247
 msgid "Standard requests: 300/minute"
 msgstr "Solicitudes estándar: 300/minuto"
 
-#: src/Admin/AdminPanel.php:1248
+#: src/Admin/AdminPanel.php:1249
 msgid "Build processes: 600/minute (auto-detected)"
 msgstr "Procesos de construcción: 600/minuto (auto-detectado)"
 
-#: src/Admin/AdminPanel.php:1250
+#: src/Admin/AdminPanel.php:1251
 msgid "Query timeout: Extended for complex operations"
 msgstr "Timeout de consulta: Extendido para operaciones complejas"
 
-#: src/Admin/AdminPanel.php:1252
+#: src/Admin/AdminPanel.php:1253
 msgid "Standard requests: 100/minute"
 msgstr "Solicitudes estándar: 100/minuto"
 
-#: src/Admin/AdminPanel.php:1254
+#: src/Admin/AdminPanel.php:1255
 msgid "Build processes: 300/minute (auto-detected)"
 msgstr "Procesos de construcción: 300/minuto (auto-detectado)"
 
-#: src/Admin/AdminPanel.php:1255
+#: src/Admin/AdminPanel.php:1256
 msgid "Query timeout: Standard limits"
 msgstr "Timeout de consulta: Límites estándar"
 
-#: src/Admin/AdminPanel.php:1262
+#: src/Admin/AdminPanel.php:1263
 msgid "WPGraphQL Recommendations"
 msgstr "Recomendaciones de WPGraphQL"
 
-#: src/Admin/AdminPanel.php:1266
+#: src/Admin/AdminPanel.php:1267
 msgid "For Headless CMS Usage:"
 msgstr "Para Uso de CMS sin Cabeza:"
 
-#: src/Admin/AdminPanel.php:1269
+#: src/Admin/AdminPanel.php:1270
 msgid "✓ Enable Query Depth Limiting with Max Depth: 15-20"
 msgstr "✓ Habilitar Limitación de Profundidad de Consulta con Profundidad Máx: 15-20"
 
-#: src/Admin/AdminPanel.php:1271
+#: src/Admin/AdminPanel.php:1272
 msgid "✓ Keep Batch Queries enabled with limit: 10-20"
 msgstr "✓ Mantener Consultas por Lotes habilitadas con límite: 10-20"
 
-#: src/Admin/AdminPanel.php:1273
+#: src/Admin/AdminPanel.php:1274
 msgid "✓ Disable Public Introspection in production"
 msgstr "✓ Deshabilitar Introspección Pública en producción"
 
-#: src/Admin/AdminPanel.php:1275
+#: src/Admin/AdminPanel.php:1276
 msgid "✓ Disable GraphQL Debug Mode in production"
 msgstr "✓ Deshabilitar Modo Debug de GraphQL en producción"
 
-#: src/Admin/AdminPanel.php:1279
+#: src/Admin/AdminPanel.php:1280
 msgid "Current WPGraphQL Settings:"
 msgstr "Configuraciones Actuales de WPGraphQL:"
 
-#: src/Admin/AdminPanel.php:1291
+#: src/Admin/AdminPanel.php:1292
 msgid "Headless CMS Mode Active"
 msgstr "Modo CMS sin Cabeza Activo"
 
-#: src/Admin/AdminPanel.php:1293
+#: src/Admin/AdminPanel.php:1294
 msgid "✓ Enhanced rate limiting for high-frequency requests"
 msgstr "✓ Limitación de velocidad mejorada para solicitudes de alta frecuencia"
 
-#: src/Admin/AdminPanel.php:1295
+#: src/Admin/AdminPanel.php:1296
 msgid "✓ Build process detection (Next.js, Gatsby, etc.)"
 msgstr "✓ Detección de procesos de construcción (Next.js, Gatsby, etc.)"
 
-#: src/Admin/AdminPanel.php:1297
+#: src/Admin/AdminPanel.php:1298
 msgid "✓ Extended timeouts for complex queries"
 msgstr "✓ Timeouts extendidos para consultas complejas"
 
-#: src/Admin/AdminPanel.php:1299
+#: src/Admin/AdminPanel.php:1300
 msgid "✓ Optimized for static site generation (SSG/ISR)"
 msgstr "✓ Optimizado para generación de sitios estáticos (SSG/ISR)"
 
-#: src/Admin/AdminPanel.php:1303
+#: src/Admin/AdminPanel.php:1304
 msgid "Configure query depth and complexity limits in WPGraphQL settings for optimal performance."
 msgstr "Configura los límites de profundidad y complejidad de consultas en las configuraciones de WPGraphQL para rendimiento óptimo."
 
-#: src/Admin/AdminPanel.php:1310
+#: src/Admin/AdminPanel.php:1311
 msgid "Save Security Settings"
 msgstr "Guardar Configuración de Seguridad"
 
-#: src/Admin/AdminPanel.php:1345
+#: src/Admin/AdminPanel.php:1346
 msgid "Plugin Updates"
 msgstr "Actualizaciones del Plugin"
 
-#: src/Admin/AdminPanel.php:1348
+#: src/Admin/AdminPanel.php:1349
 msgid "Current Version"
 msgstr "Versión Actual"
 
-#: src/Admin/AdminPanel.php:1352
+#: src/Admin/AdminPanel.php:1353
 msgid "Latest Version"
 msgstr "Última Versión"
 
-#: src/Admin/AdminPanel.php:1358
+#: src/Admin/AdminPanel.php:1359
 msgid "Update Available!"
 msgstr "¡Actualización Disponible!"
 
-#: src/Admin/AdminPanel.php:1362
+#: src/Admin/AdminPanel.php:1363
 msgid "Up to date"
 msgstr "Actualizado"
 
-#: src/Admin/AdminPanel.php:1367
+#: src/Admin/AdminPanel.php:1368
 msgid "Repository"
 msgstr "Repositorio"
 
-#: src/Admin/AdminPanel.php:1378
+#: src/Admin/AdminPanel.php:1379
 msgid "Check for Updates"
 msgstr "Verificar Actualizaciones"
 
-#: src/Admin/AdminPanel.php:1382
+#: src/Admin/AdminPanel.php:1383
 msgid "Go to Updates"
 msgstr "Ir a Actualizaciones"
 
@@ -780,14 +780,14 @@ msgstr "Aviso de Seguridad Importante"
 msgid "Save your custom admin URL in a secure location before enabling this feature."
 msgstr "Guarda tu URL de admin personalizada en un lugar seguro antes de habilitar esta característica."
 
-#: src/Admin/AdminPanel.php:1178
-msgid "If you forget the custom path, you can disable this feature via FTP by editing the database."
-msgstr "Si olvidas la ruta personalizada, puedes deshabilitar esta característica vía FTP editando la base de datos."
-
-#: src/Admin/AdminPanel.php:1180
+#: src/Admin/AdminPanel.php:1181
 msgid "This feature adds an extra layer of security but should be used alongside strong passwords and other security measures."
 msgstr "Esta característica agrega una capa extra de seguridad pero debe usarse junto con contraseñas fuertes y otras medidas de seguridad."
 
 #: src/Security/LoginSecurity.php:172
 msgid "Password meets security requirements"
 msgstr "La contraseña cumple los requisitos de seguridad"
+
+#: src/Admin/AdminPanel.php:1178
+msgid "If you forget the custom path, you can disable this feature via FTP by adding this line to wp-config.php:"
+msgstr "Si olvidas la ruta personalizada, puedes desactivar esta función via FTP agregando esta línea a wp-config.php:"

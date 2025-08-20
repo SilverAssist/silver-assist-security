@@ -133,7 +133,20 @@ Access your security control panel at **Settings → Security Essentials**
 - 🔧 **Custom Admin Path**: Set your personalized admin access URL (e.g., 'my-secure-admin')
 - ✅ **Real-Time Validation**: Live feedback prevents weak or forbidden paths
 - ✅ **404 Protection**: Standard admin URLs automatically return "Not Found" errors
-- ⚠️ **Recovery Instructions**: Built-in guidance for users who forget their custom paths
+- 🆘 **Emergency Access**: Built-in recovery system for forgotten custom paths (see Emergency Access section below)
+
+#### 🆘 Emergency Access Recovery
+If you forget your custom admin path, you can regain access via FTP:
+
+**Step 1**: Access your WordPress files via FTP or cPanel File Manager  
+**Step 2**: Open the `wp-config.php` file in your website root  
+**Step 3**: Add this line anywhere before `/* That's all, stop editing! */`:
+```php
+define('SILVER_ASSIST_HIDE_ADMIN', false);
+```
+**Step 4**: Save the file and refresh your website  
+**Step 5**: You can now access admin at the standard `/wp-admin` URL  
+**Step 6**: After regaining access, you can reconfigure the admin path and remove the constant
 
 ### Security Compliance Verification
 After configuration, your website will be protected against the three critical security issues:

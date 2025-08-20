@@ -121,13 +121,13 @@
       SPACING VARIABLES
       ============================================================================= */
 
-   --silver-spacing-xs: 4px;
-   --silver-spacing-sm: 8px;
-   --silver-spacing-md: 12px;
-   --silver-spacing-lg: 15px;
-   --silver-spacing-xl: 20px;
-   --silver-spacing-xxl: 25px;
-   --silver-spacing-xxxl: 30px;
+   --silver-spacing-xs: 2px;
+   --silver-spacing-sm: 4px;
+   --silver-spacing-md: 8px;
+   --silver-spacing-lg: 12px;
+   --silver-spacing-xl: 16px;
+   --silver-spacing-2xl: 20px;
+   --silver-spacing-3xl: 24px;
 
    /* =============================================================================
       TYPOGRAPHY VARIABLES
@@ -250,9 +250,9 @@
       ============================================================================= */
 
    /* Fluid spacing and typography */
-   --silver-fluid-spacing: clamp(1rem, 2.5vw, 2rem);
+   --silver-fluid-spacing: clamp(1rem, 2.5vw, 1.5rem);
    --silver-fluid-spacing-sm: clamp(0.5rem, 1.5vw, 1rem);
-   --silver-fluid-spacing-lg: clamp(1.5rem, 4vw, 3rem);
+   --silver-fluid-spacing-lg: clamp(1.5rem, 4vw, 2rem);
    
    /* Responsive gap using clamp */
    --silver-responsive-gap: clamp(var(--silver-spacing-md), 3vw, var(--silver-spacing-xl));
