@@ -6,7 +6,7 @@
  * security status management.
  *
  * @file admin.js
- * @version 1.1.6
+ * @version 1.1.7
  * @author Silver Assist
  * @requires jQuery
  * @since 1.0.0
@@ -25,7 +25,7 @@
      * Centralized timeout values for consistent user experience
      * and easy maintenance of timing behavior across admin features.
      * 
-     * @since 1.1.6
+     * @since 1.1.7
      */
     const TIMING = {
         AUTO_SAVE_DELAY: 2000,          // Auto-save delay after input changes (ms)
@@ -43,7 +43,7 @@
      * Centralized validation limits for all security settings form fields.
      * These values must match the server-side validation limits.
      * 
-     * @since 1.1.6
+     * @since 1.1.7
      */
     const VALIDATION_LIMITS = {
         LOGIN_ATTEMPTS: { min: 1, max: 20 },           // Failed login attempts before lockout

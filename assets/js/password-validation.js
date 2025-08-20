@@ -5,7 +5,7 @@
  * Validates password strength according to plugin security requirements.
  *
  * @file password-validation.js
- * @version 1.1.6
+ * @version 1.1.7
  * @author Silver Assist
  * @requires jQuery
  * @since 1.1.5
@@ -24,7 +24,7 @@
      * Centralized timeout values for consistent user experience
      * and easy maintenance of timing behavior.
      * 
-     * @since 1.1.6
+     * @since 1.1.7
      */
     const TIMING = {
         VALIDATION_DEBOUNCE: 300,     // Debounce delay for input validation (ms)
@@ -182,7 +182,7 @@
      * Smoothly hides the password validation message after a period of inactivity.
      * Uses fadeOut for better user experience.
      *
-     * @since 1.1.6
+     * @since 1.1.7
      * @returns {void}
      */
     const hideValidationMessage = () => {
