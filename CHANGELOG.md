@@ -5,6 +5,37 @@ All notable changes to Silver Assist Security Essentials will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.9] - 2025-08-21
+
+### 🐛 Critical Login Bug Fixes
+
+#### Session Management Loop Prevention
+- **Fixed Login Loop Bug**: Resolved infinite redirect loop where users were sent to `?session_expired=1` after logout and subsequent login attempts
+- **Root Cause**: `last_activity` metadata was persisting after logout, causing immediate session timeout on new login attempts
+- **Session Cleanup**: Added comprehensive session metadata cleanup in multiple points:
+  - `clear_login_attempts()` - Clears `last_activity` during logout process
+  - `handle_successful_login()` - Removes stale metadata before establishing new session
+  - `setup_session_timeout()` - Enhanced with login process detection
+
+#### Login Process Intelligence
+- **New Function**: `is_in_login_process()` - Intelligent detection of login workflow to prevent premature timeouts
+- **Detection Points**: 
+  - wp-login.php page access
+  - POST login requests
+  - Recent login activity (< 30 seconds)
+  - Login-related actions (login, logout, register, resetpass, etc.)
+- **Session Protection**: Prevents session timeout during active login processes
+
+#### Enhanced Session Security
+- **Pre-logout Cleanup**: Session metadata cleared before logout to prevent state persistence
+- **Fresh Session Initialization**: Each successful login starts with clean session state
+- **Improved User Experience**: Eliminates frustrating login loops while maintaining security
+
+### 🔒 Security Enhancements
+- **Maintained Security**: All session timeout protections remain active for legitimate sessions
+- **Login Flow Protection**: Timeout checks skip during login processes to allow smooth authentication
+- **Stale Session Prevention**: Automatic cleanup prevents old session data from interfering with new logins
+
 ## [1.1.8] - 2025-08-20
 
 ### 🔧 Code Architecture & Security Improvements

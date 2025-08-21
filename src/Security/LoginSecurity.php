@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Security
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.8
+ * @version 1.1.9
  */
 
 namespace SilverAssist\Security\Security;
@@ -315,7 +315,10 @@ class LoginSecurity
         // Clear login attempts on successful login
         $this->clear_login_attempts();
 
-        // Set session timeout
+        // Clear any previous session metadata to prevent login loops
+        \delete_user_meta($user->ID, "last_activity");
+
+        // Set fresh session timeout for new login session
         $this->set_session_timeout();
     }
 
@@ -327,32 +330,82 @@ class LoginSecurity
      */
     public function setup_session_timeout(): void
     {
-        if (\is_user_logged_in()) {
-            $user_id = \get_current_user_id();
-            $last_activity = \get_user_meta($user_id, "last_activity", true);
-            $timeout = $this->session_timeout * 60; // Convert to seconds
-
-            // Only check timeout if last_activity exists and is not empty
-            // This prevents logout during plugin activation when last_activity hasn't been set yet
-            if ($last_activity && is_numeric($last_activity) && (int) $last_activity > 0) {
-                $time_since_last_activity = time() - (int) $last_activity;
-
-                // Only logout if timeout exceeded and not in admin area during plugin management
-                if (
-                    $time_since_last_activity > $timeout &&
-                    (!\is_admin() ||
-                        (!\current_user_can("activate_plugins") && !isset($_GET["page"]) && !isset($_POST["action"])))
-                ) {
-                    \wp_logout();
-                    \wp_redirect(\wp_login_url() . "?session_expired=1");
-                    exit;
-                }
-            }
-
-            // Always update last activity for logged-in users (but only if not empty)
-            // This ensures we initialize last_activity for new users
-            \update_user_meta($user_id, "last_activity", time());
+        if (!\is_user_logged_in()) {
+            return;
         }
+
+        $user_id = \get_current_user_id();
+        $last_activity = \get_user_meta($user_id, "last_activity", true);
+        $timeout = $this->session_timeout * 60; // Convert to seconds
+
+        // Skip timeout check if we're in the login process or just logged in
+        if ($this->is_in_login_process()) {
+            // Initialize/update last activity for new session
+            \update_user_meta($user_id, "last_activity", time());
+            return;
+        }
+
+        // Only check timeout if last_activity exists and is not empty
+        // This prevents logout during plugin activation when last_activity hasn't been set yet
+        if ($last_activity && is_numeric($last_activity) && (int) $last_activity > 0) {
+            $time_since_last_activity = time() - (int) $last_activity;
+
+            // Only logout if timeout exceeded and not in admin area during plugin management
+            if (
+                $time_since_last_activity > $timeout &&
+                (!\is_admin() ||
+                    (!\current_user_can("activate_plugins") && !isset($_GET["page"]) && !isset($_POST["action"])))
+            ) {
+                // Clear session metadata before logout to prevent loops
+                \delete_user_meta($user_id, "last_activity");
+                \wp_logout();
+                \wp_redirect(\wp_login_url() . "?session_expired=1");
+                exit;
+            }
+        }
+
+        // Always update last activity for logged-in users
+        \update_user_meta($user_id, "last_activity", time());
+    }
+
+    /**
+     * Check if we're currently in a login process
+     * 
+     * @since 1.1.8
+     * @return bool True if in login process
+     */
+    private function is_in_login_process(): bool
+    {
+        global $pagenow;
+
+        // Check if we're on wp-login.php
+        if ($pagenow === "wp-login.php") {
+            return true;
+        }
+
+        // Check if this is a login POST request
+        if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["log"])) {
+            return true;
+        }
+
+        // Check if this is immediately after login (within 30 seconds)
+        $user_id = \get_current_user_id();
+        $last_login = \get_user_meta($user_id, "session_tokens", true);
+        if (is_array($last_login)) {
+            $most_recent_token = end($last_login);
+            if (isset($most_recent_token["login"]) && (time() - $most_recent_token["login"]) < 30) {
+                return true;
+            }
+        }
+
+        // Check for specific login-related actions
+        $action = $_REQUEST["action"] ?? "";
+        $login_actions = ["login", "logout", "register", "resetpass", "rp", "lostpassword"];
+        if (in_array($action, $login_actions)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -369,7 +422,7 @@ class LoginSecurity
     }
 
     /**
-     * Clear login attempts for current IP
+     * Clear login attempts for current IP and user session data
      * 
      * @since 1.1.1
      * @return void
@@ -379,6 +432,12 @@ class LoginSecurity
         $ip = $this->get_client_ip();
         \delete_transient("login_attempts_{md5($ip)}");
         \delete_transient("lockout_{md5($ip)}");
+        
+        // Clear user session metadata to prevent login loops
+        if (\is_user_logged_in()) {
+            $user_id = \get_current_user_id();
+            \delete_user_meta($user_id, "last_activity");
+        }
     }
 
     /**
