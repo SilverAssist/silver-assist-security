@@ -117,12 +117,18 @@ class DefaultConfig
   public static function get_legitimate_actions(bool $include_logout = true): array
   {
     $actions = [
-      "postpass",         // Password protected posts
-      "resetpass",        // Reset password form after clicking email link
-      "rp",               // Reset password request
+      "checkemail",       // Check email confirmation page
+      "confirm_admin_email", // Admin email confirmation
+      "confirmaction",     // Confirm action (used in admin email confirmation)
+      "expired",          // Password reset link expired
+      "invalidkey",       // Invalid password reset key
       "lostpassword",     // Lost password form
+      "newpwd",           // Set new password process
+      "postpass",         // Password protected posts
+      "register",         // User registration (if enabled)
+      "resetpass",        // Reset password form after clicking email link
       "retrievepassword", // Retrieve password (alias for lostpassword)
-      "checkemail"        // Check email confirmation page
+      "rp"                // Reset password request
     ];
 
     if ($include_logout) {

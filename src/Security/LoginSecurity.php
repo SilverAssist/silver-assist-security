@@ -112,6 +112,10 @@ class LoginSecurity
         \add_action("init", [$this, "setup_session_timeout"]);
         \add_action("wp_logout", [$this, "clear_login_attempts"]);
 
+        // Clear login attempts after successful password changes
+        \add_action("password_reset", [$this, "clear_login_attempts_on_password_change"], 10, 2);
+        \add_action("profile_update", [$this, "clear_login_attempts_on_profile_update"], 10, 2);
+
         // Password reset security
         $this->init_password_security();
 
@@ -422,7 +426,7 @@ class LoginSecurity
     }
 
     /**
-     * Clear login attempts for current IP and user session data
+     * Clear login attempts for current IP
      * 
      * @since 1.1.1
      * @return void
@@ -432,11 +436,49 @@ class LoginSecurity
         $ip = $this->get_client_ip();
         \delete_transient("login_attempts_{md5($ip)}");
         \delete_transient("lockout_{md5($ip)}");
-        
-        // Clear user session metadata to prevent login loops
-        if (\is_user_logged_in()) {
-            $user_id = \get_current_user_id();
-            \delete_user_meta($user_id, "last_activity");
+    }
+
+    /**
+     * Clear login attempts after successful password reset
+     * 
+     * @since 1.1.9
+     * @param \WP_User $user User object
+     * @param string $new_pass New password
+     * @return void
+     */
+    public function clear_login_attempts_on_password_change(\WP_User $user, string $new_pass): void
+    {
+        // Clear any existing login attempts for the current IP
+        $this->clear_login_attempts();
+
+        error_log(sprintf(
+            "SECURITY_NOTICE: Login attempts cleared after password reset for user: %s, IP: %s",
+            $user->user_login,
+            $this->get_client_ip()
+        ));
+    }
+
+    /**
+     * Clear login attempts after profile update (includes password changes from admin)
+     * 
+     * @since 1.1.9
+     * @param int $user_id User ID
+     * @param \WP_User $old_user_data Old user data before update
+     * @return void
+     */
+    public function clear_login_attempts_on_profile_update(int $user_id, \WP_User $old_user_data): void
+    {
+        // Only clear if password was actually changed
+        $new_user = \get_userdata($user_id);
+        if ($new_user && $new_user->user_pass !== $old_user_data->user_pass) {
+            // Clear any existing login attempts for the current IP
+            $this->clear_login_attempts();
+
+            error_log(sprintf(
+                "SECURITY_NOTICE: Login attempts cleared after profile password change for user: %s, IP: %s",
+                $new_user->user_login,
+                $this->get_client_ip()
+            ));
         }
     }
 
