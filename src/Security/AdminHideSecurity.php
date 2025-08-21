@@ -8,7 +8,7 @@
  * @package SilverAssist\Security\Security
  * @since 1.1.4
  * @author Silver Assist
- * @version 1.1.7
+ * @version 1.1.8
  */
 
 namespace SilverAssist\Security\Security;
@@ -125,15 +125,7 @@ class AdminHideSecurity
         $action = $_REQUEST["action"] ?? "";
 
         // Allow specific actions that should work without admin hide protection
-        $allowed_actions = [
-            "postpass",     // Password protected posts
-            "resetpass",    // Reset password form after clicking email link
-            "rp",           // Reset password request
-            "lostpassword", // Lost password form
-            "retrievepassword", // Retrieve password (alias for lostpassword)
-            "checkemail",   // Check email confirmation page
-            "logout"        // Logout action
-        ];
+        $allowed_actions = DefaultConfig::get_legitimate_actions(true); // Include logout
 
         if (in_array($action, $allowed_actions)) {
             return;
@@ -190,7 +182,7 @@ class AdminHideSecurity
         if (!$this->admin_hide_enabled) {
             return;
         }
-        
+
         // Skip if doing cron or AJAX
         if (\wp_doing_cron() || \wp_doing_ajax()) {
             return;
@@ -375,34 +367,22 @@ class AdminHideSecurity
         if (!$this->admin_hide_enabled) {
             return $url;
         }
-        
+
         [$clean_path] = explode("?", $path);
 
         if ($clean_path === "wp-login.php") {
             // List of actions that should not get access tokens (they need to work normally)
-            $allowed_actions = [
-                "postpass",        // Password protected posts
-                "resetpass",       // Reset password form after clicking email link
-                "rp",              // Reset password request
-                "lostpassword",    // Lost password form
-                "retrievepassword", // Retrieve password (alias for lostpassword)
-                "checkemail"       // Check email confirmation page
-            ];
-            
+            $allowed_actions = DefaultConfig::get_admin_hide_bypass_actions(); // Exclude logout for URL tokens
+
             // Check if this path contains any of the allowed actions
             foreach ($allowed_actions as $action) {
                 if (strpos($path, "action={$action}") !== false) {
                     return $url; // Don't add tokens to these actions
                 }
             }
-            
+
             // Special handling for registration
-            if (strpos($path, "action=register") !== false) {
-                $url = $this->add_token_to_url($url, "register");
-            } else {
-                // Only add token to login attempts, not password reset flows
-                $url = $this->add_token_to_url($url, "login");
-            }
+            $url = $this->add_token_to_url($url, strpos($path, "action=register") !== false ? "register" : "login");
         }
 
         return $url;
@@ -422,7 +402,7 @@ class AdminHideSecurity
         if (!$this->admin_hide_enabled) {
             return $url;
         }
-        
+
         // Add token to profile update URLs
         if (strpos($path, "profile.php?newuseremail=") === 0) {
             $url = $this->add_token_to_url($url, "login");
@@ -444,7 +424,7 @@ class AdminHideSecurity
         if (!$this->admin_hide_enabled) {
             return $location;
         }
-        
+
         return $this->filter_generated_url($location, $location);
     }
 
@@ -575,7 +555,7 @@ class AdminHideSecurity
         if (!$this->admin_hide_enabled) {
             return $redirect_to;
         }
-        
+
         // Generate validation token for the logout redirect
         $validation_token = $this->get_access_token("login");
 

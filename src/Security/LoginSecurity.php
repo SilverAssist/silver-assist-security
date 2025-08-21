@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Security
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.7
+ * @version 1.1.8
  */
 
 namespace SilverAssist\Security\Security;
@@ -532,6 +532,24 @@ class LoginSecurity
             return;
         }
 
+        // Skip bot protection for logged-in users
+        if (\is_user_logged_in()) {
+            return;
+        }
+
+        // Skip bot protection for legitimate WordPress actions
+        $action = $_REQUEST["action"] ?? "";
+        $legitimate_actions = DefaultConfig::get_bot_protection_bypass_actions();
+
+        if (in_array($action, $legitimate_actions)) {
+            return;
+        }
+
+        // Skip if this is a password reset confirmation (has key parameter)
+        if (isset($_GET["key"]) && isset($_GET["login"])) {
+            return;
+        }
+
         $user_agent = $_SERVER["HTTP_USER_AGENT"] ?? "";
         $ip = $this->get_client_ip();
 
@@ -570,28 +588,37 @@ class LoginSecurity
             }
         }
 
-        // Additional checks for suspicious behavior
+        // Additional checks for suspicious behavior (but more lenient for users)
         if (!$is_bot) {
             // Check for empty or very short user agents (common in bots)
             if (empty($user_agent) || strlen($user_agent) < 10) {
                 $is_bot = true;
             }
 
-            // Check for missing common browser headers
-            if (!isset($_SERVER["HTTP_ACCEPT"]) || !isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
+            // Check for missing common browser headers (but be more lenient)
+            if (!isset($_SERVER["HTTP_ACCEPT"]) && !isset($_SERVER["HTTP_ACCEPT_LANGUAGE"]) && !isset($_SERVER["HTTP_ACCEPT_ENCODING"])) {
                 $is_bot = true;
             }
 
-            // Check for rapid access patterns
+            // More lenient rate limiting - allow more requests for legitimate users
             $access_key = "login_access_{md5($ip)}";
             $recent_access = \get_transient($access_key) ?: 0;
-            if ($recent_access > 5) { // More than 5 requests in last minute
+
+            // Increase threshold to 15 requests per minute (was 5) to accommodate:
+            // - Password changes with redirects
+            // - Logout confirmations  
+            // - Multiple login attempts by legitimate users
+            if ($recent_access > 15) {
                 $is_bot = true;
             }
+
+            // Update rate limiting counter (more lenient)
             \set_transient($access_key, $recent_access + 1, 60);
         }
 
+        // Only block if definitively identified as bot/crawler
         if ($is_bot) {
+            $this->track_bot_behavior(); // Use existing method
             $this->send_404_response();
         }
     }

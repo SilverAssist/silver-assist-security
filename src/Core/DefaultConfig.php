@@ -7,7 +7,7 @@
  * @package SilverAssist\Security\Core
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.7
+ * @version 1.1.8
  */
 
 namespace SilverAssist\Security\Core;
@@ -105,5 +105,52 @@ class DefaultConfig
   {
     $timeout = ini_get("max_execution_time");
     return $timeout !== false ? (int) $timeout : 30;
+  }
+
+  /**
+   * Get legitimate WordPress actions that should bypass security restrictions
+   * 
+   * @since 1.1.8
+   * @param bool $include_logout Whether to include logout action
+   * @return array<string> List of legitimate WordPress actions
+   */
+  public static function get_legitimate_actions(bool $include_logout = true): array
+  {
+    $actions = [
+      "postpass",         // Password protected posts
+      "resetpass",        // Reset password form after clicking email link
+      "rp",               // Reset password request
+      "lostpassword",     // Lost password form
+      "retrievepassword", // Retrieve password (alias for lostpassword)
+      "checkemail"        // Check email confirmation page
+    ];
+
+    if ($include_logout) {
+      $actions[] = "logout"; // User logout process
+    }
+
+    return $actions;
+  }
+
+  /**
+   * Get legitimate actions for bot protection (includes logout)
+   * 
+   * @since 1.1.8
+   * @return array<string> List of actions that should bypass bot protection
+   */
+  public static function get_bot_protection_bypass_actions(): array
+  {
+    return self::get_legitimate_actions(true); // Include logout
+  }
+
+  /**
+   * Get legitimate actions for admin hide URL filtering (excludes logout for tokens)
+   * 
+   * @since 1.1.8
+   * @return array<string> List of actions that should not get access tokens
+   */
+  public static function get_admin_hide_bypass_actions(): array
+  {
+    return self::get_legitimate_actions(false); // Exclude logout for URL token filtering
   }
 }

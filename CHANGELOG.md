@@ -5,6 +5,34 @@ All notable changes to Silver Assist Security Essentials will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.8] - 2025-08-20
+
+### 🔧 Code Architecture & Security Improvements
+
+#### Configuration Centralization
+- **Centralized Legitimate Actions**: Moved all WordPress action arrays (`logout`, `postpass`, `resetpass`, `lostpassword`, etc.) from duplicated implementations to centralized `DefaultConfig.php`
+- **New Configuration Methods**: Added three new methods for action management:
+  - `get_legitimate_actions(bool $include_logout)` - General method with logout toggle
+  - `get_bot_protection_bypass_actions()` - Actions that bypass bot protection (includes logout)
+  - `get_admin_hide_bypass_actions()` - Actions for admin hide URL filtering (excludes logout)
+
+#### Bot Protection Refinements  
+- **Improved Rate Limiting**: Increased threshold from 5 to 15 requests per minute to accommodate legitimate user flows (password changes, logout confirmations)
+- **Enhanced User Flow Detection**: Added specific exclusions for logged-in users and legitimate WordPress actions
+- **False Positive Reduction**: More lenient detection criteria to prevent blocking legitimate users during normal WordPress operations
+- **Better Header Validation**: Improved browser header detection logic for more accurate bot identification
+
+#### Code Quality Improvements
+- **Eliminated Code Duplication**: Removed redundant action arrays from `LoginSecurity.php` and `AdminHideSecurity.php`
+- **Single Source of Truth**: All legitimate action definitions now managed centrally for consistency
+- **Maintainability Enhancement**: Future action updates only require changes in one location
+- **Clear Method Documentation**: Comprehensive PHPDoc for all new configuration methods
+
+#### Bug Fixes
+- **404 Error Resolution**: Fixed issue where legitimate users received 404 responses during password changes and logout flows
+- **Authentication Flow**: Improved handling of legitimate WordPress authentication actions
+- **Session Management**: Better integration between bot protection and user session handling
+
 ## [1.1.7] - 2025-08-20
 
 ### 🚀 JavaScript Architecture Modernization

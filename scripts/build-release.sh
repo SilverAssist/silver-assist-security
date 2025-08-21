@@ -12,7 +12,7 @@
 # @package SilverAssist\Security
 # @since 1.0.0
 # @author Silver Assist
-# @version 1.1.7
+# @version 1.1.8
 ###############################################################################
 
 set -e
