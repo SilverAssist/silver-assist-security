@@ -14,8 +14,8 @@
 namespace SilverAssist\Security\Security;
 
 use SilverAssist\Security\Core\DefaultConfig;
-use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\Core\PathValidator;
+use SilverAssist\Security\Core\SecurityHelper;
 
 // Prevent direct access
 defined("ABSPATH") or exit;

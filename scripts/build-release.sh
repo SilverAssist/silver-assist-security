@@ -95,6 +95,36 @@ fi
 if [ -d "assets" ]; then
     cp -r assets "$PLUGIN_DIR/"
     echo "  ✅ assets/ directory copied"
+    
+    # Generate minified asset versions for production
+    echo -e "${YELLOW}🔧 Generating minified assets for production...${NC}"
+    if [ -f "scripts/minify-assets.sh" ]; then
+        # Run minification script in the temporary plugin directory
+        cd "$PLUGIN_DIR"
+        if "$PROJECT_ROOT/scripts/minify-assets.sh" > /dev/null 2>&1; then
+            echo "  ✅ Minified CSS and JS files generated"
+            
+            # Show compression statistics
+            if [ -f "assets/css/admin.css" ] && [ -f "assets/css/admin.min.css" ]; then
+                original_css=$(wc -c < "assets/css/admin.css")
+                minified_css=$(wc -c < "assets/css/admin.min.css")
+                css_reduction=$(( (original_css - minified_css) * 100 / original_css ))
+                echo "  📊 CSS compression: ${css_reduction}% reduction"
+            fi
+            
+            if [ -f "assets/js/admin.js" ] && [ -f "assets/js/admin.min.js" ]; then
+                original_js=$(wc -c < "assets/js/admin.js")
+                minified_js=$(wc -c < "assets/js/admin.min.js")
+                js_reduction=$(( (original_js - minified_js) * 100 / original_js ))
+                echo "  📊 JS compression: ${js_reduction}% reduction"
+            fi
+        else
+            echo -e "${YELLOW}  ⚠️  Warning: Asset minification failed, using original files${NC}"
+        fi
+        cd "$PROJECT_ROOT"
+    else
+        echo -e "${YELLOW}  ⚠️  Warning: Minification script not found, using original assets${NC}"
+    fi
 fi
 
 # Copy languages directory if it exists

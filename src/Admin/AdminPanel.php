@@ -17,9 +17,9 @@ namespace SilverAssist\Security\Admin;
 use Exception;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\PathValidator;
+use SilverAssist\Security\Core\Plugin;
 use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
-use SilverAssist\Security\Core\Plugin;
 
 /**
  * Admin Panel class
