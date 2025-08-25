@@ -9,7 +9,8 @@
 # @author Silver Assist Security Team
 # @since 1.1.10
 
-set -e
+# Note: Not using 'set -e' to allow graceful error handling
+# Individual errors are handled per-file basis
 
 # Color output functions
 RED='\033[0;31m'
@@ -426,10 +427,13 @@ main() {
             if [ -f "$css_file" ]; then
                 info "Processing CSS file: $css_file"
                 css_count=$((css_count + 1))
+                # Explicitly handle return code to avoid script termination
                 if process_file "$css_file" "css"; then
                     ((total_processed++))
+                    info "Successfully processed $css_file"
                 else
                     ((total_errors++))
+                    warning "Failed to process $css_file, continuing with next file"
                 fi
             else
                 warning "CSS file does not exist: $css_file"
@@ -463,10 +467,13 @@ main() {
             if [ -f "$js_file" ]; then
                 info "Processing JS file: $js_file"
                 js_count=$((js_count + 1))
+                # Explicitly handle return code to avoid script termination
                 if process_file "$js_file" "js"; then
                     ((total_processed++))
+                    info "Successfully processed $js_file"
                 else
                     ((total_errors++))
+                    warning "Failed to process $js_file, continuing with next file"
                 fi
             else
                 warning "JS file does not exist: $js_file"
