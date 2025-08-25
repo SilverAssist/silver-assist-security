@@ -241,6 +241,18 @@ use SilverAssist\Security\Core\DefaultConfig;
 
 ## Testing & Quality Assurance
 
+### 🚨 MANDATORY Testing File Organization
+
+**ALL test files MUST be created within the `/tests/` directory structure:**
+
+- **Unit Tests**: `/tests/Unit/` - For testing individual classes and methods
+- **Integration Tests**: `/tests/Integration/` - For testing component interactions
+- **Security Tests**: `/tests/Security/` - For security-specific validation
+- **Helper Classes**: `/tests/Helpers/` - For shared testing utilities
+- **Test Results**: `/tests/results/` - For test output and reports
+
+**NEVER create test files in the project root directory. Always use the proper `/tests/` subdirectory structure.**
+
 ### Security Testing Requirements
 - **Brute Force Testing**: Verify login attempt limiting works correctly
 - **Cookie Security**: Confirm HTTPOnly flags are applied properly

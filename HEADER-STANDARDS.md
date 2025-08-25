@@ -6,7 +6,7 @@
 Plugin Name: Silver Assist Security Suite
 Plugin URI: https://github.com/SilverAssist/silver-assist-security
 Description: Comprehensive security suite for Silver Assist - includes login security, GraphQL protection, and admin configuration panel
-Version: 1.1.9
+Version: 1.1.10
 Author: Silver Assist
 Author URI: http://silverassist.com/
 Text Domain: silver-assist-security
@@ -29,7 +29,7 @@ License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
 /**
  * Plugin Name: Silver Assist Security Suite
  * Description: Comprehensive security suite for Silver Assist - includes login security, GraphQL protection, and admin configuration panel
- * Version: 1.1.9
+ * Version: 1.1.10
  * Author: Silver Assist
  * Author URI: http://silverassist.com/
  * Text Domain: silver-assist-security
@@ -42,7 +42,7 @@ License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
  * License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
  *
  * @package SilverAssist\Security
- * @version 1.1.9
+ * @version 1.1.10
  * @since 1.0.0
  * @author Silver Assist
  */
@@ -57,7 +57,7 @@ License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
  * [Detailed description of file functionality]
  *
  * @package SilverAssist\Security[/SubNamespace if applicable]
- * @version 1.1.9
+ * @version 1.1.10
  * @since 1.0.0
  * @author Silver Assist
  */
@@ -76,7 +76,7 @@ License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
  * @author Silver Assist
  * @copyright Copyright (c) 2025, Silver Assist
  * @license Polyform Noncommercial License 1.0.0
- * @version 1.1.9
+ * @version 1.1.10
  */
 ```
 
@@ -89,7 +89,7 @@ License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
  * [Detailed description of JavaScript functionality]
  *
  * @file [filename.js]
- * @version 1.1.9
+ * @version 1.1.10
  * @author Silver Assist
  * @requires jQuery
  * @since 1.0.0
@@ -110,7 +110,7 @@ License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
  * @package SilverAssist\Security\Core
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.1.9
+ * @version 1.1.10
  */
 ```
 
@@ -126,7 +126,7 @@ License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
  * @package SilverAssist\Security\Admin
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.1.9
+ * @version 1.1.10
  */
 ```
 
@@ -142,7 +142,7 @@ License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
  * @package SilverAssist\Security\Security
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.1.9
+ * @version 1.1.10
  */
 ```
 
@@ -158,7 +158,7 @@ License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
  * @package SilverAssist\Security\Security
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.1.9
+ * @version 1.1.10
  */
 ```
 
@@ -174,7 +174,7 @@ License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
  * @package SilverAssist\Security\GraphQL
  * @since 1.0.0
  * @author Silver Assist
- * @version 1.1.9
+ * @version 1.1.10
  */
 ```
 
@@ -192,7 +192,7 @@ License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
  * @author Silver Assist
  * @copyright Copyright (c) 2025, Silver Assist
  * @license Polyform Noncommercial License 1.0.0
- * @version 1.1.9
+ * @version 1.1.10
  */
 ```
 
@@ -206,7 +206,7 @@ License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
  * security status management.
  *
  * @file admin.js
- * @version 1.1.9
+ * @version 1.1.10
  * @author Silver Assist
  * @requires jQuery
  * @since 1.0.0

@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Security
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.9
+ * @version 1.1.10
  */
 
 namespace SilverAssist\Security\Security;
@@ -329,7 +329,13 @@ class LoginSecurity
     /**
      * Setup session timeout
      * 
+     * Manages automatic logout when session timeout is exceeded. Behavior differs
+     * between admin and frontend:
+     * - Admin area: Logs out and redirects to login with session_expired=1
+     * - Frontend: Silently logs out without redirect to preserve user experience
+     * 
      * @since 1.1.1
+     * @updated 1.1.10 Added frontend/admin differentiation
      * @return void
      */
     public function setup_session_timeout(): void
@@ -363,8 +369,15 @@ class LoginSecurity
                 // Clear session metadata before logout to prevent loops
                 \delete_user_meta($user_id, "last_activity");
                 \wp_logout();
-                \wp_redirect(\wp_login_url() . "?session_expired=1");
-                exit;
+
+                // Only redirect to login if user is in admin area
+                // Frontend users should stay on their current page after silent logout
+                if (\is_admin()) {
+                    \wp_redirect(\wp_login_url() . "?session_expired=1");
+                    exit;
+                }
+                // For frontend, just return without redirect to allow normal page rendering
+                return;
             }
         }
 

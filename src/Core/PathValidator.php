@@ -10,7 +10,7 @@ namespace SilverAssist\Security\Core;
  *
  * @package SilverAssist\Security\Core
  * @since   1.1.4
- * @version 1.1.9
+ * @version 1.1.10
  */
 class PathValidator
 {

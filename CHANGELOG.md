@@ -5,6 +5,24 @@ All notable changes to Silver Assist Security Essentials will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.10] - 2025-08-25
+
+### 🐛 Critical Frontend Session Fix
+
+#### Frontend Session Timeout Behavior Correction
+- **🐛 Fixed Frontend Redirect Issue**: Session timeouts now handle frontend vs admin differently:
+  - **Frontend**: Silent logout without redirect - users stay on their current page
+  - **Admin**: Logout with redirect to login page showing `session_expired=1`
+- **Better UX**: Users visiting public pages no longer get redirected to login when session expires
+- **SEO Friendly**: Google search traffic and direct links to blog posts work properly even with expired sessions
+- **Root Cause**: Previous implementation redirected all session timeouts to login, regardless of context
+- **Solution**: Added conditional logic in `LoginSecurity::setup_session_timeout()` to differentiate frontend vs admin behavior
+
+### 🔒 Security Impact
+- **Maintained Security**: All session timeout protections remain active for legitimate sessions
+- **Admin Protection**: Admin area maintains proper session timeout redirect behavior
+- **Frontend Preservation**: Public pages no longer interrupted by authentication flows
+
 ## [1.1.9] - 2025-08-21
 
 ### 🐛 Critical Login Bug Fixes
