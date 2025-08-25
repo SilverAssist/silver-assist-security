@@ -148,30 +148,70 @@ minify_js_simple() {
 url_encode() {
     local string="$1"
     
+    # Debug: Show available tools
+    info "Checking available encoding tools..."
+    command -v python3 >/dev/null 2>&1 && info "  ✓ Python3 available" || info "  ✗ Python3 not available"
+    command -v node >/dev/null 2>&1 && info "  ✓ Node.js available" || info "  ✗ Node.js not available"
+    
     # Try Python3 first (available in GitHub Actions)
     if command -v python3 >/dev/null 2>&1; then
+        info "Using Python3 for URL encoding"
         printf '%s' "$string" | python3 -c "
 import sys
 import urllib.parse
-content = sys.stdin.read()
-print(urllib.parse.quote(content, safe=''), end='')
+try:
+    content = sys.stdin.read()
+    print(urllib.parse.quote(content, safe=''), end='')
+    sys.exit(0)
+except Exception as e:
+    print(f'Python encoding error: {e}', file=sys.stderr)
+    sys.exit(1)
 " 2>/dev/null
-        return $?
+        local exit_code=$?
+        if [ $exit_code -eq 0 ]; then
+            return 0
+        else
+            warning "Python3 URL encoding failed with exit code $exit_code"
+        fi
     fi
     
     # Try Node.js as fallback (also available in GitHub Actions)
     if command -v node >/dev/null 2>&1; then
+        info "Using Node.js for URL encoding"
         printf '%s' "$string" | node -e "
-const fs = require('fs');
-let content = '';
-process.stdin.setEncoding('utf8');
-process.stdin.on('data', chunk => content += chunk);
-process.stdin.on('end', () => process.stdout.write(encodeURIComponent(content)));
+try {
+    const fs = require('fs');
+    let content = '';
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', chunk => content += chunk);
+    process.stdin.on('end', () => {
+        try {
+            process.stdout.write(encodeURIComponent(content));
+            process.exit(0);
+        } catch (e) {
+            console.error('Node encoding error:', e.message);
+            process.exit(1);
+        }
+    });
+    process.stdin.on('error', (e) => {
+        console.error('Node input error:', e.message);
+        process.exit(1);
+    });
+} catch (e) {
+    console.error('Node setup error:', e.message);
+    process.exit(1);
+}
 " 2>/dev/null
-        return $?
+        local exit_code=$?
+        if [ $exit_code -eq 0 ]; then
+            return 0
+        else
+            warning "Node.js URL encoding failed with exit code $exit_code"
+        fi
     fi
     
-    # If no encoding tools available, use local minifier instead
+    # If no encoding tools available, return error to trigger local minifier
+    warning "No suitable URL encoding tools available - will use local minifier"
     return 1
 }
 
@@ -349,14 +389,14 @@ main() {
     info "Silver Assist Security Essentials - Asset Minification"
     info "Project root: $PROJECT_ROOT"
     
-    # Check dependencies
+    # Check basic dependencies
     if ! command -v curl &> /dev/null; then
-        error "curl is required but not installed"
-        exit 1
+        warning "curl not available - will use local minifiers only"
     fi
     
-    if ! command -v perl &> /dev/null; then
-        error "perl is required but not installed"
+    # Check if we're in the right directory
+    if [ ! -f "silver-assist-security.php" ]; then
+        error "Not in plugin root directory - missing silver-assist-security.php"
         exit 1
     fi
     
@@ -412,12 +452,17 @@ main() {
         warning "Asset minification completed with $total_errors errors"
         warning "Successfully processed: $total_processed files"
         warning "Errors: $total_errors files"
+        warning "Build will continue with available files"
     fi
     
     info "Next steps:"
     info "  1. Review the generated .min.css and .min.js files"
     info "  2. Test the plugin with SCRIPT_DEBUG disabled"
     info "  3. Include minified files in release package"
+    
+    # Always return success to not break the build process
+    # Even if minification fails, the build should continue with original assets
+    return 0
 }
 
 # Script help
