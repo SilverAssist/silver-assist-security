@@ -65,13 +65,20 @@ class SecurityHelper
       self::init();
     }
 
-    $min_suffix = (defined("SCRIPT_DEBUG") && SCRIPT_DEBUG) ? "" : ".min";
-    $file_info = pathinfo($asset_path);
+    // Determine if we should use minified version
+    $use_minified = !(defined("SCRIPT_DEBUG") && SCRIPT_DEBUG);
 
-    // Construct minified path: assets/css/admin.css -> assets/css/admin.min.css
-    $minified_path = $file_info["dirname"] . "/" . $file_info["filename"] . $min_suffix . "." . $file_info["extension"];
+    if ($use_minified) {
+      $file_info = pathinfo($asset_path);
 
-    return self::$plugin_url . $minified_path;
+      // Construct minified path: assets/css/admin.css -> assets/css/admin.min.css
+      $minified_path = $file_info["dirname"] . "/" . $file_info["filename"] . ".min." . $file_info["extension"];
+
+      return self::$plugin_url . $minified_path;
+    }
+
+    // Return original path for debug mode
+    return self::$plugin_url . $asset_path;
   }
 
   /**
