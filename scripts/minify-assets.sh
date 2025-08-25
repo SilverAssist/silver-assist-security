@@ -404,41 +404,75 @@ main() {
     local total_errors=0
     
     info "Processing CSS files..."
+    info "Looking in directory: $CSS_DIR"
     if [ -d "$CSS_DIR" ]; then
+        info "CSS directory exists, scanning for files..."
+        local css_count=0
         for css_file in "$CSS_DIR"/*.css; do
+            info "Found file: $css_file"
+            
+            # Handle case where glob doesn't match any files
+            if [[ "$css_file" == "$CSS_DIR/*.css" ]] && [[ ! -f "$css_file" ]]; then
+                warning "No CSS files found in $CSS_DIR"
+                break
+            fi
+            
             # Skip already minified files
             if [[ "$css_file" == *.min.css ]]; then
+                info "Skipping minified file: $css_file"
                 continue
             fi
             
             if [ -f "$css_file" ]; then
+                info "Processing CSS file: $css_file"
+                css_count=$((css_count + 1))
                 if process_file "$css_file" "css"; then
                     ((total_processed++))
                 else
                     ((total_errors++))
                 fi
+            else
+                warning "CSS file does not exist: $css_file"
             fi
         done
+        info "Found $css_count CSS files to process"
     else
         warning "CSS directory not found: $CSS_DIR"
     fi
     
     info "Processing JavaScript files..."
+    info "Looking in directory: $JS_DIR"
     if [ -d "$JS_DIR" ]; then
+        info "JavaScript directory exists, scanning for files..."
+        local js_count=0
         for js_file in "$JS_DIR"/*.js; do
+            info "Found file: $js_file"
+            
+            # Handle case where glob doesn't match any files
+            if [[ "$js_file" == "$JS_DIR/*.js" ]] && [[ ! -f "$js_file" ]]; then
+                warning "No JS files found in $JS_DIR"
+                break
+            fi
+            
             # Skip already minified files
             if [[ "$js_file" == *.min.js ]]; then
+                info "Skipping minified file: $js_file"
                 continue
             fi
             
             if [ -f "$js_file" ]; then
+                info "Processing JS file: $js_file"
+                js_count=$((js_count + 1))
                 if process_file "$js_file" "js"; then
                     ((total_processed++))
                 else
                     ((total_errors++))
                 fi
+            else
+                warning "JS file does not exist: $js_file"
             fi
         done
+        info "Found $js_count JS files to process"
     else
         warning "JavaScript directory not found: $JS_DIR"
     fi
