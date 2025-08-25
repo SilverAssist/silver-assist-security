@@ -97,10 +97,17 @@ if [ -d "assets" ]; then
     echo -e "${YELLOW}🔧 Generating minified assets for production...${NC}"
     if [ -f "scripts/minify-assets.sh" ]; then
         # Run minification script in the source directory first
-        if ./scripts/minify-assets.sh > /dev/null 2>&1; then
+        # Capture both stdout and stderr for debugging
+        MINIFY_OUTPUT=$(./scripts/minify-assets.sh 2>&1)
+        MINIFY_EXIT_CODE=$?
+        
+        if [ $MINIFY_EXIT_CODE -eq 0 ]; then
             echo "  ✅ Minified CSS and JS files generated"
         else
-            echo -e "${YELLOW}  ⚠️  Warning: Asset minification failed, proceeding with original files${NC}"
+            echo -e "${YELLOW}  ⚠️  Warning: Asset minification failed (exit code: $MINIFY_EXIT_CODE)${NC}"
+            echo -e "${YELLOW}  📋 Minification output:${NC}"
+            echo "$MINIFY_OUTPUT" | sed 's/^/    /'
+            echo -e "${YELLOW}  🔄 Proceeding with original files${NC}"
         fi
     else
         echo -e "${YELLOW}  ⚠️  Warning: Minification script not found, using original assets${NC}"

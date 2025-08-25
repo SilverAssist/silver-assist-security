@@ -114,7 +114,68 @@ get_content_without_header() {
     echo -n "$content"
 }
 
-# Function to minify content using API
+# Function to create a simple local minifier for CSS (fallback)
+minify_css_simple() {
+    local content="$1"
+    echo -n "$content" | \
+    # Remove comments
+    sed 's|/\*[^*]*\*\+\([^/*][^*]*\*\+\)*/||g' | \
+    # Remove extra whitespace
+    sed 's/[[:space:]]\+/ /g' | \
+    # Remove whitespace around specific characters
+    sed 's/[[:space:]]*{[[:space:]]*/{/g; s/[[:space:]]*}[[:space:]]*/}/g; s/[[:space:]]*;[[:space:]]*/;/g; s/[[:space:]]*:[[:space:]]*/:/g; s/[[:space:]]*,[[:space:]]*/,/g' | \
+    # Remove leading and trailing whitespace
+    sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+}
+
+# Function to create a simple local minifier for JS (fallback)
+minify_js_simple() {
+    local content="$1"
+    echo -n "$content" | \
+    # Remove single-line comments (but preserve URLs and regexes)
+    sed 's|^\s*//.*$||g' | \
+    # Remove multi-line comments
+    sed 's|/\*[^*]*\*\+\([^/*][^*]*\*\+\)*/||g' | \
+    # Remove extra whitespace
+    sed 's/[[:space:]]\+/ /g' | \
+    # Remove whitespace around operators and delimiters
+    sed 's/[[:space:]]*([[:space:]]*/(/g; s/[[:space:]]*)[[:space:]]*/)/g; s/[[:space:]]*{[[:space:]]*/{/g; s/[[:space:]]*}[[:space:]]*/}/g; s/[[:space:]]*;[[:space:]]*/;/g' | \
+    # Remove leading and trailing whitespace
+    sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+}
+
+# Function to URL encode content (compatible with GitHub Actions)
+url_encode() {
+    local string="$1"
+    
+    # Try Python3 first (available in GitHub Actions)
+    if command -v python3 >/dev/null 2>&1; then
+        printf '%s' "$string" | python3 -c "
+import sys
+import urllib.parse
+content = sys.stdin.read()
+print(urllib.parse.quote(content, safe=''), end='')
+" 2>/dev/null
+        return $?
+    fi
+    
+    # Try Node.js as fallback (also available in GitHub Actions)
+    if command -v node >/dev/null 2>&1; then
+        printf '%s' "$string" | node -e "
+const fs = require('fs');
+let content = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', chunk => content += chunk);
+process.stdin.on('end', () => process.stdout.write(encodeURIComponent(content)));
+" 2>/dev/null
+        return $?
+    fi
+    
+    # If no encoding tools available, use local minifier instead
+    return 1
+}
+
+# Function to minify content using API with better error handling
 minify_content() {
     local content="$1"
     local file_type="$2"
@@ -129,17 +190,102 @@ minify_content() {
         return 1
     fi
     
-    # Use curl to send POST request to API
-    local minified_content
-    minified_content=$(curl -s -X POST \
-        -H "Content-Type: application/x-www-form-urlencoded" \
-        -d "input=$(printf '%s' "$content" | perl -MURI::Escape -e 'print uri_escape(<STDIN>)')" \
-        "$api_url")
+    # Try API minification first
+    local encoded_content
+    encoded_content=$(url_encode "$content")
+    local encode_exit_code=$?
     
-    # Check if curl was successful
-    if [ $? -ne 0 ] || [ -z "$minified_content" ]; then
-        error "Failed to minify content using API"
-        return 1
+    if [ $encode_exit_code -ne 0 ] || [ -z "$encoded_content" ]; then
+        warning "URL encoding failed, using local minifier instead"
+        # Use local fallback minifier
+        if [ "$file_type" = "css" ]; then
+            minify_css_simple "$content"
+        elif [ "$file_type" = "js" ]; then
+            minify_js_simple "$content"
+        fi
+        return $?
+    fi
+    
+    # Use curl to send POST request to API with better error handling
+    local temp_file=$(mktemp)
+    local curl_exit_code
+    
+    curl -s -X POST \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -H "User-Agent: Silver-Assist-Security-Minifier/1.1.10" \
+        -H "Accept: text/plain, text/css, application/javascript, */*" \
+        --connect-timeout 30 \
+        --max-time 60 \
+        --retry 2 \
+        --retry-delay 1 \
+        -w "%{http_code}" \
+        -d "input=$encoded_content" \
+        -o "$temp_file" \
+        "$api_url" > /tmp/http_code 2>/dev/null
+    
+    curl_exit_code=$?
+    local http_code=$(cat /tmp/http_code 2>/dev/null || echo "000")
+    local minified_content=$(cat "$temp_file" 2>/dev/null)
+    
+    # Clean up temp files
+    rm -f "$temp_file" /tmp/http_code 2>/dev/null
+    
+    # Check curl exit code
+    if [ $curl_exit_code -ne 0 ]; then
+        warning "API request failed (curl exit code: $curl_exit_code), using local minifier"
+        if [ "$file_type" = "css" ]; then
+            minify_css_simple "$content"
+        elif [ "$file_type" = "js" ]; then
+            minify_js_simple "$content"
+        fi
+        return $?
+    fi
+    
+    # Check HTTP status code
+    if [ "$http_code" != "200" ]; then
+        warning "API returned HTTP status $http_code, using local minifier"
+        if [ "$file_type" = "css" ]; then
+            minify_css_simple "$content"
+        elif [ "$file_type" = "js" ]; then
+            minify_js_simple "$content"
+        fi
+        return $?
+    fi
+    
+    # Check if content is empty
+    if [ -z "$minified_content" ]; then
+        warning "API returned empty content, using local minifier"
+        if [ "$file_type" = "css" ]; then
+            minify_css_simple "$content"
+        elif [ "$file_type" = "js" ]; then
+            minify_js_simple "$content"
+        fi
+        return $?
+    fi
+    
+    # Check if API returned an error page
+    if echo "$minified_content" | grep -qi "<!DOCTYPE\|<html\|<body\|error\|exception" >/dev/null 2>&1; then
+        warning "API returned an error response, using local minifier"
+        if [ "$file_type" = "css" ]; then
+            minify_css_simple "$content"
+        elif [ "$file_type" = "js" ]; then
+            minify_js_simple "$content"
+        fi
+        return $?
+    fi
+    
+    # Basic validation: minified content should be shorter or same length
+    local original_length=${#content}
+    local minified_length=${#minified_content}
+    
+    if [ $minified_length -gt $((original_length * 2)) ]; then
+        warning "Minified content is suspiciously large, using local minifier"
+        if [ "$file_type" = "css" ]; then
+            minify_css_simple "$content"
+        elif [ "$file_type" = "js" ]; then
+            minify_js_simple "$content"
+        fi
+        return $?
     fi
     
     echo -n "$minified_content"
