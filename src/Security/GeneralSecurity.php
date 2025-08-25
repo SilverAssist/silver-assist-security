@@ -14,6 +14,8 @@
 
 namespace SilverAssist\Security\Security;
 
+use SilverAssist\Security\Core\SecurityHelper;
+
 /**
  * General Security class
  * 
@@ -322,27 +324,6 @@ class GeneralSecurity
      */
     public function get_client_ip(): string
     {
-        $ip_keys = [
-            "HTTP_CF_CONNECTING_IP",
-            "HTTP_CLIENT_IP",
-            "HTTP_X_FORWARDED_FOR",
-            "HTTP_X_FORWARDED",
-            "HTTP_FORWARDED_FOR",
-            "HTTP_FORWARDED",
-            "REMOTE_ADDR"
-        ];
-
-        foreach ($ip_keys as $key) {
-            if (array_key_exists($key, $_SERVER) === true) {
-                foreach (explode(",", $_SERVER[$key]) as $ip) {
-                    $ip = trim($ip);
-                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
-                        return $ip;
-                    }
-                }
-            }
-        }
-
-        return $_SERVER["REMOTE_ADDR"] ?? "0.0.0.0";
+        return SecurityHelper::get_client_ip();
     }
 }

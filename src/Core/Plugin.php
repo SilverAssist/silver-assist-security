@@ -102,6 +102,9 @@ class Plugin
      */
     private function __construct()
     {
+        // Initialize SecurityHelper first
+        SecurityHelper::init();
+
         // Initialize security components early (before setup_theme)
         \add_action("plugins_loaded", [$this, "init_security_components"], 1);
 

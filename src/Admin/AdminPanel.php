@@ -17,6 +17,7 @@ namespace SilverAssist\Security\Admin;
 use Exception;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\PathValidator;
+use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 use SilverAssist\Security\Core\Plugin;
 
@@ -129,6 +130,20 @@ class AdminPanel
     }
 
     /**
+     * Get asset URL with minification support
+     * 
+     * Returns minified version when SCRIPT_DEBUG is not true, regular version otherwise.
+     * 
+     * @since 1.1.10
+     * @param string $asset_path The relative path to the asset (e.g., 'assets/css/admin.css')
+     * @return string The full URL to the asset
+     */
+    private function get_asset_url(string $asset_path): string
+    {
+        return SecurityHelper::get_asset_url($asset_path);
+    }
+
+    /**
      * Enqueue admin scripts and styles
      * 
      * @since 1.1.1
@@ -143,21 +158,21 @@ class AdminPanel
 
         \wp_enqueue_style(
             "silver-assist-variables",
-            "{$this->plugin_url}assets/css/variables.css",
+            $this->get_asset_url("assets/css/variables.css"),
             [],
             $this->plugin_version
         );
 
         \wp_enqueue_style(
             "silver-assist-security-admin",
-            "{$this->plugin_url}assets/css/admin.css",
+            $this->get_asset_url("assets/css/admin.css"),
             ["silver-assist-variables"],
             $this->plugin_version
         );
 
         \wp_enqueue_script(
             "silver-assist-security-admin",
-            "{$this->plugin_url}assets/js/admin.js",
+            $this->get_asset_url("assets/js/admin.js"),
             ["jquery"],
             $this->plugin_version,
             true
@@ -245,15 +260,9 @@ class AdminPanel
     public function ajax_get_security_status(): void
     {
         try {
-            // Verify nonce
-            if (!\wp_verify_nonce($_POST["nonce"] ?? "", "silver_assist_security_ajax")) {
-                \wp_send_json_error(["message" => "Security check failed"]);
-                return;
-            }
-
-            // Check user permissions
-            if (!\current_user_can("manage_options")) {
-                \wp_send_json_error(["message" => "Insufficient permissions"]);
+            // Use centralized AJAX validation
+            if (!SecurityHelper::validate_ajax_request("silver_assist_security_ajax")) {
+                \wp_send_json_error(["message" => "Security validation failed"]);
                 return;
             }
 
@@ -261,6 +270,12 @@ class AdminPanel
             \wp_send_json_success($status);
 
         } catch (Exception $e) {
+            SecurityHelper::log_security_event(
+                "AJAX_ERROR",
+                "Security status AJAX error: " . $e->getMessage(),
+                ["function" => "ajax_get_security_status"]
+            );
+            
             \wp_send_json_error([
                 "message" => "Error loading security status",
                 "error" => $e->getMessage()

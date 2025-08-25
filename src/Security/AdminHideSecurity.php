@@ -14,6 +14,7 @@
 namespace SilverAssist\Security\Security;
 
 use SilverAssist\Security\Core\DefaultConfig;
+use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\Core\PathValidator;
 
 // Prevent direct access
@@ -696,28 +697,7 @@ class AdminHideSecurity
      */
     private function send_404_response(): void
     {
-        \status_header(404);
-
-        // Load 404 template if available
-        $template_404 = \get_404_template();
-        if ($template_404) {
-            include $template_404;
-        } else {
-            // Fallback 404 response
-            echo "<!DOCTYPE html>
-<html>
-<head>
-    <title>404 Not Found</title>
-    <meta name=\"robots\" content=\"noindex,nofollow\">
-</head>
-<body>
-    <h1>Not Found</h1>
-    <p>The requested URL was not found on this server.</p>
-</body>
-</html>";
-        }
-
-        exit;
+        SecurityHelper::send_404_response();
     }
 
     /**

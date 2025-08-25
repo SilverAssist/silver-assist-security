@@ -15,6 +15,7 @@
 namespace SilverAssist\Security\Security;
 
 use SilverAssist\Security\Core\DefaultConfig;
+use SilverAssist\Security\Core\SecurityHelper;
 
 /**
  * Login Security class
@@ -148,7 +149,7 @@ class LoginSecurity
         // Enqueue CSS variables
         \wp_enqueue_style(
             "silver-assist-variables",
-            "{$this->plugin_url}assets/css/variables.css",
+            $this->get_asset_url("assets/css/variables.css"),
             [],
             $this->plugin_version
         );
@@ -156,7 +157,7 @@ class LoginSecurity
         // Enqueue custom password validation styles
         \wp_enqueue_style(
             "silver-assist-password-validation",
-            "{$this->plugin_url}assets/css/password-validation.css",
+            $this->get_asset_url("assets/css/password-validation.css"),
             ["silver-assist-variables"],
             $this->plugin_version
         );
@@ -164,7 +165,7 @@ class LoginSecurity
         // Enqueue custom password validation script
         \wp_enqueue_script(
             "silver-assist-password-validation",
-            "{$this->plugin_url}assets/js/password-validation.js",
+            $this->get_asset_url("assets/js/password-validation.js"),
             ["jquery", "password-strength-meter"],
             $this->plugin_version,
             true
@@ -176,6 +177,20 @@ class LoginSecurity
             "passwordSuccess" => \__("Password meets security requirements", "silver-assist-security"),
             "hideWeakConfirmation" => true // Flag to indicate weak password confirmation should be hidden
         ]);
+    }
+
+    /**
+     * Get asset URL with minification support
+     * 
+     * Returns minified version when SCRIPT_DEBUG is not true, regular version otherwise.
+     * 
+     * @since 1.1.10
+     * @param string $asset_path The relative path to the asset (e.g., 'assets/css/password-validation.css')
+     * @return string The full URL to the asset
+     */
+    private function get_asset_url(string $asset_path): string
+    {
+        return SecurityHelper::get_asset_url($asset_path);
     }
 
     /**
@@ -246,8 +261,8 @@ class LoginSecurity
      */
     public function handle_failed_login(string $username): void
     {
-        $ip = $this->get_client_ip();
-        $key = "login_attempts_{md5($ip)}";
+        $ip = SecurityHelper::get_client_ip();
+        $key = SecurityHelper::generate_ip_transient_key("login_attempts", $ip);
 
         $attempts = \get_transient($key) ?: 0;
         $attempts++;
@@ -255,16 +270,21 @@ class LoginSecurity
         \set_transient($key, $attempts, $this->lockout_duration);
 
         if ($attempts >= $this->max_attempts) {
-            // Log the lockout
-            error_log(sprintf(
-                "User locked out after %d failed attempts. IP: %s, Username: %s",
-                $attempts,
-                $ip,
-                $username
-            ));
+            // Log the lockout using centralized security logging
+            SecurityHelper::log_security_event(
+                "LOGIN_LOCKOUT",
+                "IP locked out after {$attempts} failed login attempts",
+                [
+                    "username" => $username,
+                    "attempts" => $attempts,
+                    "max_attempts" => $this->max_attempts,
+                    "lockout_duration" => $this->lockout_duration
+                ]
+            );
 
             // Set lockout flag
-            \set_transient("lockout_{md5($ip)}", true, $this->lockout_duration);
+            $lockout_key = SecurityHelper::generate_ip_transient_key("lockout", $ip);
+            \set_transient($lockout_key, true, $this->lockout_duration);
         }
     }
 
@@ -446,9 +466,12 @@ class LoginSecurity
      */
     public function clear_login_attempts(): void
     {
-        $ip = $this->get_client_ip();
-        \delete_transient("login_attempts_{md5($ip)}");
-        \delete_transient("lockout_{md5($ip)}");
+        $ip = SecurityHelper::get_client_ip();
+        $attempts_key = SecurityHelper::generate_ip_transient_key("login_attempts", $ip);
+        $lockout_key = SecurityHelper::generate_ip_transient_key("lockout", $ip);
+
+        \delete_transient($attempts_key);
+        \delete_transient($lockout_key);
     }
 
     /**
@@ -549,32 +572,7 @@ class LoginSecurity
      */
     private function is_strong_password(string $password): bool
     {
-        // At least 8 characters
-        if (strlen($password) < 8) {
-            return false;
-        }
-
-        // Must contain uppercase letter
-        if (!preg_match("/[A-Z]/", $password)) {
-            return false;
-        }
-
-        // Must contain lowercase letter
-        if (!preg_match("/[a-z]/", $password)) {
-            return false;
-        }
-
-        // Must contain number
-        if (!preg_match("/[0-9]/", $password)) {
-            return false;
-        }
-
-        // Must contain special character
-        if (!preg_match("/[^A-Za-z0-9]/", $password)) {
-            return false;
-        }
-
-        return true;
+        return SecurityHelper::is_strong_password($password);
     }
 
     /**
@@ -585,28 +583,7 @@ class LoginSecurity
      */
     private function get_client_ip(): string
     {
-        $ip_keys = [
-            "HTTP_CF_CONNECTING_IP",
-            "HTTP_CLIENT_IP",
-            "HTTP_X_FORWARDED_FOR",
-            "HTTP_X_FORWARDED",
-            "HTTP_FORWARDED_FOR",
-            "HTTP_FORWARDED",
-            "REMOTE_ADDR"
-        ];
-
-        foreach ($ip_keys as $key) {
-            if (array_key_exists($key, $_SERVER) === true) {
-                foreach (explode(",", $_SERVER[$key]) as $ip) {
-                    $ip = trim($ip);
-                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
-                        return $ip;
-                    }
-                }
-            }
-        }
-
-        return $_SERVER["REMOTE_ADDR"] ?? "0.0.0.0";
+        return SecurityHelper::get_client_ip();
     }
 
     /**
@@ -782,31 +759,17 @@ class LoginSecurity
     private function send_404_response(): void
     {
         // Log the blocked access attempt
-        error_log(sprintf(
-            "SECURITY_ALERT: Bot blocked from login page - IP: %s, User-Agent: %s, Timestamp: %s",
-            $this->get_client_ip(),
-            $_SERVER["HTTP_USER_AGENT"] ?? "Unknown",
-            \current_time("mysql")
-        ));
+        SecurityHelper::log_security_event(
+            "BOT_BLOCKED",
+            "Bot/crawler blocked from login page",
+            [
+                "user_agent" => $_SERVER["HTTP_USER_AGENT"] ?? "Unknown",
+                "request_uri" => $_SERVER["REQUEST_URI"] ?? ""
+            ]
+        );
 
-        // Send proper 404 headers
-        \status_header(404);
-        \nocache_headers();
-
-        // Send minimal 404 page content
-        echo "<!DOCTYPE html>
-<html>
-<head>
-    <title>404 Not Found</title>
-    <meta name=\"robots\" content=\"noindex,nofollow,noarchive,nosnippet,noimageindex\">
-</head>
-<body>
-    <h1>Not Found</h1>
-    <p>The requested URL was not found on this server.</p>
-</body>
-</html>";
-
-        exit;
+        // Use centralized 404 response without WordPress template to avoid conflicts
+        SecurityHelper::send_404_response(false);
     }
 
     /**
