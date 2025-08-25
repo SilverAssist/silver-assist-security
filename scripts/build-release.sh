@@ -96,12 +96,9 @@ if [ -d "assets" ]; then
     # Generate minified asset versions BEFORE copying
     echo -e "${YELLOW}🔧 Generating minified assets for production (NPM + Grunt)...${NC}"
     if [ -f "scripts/minify-assets-npm.sh" ]; then
-        # Run NPM-based minification script
-        # Capture both stdout and stderr for debugging, but don't fail the build
-        set +e  # Temporarily disable exit on error for minification
+        # Run NPM-based minification script - reliable professional build system
         MINIFY_OUTPUT=$(./scripts/minify-assets-npm.sh 2>&1)
         MINIFY_EXIT_CODE=$?
-        set -e  # Re-enable exit on error
         
         if [ $MINIFY_EXIT_CODE -eq 0 ]; then
             echo "  ✅ Minified CSS and JS files generated successfully with NPM + Grunt"
@@ -112,23 +109,8 @@ if [ -d "assets" ]; then
             echo "$MINIFY_OUTPUT" | sed 's/^/    /'
             echo -e "${YELLOW}  🔄 Proceeding with original files - build will continue${NC}"
         fi
-    elif [ -f "scripts/minify-assets.sh" ]; then
-        # Fallback to old bash script if NPM script not available
-        echo -e "${YELLOW}  📋 Using fallback bash minification script${NC}"
-        set +e  # Temporarily disable exit on error for minification
-        MINIFY_OUTPUT=$(./scripts/minify-assets.sh 2>&1)
-        MINIFY_EXIT_CODE=$?
-        set -e  # Re-enable exit on error
-        
-        if [ $MINIFY_EXIT_CODE -eq 0 ]; then
-            echo "  ✅ Minified CSS and JS files generated successfully with bash script"
-            echo "$MINIFY_OUTPUT" | grep -E "(SUCCESS|✓)" | sed 's/^/    /' || true
-        else
-            echo -e "${YELLOW}  ⚠️  Warning: Bash asset minification failed (exit code: $MINIFY_EXIT_CODE)${NC}"
-            echo -e "${YELLOW}  🔄 Proceeding with original files - build will continue${NC}"
-        fi
     else
-        echo -e "${YELLOW}  ⚠️  Warning: No minification script found, using original assets${NC}"
+        echo -e "${YELLOW}  ⚠️  Warning: NPM minification script not found, using original assets${NC}"
     fi
     
     # Now copy the assets directory (including minified files)
