@@ -31,13 +31,6 @@ class SecurityHelper
   private static string $plugin_url;
 
   /**
-   * Plugin version for cache busting
-   * 
-   * @var string
-   */
-  private static string $plugin_version;
-
-  /**
    * Initialize SecurityHelper with plugin constants
    * 
    * @since 1.1.10
@@ -46,7 +39,6 @@ class SecurityHelper
   public static function init(): void
   {
     self::$plugin_url = SILVER_ASSIST_SECURITY_URL;
-    self::$plugin_version = SILVER_ASSIST_SECURITY_VERSION;
   }
   /**
    * Get asset URL with minification support

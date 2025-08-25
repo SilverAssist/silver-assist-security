@@ -49,13 +49,6 @@ class LoginSecurity
     private int $session_timeout;
 
     /**
-     * Plugin URL for assets
-     * 
-     * @var string
-     */
-    private string $plugin_url;
-
-    /**
      * Plugin version for cache busting
      * 
      * @var string
@@ -69,7 +62,6 @@ class LoginSecurity
      */
     public function __construct()
     {
-        $this->plugin_url = SILVER_ASSIST_SECURITY_URL;
         $this->plugin_version = SILVER_ASSIST_SECURITY_VERSION;
         $this->init_configuration();
         $this->init();
