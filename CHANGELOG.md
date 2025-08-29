@@ -5,6 +5,22 @@ All notable changes to Silver Assist Security Essentials will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.11] - 2025-08-29
+
+### ⬆️ Dependencies Update
+
+#### GitHub Updater Package Enhancement
+- **📦 Updated silverassist/wp-github-updater**: Upgraded to version 1.1.3 (latest)
+  - **Enhanced Reliability**: Improved auto-update system stability
+  - **Better Error Handling**: More robust GitHub API interaction
+  - **Performance Optimization**: Faster update checks and download processes
+  - **WordPress 6.7+ Compatibility**: Full compatibility with latest WordPress versions
+
+### 🔧 Code Quality Improvements
+- **Clean Architecture**: Maintained consistent coding standards across all components
+- **Version Synchronization**: All version references updated consistently using automated script
+- **Documentation Updates**: Updated version numbers in headers and constants
+
 ## [1.1.10] - 2025-08-25
 
 ### 🐛 Critical Frontend Session Fix

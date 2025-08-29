@@ -5,7 +5,7 @@
 # Uses Grunt with grunt-contrib-uglify and grunt-contrib-cssmin for reliable
 # asset minification in both local and CI/CD environments.
 #
-# @version 1.1.10
+# @version 1.1.11
 # @author Silver Assist Security Team
 # @since 1.1.10
 
