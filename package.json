@@ -5,8 +5,10 @@
   "main": "silver-assist-security.php",
   "scripts": {
     "grunt": "grunt",
-    "minify": "grunt",
-    "build": "grunt",
+    "minify": "npm run minify:css && npm run minify:js",
+    "minify:css": "postcss assets/css/admin.css -o assets/css/admin.min.css && postcss assets/css/password-validation.css -o assets/css/password-validation.min.css && postcss assets/css/variables.css -o assets/css/variables.min.css",
+    "minify:js": "grunt uglify",
+    "build": "npm run clean && npm run minify",
     "clean": "rm -f assets/css/*.min.css assets/js/*.min.js"
   },
   "repository": {
@@ -29,9 +31,13 @@
   },
   "homepage": "https://github.com/SilverAssist/silver-assist-security#readme",
   "devDependencies": {
+    "cssnano": "^7.1.1",
     "grunt": "^1.6.1",
     "grunt-contrib-cssmin": "^5.0.0",
-    "grunt-contrib-uglify": "^5.2.2"
+    "grunt-contrib-uglify": "^5.2.2",
+    "grunt-postcss": "^0.9.0",
+    "postcss": "^8.5.6",
+    "postcss-cli": "^11.0.1"
   },
   "engines": {
     "node": ">=16.0.0",

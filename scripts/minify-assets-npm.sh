@@ -2,10 +2,16 @@
 
 # Silver Assist Security Essentials - NPM-based Asset Minification Script
 # 
-# Uses Grunt with grunt-contrib-uglify and grunt-contrib-cssmin for reliable
-# asset minification in both local and CI/CD environments.
+# Uses PostCSS + cssnano for CSS minification and Grunt with grunt-contrib-uglify
+# for JavaScript minification in both local and CI/CD environments.
+# 
+# The PostCSS system replaced grunt-contrib-cssmin to properly handle:
+# - CSS @layer directives
+# - CSS nesting
+# - Container queries  
+# - Modern CSS syntax
 #
-# @version 1.1.11
+# @version 1.1.12
 # @author Silver Assist Security Team
 # @since 1.1.10
 
@@ -59,9 +65,15 @@ main() {
         return 1
     fi
     
-    # Check if Gruntfile.js exists
+    # Check if postcss.config.js exists
+    if [ ! -f "postcss.config.js" ]; then
+        error "postcss.config.js not found - PostCSS configuration required"
+        return 1
+    fi
+    
+    # Check if Gruntfile.js exists (still needed for JavaScript minification)
     if [ ! -f "Gruntfile.js" ]; then
-        error "Gruntfile.js not found"
+        error "Gruntfile.js not found - required for JavaScript minification"
         return 1
     fi
     
@@ -75,6 +87,12 @@ main() {
     # Check if npm is available
     if ! command -v npm >/dev/null 2>&1; then
         error "npm is required but not installed"
+        return 1
+    fi
+    
+    # Check if PostCSS CLI is available
+    if ! command -v npx >/dev/null 2>&1; then
+        error "npx is required but not available"
         return 1
     fi
     
@@ -100,14 +118,20 @@ main() {
         fi
     fi
     
+    # Display build system information
+    info "Build System Information:"
+    info "  • CSS Minification: PostCSS + cssnano (modern CSS support)"
+    info "  • JS Minification: Grunt + uglify (reliable ES5 support)"
+    info "  • Command: This script runs 'npm run build' internally"
+    
     # Clean existing minified files
     info "Cleaning existing minified files..."
     rm -f assets/css/*.min.css assets/js/*.min.js
     
-    # Run Grunt to minify assets
-    info "Running Grunt to minify assets..."
-    if ! npm run grunt; then
-        error "Grunt minification failed"
+    # Run the complete build process using npm scripts
+    info "Running complete build process (CSS with PostCSS + JS with Grunt)..."
+    if ! npm run build; then
+        error "Build process failed"
         return 1
     fi
     
@@ -144,7 +168,12 @@ main() {
     echo ""
     if [ $missing_files -eq 0 ]; then
         success "✨ Asset minification completed successfully!"
-        success "All 5 minified files created"
+        success "All 5 minified files created with PostCSS (CSS) + Grunt (JS)"
+        echo ""
+        info "📊 System Information:"
+        info "  • CSS: PostCSS + cssnano (supports @layer, nesting, container queries)"
+        info "  • JavaScript: Grunt + uglify (reliable ES5 minification)"
+        info "  • Build command: npm run build"
     else
         warning "Asset minification completed with $missing_files missing files"
     fi
@@ -153,6 +182,7 @@ main() {
     info "  1. Review the generated .min.css and .min.js files"
     info "  2. Test the plugin with SCRIPT_DEBUG disabled"
     info "  3. Include minified files in release package"
+    info "  4. Use 'npm run build' for future minification"
     
     return 0
 }
@@ -166,18 +196,26 @@ show_help() {
     echo "Options:"
     echo "  -h, --help    Show this help message"
     echo ""
-    echo "This script uses npm and Grunt to generate minified versions of CSS and JavaScript files"
-    echo "using grunt-contrib-cssmin and grunt-contrib-uglify. The minified files preserve"
+    echo "This script uses npm, PostCSS, and Grunt to generate minified versions of CSS and JavaScript files"
+    echo "using PostCSS + cssnano for CSS and grunt-contrib-uglify for JavaScript. The minified files preserve"
     echo "the original file headers and are saved with .min.css and .min.js extensions."
     echo ""
     echo "Requirements:"
     echo "  - Node.js 16+ and npm 8+"
-    echo "  - package.json with grunt dependencies"
-    echo "  - Gruntfile.js with cssmin and uglify tasks"
+    echo "  - package.json with postcss, cssnano, and grunt dependencies"
+    echo "  - postcss.config.js with cssnano configuration"
+    echo "  - Gruntfile.js with uglify tasks for JavaScript"
     echo ""
     echo "Examples:"
-    echo "  $0                 # Minify all CSS and JS files"
+    echo "  $0                 # Run complete build (CSS with PostCSS + JS with Grunt)"
     echo "  $0 --help          # Show this help"
+    echo ""
+    echo "Available npm commands:"
+    echo "  npm run build      # Complete build process (recommended)"
+    echo "  npm run minify     # Minify CSS + JS without cleaning"
+    echo "  npm run minify:css # Minify only CSS files with PostCSS"
+    echo "  npm run minify:js  # Minify only JS files with Grunt"
+    echo "  npm run clean      # Remove all .min.css and .min.js files"
     echo ""
 }
 

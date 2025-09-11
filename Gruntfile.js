@@ -42,69 +42,43 @@ module.exports = function (grunt) {
             }
         },
 
-        // CSS minification with clean-css
-        cssmin: {
+        // CSS minification with PostCSS and cssnano (supports modern CSS)
+        postcss: {
             options: {
-                banner: "/*! <%= pkg.name %> - v<%= pkg.version %> - " +
-                       "<%= grunt.template.today(\"yyyy-mm-dd\") %> */\n",
-                compatibility: "ie9",  // Support IE9+ for WordPress compatibility
-                report: "gzip",
-                level: {
-                    1: {
-                        all: true,
-                        normalizeUrls: false  // Don't change URLs
-                    },
-                    2: {
-                        all: true,
-                        removeDuplicateRules: true,
-                        reduceNonAdjacentRules: true,
-                        mergeAdjacentRules: true,
-                        mergeIntoShorthands: true,
-                        mergeMedia: true,
-                        mergeNonAdjacentRules: true,
-                        mergeSemantically: false,  // Keep semantic meaning
-                        overrideProperties: true,
-                        removeEmpty: true,
-                        reduceNonAdjacentRules: true,
-                        removeDuplicateFontRules: true,
-                        removeDuplicateMediaBlocks: true,
-                        removeDuplicateRules: true,
-                        removeUnusedAtRules: false,  // Keep all @rules for WordPress compatibility
-                        restructureRules: true
-                    }
-                }
+                processors: [
+                    require("cssnano")({
+                        preset: "default"
+                    })
+                ]
             },
             admin: {
-                files: {
-                    "assets/css/admin.min.css": ["assets/css/admin.css"]
-                }
+                src: "assets/css/admin.css",
+                dest: "assets/css/admin.min.css"
             },
             passwordValidation: {
-                files: {
-                    "assets/css/password-validation.min.css": ["assets/css/password-validation.css"]
-                }
+                src: "assets/css/password-validation.css", 
+                dest: "assets/css/password-validation.min.css"
             },
             variables: {
-                files: {
-                    "assets/css/variables.min.css": ["assets/css/variables.css"]
-                }
+                src: "assets/css/variables.css",
+                dest: "assets/css/variables.min.css"
             }
         }
     });
 
     // Load grunt plugins
-    grunt.loadNpmTasks("grunt-contrib-cssmin");
+    grunt.loadNpmTasks("grunt-postcss");
     grunt.loadNpmTasks("grunt-contrib-uglify");
 
     // Register tasks
-    grunt.registerTask("css", ["cssmin"]);
+    grunt.registerTask("css", ["postcss"]);
     grunt.registerTask("js", ["uglify"]);
-    grunt.registerTask("default", ["cssmin", "uglify"]);
-    grunt.registerTask("minify", ["cssmin", "uglify"]);
+    grunt.registerTask("default", ["postcss", "uglify"]);
+    grunt.registerTask("minify", ["postcss", "uglify"]);
 
     // Custom task to show minification results
     grunt.registerTask("build", "Build minified assets", function() {
-        grunt.task.run(["cssmin", "uglify"]);
+        grunt.task.run(["postcss", "uglify"]);
         grunt.log.writeln("");
         grunt.log.writeln("✨ Asset minification completed successfully!");
         grunt.log.writeln("📦 Generated files:");

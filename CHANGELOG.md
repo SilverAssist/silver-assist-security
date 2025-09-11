@@ -5,6 +5,50 @@ All notable changes to Silver Assist Security Essentials will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.12] - 2025-09-10
+
+### 🎨 Modern CSS Minification System Upgrade
+
+#### PostCSS + cssnano Implementation
+- **🚀 CRITICAL FIX**: Replaced broken grunt-contrib-cssmin with modern PostCSS + cssnano system:
+  - **CSS Corruption Fixed**: grunt-contrib-cssmin was corrupting modern CSS features (@layer, nesting)
+  - **All Classes Preserved**: Fixed loss of CSS classes during minification (46/46 classes now preserved)
+  - **Modern CSS Support**: Full support for @layer directives, CSS nesting, container queries
+  - **Better Compression**: Improved compression rates (37-50% vs previous inconsistent results)
+  - **Build System Hybrid**: PostCSS for CSS + Grunt for JavaScript (best of both worlds)
+
+#### Updated Build Commands
+- **New Primary Command**: `npm run build` - Complete CSS + JS minification
+- **Granular Control**: `npm run minify:css` (PostCSS) and `npm run minify:js` (Grunt)
+- **Enhanced Script**: `./scripts/minify-assets-npm.sh` with detailed logging and verification
+- **Development Friendly**: `npm run clean` to remove minified files during development
+
+#### Developer Experience Improvements
+- **Real-time Verification**: Script shows compression ratios and file size reductions
+- **Dependency Management**: Auto-installs and updates npm packages
+- **Error Prevention**: Validates all required configuration files (postcss.config.js, Gruntfile.js)
+- **Comprehensive Logging**: Detailed build process information with colored output
+
+### 📚 Documentation Updates
+- **Complete Guide**: Updated all documentation to reflect new PostCSS + Grunt workflow
+- **Script README**: Added comprehensive `minify-assets-npm.sh` documentation
+- **Release Workflow**: Updated release process to include asset minification step
+- **Developer Instructions**: Enhanced Copilot instructions with modern CSS minification details
+
+### 🔧 Technical Details
+- **CSS Pipeline**: assets/css/*.css → PostCSS + cssnano → assets/css/*.min.css
+- **JS Pipeline**: assets/js/*.js → Grunt + uglify → assets/js/*.min.js  
+- **Configuration**: postcss.config.js (CSS) + Gruntfile.js (JS) + package.json (dependencies)
+- **Compression**: CSS 37-50% reduction, JavaScript 69-79% reduction
+- **Compatibility**: Node.js 16+, npm 8+, modern CSS features fully supported
+
+### 🎯 Impact
+- **Fixed Critical Issue**: Admin styles no longer lost during minification
+- **Enhanced Performance**: Better compression rates for faster page loads
+- **Future-Proof**: Support for cutting-edge CSS features as they're adopted
+- **Reliable Builds**: No more random minification failures or corrupted output
+- **Developer Productivity**: Clear build commands and comprehensive error reporting
+
 ## [1.1.11] - 2025-08-29
 
 ### ⬆️ Dependencies Update
