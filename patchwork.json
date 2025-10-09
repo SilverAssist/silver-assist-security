@@ -1,0 +1,10 @@
+{
+  "redefinable-internals": [
+    "class_exists",
+    "function_exists",
+    "ini_get"
+  ],
+  "whitelist": [
+    "get_graphql_setting"
+  ]
+}

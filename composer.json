@@ -24,6 +24,7 @@
         "silverassist/wp-github-updater": "^1.0"
     },
     "require-dev": {
+        "axepress/wp-graphql-stubs": "^2.3",
         "brain/monkey": "^2.6",
         "dealerdirect/phpcodesniffer-composer-installer": "^0.7.2",
         "mockery/mockery": "^1.6",

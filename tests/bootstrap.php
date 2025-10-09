@@ -16,7 +16,9 @@ if (!defined("SILVER_ASSIST_SECURITY_TESTING")) {
 
 // Composer autoloader (loads Brain Monkey FIRST before WordPress stubs)
 if (file_exists(dirname(__DIR__) . "/vendor/autoload.php")) {
-    require_once dirname(__DIR__) . "/vendor/autoload.php";
+    require_once __DIR__ . "/../vendor/autoload.php";
+
+// Define plugin constants for testing
 }
 
 // NOTE: WordPress stubs are NOT loaded here to avoid conflicts with Brain Monkey

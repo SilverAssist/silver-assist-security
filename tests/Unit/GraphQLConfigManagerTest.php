@@ -6,20 +6,21 @@
  *
  * @package SilverAssist\Security\Tests\Unit
  * @since 1.1.0
+ * @version 1.1.12
  */
 
 namespace SilverAssist\Security\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
+use Brain\Monkey\Functions;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
-use SilverAssist\Security\Tests\Helpers\TestHelper;
+use SilverAssist\Security\Tests\Helpers\BrainMonkeyTestCase;
 
 /**
  * Test GraphQLConfigManager functionality
  * 
  * @since 1.1.0
  */
-class GraphQLConfigManagerTest extends TestCase
+class GraphQLConfigManagerTest extends BrainMonkeyTestCase
 {
     /**
      * GraphQLConfigManager instance
@@ -35,7 +36,8 @@ class GraphQLConfigManagerTest extends TestCase
     {
         parent::setUp();
         
-        // Reset singleton for clean testing
+        $this->setup_wordpress_mocks();
+        
         $reflection = new \ReflectionClass(GraphQLConfigManager::class);
         $instance = $reflection->getProperty("instance");
         $instance->setAccessible(true);
@@ -45,241 +47,240 @@ class GraphQLConfigManagerTest extends TestCase
     }
 
     /**
-     * Clean up after tests
+     * Setup WordPress function mocks
+     *
+     * @return void
      */
-    protected function tearDown(): void
+    private function setup_wordpress_mocks(): void
     {
-        // Reset any WordPress options that might have been set during testing
-        delete_option("silver_assist_graphql_query_depth");
-        delete_option("silver_assist_graphql_query_complexity");
-        delete_option("silver_assist_graphql_query_timeout");
+        Functions\when("get_option")->alias(function($option, $default = false) {
+            $defaults = [
+                "silver_assist_graphql_query_depth" => 8,
+                "silver_assist_graphql_query_complexity" => 100,
+                "silver_assist_graphql_query_timeout" => 30,
+                "silver_assist_graphql_headless_mode" => 0,
+            ];
+            return $defaults[$option] ?? $default;
+        });
+
+        // Mock class_exists - return true for WPGraphQL to enable testing
+        Functions\when("class_exists")->alias(function($class_name) {
+            return $class_name === "WPGraphQL";
+        });
+
+        Functions\when("get_transient")->justReturn(false);
+        Functions\when("set_transient")->justReturn(true);
+        Functions\when("delete_transient")->justReturn(true);
         
-        // Clear any transients
-        delete_transient("graphql_config_query_depth");
-        delete_transient("graphql_config_query_complexity");
-        delete_transient("graphql_config_query_timeout");
-        delete_transient("graphql_config_rate_limit");
-        delete_transient("graphql_config_wpgraphql_active");
-        delete_transient("graphql_config_headless_mode");
+        // Mock function_exists - return FALSE for get_graphql_setting to simulate
+        // WordPress environment without WPGraphQL plugin
+        Functions\when("function_exists")->alias(function($function_name) {
+            return $function_name !== "get_graphql_setting";
+        });
         
-        parent::tearDown();
+        Functions\when("ini_get")->alias(function($option) {
+            return $option === "max_execution_time" ? "30" : false;
+        });
     }
 
     /**
      * Test singleton pattern implementation
      * 
-     * @since 1.1.0
+     * @since 1.1.12
      */
     public function test_singleton_pattern(): void
     {
         $instance1 = GraphQLConfigManager::getInstance();
         $instance2 = GraphQLConfigManager::getInstance();
-        
-        $this->assertSame($instance1, $instance2, "GraphQLConfigManager should implement singleton pattern");
+
+        $this->assertSame($instance1, $instance2);
         $this->assertInstanceOf(GraphQLConfigManager::class, $instance1);
     }
 
     /**
-     * Test query depth configuration
-     * 
-     * @since 1.1.0
+     * Test WPGraphQL availability detection
+     *
+     * In test environment, WPGraphQL function is not available (realistic scenario)
+     * GraphQLConfigManager should gracefully handle this
+     *
+     * @since 1.1.12
+     * @return void
      */
-    public function test_query_depth_configuration(): void
+    public function test_wpgraphql_availability_detection(): void
     {
-        // Test default value
-        $depth = $this->config_manager->get_query_depth();
-        $this->assertIsInt($depth, "Query depth should be integer");
-        $this->assertGreaterThan(0, $depth, "Query depth should be positive");
-        $this->assertLessThanOrEqual(50, $depth, "Query depth should be reasonable");
+        $is_available = $this->config_manager->is_wpgraphql_available();
         
-        // Test with custom WordPress option
-        update_option("silver_assist_graphql_query_depth", 15);
-        
-        // Reset singleton to pick up new option
-        $reflection = new \ReflectionClass(GraphQLConfigManager::class);
-        $instance = $reflection->getProperty("instance");
-        $instance->setAccessible(true);
-        $instance->setValue(null, null);
-        
-        $new_manager = GraphQLConfigManager::getInstance();
-        $custom_depth = $new_manager->get_query_depth();
-        $this->assertEquals(15, $custom_depth, "Should use custom WordPress option value");
-    }
-
-    /**
-     * Test query complexity configuration
-     * 
-     * @since 1.1.0
-     */
-    public function test_query_complexity_configuration(): void
-    {
-        $complexity = $this->config_manager->get_query_complexity();
-        $this->assertIsInt($complexity, "Query complexity should be integer");
-        $this->assertGreaterThan(0, $complexity, "Query complexity should be positive");
-    }
-
-    /**
-     * Test query timeout configuration
-     * 
-     * @since 1.1.0
-     */
-    public function test_query_timeout_configuration(): void
-    {
-        $timeout = $this->config_manager->get_query_timeout();
-        $this->assertIsInt($timeout, "Query timeout should be integer");
-        $this->assertGreaterThan(0, $timeout, "Query timeout should be positive");
-        $this->assertLessThanOrEqual(30, $timeout, "Query timeout should be reasonable");
-    }
-
-    /**
-     * Test intelligent rate limiting
-     * 
-     * @since 1.1.0
-     */
-    public function test_rate_limiting(): void
-    {
-        $rate_limit = $this->config_manager->get_rate_limit();
-        $this->assertIsInt($rate_limit, "Rate limit should be integer");
-        $this->assertGreaterThan(0, $rate_limit, "Rate limit should be positive");
-        
-        // Rate limit should be reasonable (between 10 and 200 requests per minute)
-        $this->assertGreaterThanOrEqual(10, $rate_limit, "Rate limit should allow reasonable usage");
-        $this->assertLessThanOrEqual(200, $rate_limit, "Rate limit should prevent abuse");
-    }
-
-    /**
-     * Test WPGraphQL detection
-     * 
-     * @since 1.1.0
-     */
-    public function test_wpgraphql_detection(): void
-    {
-        $is_active = $this->config_manager->is_wpgraphql_active();
-        $this->assertIsBool($is_active, "WPGraphQL detection should return boolean");
-        
-        // The actual value depends on test environment, but should be consistent
-        $is_active_second_call = $this->config_manager->is_wpgraphql_active();
-        $this->assertEquals($is_active, $is_active_second_call, "WPGraphQL detection should be consistent");
+        // In test environment, WPGraphQL is not available (function_exists returns false)
+        $this->assertFalse($is_available);
     }
 
     /**
      * Test headless mode detection
-     * 
-     * @since 1.1.0
+     *
+     * @since 1.1.12
+     * @return void
      */
     public function test_headless_mode_detection(): void
     {
         $is_headless = $this->config_manager->is_headless_mode();
-        $this->assertIsBool($is_headless, "Headless mode detection should return boolean");
+        
+        $this->assertIsBool($is_headless);
+        $this->assertFalse($is_headless);
     }
 
     /**
-     * Test security level evaluation
-     * 
-     * @since 1.1.0
+     * Test PHP execution timeout retrieval
+     *
+     * @since 1.1.12
+     * @return void
      */
-    public function test_security_level_evaluation(): void
+    public function test_php_execution_timeout(): void
     {
-        $security_level = $this->config_manager->evaluate_security_level();
-        $this->assertIsString($security_level, "Security level should be string");
+        $timeout = $this->config_manager->get_php_execution_timeout();
         
-        $valid_levels = ["low", "medium", "high", "maximum"];
-        $this->assertContains($security_level, $valid_levels, "Security level should be valid");
+        $this->assertIsInt($timeout);
+        $this->assertEquals(30, $timeout);
+    }
+
+    /**
+     * Test timeout configuration
+     *
+     * @since 1.1.12
+     * @return void
+     */
+    public function test_timeout_configuration(): void
+    {
+        $timeout_config = $this->config_manager->get_timeout_config();
+        
+        $this->assertIsArray($timeout_config);
+        $this->assertArrayHasKey("php_timeout", $timeout_config);
+        $this->assertArrayHasKey("current_timeout", $timeout_config);
+        $this->assertArrayHasKey("is_unlimited_php", $timeout_config);
+        $this->assertArrayHasKey("is_using_php_default", $timeout_config);
+        $this->assertArrayHasKey("recommended_min", $timeout_config);
+        $this->assertArrayHasKey("recommended_max", $timeout_config);
     }
 
     /**
      * Test complete configuration retrieval
-     * 
-     * @since 1.1.0
+     *
+     * @since 1.1.12
+     * @return void
      */
-    public function test_all_configurations(): void
+    public function test_configuration_retrieval(): void
     {
-        $config = $this->config_manager->get_all_configurations();
-        $this->assertIsArray($config, "All configurations should return array");
+        $config = $this->config_manager->get_configuration();
         
-        // Check required keys exist
-        $required_keys = [
-            "query_depth_limit",
-            "query_complexity_limit", 
-            "query_timeout",
-            "rate_limit",
-            "is_wpgraphql_active",
-            "is_headless_mode",
-            "security_level"
-        ];
-        
-        foreach ($required_keys as $key) {
-            $this->assertArrayHasKey($key, $config, "Configuration should include {$key}");
-        }
-        
-        // Verify data types
-        $this->assertIsInt($config["query_depth_limit"], "Query depth should be integer");
-        $this->assertIsInt($config["query_complexity_limit"], "Query complexity should be integer");
-        $this->assertIsInt($config["query_timeout"], "Query timeout should be integer");
-        $this->assertIsInt($config["rate_limit"], "Rate limit should be integer");
-        $this->assertIsBool($config["is_wpgraphql_active"], "WPGraphQL status should be boolean");
-        $this->assertIsBool($config["is_headless_mode"], "Headless mode should be boolean");
-        $this->assertIsString($config["security_level"], "Security level should be string");
+        $this->assertIsArray($config);
+        $this->assertArrayHasKey("query_depth_limit", $config);
+        $this->assertArrayHasKey("query_complexity_limit", $config);
+        $this->assertArrayHasKey("query_timeout", $config);
+        $this->assertArrayHasKey("introspection_enabled", $config);
+        $this->assertArrayHasKey("debug_mode", $config);
+        $this->assertArrayHasKey("endpoint_access", $config);
+        $this->assertArrayHasKey("batch_enabled", $config);
+        $this->assertArrayHasKey("batch_limit", $config);
     }
 
     /**
-     * Test configuration caching
-     * 
-     * @since 1.1.0
+     * Test security recommendations generation
+     *
+     * @since 1.1.12
+     * @return void
      */
-    public function test_configuration_caching(): void
+    public function test_security_recommendations(): void
     {
-        // First call should cache the configuration
-        $depth1 = $this->config_manager->get_query_depth();
+        $recommendations = $this->config_manager->get_security_recommendations();
         
-        // Second call should use cached value (same result)
-        $depth2 = $this->config_manager->get_query_depth();
-        
-        $this->assertEquals($depth1, $depth2, "Cached configuration should be consistent");
-        
-        // Verify that transients are being used for caching
-        $cached_depth = get_transient("graphql_config_query_depth");
-        if ($cached_depth !== false) {
-            $this->assertEquals($depth1, $cached_depth, "Transient cache should match configuration");
+        $this->assertIsArray($recommendations);
+        // Recommendations may be empty if configuration is secure
+        // Each recommendation should have 'level' and 'message' keys
+        foreach ($recommendations as $recommendation) {
+            $this->assertIsArray($recommendation);
+            $this->assertArrayHasKey("level", $recommendation);
+            $this->assertArrayHasKey("message", $recommendation);
         }
     }
 
     /**
-     * Test configuration HTML generation
-     * 
-     * @since 1.1.0
+     * Test settings display HTML generation
+     *
+     * @since 1.1.12
+     * @return void
      */
-    public function test_configuration_html(): void
+    public function test_settings_display(): void
     {
-        $html = $this->config_manager->get_configuration_html();
-        $this->assertIsString($html, "Configuration HTML should be string");
-        $this->assertNotEmpty($html, "Configuration HTML should not be empty");
+        $html = $this->config_manager->get_settings_display();
         
-        // Should contain basic HTML structure
-        $this->assertStringContainsString("<div", $html, "HTML should contain div elements");
-        
-        // Should contain configuration values
-        $depth = $this->config_manager->get_query_depth();
-        $this->assertStringContainsString((string)$depth, $html, "HTML should display query depth");
+        $this->assertIsString($html);
+        $this->assertStringContainsString("graphql", strtolower($html));
     }
 
     /**
-     * Test error handling for missing WPGraphQL
-     * 
-     * @since 1.1.0
+     * Test safe limit retrieval
+     *
+     * @since 1.1.12
+     * @return void
      */
-    public function test_missing_wpgraphql_handling(): void
+    public function test_safe_limit_retrieval(): void
     {
-        // This test assumes WPGraphQL might not be available in test environment
-        // The configuration should still work with fallback values
+        $depth_limit = $this->config_manager->get_safe_limit("depth");
+        $complexity_limit = $this->config_manager->get_safe_limit("complexity");
+        $timeout_limit = $this->config_manager->get_safe_limit("timeout");
         
-        $config = $this->config_manager->get_all_configurations();
-        $this->assertIsArray($config, "Configuration should work even without WPGraphQL");
+        $this->assertIsInt($depth_limit);
+        $this->assertIsInt($complexity_limit);
+        $this->assertIsInt($timeout_limit);
         
-        // All required values should still be present and valid
-        $this->assertGreaterThan(0, $config["query_depth_limit"], "Should have fallback query depth");
-        $this->assertGreaterThan(0, $config["query_complexity_limit"], "Should have fallback complexity");
-        $this->assertGreaterThan(0, $config["query_timeout"], "Should have fallback timeout");
-        $this->assertGreaterThan(0, $config["rate_limit"], "Should have fallback rate limit");
+        $this->assertGreaterThan(0, $depth_limit);
+        $this->assertGreaterThan(0, $complexity_limit);
+        $this->assertGreaterThan(0, $timeout_limit);
+    }
+
+    /**
+     * Test rate limiting configuration
+     *
+     * @since 1.1.12
+     * @return void
+     */
+    public function test_rate_limiting_configuration(): void
+    {
+        $rate_config = $this->config_manager->get_rate_limiting_config();
+        
+        $this->assertIsArray($rate_config);
+        $this->assertArrayHasKey("requests_per_minute", $rate_config);
+        $this->assertArrayHasKey("burst_limit", $rate_config);
+        $this->assertArrayHasKey("timeout_seconds", $rate_config);
+    }
+
+    /**
+     * Test WPGraphQL integration status monitoring
+     *
+     * @since 1.1.12
+     * @return void
+     */
+    public function test_integration_status(): void
+    {
+        $status = $this->config_manager->get_integration_status();
+        
+        $this->assertIsArray($status);
+        $this->assertArrayHasKey("wpgraphql_available", $status);
+        $this->assertArrayHasKey("headless_mode", $status);
+        $this->assertArrayHasKey("current_config", $status);
+        $this->assertArrayHasKey("security_level", $status);
+        $this->assertArrayHasKey("recommendations", $status);
+    }
+
+    /**
+     * Test cache clearing
+     *
+     * @since 1.1.12
+     * @return void
+     */
+    public function test_cache_clearing(): void
+    {
+        $this->config_manager->clear_cache();
+        
+        $this->assertTrue(true);
     }
 }

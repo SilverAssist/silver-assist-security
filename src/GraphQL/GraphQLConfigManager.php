@@ -161,7 +161,7 @@ class GraphQLConfigManager
       return $default;
     }
 
-    return get_graphql_setting($setting_key, $default);
+    return \get_graphql_setting($setting_key, $default);
   }
 
   /**
