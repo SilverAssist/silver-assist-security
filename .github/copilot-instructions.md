@@ -22,6 +22,383 @@ The plugin specifically addresses three critical security issues commonly found 
 - **Real-time Dashboard**: Live security monitoring with AJAX updates
 - **Multi-language Support**: Complete i18n implementation (English/Spanish)
 - **WP-CLI**: Required for translation file generation and management (install via `brew install wp-cli`)
+- **WordPress Test Suite**: Real WordPress environment with WP_UnitTestCase for comprehensive testing
+
+## 🚨 Test-Driven Development (TDD) - MANDATORY
+
+**CRITICAL: This is a security plugin. ALL code MUST be test-driven. Write tests FIRST, then implement features.**
+
+### TDD Workflow - The Red-Green-Refactor Cycle
+
+**🚨 MANDATORY DEVELOPMENT SEQUENCE:**
+
+#### **1. RED Phase - Write Failing Tests First**
+```bash
+# ALWAYS start here - write the test BEFORE any implementation
+vendor/bin/phpunit tests/Security/NewFeatureTest.php
+# Expected: Test fails (RED) because feature doesn't exist yet
+```
+
+**Rules:**
+- ✅ Write test for the feature you want to implement
+- ✅ Test MUST fail initially (proves test is valid)
+- ✅ Test describes the expected behavior clearly
+- ❌ NEVER write implementation code first
+- ❌ NEVER skip the RED phase
+
+**Example - New Security Feature:**
+```php
+// tests/Security/CSRFProtectionTest.php - WRITE THIS FIRST
+class CSRFProtectionTest extends WP_UnitTestCase
+{
+    public function test_csrf_token_generation(): void
+    {
+        $csrf = new CSRFProtection();
+        $token = $csrf->generate_token();
+        
+        $this->assertNotEmpty($token);
+        $this->assertEquals(32, strlen($token));
+    }
+    
+    public function test_csrf_token_validation(): void
+    {
+        $csrf = new CSRFProtection();
+        $token = $csrf->generate_token();
+        
+        $this->assertTrue($csrf->validate_token($token));
+        $this->assertFalse($csrf->validate_token("invalid_token"));
+    }
+}
+
+// Run test - it MUST fail (class doesn't exist)
+// vendor/bin/phpunit tests/Security/CSRFProtectionTest.php
+// ❌ Error: Class 'CSRFProtection' not found - GOOD! Now we can implement.
+```
+
+#### **2. GREEN Phase - Minimal Implementation**
+```php
+// src/Security/CSRFProtection.php - NOW implement to make test pass
+class CSRFProtection
+{
+    public function generate_token(): string
+    {
+        return bin2hex(random_bytes(16)); // Exactly 32 chars
+    }
+    
+    public function validate_token(string $token): bool
+    {
+        // Minimal implementation to pass test
+        return strlen($token) === 32 && ctype_xdigit($token);
+    }
+}
+
+// Run test again
+// vendor/bin/phpunit tests/Security/CSRFProtectionTest.php
+// ✅ OK (2 tests, 4 assertions) - GREEN! Tests pass.
+```
+
+**Rules:**
+- ✅ Write MINIMAL code to make test pass
+- ✅ Don't add features not covered by tests
+- ✅ Focus on making the RED test turn GREEN
+- ❌ Don't over-engineer or add "nice to have" features
+- ❌ Don't skip tests to "save time"
+
+#### **3. REFACTOR Phase - Improve Code Quality**
+```php
+// Now refactor with confidence - tests ensure nothing breaks
+class CSRFProtection
+{
+    private const TOKEN_LENGTH = 16; // bytes (32 hex chars)
+    private const TOKEN_LIFETIME = 3600; // 1 hour
+    
+    public function generate_token(): string
+    {
+        $token = bin2hex(random_bytes(self::TOKEN_LENGTH));
+        
+        // Store with expiration (refactor - add session storage)
+        \set_transient("csrf_token_{$token}", time(), self::TOKEN_LIFETIME);
+        
+        return $token;
+    }
+    
+    public function validate_token(string $token): bool
+    {
+        // Refactor - add expiration check
+        if (strlen($token) !== self::TOKEN_LENGTH * 2 || !ctype_xdigit($token)) {
+            return false;
+        }
+        
+        $stored_time = \get_transient("csrf_token_{$token}");
+        return $stored_time !== false;
+    }
+}
+
+// Run tests after refactor
+// vendor/bin/phpunit tests/Security/CSRFProtectionTest.php
+// ✅ Still passing - refactor successful!
+```
+
+**Rules:**
+- ✅ Refactor ONLY when tests are passing
+- ✅ Run tests after each refactor
+- ✅ Improve code structure, readability, performance
+- ✅ Extract constants, improve naming, reduce duplication
+- ❌ NEVER refactor with failing tests
+- ❌ Don't change behavior during refactor
+
+### TDD Benefits for Security Plugin
+
+**Why TDD is CRITICAL for security:**
+
+1. **Security Validation**: Tests prove security features work BEFORE deployment
+2. **Regression Prevention**: Changes can't break existing security measures
+3. **Documentation**: Tests document expected security behavior
+4. **Confidence**: Refactor security code without fear of breaking protections
+5. **CI/CD Integration**: Automated testing catches issues before production
+
+### TDD Test Organization
+
+```
+tests/
+├── Unit/                          # Unit tests (isolated, fast)
+│   ├── DefaultConfigTest.php     # Configuration management
+│   ├── SecurityHelperTest.php    # Utility functions
+│   └── GraphQLConfigManagerTest.php
+├── Security/                      # Security feature tests
+│   ├── GeneralSecurityTest.php   # Headers, cookies, hardening
+│   ├── LoginSecurityTest.php     # Brute force, bot blocking
+│   └── AdminHideSecurityTest.php # Admin path hiding
+├── Core/                          # Core functionality tests
+│   └── PathValidatorTest.php     # Path validation & security
+├── Integration/                   # Integration tests
+│   └── AdminPanelTest.php        # Admin interface integration
+└── Helpers/                       # Test utilities
+    └── TestHelper.php             # Shared test functions
+```
+
+### TDD Development Checklist
+
+**Before starting ANY new feature:**
+
+- [ ] **Write test file first** in appropriate `tests/` directory
+- [ ] **Run test** - verify it fails (RED phase)
+- [ ] **Implement minimal code** to pass test (GREEN phase)
+- [ ] **Run test again** - verify it passes
+- [ ] **Refactor if needed** - improve code quality
+- [ ] **Run test after refactor** - ensure still passing
+- [ ] **Commit** with test and implementation together
+- [ ] **CI/CD validation** - verify in GitHub Actions
+
+**Example commit message:**
+```bash
+git commit -m "✨ Add CSRF token protection with TDD
+
+- Write tests first (RED): CSRFProtectionTest with 5 test cases
+- Implement feature (GREEN): CSRFProtection class passes all tests
+- Refactor: Add transient storage and expiration
+- All tests passing: 5/5 ✅
+- Security feature validated before deployment"
+```
+
+### TDD Anti-Patterns - AVOID THESE
+
+**❌ Implementation-First Development:**
+```php
+// WRONG - Don't do this!
+// 1. Write CSRFProtection class
+// 2. Then write tests to match implementation
+// Problem: Tests validate what you built, not what you need
+```
+
+**❌ Testing After Bugs:**
+```php
+// WRONG - Don't do this!
+// 1. Deploy feature
+// 2. Bug discovered in production
+// 3. Write test to reproduce bug
+// 4. Fix bug
+// Problem: Security vulnerability was already deployed!
+```
+
+**❌ Skipping Tests for "Speed":**
+```php
+// WRONG - Don't do this!
+// "I'll add tests later, need to ship this quickly"
+// Problem: Technical debt, untested code, security risks
+```
+
+**✅ Correct TDD Approach:**
+```php
+// RIGHT - Always do this!
+// 1. Write test describing desired behavior
+// 2. Run test - verify it fails (RED)
+// 3. Implement minimal code to pass test (GREEN)
+// 4. Refactor for quality (REFACTOR)
+// 5. Commit test + implementation together
+// 6. Deploy with confidence - tests prove it works
+```
+
+### TDD Test Coverage Requirements
+
+**MANDATORY coverage for security plugin:**
+
+- **Unit Tests**: All utility functions, helpers, validators
+- **Security Tests**: All security features (headers, cookies, auth, validation)
+- **Integration Tests**: Admin panel, WordPress hooks, filters
+- **Edge Cases**: Empty inputs, invalid data, malicious attempts
+- **Failure Cases**: Test that security features block attacks
+
+**Target Coverage:**
+- Critical security classes: **100%** coverage required
+- Utility classes: **90%+** coverage required
+- Admin interface: **80%+** coverage required
+- Overall project: **85%+** coverage required
+
+**Generate coverage report:**
+```bash
+vendor/bin/phpunit --coverage-html coverage/
+open coverage/index.html
+```
+
+### TDD Integration with GitHub Actions
+
+**Automated TDD validation in CI/CD:**
+
+```yaml
+# .github/workflows/quality-checks.yml
+wordpress-tests:
+  strategy:
+    matrix:
+      php: ['8.0', '8.1', '8.2', '8.3']
+      wordpress: ['6.5', '6.6', 'latest']
+  steps:
+    - name: Run WordPress Test Suite
+      run: vendor/bin/phpunit --testdox
+    - name: Fail if tests don't pass
+      run: exit 1 if any test fails
+```
+
+**Benefits:**
+- Every push runs full test suite
+- 12 environment combinations tested (PHP × WordPress versions)
+- Immediate feedback on test failures
+- Prevents merging code with failing tests
+
+### Real-World TDD Example - Login Rate Limiting
+
+**Step 1: Write Test First (RED Phase)**
+```php
+// tests/Security/RateLimitTest.php
+class RateLimitTest extends WP_UnitTestCase
+{
+    public function test_rate_limit_blocks_excessive_requests(): void
+    {
+        $rate_limiter = new RateLimiter();
+        $ip = "192.168.1.100";
+        
+        // Allow first 5 requests
+        for ($i = 0; $i < 5; $i++) {
+            $this->assertTrue($rate_limiter->allow_request($ip));
+        }
+        
+        // Block 6th request
+        $this->assertFalse($rate_limiter->allow_request($ip));
+    }
+}
+
+// Run: vendor/bin/phpunit tests/Security/RateLimitTest.php
+// ❌ FAILS - RateLimiter class doesn't exist (RED phase complete)
+```
+
+**Step 2: Implement Feature (GREEN Phase)**
+```php
+// src/Security/RateLimiter.php
+class RateLimiter
+{
+    private const MAX_REQUESTS = 5;
+    private const TIME_WINDOW = 60; // seconds
+    
+    public function allow_request(string $ip): bool
+    {
+        $key = "rate_limit_{$ip}";
+        $requests = (int) \get_transient($key);
+        
+        if ($requests >= self::MAX_REQUESTS) {
+            return false;
+        }
+        
+        \set_transient($key, $requests + 1, self::TIME_WINDOW);
+        return true;
+    }
+}
+
+// Run: vendor/bin/phpunit tests/Security/RateLimitTest.php
+// ✅ PASSES - Feature works (GREEN phase complete)
+```
+
+**Step 3: Refactor (REFACTOR Phase)**
+```php
+// Add more sophisticated features while maintaining passing tests
+class RateLimiter
+{
+    private const MAX_REQUESTS = 5;
+    private const TIME_WINDOW = 60;
+    private const LOCKOUT_DURATION = 900; // 15 minutes after limit
+    
+    public function allow_request(string $ip): bool
+    {
+        // Check if IP is in lockout
+        if ($this->is_locked_out($ip)) {
+            SecurityHelper::log_security_event(
+                "RATE_LIMIT_LOCKOUT",
+                "IP in lockout period: {$ip}",
+                ["ip" => $ip]
+            );
+            return false;
+        }
+        
+        $key = "rate_limit_{$ip}";
+        $requests = (int) \get_transient($key);
+        
+        if ($requests >= self::MAX_REQUESTS) {
+            $this->initiate_lockout($ip);
+            return false;
+        }
+        
+        \set_transient($key, $requests + 1, self::TIME_WINDOW);
+        return true;
+    }
+    
+    private function is_locked_out(string $ip): bool
+    {
+        return \get_transient("rate_limit_lockout_{$ip}") !== false;
+    }
+    
+    private function initiate_lockout(string $ip): void
+    {
+        \set_transient("rate_limit_lockout_{$ip}", time(), self::LOCKOUT_DURATION);
+    }
+}
+
+// Run: vendor/bin/phpunit tests/Security/RateLimitTest.php
+// ✅ STILL PASSES - Refactor successful, behavior unchanged
+```
+
+### TDD Summary - Critical Rules
+
+**🚨 MANDATORY RULES FOR ALL DEVELOPMENT:**
+
+1. **Write tests FIRST** - Never write implementation before tests
+2. **Test MUST fail initially** - Proves test is valid (RED phase)
+3. **Minimal implementation** - Just enough to pass test (GREEN phase)
+4. **Refactor with confidence** - Tests ensure nothing breaks (REFACTOR phase)
+5. **Commit tests + code together** - Never commit untested code
+6. **Run tests before every commit** - Ensure all tests pass
+7. **CI/CD validates everything** - GitHub Actions runs full test suite
+8. **100% coverage for security** - Critical security code must be fully tested
+
+**TDD mantra: "Red, Green, Refactor, Repeat"**
 
 ## Project Structure
 
@@ -390,6 +767,8 @@ public static function function_name($param): return_type
 
 **The plugin uses WordPress Test Suite (WP_UnitTestCase) for ALL tests - both local development and GitHub Actions CI/CD.**
 
+**CRITICAL: This project follows Test-Driven Development (TDD). See the "Test-Driven Development (TDD) - MANDATORY" section above for complete TDD guidelines. ALL new features must be developed test-first.**
+
 #### **Test Infrastructure**
 - **Framework**: WordPress Test Suite with WP_UnitTestCase (extends PHPUnit\Framework\TestCase)
 - **Local Setup**: `scripts/install-wp-tests.sh wordpress_test root '' localhost latest`
@@ -507,11 +886,42 @@ class ExampleTest extends WP_UnitTestCase
 **NEVER create test files in the project root directory. Always use the proper `/tests/` subdirectory structure.**
 
 ### Security Testing Requirements
+
+**🚨 ALL security features MUST be developed using TDD methodology:**
+
+1. **Write test FIRST** describing security requirement
+2. **Run test** to verify it fails (RED)
+3. **Implement security feature** to make test pass (GREEN)
+4. **Refactor** for code quality while maintaining passing tests
+5. **Commit** test + implementation together
+
+**Security test categories:**
 - **Brute Force Testing**: Verify login attempt limiting works correctly
 - **Cookie Security**: Confirm HTTPOnly flags are applied properly
 - **GraphQL Protection**: Test query limits and rate limiting
 - **User Enumeration**: Ensure login errors don't reveal valid usernames
 - **Cross-site Scripting**: Verify XSS protection via HTTPOnly cookies
+- **Path Validation**: Test forbidden path detection and sanitization
+- **Bot Detection**: Verify crawler and scanner blocking
+- **Session Management**: Test timeout and secure session handling
+
+**Example TDD workflow for security feature:**
+```bash
+# 1. Write test for IP blocking feature
+vendor/bin/phpunit tests/Security/IPBlockingTest.php
+# ❌ Fails - IPBlocking class doesn't exist
+
+# 2. Implement minimal IPBlocking class
+vendor/bin/phpunit tests/Security/IPBlockingTest.php
+# ✅ Passes - Feature works
+
+# 3. Refactor and enhance
+vendor/bin/phpunit tests/Security/IPBlockingTest.php
+# ✅ Still passes - Security validated
+
+# 4. Commit together
+git commit -m "✨ Add IP blocking with TDD validation"
+```
 
 ### Performance Testing
 - **Page Load Impact**: Ensure minimal performance overhead
@@ -1425,6 +1835,43 @@ switch ($action_type) {
 - Breaking out of loops within cases
 
 ## Development Workflow
+
+### TDD Development Cycle (ALWAYS FOLLOW THIS)
+
+**🚨 MANDATORY: Every new feature must follow the TDD cycle:**
+
+```bash
+# 1. RED - Write test first (it MUST fail)
+cat > tests/Security/NewFeatureTest.php << 'EOF'
+class NewFeatureTest extends WP_UnitTestCase {
+    public function test_new_feature_works(): void {
+        $feature = new NewFeature();
+        $this->assertTrue($feature->is_secure());
+    }
+}
+EOF
+vendor/bin/phpunit tests/Security/NewFeatureTest.php
+# ❌ MUST FAIL - Class doesn't exist yet
+
+# 2. GREEN - Write minimal code to pass test
+cat > src/Security/NewFeature.php << 'EOF'
+class NewFeature {
+    public function is_secure(): bool {
+        return true; // Minimal implementation
+    }
+}
+EOF
+vendor/bin/phpunit tests/Security/NewFeatureTest.php
+# ✅ MUST PASS - Test now passes
+
+# 3. REFACTOR - Improve code quality
+# Add proper implementation, security checks, logging
+# Run tests after each change to ensure nothing breaks
+
+# 4. COMMIT - Tests + implementation together
+git add tests/Security/NewFeatureTest.php src/Security/NewFeature.php
+git commit -m "✨ Add NewFeature with TDD validation"
+```
 
 ### Composer Scripts
 ```bash
