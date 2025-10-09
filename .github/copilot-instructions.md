@@ -16,7 +16,7 @@ The plugin specifically addresses three critical security issues commonly found 
 
 ## Core Technologies
 
-- **PHP 8.0+**: Modern PHP with strict typing, union types, and match expressions
+- **PHP 8.3+**: Modern PHP with strict typing, union types, and match expressions
 - **WordPress 6.5+**: Latest WordPress APIs and hooks
 - **PSR-4 Autoloading**: Namespace-based class loading for better organization
 - **Real-time Dashboard**: Live security monitoring with AJAX updates
@@ -868,8 +868,8 @@ vendor/bin/phpunit --coverage-html coverage/
 
 **Workflow**: `.github/workflows/quality-checks.yml`
 
-**Job: `wordpress-tests`** (12 test combinations)
-- **Matrix**: PHP 8.0-8.3 × WordPress 6.5, 6.6, latest
+**Job: `wordpress-tests`** (3 test combinations)
+- **Matrix**: PHP 8.3 × WordPress 6.5, 6.6, latest
 - **Database**: MySQL 8.0 service container
 - **Installation**: Automatic via `scripts/install-wp-tests.sh`
 - **Execution**: Full PHPUnit test suite with real WordPress
@@ -980,7 +980,7 @@ git commit -m "✨ Add IP blocking with TDD validation"
 
 ### Compatibility Testing
 - **WordPress Versions**: Test with WordPress 6.5+ (automated in CI/CD)
-- **PHP Versions**: Ensure compatibility with PHP 8.0+ (automated in CI/CD)
+- **PHP Versions**: Ensure compatibility with PHP 8.3+ (automated in CI/CD)
 - **Plugin Conflicts**: Test with common security plugins
 - **Theme Compatibility**: Verify admin interface renders correctly
 
@@ -2441,7 +2441,7 @@ git commit -m "🔧 Update documentation with new features"
 The plugin includes a comprehensive `composer.json` configuration for development tools and PSR-4 autoloading:
 
 #### Key Features
-- **PHP 8.0+ Requirement**: Matches plugin requirements
+- **PHP 8.3+ Requirement**: Matches plugin requirements
 - **PSR-4 Autoloading**: Modern namespace organization with proper class loading
 - **WordPress Coding Standards**: Automated PHPCS integration
 - **Development Tools**: PHPUnit, PHPCS, PHPCBF integration
@@ -2486,7 +2486,7 @@ Composer files are automatically excluded from distribution packages:
 - Development tools not included in WordPress plugin distribution
 
 #### Quality Assurance Integration
-- **Multi-environment Testing**: Automated testing across PHP 8.0-8.3
+- **Single PHP Version**: Automated testing with PHP 8.3
 - **WordPress Compatibility**: Testing with WordPress 6.5-latest
 - **Security Validation**: Automated vulnerability scanning
 - **Standards Enforcement**: Automated PHPCS validation in CI/CD
@@ -2500,7 +2500,7 @@ Composer files are automatically excluded from distribution packages:
 
 ### External Dependencies
 - **WPGraphQL**: Conditional loading - check `class_exists('WPGraphQL')`
-- **WordPress Core**: Minimum version 6.5, PHP 8.0+
+- **WordPress Core**: Minimum version 6.5, PHP 8.3+
 
 ### Database Operations
 - No custom tables - uses WordPress options and transients

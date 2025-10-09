@@ -8,7 +8,7 @@
  * Author URI: http://silverassist.com/
  * Text Domain: silver-assist-security
  * Domain Path: /languages
- * Requires PHP: 8.0
+ * Requires PHP: 8.3
  * Requires at least: 6.5
  * Tested up to: 6.4
  * Network: false
@@ -24,6 +24,18 @@
 // Prevent direct access
 if (!defined("ABSPATH")) {
     exit;
+}
+
+// PHP version check - Require PHP 8.3+
+if (version_compare(PHP_VERSION, "8.3.0", "<")) {
+    add_action("admin_notices", function () {
+        echo '<div class="notice notice-error"><p>';
+        echo '<strong>Silver Assist Security Essentials:</strong> This plugin requires PHP 8.3 or higher. ';
+        echo 'You are currently running PHP ' . PHP_VERSION . '. ';
+        echo 'Please contact your hosting provider to upgrade PHP.';
+        echo '</p></div>';
+    });
+    return;
 }
 
 // Define plugin constants

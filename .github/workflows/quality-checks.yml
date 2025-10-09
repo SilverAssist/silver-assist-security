@@ -12,7 +12,7 @@ jobs:
 
         strategy:
             matrix:
-                php-version: [8.0, 8.1, 8.2, 8.3]
+                php-version: [8.3]
                 wordpress-version: [6.5, 6.6, latest]
 
         steps:
@@ -146,7 +146,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php-version: [8.0, 8.1, 8.2, 8.3]
+                php-version: [8.3]
                 wordpress-version: [6.5, 6.6, latest]
                 
         services:
@@ -260,7 +260,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php-version: [8.0, 8.1, 8.2, 8.3]
+                php-version: [8.3]
 
         steps:
             - name: Checkout code
@@ -319,7 +319,7 @@ jobs:
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: 8.0
+                  php-version: 8.3
                   tools: composer:v2
 
             - name: Cache Composer dependencies
@@ -417,7 +417,7 @@ jobs:
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: 8.0
+                  php-version: 8.3
                   extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
                   tools: composer:v2
 
@@ -496,12 +496,17 @@ jobs:
               with:
                   php-version: 8.0
 
-            - name: Check PHP 8.0+ compatibility
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: 8.3
+
+            - name: Check PHP 8.3+ compatibility
               run: |
-                  # Check for PHP 8.0+ features usage
+                  # Check for PHP 8.3+ features usage
                   php -r "
-                    if (version_compare(PHP_VERSION, '8.0.0', '<')) {
-                      echo 'PHP 8.0+ required';
+                    if (version_compare(PHP_VERSION, '8.3.0', '<')) {
+                      echo 'PHP 8.3+ required';
                       exit(1);
                     }
                     echo 'PHP version compatible';

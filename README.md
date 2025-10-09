@@ -205,7 +205,7 @@ Yes! Go to **Settings → Security Essentials** to configure login attempt limit
 
 **System Requirements**
 - **WordPress**: 6.5 or higher
-- **PHP**: 8.0 or higher
+- **PHP**: 8.3 or higher
 - **HTTPS**: Recommended for full security features
 
 **Important Notes**
