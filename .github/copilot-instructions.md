@@ -1881,6 +1881,72 @@ composer phpstan        # Static analysis (level 8)
 composer check          # Run all quality checks
 ```
 
+### GitHub CLI (gh) for CI/CD Monitoring
+
+**Prerequisites**: Ensure `gh` CLI is installed locally for GitHub Actions monitoring
+
+**🚨 CRITICAL: OAuth Workflow Permissions**
+- **Always use GitHub Desktop for commits that touch workflow files** (`.github/workflows/` files)
+- Git CLI will reject pushes to workflow files with error: "refusing to allow an OAuth App to create or update workflow without `workflow` scope"
+- **Workflow for Actions changes**:
+  1. Make changes to `.github/workflows/` files
+  2. Commit other files via git CLI if needed
+  3. Use GitHub Desktop to commit and push workflow file changes
+  4. Monitor CI execution using `gh` CLI tools
+
+**Common Monitoring Commands**:
+```bash
+# Quick check of recent runs (most commonly used)
+gh run list --limit 3
+
+# View last 5 workflow runs
+gh run list --limit 5
+
+# Get quick status of latest run
+gh run list --limit 1 --json databaseId,status,conclusion --jq '.[0]'
+
+# View specific run details
+gh run view <run-id>
+
+# Monitor run in real-time
+gh run watch <run-id> --interval 20
+
+# View detailed job logs (avoid interactive pager)
+PAGER=cat gh run view --log --job=<job-id>
+```
+
+**Pager Management**:
+- Use `PAGER=cat` prefix to avoid interactive pager for long outputs
+- Example: `PAGER=cat gh run list --limit 3` - Avoid pager for run lists
+- Example: `PAGER=cat gh run view --log --job=12345` - View logs without pager
+- Long CI logs may require pager navigation or output redirection
+- For quick monitoring, `gh run list --limit 3` is the most efficient command
+
+**CI/CD Debugging Workflow**:
+1. Make changes and push via GitHub Desktop (for workflow files) or git CLI (for code)
+2. Monitor with `gh run list --limit 3` to get latest run ID
+3. Watch progress with `gh run watch <run-id> --interval 20`
+4. Debug issues with `PAGER=cat gh run view --log --job=<job-id>`
+5. For quick status checks, use `gh run list --limit 3` repeatedly
+
+**Example Monitoring Session**:
+```bash
+# Quick check of recent runs
+gh run list --limit 3
+
+# Get run ID and status
+gh run list --limit 1 --json databaseId,status,conclusion --jq '.[0]'
+
+# Watch the latest run in real-time
+gh run watch 18385735131 --interval 20
+
+# Get detailed logs without pager
+PAGER=cat gh run view --log --job=52383549624
+
+# View failed jobs only
+gh run view 18385735131 --log-failed
+```
+
 ### Asset Minification System
 **🚨 CRITICAL: PostCSS + Grunt system replaced grunt-contrib-cssmin for modern CSS support**
 

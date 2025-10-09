@@ -1,0 +1,36 @@
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+    
+parameters:
+    level: 8
+    paths:
+        - src
+    
+    # Bootstrap file for PHPStan - shared with PHPUnit
+    bootstrapFiles:
+        - tests/bootstrap.php
+    
+    # Ignore patterns
+    excludePaths:
+        - vendor/
+        - tests/
+        - node_modules/
+    
+    # Type coverage
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+    
+    # WordPress-specific ignores
+    ignoreErrors:
+        # WordPress functions that PHPStan doesn't understand
+        - '#Function (wp_|get_|add_|do_|apply_|esc_|__)\w+ not found#'
+        - '#Constant WP_DEBUG(_LOG|_DISPLAY)? not found#'
+        - '#Access to an undefined property WP_Error::\$\w+#'
+        
+        # Allow mixed types for WordPress flexibility
+        - '#Parameter .+ expects .+, mixed given#'
+        - '#Method .+ has parameter .+ with no type specified#'
+        
+        # GraphQL library specific
+        - '#Class GraphQL\\.+Type.+ not found#'
+        - '#Access to an undefined property GraphQL\\.+#'

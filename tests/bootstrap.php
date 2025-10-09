@@ -1,6 +1,10 @@
 <?php
 /**
- * PHPUnit bootstrap file for WordPress Integration Tests
+ * Bootstrap file for PHPUnit and PHPStan
+ * 
+ * This file is used by both PHPUnit (for tests) and PHPStan (for static analysis).
+ * - For PHPUnit: Loads WordPress Test Suite
+ * - For PHPStan: Only defines constants (WordPress stubs loaded via composer)
  *
  * @package SilverAssist\Security\Tests
  * @since 1.1.10
@@ -8,6 +12,32 @@
 
 // Composer autoloader must be loaded before WordPress test suite
 require_once dirname(__DIR__) . "/vendor/autoload.php";
+
+// Define plugin constants if not already defined
+if (!defined("SILVER_ASSIST_SECURITY_VERSION")) {
+    define("SILVER_ASSIST_SECURITY_VERSION", "1.1.11");
+}
+
+if (!defined("SILVER_ASSIST_SECURITY_PATH")) {
+    define("SILVER_ASSIST_SECURITY_PATH", dirname(__DIR__));
+}
+
+if (!defined("SILVER_ASSIST_SECURITY_URL")) {
+    // Use same domain as WordPress Test Suite (example.org)
+    define("SILVER_ASSIST_SECURITY_URL", "http://example.org/wp-content/plugins/silver-assist-security");
+}
+
+if (!defined("SILVER_ASSIST_SECURITY_BASENAME")) {
+    define("SILVER_ASSIST_SECURITY_BASENAME", "silver-assist-security/silver-assist-security.php");
+}
+
+// Detect if we're running PHPStan (static analysis) or PHPUnit (tests)
+// PHPStan sets environment variable or can be detected by checking if we're analyzing
+$is_phpstan = getenv("PHPSTAN_RUNNING") === "1" || 
+              (isset($_SERVER["argv"]) && in_array("analyse", $_SERVER["argv"]));
+
+// Only load WordPress Test Suite for PHPUnit, not for PHPStan
+if (!$is_phpstan) {
 
 // Get WordPress tests directory
 $_tests_dir = getenv("WP_TESTS_DIR");
@@ -52,3 +82,8 @@ echo "\n✅ WordPress Test Environment Loaded Successfully\n";
 echo "   WordPress Version: " . get_bloginfo("version") . "\n";
 echo "   PHP Version: " . PHP_VERSION . "\n";
 echo "   PHPUnit Version: " . \PHPUnit\Runner\Version::id() . "\n\n";
+
+} // End PHPUnit-only section
+
+// For PHPStan: WordPress stubs are loaded automatically via composer
+// No additional WordPress loading needed for static analysis
