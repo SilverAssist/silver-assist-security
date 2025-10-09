@@ -188,22 +188,32 @@ install_db() {
 
 	if [ -n "`mysql --user="$DB_USER" --password="$DB_PASS"$EXTRA --execute='show databases;' | grep ^$DB_NAME$`" ]
 	then
-		echo ""
-		echo "⚠️  DATABASE ALREADY EXISTS"
-		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-		echo "The database '$DB_NAME' already exists in your MySQL server."
-		echo ""
-		echo "WordPress Test Suite requires a clean database installation."
-		echo "The existing database will be DROPPED and recreated."
-		echo ""
-		echo "⚠️  WARNING: This will DELETE all data in the '$DB_NAME' database!"
-		echo ""
-		echo "If this is a production database or contains important data,"
-		echo "press Ctrl+C now to cancel, or type 'N' below."
-		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-		echo ""
-		read -p "Are you sure you want to proceed? [y/N]: " DELETE_EXISTING_DB
-		recreate_db $DELETE_EXISTING_DB
+		# In CI/CD or non-interactive mode, automatically recreate database
+		if [ -t 0 ]; then
+			# Interactive mode - ask for confirmation
+			echo ""
+			echo "⚠️  DATABASE ALREADY EXISTS"
+			echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+			echo "The database '$DB_NAME' already exists in your MySQL server."
+			echo ""
+			echo "WordPress Test Suite requires a clean database installation."
+			echo "The existing database will be DROPPED and recreated."
+			echo ""
+			echo "⚠️  WARNING: This will DELETE all data in the '$DB_NAME' database!"
+			echo ""
+			echo "If this is a production database or contains important data,"
+			echo "press Ctrl+C now to cancel, or type 'N' below."
+			echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+			echo ""
+			read -p "Are you sure you want to proceed? [y/N]: " DELETE_EXISTING_DB
+			recreate_db $DELETE_EXISTING_DB
+		else
+			# Non-interactive mode (CI/CD) - automatically recreate
+			echo "🔄 Database already exists - automatically recreating for test environment..."
+			mysqladmin drop $DB_NAME -f --user="$DB_USER" --password="$DB_PASS"$EXTRA
+			create_db
+			echo "✅ Database recreated successfully"
+		fi
 	else
 		create_db
 	fi
