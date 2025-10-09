@@ -24,14 +24,14 @@ class TestHelper
     public static function create_test_user(array $args = []): int
     {
         $defaults = [
-            "user_login" => "testuser_{wp_generate_password(8, false)}",
+            "user_login" => "testuser_" . \wp_generate_password(8, false),
             "user_email" => "test@example.com",
             "user_pass" => "TestPassword123!",
             "role" => "subscriber"
         ];
 
-        $user_data = wp_parse_args($args, $defaults);
-        return wp_insert_user($user_data);
+        $user_data = \wp_parse_args($args, $defaults);
+        return \wp_insert_user($user_data);
     }
 
     /**
@@ -42,7 +42,7 @@ class TestHelper
      */
     public static function delete_test_user(int $user_id): bool
     {
-        return wp_delete_user($user_id);
+        return \wp_delete_user($user_id);
     }
 
     /**
@@ -62,7 +62,7 @@ class TestHelper
             "HTTP_ACCEPT_LANGUAGE" => "en-US,en;q=0.5"
         ];
 
-        foreach (wp_parse_args($server_vars, $defaults) as $key => $value) {
+        foreach (\wp_parse_args($server_vars, $defaults) as $key => $value) {
             $_SERVER[$key] = $value;
         }
     }
@@ -96,7 +96,7 @@ class TestHelper
     {
         $_SERVER["REMOTE_ADDR"] = $ip;
 
-        return wp_authenticate($username, $password);
+        return \wp_authenticate($username, $password);
     }
 
     /**
@@ -127,7 +127,7 @@ class TestHelper
      */
     public static function assert_security_option(string $option_name, $expected_value): void
     {
-        $actual_value = get_option($option_name);
+        $actual_value = \get_option($option_name);
 
         if ($actual_value !== $expected_value) {
             throw new \Exception(

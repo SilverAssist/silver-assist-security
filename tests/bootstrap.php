@@ -2,63 +2,92 @@
 /**
  * PHPUnit bootstrap file for Silver Assist Security Essentials
  *
- * Sets up WordPress test environment and loads the plugin for testing.
+ * Sets up WordPress test environment with Brain Monkey and loads the plugin for testing.
  *
  * @package SilverAssist\Security\Tests
  * @since 1.0.0
+ * @version 1.1.12
  */
 
 // Define test environment
-define("SILVER_ASSIST_SECURITY_TESTING", true);
+if (!defined("SILVER_ASSIST_SECURITY_TESTING")) {
+    define("SILVER_ASSIST_SECURITY_TESTING", true);
+}
 
-// Composer autoloader
+// Composer autoloader (loads Brain Monkey FIRST before WordPress stubs)
 if (file_exists(dirname(__DIR__) . "/vendor/autoload.php")) {
     require_once dirname(__DIR__) . "/vendor/autoload.php";
 }
 
-// WordPress tests configuration
-if (!defined("WP_TESTS_CONFIG_FILE_PATH")) {
-    define("WP_TESTS_CONFIG_FILE_PATH", dirname(__FILE__) . "/wp-tests-config.php");
-}
+// NOTE: WordPress stubs are NOT loaded here to avoid conflicts with Brain Monkey
+// Brain Monkey's Patchwork needs to be initialized before any WordPress functions are defined
+// WordPress stubs will be available through type hints but functions will be mocked by Brain Monkey
 
 // Plugin constants
-define("SILVER_ASSIST_SECURITY_PATH", dirname(__DIR__));
-define("SILVER_ASSIST_SECURITY_URL", "http://example.org/wp-content/plugins/silver-assist-security/");
-define("SILVER_ASSIST_SECURITY_BASENAME", "silver-assist-security/silver-assist-security.php");
-define("SILVER_ASSIST_SECURITY_VERSION", "1.0.4");
+if (!defined("SILVER_ASSIST_SECURITY_PATH")) {
+    define("SILVER_ASSIST_SECURITY_PATH", dirname(__DIR__));
+}
 
-// Load WordPress test functions
-if (file_exists("/tmp/wordpress-tests-lib/includes/functions.php")) {
-    require_once "/tmp/wordpress-tests-lib/includes/functions.php";
-} elseif (getenv("WP_TESTS_DIR")) {
-    require_once getenv("WP_TESTS_DIR") . "/includes/functions.php";
+if (!defined("SILVER_ASSIST_SECURITY_URL")) {
+    define("SILVER_ASSIST_SECURITY_URL", "http://example.org/wp-content/plugins/silver-assist-security/");
+}
+
+if (!defined("SILVER_ASSIST_SECURITY_BASENAME")) {
+    define("SILVER_ASSIST_SECURITY_BASENAME", "silver-assist-security/silver-assist-security.php");
+}
+
+if (!defined("SILVER_ASSIST_SECURITY_VERSION")) {
+    define("SILVER_ASSIST_SECURITY_VERSION", "1.1.12");
+}
+
+// WordPress constants for testing
+if (!defined("ABSPATH")) {
+    define("ABSPATH", "/tmp/wordpress/");
+}
+
+if (!defined("WP_DEBUG")) {
+    define("WP_DEBUG", true);
+}
+
+if (!defined("WP_DEBUG_LOG")) {
+    define("WP_DEBUG_LOG", false);
+}
+
+if (!defined("WP_DEBUG_DISPLAY")) {
+    define("WP_DEBUG_DISPLAY", true);
+}
+
+// WordPress content directory
+if (!defined("WP_CONTENT_DIR")) {
+    define("WP_CONTENT_DIR", ABSPATH . "wp-content");
+}
+
+// Database configuration for tests (not used with Brain Monkey but kept for compatibility)
+if (!defined("DB_NAME")) {
+    define("DB_NAME", "wordpress_test");
+}
+
+if (!defined("DB_USER")) {
+    define("DB_USER", "root");
+}
+
+if (!defined("DB_PASSWORD")) {
+    define("DB_PASSWORD", "");
+}
+
+if (!defined("DB_HOST")) {
+    define("DB_HOST", "localhost");
+}
+
+// WordPress table prefix
+if (!defined("table_prefix")) {
+    $table_prefix = "wptests_";
 }
 
 /**
- * Manually load the plugin being tested
+ * Initialize Brain Monkey for WordPress function mocking
+ * This is called automatically by PHPUnit via TestCase setUp
  */
-function _manually_load_plugin()
-{
-    // Load plugin main file
-    require dirname(__DIR__) . "/silver-assist-security.php";
-}
-
-// Load the plugin before WordPress loads
-if (function_exists("tests_add_filter")) {
-    tests_add_filter("muplugins_loaded", "_manually_load_plugin");
-}
-
-// Load WordPress test environment
-if (file_exists("/tmp/wordpress-tests-lib/includes/bootstrap.php")) {
-    require_once "/tmp/wordpress-tests-lib/includes/bootstrap.php";
-} elseif (getenv("WP_TESTS_DIR")) {
-    require_once getenv("WP_TESTS_DIR") . "/includes/bootstrap.php";
-} else {
-    // Fallback for development environment
-    echo "WordPress test environment not found.\n";
-    echo "Please install WordPress tests or set WP_TESTS_DIR environment variable.\n";
-    exit(1);
-}
 
 // Test helper functions
 require_once __DIR__ . "/Helpers/TestHelper.php";
