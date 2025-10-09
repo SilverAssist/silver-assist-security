@@ -8,7 +8,7 @@
  * @package SilverAssist\Security\Security
  * @since 1.1.4
  * @author Silver Assist
- * @version 1.1.12
+ * @version 1.1.13
  */
 
 namespace SilverAssist\Security\Security;

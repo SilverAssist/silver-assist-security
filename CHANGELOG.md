@@ -5,6 +5,138 @@ All notable changes to Silver Assist Security Essentials will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.13] - 2025-10-09
+
+### 🎯 Major Feature: Settings Hub Integration
+
+#### ⚠️ BREAKING CHANGES
+- **Menu Structure Changed**: Plugin now registers under centralized "Silver Assist" menu via Settings Hub
+  - **Before**: Standalone menu in WordPress Settings → "Security Essentials"
+  - **After**: Top-level "Silver Assist" menu → "Security" submenu
+  - **URL Change**: Admin page URL structure modified for hub integration
+  - **Backward Compatibility**: Automatic fallback to standalone menu when Settings Hub unavailable
+
+#### 🚀 New Features
+- **Settings Hub Integration** (`silverassist/wp-settings-hub v1.1.0`):
+  - Centralized admin interface for all Silver Assist plugins
+  - Professional plugin dashboard with cards and metadata display
+  - Cross-plugin navigation via tabs (when multiple plugins installed)
+  - Dynamic action buttons support
+  - Enhanced user experience with consistent UI across Silver Assist ecosystem
+
+- **"Check Updates" Button**:
+  - New action button in Settings Hub plugin card
+  - One-click update checking via AJAX
+  - Automatic redirection to WordPress Updates page when update available
+  - Real-time feedback with user-friendly messages
+  - Seamless integration with existing wp-github-updater package
+
+- **Removed Plugin Updates Section**:
+  - Eliminated redundant "Plugin Updates" card from admin page
+  - Update functionality consolidated into Settings Hub action button
+  - Cleaner admin interface with reduced UI clutter
+  - Maintained all update checking capabilities
+
+#### 🔧 Technical Implementation
+- **New Methods in AdminPanel**:
+  - `register_with_hub()`: Main hub registration with automatic fallback
+  - `get_hub_actions()`: Configures action buttons for plugin card
+  - `render_update_check_script()`: JavaScript callback for update button
+  - `ajax_check_updates()`: AJAX handler for update verification
+  - `add_admin_menu()`: Fallback method for standalone menu registration
+
+- **Settings Hub Registration**:
+  ```php
+  $hub->register_plugin(
+      'silver-assist-security',
+      __('Security', 'silver-assist-security'),
+      [$this, 'render_admin_page'],
+      [
+          'description' => __('Security configuration for WordPress', 'silver-assist-security'),
+          'version' => SILVER_ASSIST_SECURITY_VERSION,
+          'tab_title' => __('Security', 'silver-assist-security'),
+          'actions' => [
+              [
+                  'label' => __('Check Updates', 'silver-assist-security'),
+                  'callback' => [$this, 'render_update_check_script'],
+                  'class' => 'button button-primary',
+              ]
+          ]
+      ]
+  );
+  ```
+
+- **Intelligent Fallback System**:
+  - Automatic detection of Settings Hub availability
+  - Graceful degradation to standalone menu when hub absent
+  - Zero functionality loss in fallback mode
+  - Exception handling with security event logging
+
+#### 🧪 Comprehensive Testing
+- **New Test Suite**: `tests/Integration/SettingsHubTest.php` (10 test cases):
+  - Settings Hub class detection and availability
+  - Fallback menu registration verification
+  - Update button configuration validation
+  - AJAX handler functionality tests
+  - Security validation for update checks
+  - Update script rendering verification
+  - Hub registration metadata validation
+  - Actions array structure tests
+  - Admin hooks registration checks
+  - Integration testing with wp-github-updater
+
+#### 🔒 Security Enhancements
+- **AJAX Security**:
+  - Nonce validation for all update check requests
+  - User capability verification (`manage_options`)
+  - Comprehensive error handling and logging
+  - Sanitized JavaScript output with `esc_js()`, `esc_url()`
+  - SecurityHelper integration for event logging
+
+#### 📊 Impact Assessment
+- **User Experience**: 
+  - ✅ Unified admin interface for Silver Assist plugins
+  - ✅ Professional dashboard with plugin cards
+  - ✅ Quick access to update checking
+  - ✅ Consistent UI across plugin ecosystem
+  - ⚠️ URL change may affect bookmarks (acceptable for major version)
+
+- **Developer Experience**:
+  - ✅ Modular architecture with clean separation
+  - ✅ Easy to extend with additional action buttons
+  - ✅ Comprehensive test coverage
+  - ✅ Well-documented integration patterns
+
+- **Compatibility**:
+  - ✅ Works with or without Settings Hub
+  - ✅ Maintains all existing functionality
+  - ✅ Backward compatible via fallback mechanism
+  - ✅ No data migration required
+
+#### 🎨 Code Quality
+- **Standards Compliance**: Full WordPress coding standards adherence
+- **Type Safety**: Strict PHP 8+ type declarations throughout
+- **Documentation**: Complete PHPDoc for all new methods
+- **Error Handling**: Comprehensive try-catch blocks with logging
+- **Internationalization**: All user-facing strings properly translated
+
+### 📦 Dependencies
+- **Added**: `silverassist/wp-settings-hub` ^1.1 (production dependency)
+- **Maintained**: All existing dependencies (wp-github-updater, PHPUnit, etc.)
+
+### 🔄 Migration Guide
+**For End Users**:
+1. Update plugin to v1.1.13
+2. Admin menu location changes automatically
+3. Find plugin under "Silver Assist" → "Security" (or Settings if hub not installed)
+4. Update bookmarks if accessing settings directly
+
+**For Developers**:
+1. Install/update via Composer: `composer update`
+2. Settings Hub automatically detected if installed
+3. Fallback mechanism ensures compatibility
+4. No code changes required in consuming applications
+
 ## [1.1.12] - 2025-09-10
 
 ### 🎨 Modern CSS Minification System Upgrade

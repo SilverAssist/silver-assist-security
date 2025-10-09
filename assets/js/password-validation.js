@@ -5,7 +5,7 @@
  * Validates password strength according to plugin security requirements.
  *
  * @file password-validation.js
- * @version 1.1.12
+ * @version 1.1.13
  * @author Silver Assist
  * @requires jQuery
  * @since 1.1.5

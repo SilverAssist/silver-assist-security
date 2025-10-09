@@ -496,6 +496,55 @@ silver-assist-security/
 - **Logging & Monitoring**: `log_security_event()`, `format_time_duration()`
 - **AJAX Utilities**: `validate_ajax_request()` with comprehensive security checks
 
+### 5. Admin\AdminPanel.php
+**Purpose**: WordPress admin interface for security configuration
+**Key Responsibilities**:
+- Register with Settings Hub or fallback to standalone menu
+- Render Security Essentials dashboard page
+- Handle AJAX requests for real-time updates
+- Process security configuration form submissions
+- Display security statistics and compliance status
+- Integrate "Check Updates" button via Settings Hub actions
+- Use GraphQLConfigManager for centralized GraphQL configuration
+- Use DefaultConfig for consistent configuration handling
+
+**🎯 Settings Hub Integration (v1.1.13+)**:
+- **Primary Mode**: Registers plugin under centralized "Silver Assist" menu
+- **Fallback Mode**: Standalone menu in Settings when hub unavailable
+- **Update Button**: One-click update checking via Settings Hub actions
+- **Automatic Detection**: Class existence check for seamless integration
+- **Exception Handling**: Graceful degradation with error logging
+
+**Settings Hub Registration Pattern**:
+```php
+// In AdminPanel::register_with_hub()
+if (!class_exists(SettingsHub::class)) {
+    // Fallback to standalone menu
+    $this->add_admin_menu();
+    return;
+}
+
+$hub = SettingsHub::get_instance();
+$hub->register_plugin(
+    'silver-assist-security',
+    __('Security', 'silver-assist-security'),
+    [$this, 'render_admin_page'],
+    [
+        'description' => __('Security configuration for WordPress', 'silver-assist-security'),
+        'version' => SILVER_ASSIST_SECURITY_VERSION,
+        'tab_title' => __('Security', 'silver-assist-security'),
+        'actions' => $this->get_hub_actions()
+    ]
+);
+```
+
+**Hub Actions Integration**:
+- `get_hub_actions()`: Returns array of action button configurations
+- `render_update_check_script()`: JavaScript callback for update button
+- `ajax_check_updates()`: AJAX handler for update verification
+- Security validation with nonce and capability checks
+- Integration with wp-github-updater for version checking
+
 **Integration Pattern**:
 ```php
 // ✅ CORRECT - Use SecurityHelper for all utility functions

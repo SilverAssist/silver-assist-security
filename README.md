@@ -113,7 +113,26 @@ The plugin starts protecting your website immediately after activation:
 ✅ **Admin URL hiding** (optional - requires configuration)  
 
 ### Configuration Dashboard
-Access your security control panel at **Settings → Security Essentials**
+
+#### Settings Hub Integration (v1.1.13+)
+**🎯 NEW**: Silver Assist Security now integrates with the centralized Settings Hub!
+
+**With Settings Hub Installed**:
+- Access via **Silver Assist → Security** (top-level menu)
+- Professional plugin dashboard with cards and metadata
+- One-click "Check Updates" button in plugin card
+- Seamless navigation between Silver Assist plugins
+- Enhanced user experience with unified interface
+
+**Without Settings Hub** (Fallback):
+- Access via **Settings → Security Essentials** (legacy menu)
+- Full functionality maintained
+- All security features work identically
+
+**Install Settings Hub** (Optional but Recommended):
+```bash
+composer require silverassist/wp-settings-hub
+```
 
 **Login Security Configuration**
 - 🔧 **Max Login Attempts**: 1-20 failed attempts before lockout (default: 5)
