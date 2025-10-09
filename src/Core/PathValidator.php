@@ -99,10 +99,9 @@ class PathValidator
             return $result;
         }
 
-        // Path is valid
+        // Path is valid - leave error_message empty
         $result["is_valid"] = true;
         $result["sanitized_path"] = \sanitize_title($original_path);
-        $result["error_message"] = \__("Path is valid", "silver-assist-security");
 
         return $result;
     }

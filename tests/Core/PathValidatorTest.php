@@ -27,10 +27,10 @@ class PathValidatorTest extends WP_UnitTestCase
     public function test_valid_admin_paths(): void
     {
         $valid_paths = [
-            "my-secure-panel",
-            "custom-backend-2024",
-            "secret-area-xyz",
-            "private-console",
+            "my-secure-area",
+            "custom-gateway-2024",
+            "secret-zone-xyz",
+            "private-portal",
             "secure-123"
         ];
 
@@ -39,7 +39,7 @@ class PathValidatorTest extends WP_UnitTestCase
             
             $this->assertTrue(
                 $result["is_valid"],
-                "Path '{$path}' should be valid"
+                "Path '{$path}' should be valid. Error: " . ($result["error_message"] ?? "none")
             );
             
             $this->assertEmpty(
@@ -195,7 +195,7 @@ class PathValidatorTest extends WP_UnitTestCase
         );
         
         $this->assertFalse(
-            PathValidator::is_forbidden_path("custom-backend-2024"),
+            PathValidator::is_forbidden_path("custom-gateway-2024"),
             "Method should allow safe custom path with year"
         );
     }
