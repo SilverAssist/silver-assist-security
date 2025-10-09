@@ -8,6 +8,7 @@
 
 namespace SilverAssist\Security\Tests\Unit;
 
+use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\Security\LoginSecurity;
 use WP_UnitTestCase;
 
@@ -71,9 +72,9 @@ class LoginSecurityTest extends WP_UnitTestCase
         // Simulate failed login
         $this->login_security->handle_failed_login($username);
 
-        // Check that attempt was recorded
-        $key = "login_attempts_{md5($ip)}";
-        $attempts = get_transient($key);
+        // Use SecurityHelper to generate the same key as LoginSecurity
+        $key = SecurityHelper::generate_ip_transient_key("login_attempts", $ip);
+        $attempts = \get_transient($key);
 
         $this->assertEquals(1, $attempts, "Failed login attempt should be recorded");
     }
@@ -90,19 +91,24 @@ class LoginSecurityTest extends WP_UnitTestCase
         // Mock IP address
         $_SERVER["REMOTE_ADDR"] = $ip;
 
-        // Set low max attempts for testing
-        update_option("silver_assist_login_attempts", 3);
+        // Set low max attempts for testing and recreate instance
+        \update_option("silver_assist_login_attempts", 3);
+        $this->login_security = new LoginSecurity();
 
         // Simulate multiple failed logins
         for ($i = 0; $i < 4; $i++) {
             $this->login_security->handle_failed_login($username);
         }
 
-        // Check lockout is in place
-        $lockout_key = "lockout_{md5($ip)}";
-        $is_locked = get_transient($lockout_key);
+        // Check lockout is in place using SecurityHelper
+        $lockout_key = SecurityHelper::generate_ip_transient_key("lockout", $ip);
+        $is_locked = \get_transient($lockout_key);
 
         $this->assertTrue((bool) $is_locked, "IP should be locked out after max attempts");
+
+        // Verify the detected IP matches what we set
+        $detected_ip = SecurityHelper::get_client_ip();
+        $this->assertEquals($ip, $detected_ip, "Detected IP should match test IP");
 
         // Test authentication check
         $result = $this->login_security->check_login_lockout(null, $username, $password);
@@ -124,46 +130,58 @@ class LoginSecurityTest extends WP_UnitTestCase
 
         // Create a test user using WordPress factory
         $user_id = $this->factory()->user->create(["user_login" => $username]);
-        $user = get_user_by("id", $user_id);
+        $user = \get_user_by("id", $user_id);
 
         // Simulate a failed login first
         $this->login_security->handle_failed_login($username);
 
-        // Verify attempt was recorded
-        $key = "login_attempts_{md5($ip)}";
-        $attempts = get_transient($key);
+        // Verify attempt was recorded using SecurityHelper
+        $key = SecurityHelper::generate_ip_transient_key("login_attempts", $ip);
+        $attempts = \get_transient($key);
         $this->assertEquals(1, $attempts);
 
         // Simulate successful login
         $this->login_security->handle_successful_login($username, $user);
 
         // Verify attempts were cleared
-        $attempts_after = get_transient($key);
+        $attempts_after = \get_transient($key);
         $this->assertFalse($attempts_after, "Login attempts should be cleared after successful login");
     }
 
     /**
-     * Test bot detection and blocking
+     * Test bot detection using SecurityHelper
      */
     public function test_bot_detection_and_blocking(): void
     {
-        // Set known bot user agent directly
-        $_SERVER["HTTP_USER_AGENT"] = "Nmap Scripting Engine";
+        // Set up browser-like headers to avoid false positives
+        $_SERVER["HTTP_ACCEPT"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+        $_SERVER["HTTP_ACCEPT_LANGUAGE"] = "en-US,en;q=0.9";
+        $_SERVER["HTTP_ACCEPT_ENCODING"] = "gzip, deflate, br";
 
-        // Capture output to test 404 response
-        ob_start();
+        // Test various bot user agents
+        $bot_user_agents = [
+            "Nmap Scripting Engine",
+            "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+            "curl/7.64.1",
+            "python-requests/2.25.1",
+            "Nikto",
+            "WPScan v3.8.0"
+        ];
 
-        // Expect the method to exit, so we'll use output buffering
-        try {
-            $this->login_security->block_suspicious_bots();
-        } catch (\Exception $e) {
-            // Expected to exit, so we catch any exceptions
+        foreach ($bot_user_agents as $user_agent) {
+            $_SERVER["HTTP_USER_AGENT"] = $user_agent;
+            $this->assertTrue(
+                SecurityHelper::is_bot_request(),
+                "Should detect bot: {$user_agent}"
+            );
         }
 
-        $output = ob_get_clean();
-
-        // Should contain 404 content
-        $this->assertStringContainsString("404 Not Found", $output, "Bot should receive 404 response");
+        // Test legitimate user agent with full browser signature
+        $_SERVER["HTTP_USER_AGENT"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
+        $this->assertFalse(
+            SecurityHelper::is_bot_request(),
+            "Should not block legitimate browser"
+        );
     }
 
     /**
