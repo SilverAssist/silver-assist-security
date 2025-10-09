@@ -13,34 +13,35 @@
 // Composer autoloader must be loaded before WordPress test suite
 require_once dirname(__DIR__) . "/vendor/autoload.php";
 
-// Define plugin constants if not already defined
-if (!defined("SILVER_ASSIST_SECURITY_VERSION")) {
-    define("SILVER_ASSIST_SECURITY_VERSION", "1.1.11");
-}
-
-if (!defined("SILVER_ASSIST_SECURITY_PATH")) {
-    define("SILVER_ASSIST_SECURITY_PATH", dirname(__DIR__));
-}
-
-if (!defined("SILVER_ASSIST_SECURITY_URL")) {
-    // Use same domain as WordPress Test Suite (example.org)
-    define("SILVER_ASSIST_SECURITY_URL", "http://example.org/wp-content/plugins/silver-assist-security");
-}
-
-if (!defined("SILVER_ASSIST_SECURITY_BASENAME")) {
-    define("SILVER_ASSIST_SECURITY_BASENAME", "silver-assist-security/silver-assist-security.php");
-}
-
 // Detect if we're running PHPStan (static analysis) or PHPUnit (tests)
 // PHPStan sets environment variable or can be detected by checking if we're analyzing
 $is_phpstan = getenv("PHPSTAN_RUNNING") === "1" || 
               (isset($_SERVER["argv"]) && in_array("analyse", $_SERVER["argv"]));
 
+// For PHPStan: Define plugin constants (WordPress stubs loaded via composer)
+// For PHPUnit: Constants will be defined by plugin main file when loaded
+if ($is_phpstan) {
+    if (!defined("SILVER_ASSIST_SECURITY_VERSION")) {
+        define("SILVER_ASSIST_SECURITY_VERSION", "1.1.11");
+    }
+    
+    if (!defined("SILVER_ASSIST_SECURITY_PATH")) {
+        define("SILVER_ASSIST_SECURITY_PATH", dirname(__DIR__));
+    }
+    
+    if (!defined("SILVER_ASSIST_SECURITY_URL")) {
+        define("SILVER_ASSIST_SECURITY_URL", "http://example.org/wp-content/plugins/silver-assist-security");
+    }
+    
+    if (!defined("SILVER_ASSIST_SECURITY_BASENAME")) {
+        define("SILVER_ASSIST_SECURITY_BASENAME", "silver-assist-security/silver-assist-security.php");
+    }
+}
+
 // Only load WordPress Test Suite for PHPUnit, not for PHPStan
 if (!$is_phpstan) {
-
-// Get WordPress tests directory
-$_tests_dir = getenv("WP_TESTS_DIR");
+    // Get WordPress tests directory
+    $_tests_dir = getenv("WP_TESTS_DIR");
 
 if (!$_tests_dir) {
     $_tests_dir = rtrim(sys_get_temp_dir(), "/\\") . "/wordpress-tests-lib";
