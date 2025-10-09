@@ -50,8 +50,8 @@ class GeneralSecurityTest extends WP_UnitTestCase
         ob_end_clean();
 
         // Note: headers_sent() will be true in PHPUnit context
-        // We verify the hook is registered
-        $this->assertTrue(
+        // We verify the hook is registered (has_action returns priority number when registered)
+        $this->assertNotFalse(
             has_action("send_headers", [$this->general_security, "add_security_headers"]),
             "Security headers action should be registered"
         );
@@ -77,7 +77,7 @@ class GeneralSecurityTest extends WP_UnitTestCase
     public function test_version_query_string_removed(): void
     {
         $script_url = "https://example.com/wp-includes/js/jquery/jquery.min.js?ver=3.7.1";
-        $filtered_url = apply_filters("script_loader_src", $script_url);
+        $filtered_url = apply_filters("script_loader_src", $script_url, "jquery");
         
         $this->assertStringNotContainsString(
             "?ver=",
@@ -86,7 +86,7 @@ class GeneralSecurityTest extends WP_UnitTestCase
         );
 
         $style_url = "https://example.com/wp-content/themes/twentytwentyfour/style.css?ver=1.0";
-        $filtered_style = apply_filters("style_loader_src", $style_url);
+        $filtered_style = apply_filters("style_loader_src", $style_url, "twentytwentyfour-style");
         
         $this->assertStringNotContainsString(
             "?ver=",
@@ -145,14 +145,14 @@ class GeneralSecurityTest extends WP_UnitTestCase
      */
     public function test_secure_cookies_configuration(): void
     {
-        // Test secure auth cookie filter
-        $this->assertTrue(
+        // Test secure auth cookie filter (has_filter returns priority when registered)
+        $this->assertNotFalse(
             has_filter("secure_auth_cookie", [$this->general_security, "force_secure_cookies"]),
             "Secure auth cookie filter should be registered"
         );
 
-        // Test secure logged in cookie filter
-        $this->assertTrue(
+        // Test secure logged in cookie filter (has_filter returns priority when registered)
+        $this->assertNotFalse(
             has_filter("secure_logged_in_cookie", [$this->general_security, "force_secure_cookies"]),
             "Secure logged in cookie filter should be registered"
         );
@@ -179,8 +179,8 @@ class GeneralSecurityTest extends WP_UnitTestCase
         // Trigger init action
         do_action("init");
 
-        // Verify the hook is registered
-        $this->assertTrue(
+        // Verify the hook is registered (has_action returns priority when registered)
+        $this->assertNotFalse(
             has_action("init", [$this->general_security, "disable_user_enumeration"]),
             "User enumeration prevention should be active"
         );
@@ -201,8 +201,8 @@ class GeneralSecurityTest extends WP_UnitTestCase
         do_action("after_setup_theme");
 
         // For non-admin users, show_admin_bar(false) should be called
-        // We verify the hook is registered
-        $this->assertTrue(
+        // We verify the hook is registered (has_action returns priority when registered)
+        $this->assertNotFalse(
             has_action("after_setup_theme", [$this->general_security, "remove_admin_bar_for_non_admins"]),
             "Admin bar removal for non-admins should be active"
         );
@@ -225,8 +225,8 @@ class GeneralSecurityTest extends WP_UnitTestCase
             "Admin footer text should be customized"
         );
 
-        // Test WordPress logo removal from admin bar
-        $this->assertTrue(
+        // Test WordPress logo removal from admin bar (has_action returns priority when registered)
+        $this->assertNotFalse(
             has_action("wp_before_admin_bar_render", [$this->general_security, "remove_wp_logo"]),
             "WordPress logo removal should be active"
         );
@@ -258,8 +258,8 @@ class GeneralSecurityTest extends WP_UnitTestCase
         // Trigger init action
         do_action("init");
 
-        // Verify the hook is registered
-        $this->assertTrue(
+        // Verify the hook is registered (has_action returns priority when registered)
+        $this->assertNotFalse(
             has_action("init", [$this->general_security, "remove_unnecessary_headers"]),
             "Unnecessary headers removal should be active"
         );

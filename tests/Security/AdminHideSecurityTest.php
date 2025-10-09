@@ -123,8 +123,9 @@ class AdminHideSecurityTest extends WP_UnitTestCase
             "Should initialize with admin hiding disabled"
         );
 
-        // Re-enable for other tests
+        // Re-enable for other tests and recreate instance
         \update_option("silver_assist_admin_hide_enabled", 1);
+        $this->admin_hide_security = new AdminHideSecurity();
     }
 
     /**
@@ -134,8 +135,12 @@ class AdminHideSecurityTest extends WP_UnitTestCase
      */
     public function test_site_url_filter_registered(): void
     {
-        $this->assertTrue(
-            \has_filter("site_url", [$this->admin_hide_security, "filter_generated_url"]),
+        // Ensure admin hide is enabled and create fresh instance
+        \update_option("silver_assist_admin_hide_enabled", 1);
+        $instance = new AdminHideSecurity();
+        
+        $this->assertNotFalse(
+            \has_filter("site_url", [$instance, "filter_generated_url"]),
             "site_url filter should be registered when admin hide is enabled"
         );
     }
@@ -147,8 +152,12 @@ class AdminHideSecurityTest extends WP_UnitTestCase
      */
     public function test_admin_url_filter_registered(): void
     {
-        $this->assertTrue(
-            \has_filter("admin_url", [$this->admin_hide_security, "filter_admin_url"]),
+        // Ensure admin hide is enabled and create fresh instance
+        \update_option("silver_assist_admin_hide_enabled", 1);
+        $instance = new AdminHideSecurity();
+        
+        $this->assertNotFalse(
+            \has_filter("admin_url", [$instance, "filter_admin_url"]),
             "admin_url filter should be registered when admin hide is enabled"
         );
     }
@@ -160,8 +169,12 @@ class AdminHideSecurityTest extends WP_UnitTestCase
      */
     public function test_wp_redirect_filter_registered(): void
     {
-        $this->assertTrue(
-            \has_filter("wp_redirect", [$this->admin_hide_security, "filter_redirect"]),
+        // Ensure admin hide is enabled and create fresh instance
+        \update_option("silver_assist_admin_hide_enabled", 1);
+        $instance = new AdminHideSecurity();
+        
+        $this->assertNotFalse(
+            \has_filter("wp_redirect", [$instance, "filter_redirect"]),
             "wp_redirect filter should be registered"
         );
     }
@@ -173,8 +186,12 @@ class AdminHideSecurityTest extends WP_UnitTestCase
      */
     public function test_logout_redirect_filter_registered(): void
     {
-        $this->assertTrue(
-            \has_filter("logout_redirect", [$this->admin_hide_security, "handle_logout_redirect"]),
+        // Ensure admin hide is enabled and create fresh instance
+        \update_option("silver_assist_admin_hide_enabled", 1);
+        $instance = new AdminHideSecurity();
+        
+        $this->assertNotFalse(
+            \has_filter("logout_redirect", [$instance, "handle_logout_redirect"]),
             "logout_redirect filter should be registered"
         );
     }
@@ -186,8 +203,12 @@ class AdminHideSecurityTest extends WP_UnitTestCase
      */
     public function test_setup_theme_action_registered(): void
     {
-        $this->assertTrue(
-            \has_action("setup_theme", [$this->admin_hide_security, "handle_specific_page_requests"]),
+        // Ensure admin hide is enabled and create fresh instance
+        \update_option("silver_assist_admin_hide_enabled", 1);
+        $instance = new AdminHideSecurity();
+        
+        $this->assertNotFalse(
+            \has_action("setup_theme", [$instance, "handle_specific_page_requests"]),
             "setup_theme action should be registered for request handling"
         );
     }
