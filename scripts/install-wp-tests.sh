@@ -179,13 +179,16 @@ install_db() {
 	
 	EXTRA=""
 
-	if ! [ -z $DB_HOSTNAME ] ; then
-		if [ $(awk -F[.:] '{print NF-1}' <<< $DB_HOSTNAME) -eq 1 ] ; then
+	if ! [ -z "$DB_HOSTNAME" ] ; then
+		# If hostname starts with /, it's a socket path
+		if [[ $DB_HOSTNAME == /* ]] ; then
+			EXTRA=" --socket=$DB_HOSTNAME"
+		# If hostname contains a colon, it's host:port
+		elif [[ $DB_HOSTNAME == *:* ]] ; then
+			EXTRA=" --host=$(echo $DB_HOSTNAME | cut -d: -f1) --port=$(echo $DB_HOSTNAME | cut -d: -f2) --protocol=tcp"
+		# Otherwise it's just a hostname or IP - use TCP
+		else
 			EXTRA=" --host=$DB_HOSTNAME --protocol=tcp"
-		elif [ -n "$(awk -F[.:] '{print $1}' <<< $DB_HOSTNAME)" ] ; then
-			EXTRA=" --socket=$(awk -F[.:] '{print $1}' <<< $DB_HOSTNAME)"
-		elif [ -n "$(awk -F[.:] '{print $2}' <<< $DB_HOSTNAME)" ] ; then
-			EXTRA=" --host=$(awk -F[.:] '{print $2}' <<< $DB_HOSTNAME) --protocol=tcp"
 		fi
 	fi
 
