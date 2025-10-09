@@ -46,3 +46,7 @@ RELEASE-NOTES.md
 # Minified assets (generated during release build)
 assets/css/*.min.css
 assets/js/*.min.js
+
+# PHPUnit test results
+/tests/results/
+.phpunit.result.cache
