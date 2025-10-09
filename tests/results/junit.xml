@@ -1,17 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" tests="12" assertions="47" errors="0" warnings="0" failures="0" skipped="0" time="0.030538">
-    <testcase name="test_singleton_pattern" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="57" assertions="2" time="0.006436"/>
-    <testcase name="test_wpgraphql_availability_detection" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="75" assertions="1" time="0.002637"/>
-    <testcase name="test_headless_mode_detection" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="89" assertions="2" time="0.003901"/>
-    <testcase name="test_php_execution_timeout" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="103" assertions="3" time="0.002671"/>
-    <testcase name="test_timeout_configuration" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="118" assertions="7" time="0.002106"/>
-    <testcase name="test_configuration_retrieval" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="137" assertions="9" time="0.001898"/>
-    <testcase name="test_security_recommendations" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="158" assertions="4" time="0.001672"/>
-    <testcase name="test_settings_display" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="178" assertions="2" time="0.002476"/>
-    <testcase name="test_safe_limit_retrieval" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="192" assertions="6" time="0.001766"/>
-    <testcase name="test_rate_limiting_configuration" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="213" assertions="4" time="0.001748"/>
-    <testcase name="test_integration_status" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="229" assertions="6" time="0.001781"/>
-    <testcase name="test_cache_clearing" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="247" assertions="1" time="0.001446"/>
+  <testsuite name="SilverAssist\Security\Tests\Unit\LoginSecurityTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php" tests="8" assertions="14" errors="1" warnings="0" failures="4" skipped="0" time="0.046784">
+    <testcase name="test_constructor_initializes_properly" class="SilverAssist\Security\Tests\Unit\LoginSecurityTest" classname="SilverAssist.Security.Tests.Unit.LoginSecurityTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php" line="55" assertions="1" time="0.005160"/>
+    <testcase name="test_failed_login_tracking" class="SilverAssist\Security\Tests\Unit\LoginSecurityTest" classname="SilverAssist.Security.Tests.Unit.LoginSecurityTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php" line="63" assertions="1" time="0.003854">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">SilverAssist\Security\Tests\Unit\LoginSecurityTest::test_failed_login_tracking
+Failed login attempt should be recorded
+Failed asserting that false matches expected 1.
+
+/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php:78</failure>
+    </testcase>
+    <testcase name="test_lockout_after_max_attempts" class="SilverAssist\Security\Tests\Unit\LoginSecurityTest" classname="SilverAssist.Security.Tests.Unit.LoginSecurityTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php" line="84" assertions="1" time="0.005310">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">SilverAssist\Security\Tests\Unit\LoginSecurityTest::test_lockout_after_max_attempts
+IP should be locked out after max attempts
+Failed asserting that false is true.
+
+/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php:105</failure>
+    </testcase>
+    <testcase name="test_successful_login_clears_attempts" class="SilverAssist\Security\Tests\Unit\LoginSecurityTest" classname="SilverAssist.Security.Tests.Unit.LoginSecurityTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php" line="117" assertions="1" time="0.014689">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">SilverAssist\Security\Tests\Unit\LoginSecurityTest::test_successful_login_clears_attempts
+Failed asserting that false matches expected 1.
+
+/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php:135</failure>
+    </testcase>
+    <testcase name="test_bot_detection_and_blocking" class="SilverAssist\Security\Tests\Unit\LoginSecurityTest" classname="SilverAssist.Security.Tests.Unit.LoginSecurityTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php" line="148" assertions="1" time="0.003898">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">SilverAssist\Security\Tests\Unit\LoginSecurityTest::test_bot_detection_and_blocking
+Bot should receive 404 response
+Failed asserting that '' contains "404 Not Found".
+
+/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php:166</failure>
+    </testcase>
+    <testcase name="test_password_strength_validation" class="SilverAssist\Security\Tests\Unit\LoginSecurityTest" classname="SilverAssist.Security.Tests.Unit.LoginSecurityTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php" line="172" assertions="6" time="0.002171"/>
+    <testcase name="test_ip_address_detection" class="SilverAssist\Security\Tests\Unit\LoginSecurityTest" classname="SilverAssist.Security.Tests.Unit.LoginSecurityTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php" line="192" assertions="3" time="0.002381"/>
+    <testcase name="test_session_timeout" class="SilverAssist\Security\Tests\Unit\LoginSecurityTest" classname="SilverAssist.Security.Tests.Unit.LoginSecurityTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php" line="215" assertions="0" time="0.009322">
+      <error type="PHPUnit\Framework\RiskyTestError">SilverAssist\Security\Tests\Unit\LoginSecurityTest::test_session_timeout
+This test did not perform any assertions
+
+/Users/miguel/Projects/silver-assist-security/tests/Unit/LoginSecurityTest.php:215</error>
+    </testcase>
   </testsuite>
 </testsuites>

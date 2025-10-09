@@ -8,14 +8,13 @@
 
 namespace SilverAssist\Security\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use SilverAssist\Security\Security\LoginSecurity;
-use SilverAssist\Security\Tests\Helpers\TestHelper;
+use WP_UnitTestCase;
 
 /**
  * Test LoginSecurity class
  */
-class LoginSecurityTest extends TestCase
+class LoginSecurityTest extends WP_UnitTestCase
 {
     /**
      * LoginSecurity instance
@@ -31,9 +30,6 @@ class LoginSecurityTest extends TestCase
     {
         parent::setUp();
 
-        // Clean up any existing transients
-        TestHelper::cleanup_transients();
-
         // Set default options
         update_option("silver_assist_login_attempts", 5);
         update_option("silver_assist_lockout_duration", 900);
@@ -43,9 +39,6 @@ class LoginSecurityTest extends TestCase
 
         // Initialize LoginSecurity
         $this->login_security = new LoginSecurity();
-
-        // Mock HTTP request
-        TestHelper::mock_http_request();
     }
 
     /**
@@ -53,9 +46,6 @@ class LoginSecurityTest extends TestCase
      */
     protected function tearDown(): void
     {
-        // Clean up transients
-        TestHelper::cleanup_transients();
-
         parent::tearDown();
     }
 
@@ -132,8 +122,8 @@ class LoginSecurityTest extends TestCase
         // Mock IP address
         $_SERVER["REMOTE_ADDR"] = $ip;
 
-        // Create a test user
-        $user_id = TestHelper::create_test_user(["user_login" => $username]);
+        // Create a test user using WordPress factory
+        $user_id = $this->factory()->user->create(["user_login" => $username]);
         $user = get_user_by("id", $user_id);
 
         // Simulate a failed login first
@@ -150,9 +140,6 @@ class LoginSecurityTest extends TestCase
         // Verify attempts were cleared
         $attempts_after = get_transient($key);
         $this->assertFalse($attempts_after, "Login attempts should be cleared after successful login");
-
-        // Clean up
-        TestHelper::delete_test_user($user_id);
     }
 
     /**
@@ -160,8 +147,8 @@ class LoginSecurityTest extends TestCase
      */
     public function test_bot_detection_and_blocking(): void
     {
-        // Test with known bot user agent
-        TestHelper::mock_bot_user_agent("scanner");
+        // Set known bot user agent directly
+        $_SERVER["HTTP_USER_AGENT"] = "Nmap Scripting Engine";
 
         // Capture output to test 404 response
         ob_start();
@@ -227,8 +214,8 @@ class LoginSecurityTest extends TestCase
      */
     public function test_session_timeout(): void
     {
-        // Mock logged in user
-        $user_id = TestHelper::create_test_user();
+        // Create logged in user using WordPress factory
+        $user_id = $this->factory()->user->create();
         wp_set_current_user($user_id);
 
         // Set short session timeout for testing
@@ -249,7 +236,6 @@ class LoginSecurityTest extends TestCase
         ob_get_clean();
 
         // Clean up
-        TestHelper::delete_test_user($user_id);
         wp_set_current_user(0);
     }
 }

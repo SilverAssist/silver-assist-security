@@ -8,14 +8,13 @@
 
 namespace SilverAssist\Security\Tests\Security;
 
-use PHPUnit\Framework\TestCase;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
-use SilverAssist\Security\Tests\Helpers\TestHelper;
+use WP_UnitTestCase;
 
 /**
  * Test security implementations
  */
-class SecurityTest extends TestCase
+class SecurityTest extends WP_UnitTestCase
 {
     /**
      * Set up test environment
@@ -23,7 +22,12 @@ class SecurityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        TestHelper::mock_http_request();
+        
+        // Configure GraphQL options for testing
+        update_option("silver_assist_graphql_query_depth", 8);
+        update_option("silver_assist_graphql_query_complexity", 100);
+        update_option("silver_assist_graphql_query_timeout", 5);
+        update_option("silver_assist_graphql_headless_mode", 0);
     }
     
     /**
