@@ -8,16 +8,17 @@
 
 namespace SilverAssist\Security\Tests\Security;
 
-use PHPUnit\Framework\TestCase;
+use Brain\Monkey\Functions;
 use SilverAssist\Security\Security\GeneralSecurity;
 use SilverAssist\Security\GraphQL\GraphQLSecurity;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
+use SilverAssist\Security\Tests\Helpers\BrainMonkeyTestCase;
 use SilverAssist\Security\Tests\Helpers\TestHelper;
 
 /**
  * Test security implementations
  */
-class SecurityTest extends TestCase
+class SecurityTest extends BrainMonkeyTestCase
 {
     /**
      * Set up test environment
@@ -25,9 +26,77 @@ class SecurityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        
+        // Setup WordPress function mocks
+        $this->setup_wordpress_mocks();
+        
         TestHelper::mock_http_request();
     }
-
+    
+    /**
+     * Setup WordPress function mocks
+     *
+     * @return void
+     */
+    private function setup_wordpress_mocks(): void
+    {
+        // Mock wp_parse_args (already in stubs but needs Brain Monkey interception)
+        Functions\when("wp_parse_args")->alias(function($args, $defaults = []) {
+            if (is_object($args)) {
+                $args = get_object_vars($args);
+            } elseif (!is_array($args)) {
+                $args = [];
+            }
+            return array_merge($defaults, $args);
+        });
+        
+        // Mock is_ssl
+        Functions\when("is_ssl")->justReturn(false);
+        
+        // Mock header (PHP native but needs mocking for tests)
+        Functions\when("header")->justReturn(null);
+        
+        // Mock add_filter
+        Functions\expect("add_filter")->andReturn(true);
+        
+        // Mock add_action
+        Functions\expect("add_action")->andReturn(true);
+        
+        // Mock remove_action
+        Functions\when("remove_action")->justReturn(true);
+        
+        // Mock get_option
+        Functions\when("get_option")->alias(function($option, $default = false) {
+            $defaults = [
+                "silver_assist_graphql_query_depth" => 8,
+                "silver_assist_graphql_query_complexity" => 100,
+                "silver_assist_graphql_query_timeout" => 5,
+                "silver_assist_graphql_headless_mode" => 0,
+            ];
+            return $defaults[$option] ?? $default;
+        });
+        
+        // Mock class_exists
+        Functions\when("class_exists")->alias(function($class_name) {
+            return $class_name === "WPGraphQL";
+        });
+        
+        // Mock function_exists
+        Functions\when("function_exists")->alias(function($function_name) {
+            return $function_name !== "get_graphql_setting";
+        });
+        
+        // Mock get_transient
+        Functions\when("get_transient")->justReturn(false);
+        
+        // Mock set_transient
+        Functions\when("set_transient")->justReturn(true);
+        
+        // Mock ini_get
+        Functions\when("ini_get")->alias(function($option) {
+            return $option === "max_execution_time" ? "30" : false;
+        });
+    }
     /**
      * Test HTTPOnly cookie implementation
      */
