@@ -296,9 +296,9 @@ class LoginSecurity
             return $user;
         }
 
-        $ip = $this->get_client_ip();
-        $lockout_key = "lockout_{md5($ip)}";
-        $attempts_key = "login_attempts_{md5($ip)}";
+        $ip = SecurityHelper::get_client_ip();
+        $lockout_key = SecurityHelper::generate_ip_transient_key("lockout", $ip);
+        $attempts_key = SecurityHelper::generate_ip_transient_key("login_attempts", $ip);
 
         // Check if IP is locked out
         if (\get_transient($lockout_key)) {
