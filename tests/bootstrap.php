@@ -79,10 +79,8 @@ tests_add_filter("muplugins_loaded", "_manually_load_plugin");
 // Start up the WP testing environment
 require "{$_tests_dir}/includes/bootstrap.php";
 
-echo "\n✅ WordPress Test Environment Loaded Successfully\n";
-echo "   WordPress Version: " . get_bloginfo("version") . "\n";
-echo "   PHP Version: " . PHP_VERSION . "\n";
-echo "   PHPUnit Version: " . \PHPUnit\Runner\Version::id() . "\n\n";
+// Note: Removed echo statements to prevent "headers already sent" errors
+// Output before tests causes issues when tests trigger WordPress hooks that send headers
 
 } // End PHPUnit-only section
 
