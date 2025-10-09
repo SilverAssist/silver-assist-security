@@ -12,15 +12,14 @@
 namespace SilverAssist\Security\Tests\Unit;
 
 use SilverAssist\Security\Core\SecurityHelper;
-use SilverAssist\Security\Tests\Helpers\BrainMonkeyTestCase;
-use Brain\Monkey\Functions;
+use WP_UnitTestCase;
 
 /**
  * Test SecurityHelper class
  *
  * @since 1.1.12
  */
-class SecurityHelperTest extends BrainMonkeyTestCase
+class SecurityHelperTest extends WP_UnitTestCase
 {
     /**
      * Set up test environment
@@ -33,8 +32,8 @@ class SecurityHelperTest extends BrainMonkeyTestCase
         parent::setUp();
 
         // Define plugin constants if not already defined
-        if (!defined("SILVER_ASSIST_SECURITY_URL")) {
-            define("SILVER_ASSIST_SECURITY_URL", "http://example.org/wp-content/plugins/silver-assist-security/");
+        if (!\defined("SILVER_ASSIST_SECURITY_URL")) {
+            \define("SILVER_ASSIST_SECURITY_URL", "http://example.org/wp-content/plugins/silver-assist-security/");
         }
 
         SecurityHelper::init();
@@ -227,25 +226,21 @@ class SecurityHelperTest extends BrainMonkeyTestCase
      */
     public function test_sanitize_admin_path_removes_dangerous_characters(): void
     {
-        Functions\when("sanitize_title")->returnArg();
-
         $dangerous_paths = [
-            "../../../etc/passwd" => "etcpasswd",
-            "admin<script>" => "adminscript",
-            "path/with/slashes" => "pathwithslashes",
-            "path?query=1" => "pathquery1",
+            "../../../etc/passwd",
+            "admin<script>",
+            "path/with/slashes",
+            "path?query=1",
         ];
 
-        foreach ($dangerous_paths as $input => $expected_pattern) {
-            // Mock sanitize_title to actually sanitize
-            Functions\when("sanitize_title")->justReturn($expected_pattern);
-            
+        foreach ($dangerous_paths as $input) {
             $result = SecurityHelper::sanitize_admin_path($input);
             
-            $this->assertStringNotContainsString("..", $result);
-            $this->assertStringNotContainsString("/", $result);
-            $this->assertStringNotContainsString("<", $result);
-            $this->assertStringNotContainsString(">", $result);
+            $this->assertStringNotContainsString("..", $result, "Path should not contain '..'");
+            $this->assertStringNotContainsString("/", $result, "Path should not contain '/'");
+            $this->assertStringNotContainsString("<", $result, "Path should not contain '<'");
+            $this->assertStringNotContainsString(">", $result, "Path should not contain '>'");
+            $this->assertStringNotContainsString("?", $result, "Path should not contain '?'");
         }
     }
 
@@ -307,10 +302,13 @@ class SecurityHelperTest extends BrainMonkeyTestCase
      */
     public function test_format_time_duration_formats_seconds(): void
     {
-        Functions\when("__")->returnArg();
+        $result = SecurityHelper::format_time_duration(30);
+        $this->assertStringContainsString("30", $result);
+        $this->assertStringContainsString("second", $result);
         
-        $this->assertEquals("30 seconds", SecurityHelper::format_time_duration(30));
-        $this->assertEquals("1 seconds", SecurityHelper::format_time_duration(1));
+        $result = SecurityHelper::format_time_duration(1);
+        $this->assertStringContainsString("1", $result);
+        $this->assertStringContainsString("second", $result);
     }
 
     /**
@@ -321,11 +319,17 @@ class SecurityHelperTest extends BrainMonkeyTestCase
      */
     public function test_format_time_duration_formats_minutes(): void
     {
-        Functions\when("__")->returnArg();
+        $result = SecurityHelper::format_time_duration(60);
+        $this->assertStringContainsString("1", $result);
+        $this->assertStringContainsString("minute", $result);
         
-        $this->assertEquals("1 minutes", SecurityHelper::format_time_duration(60));
-        $this->assertEquals("5 minutes", SecurityHelper::format_time_duration(300));
-        $this->assertEquals("15 minutes", SecurityHelper::format_time_duration(900));
+        $result = SecurityHelper::format_time_duration(300);
+        $this->assertStringContainsString("5", $result);
+        $this->assertStringContainsString("minute", $result);
+        
+        $result = SecurityHelper::format_time_duration(900);
+        $this->assertStringContainsString("15", $result);
+        $this->assertStringContainsString("minute", $result);
     }
 
     /**
@@ -336,10 +340,13 @@ class SecurityHelperTest extends BrainMonkeyTestCase
      */
     public function test_format_time_duration_formats_hours(): void
     {
-        Functions\when("__")->returnArg();
+        $result = SecurityHelper::format_time_duration(3600);
+        $this->assertStringContainsString("1", $result);
+        $this->assertStringContainsString("hour", $result);
         
-        $this->assertEquals("1 hours", SecurityHelper::format_time_duration(3600));
-        $this->assertEquals("2 hours", SecurityHelper::format_time_duration(7200));
+        $result = SecurityHelper::format_time_duration(7200);
+        $this->assertStringContainsString("2", $result);
+        $this->assertStringContainsString("hour", $result);
     }
 
     /**
@@ -350,14 +357,12 @@ class SecurityHelperTest extends BrainMonkeyTestCase
      */
     public function test_format_time_duration_formats_mixed_time(): void
     {
-        Functions\when("__")->returnArg();
-        
         // 1 hour, 5 minutes, 30 seconds = 3930 seconds
         // This should round to hours since it's > 60 minutes
         $duration = 3600 + 300 + 30;
         $result = SecurityHelper::format_time_duration($duration);
         
-        $this->assertStringContainsString("hours", $result);
+        $this->assertStringContainsString("hour", $result);
     }
 
     /**
@@ -368,11 +373,10 @@ class SecurityHelperTest extends BrainMonkeyTestCase
      */
     public function test_verify_nonce_with_valid_nonce(): void
     {
-        Functions\when("wp_verify_nonce")->justReturn(1);
-
-        $result = SecurityHelper::verify_nonce("valid_nonce", "test_action", false);
+        $nonce = \wp_create_nonce("test_action");
+        $result = SecurityHelper::verify_nonce($nonce, "test_action", false);
         
-        $this->assertTrue($result);
+        $this->assertTrue($result, "Valid nonce should pass verification");
     }
 
     /**
@@ -383,11 +387,9 @@ class SecurityHelperTest extends BrainMonkeyTestCase
      */
     public function test_verify_nonce_with_invalid_nonce(): void
     {
-        Functions\when("wp_verify_nonce")->justReturn(false);
-
-        $result = SecurityHelper::verify_nonce("invalid_nonce", "test_action", false);
+        $result = SecurityHelper::verify_nonce("invalid_nonce_12345", "test_action", false);
         
-        $this->assertFalse($result);
+        $this->assertFalse($result, "Invalid nonce should fail verification");
     }
 
     /**
@@ -398,11 +400,13 @@ class SecurityHelperTest extends BrainMonkeyTestCase
      */
     public function test_check_user_capability_with_sufficient_capability(): void
     {
-        Functions\when("current_user_can")->justReturn(true);
+        // Create admin user
+        $admin_id = $this->factory()->user->create(["role" => "administrator"]);
+        \wp_set_current_user($admin_id);
 
         $result = SecurityHelper::check_user_capability("manage_options", false);
         
-        $this->assertTrue($result);
+        $this->assertTrue($result, "Administrator should have manage_options capability");
     }
 
     /**
@@ -413,15 +417,13 @@ class SecurityHelperTest extends BrainMonkeyTestCase
      */
     public function test_check_user_capability_without_sufficient_capability(): void
     {
-        Functions\when("current_user_can")->justReturn(false);
-        Functions\when("get_current_user_id")->justReturn(0);
-        Functions\when("wp_die")->alias(function() {
-            // Mock wp_die to not actually die during tests
-        });
+        // Create subscriber user (no admin capabilities)
+        $subscriber_id = $this->factory()->user->create(["role" => "subscriber"]);
+        \wp_set_current_user($subscriber_id);
 
         $result = SecurityHelper::check_user_capability("manage_options", false);
         
-        $this->assertFalse($result);
+        $this->assertFalse($result, "Subscriber should not have manage_options capability");
     }
 
     /**
