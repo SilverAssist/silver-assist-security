@@ -35,11 +35,35 @@ class AdminHideSecurityTest extends WP_UnitTestCase
     {
         parent::setUp();
         
-        // Configure admin hiding options
+        // Configure admin hiding options (but don't create instance yet)
         \update_option("silver_assist_admin_hide_enabled", 1);
         \update_option("silver_assist_admin_hide_path", "secure-backend-2024");
         
-        $this->admin_hide_security = new AdminHideSecurity();
+        // Don't create instance here - let each test create its own
+        // $this->admin_hide_security = new AdminHideSecurity();
+    }
+
+    /**
+     * Tear down test environment
+     *
+     * Clean up hooks and filters to prevent test contamination
+     *
+     * @return void
+     */
+    protected function tearDown(): void
+    {
+        // Remove all hooks registered by AdminHideSecurity
+        \remove_all_actions("setup_theme");
+        \remove_all_filters("site_url");
+        \remove_all_filters("admin_url");
+        \remove_all_filters("wp_redirect");
+        \remove_all_filters("logout_redirect");
+        
+        // Reset options to default enabled state for next test
+        \update_option("silver_assist_admin_hide_enabled", 1);
+        \update_option("silver_assist_admin_hide_path", "secure-backend-2024");
+        
+        parent::tearDown();
     }
 
     /**
@@ -49,9 +73,11 @@ class AdminHideSecurityTest extends WP_UnitTestCase
      */
     public function test_admin_hide_initializes(): void
     {
+        $admin_hide_security = new AdminHideSecurity();
+        
         $this->assertInstanceOf(
             AdminHideSecurity::class,
-            $this->admin_hide_security,
+            $admin_hide_security,
             "AdminHideSecurity should initialize"
         );
     }
@@ -59,6 +85,8 @@ class AdminHideSecurityTest extends WP_UnitTestCase
     /**
      * Test emergency disable constant works
      *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      * @since 1.1.10
      */
     public function test_emergency_disable_constant(): void
@@ -122,10 +150,6 @@ class AdminHideSecurityTest extends WP_UnitTestCase
             $disabled_instance,
             "Should initialize with admin hiding disabled"
         );
-
-        // Re-enable for other tests and recreate instance
-        \update_option("silver_assist_admin_hide_enabled", 1);
-        $this->admin_hide_security = new AdminHideSecurity();
     }
 
     /**
@@ -220,6 +244,10 @@ class AdminHideSecurityTest extends WP_UnitTestCase
      */
     public function test_wordpress_admin_redirect_removed(): void
     {
+        // Create instance to trigger hook removal
+        \update_option("silver_assist_admin_hide_enabled", 1);
+        $instance = new AdminHideSecurity();
+        
         // Verify that wp_redirect_admin_locations is not in template_redirect
         $this->assertFalse(
             \has_action("template_redirect", "wp_redirect_admin_locations"),
@@ -230,12 +258,16 @@ class AdminHideSecurityTest extends WP_UnitTestCase
     /**
      * Test admin hide works during cron jobs
      *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      * @since 1.1.10
      */
     public function test_admin_hide_skips_cron(): void
     {
         // Simulate cron environment
-        \define("DOING_CRON", true);
+        if (!\defined("DOING_CRON")) {
+            \define("DOING_CRON", true);
+        }
 
         // Create instance
         $cron_instance = new AdminHideSecurity();
@@ -250,6 +282,8 @@ class AdminHideSecurityTest extends WP_UnitTestCase
     /**
      * Test admin hide works during AJAX requests
      *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      * @since 1.1.10
      */
     public function test_admin_hide_skips_ajax(): void
@@ -312,10 +346,12 @@ class AdminHideSecurityTest extends WP_UnitTestCase
      */
     public function test_validation_parameter_exists(): void
     {
+        $admin_hide_security = new AdminHideSecurity();
+        
         // Validation parameter should be configured
         $this->assertInstanceOf(
             AdminHideSecurity::class,
-            $this->admin_hide_security,
+            $admin_hide_security,
             "Validation parameter should be configured"
         );
     }
