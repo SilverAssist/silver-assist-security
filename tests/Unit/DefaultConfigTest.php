@@ -12,14 +12,13 @@
 namespace SilverAssist\Security\Tests\Unit;
 
 use SilverAssist\Security\Core\DefaultConfig;
-use SilverAssist\Security\Tests\Helpers\BrainMonkeyTestCase;
 
 /**
  * Test DefaultConfig class
  *
  * @since 1.1.12
  */
-class DefaultConfigTest extends BrainMonkeyTestCase
+class DefaultConfigTest extends \WP_UnitTestCase
 {
     /**
      * Set up test environment
@@ -30,7 +29,8 @@ class DefaultConfigTest extends BrainMonkeyTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->mockWordPressOptions();
+        // WordPress Test Suite provides real get_option/update_option
+        // No mocking needed
     }
 
     /**
@@ -123,9 +123,8 @@ class DefaultConfigTest extends BrainMonkeyTestCase
      */
     public function test_get_option_returns_wordpress_option_when_exists(): void
     {
-        // Mock WordPress function to return a specific value
-        \Brain\Monkey\Functions\when("get_option")
-            ->justReturn(10);
+        // Use real WordPress update_option (provided by WordPress Test Suite)
+        update_option("silver_assist_login_attempts", 10);
 
         $value = DefaultConfig::get_option("silver_assist_login_attempts");
         $this->assertEquals(10, $value);
@@ -139,12 +138,10 @@ class DefaultConfigTest extends BrainMonkeyTestCase
      */
     public function test_get_option_returns_default_when_option_not_exists(): void
     {
-        // Mock WordPress function to return false (option doesn't exist)
-        \Brain\Monkey\Functions\when("get_option")
-            ->alias(function ($option_name, $default) {
-                return $default;
-            });
+        // Delete option to ensure it doesn't exist
+        delete_option("silver_assist_login_attempts");
 
+        // Should return default value (5) when option doesn't exist
         $value = DefaultConfig::get_option("silver_assist_login_attempts");
         $this->assertEquals(5, $value);
     }
@@ -157,11 +154,10 @@ class DefaultConfigTest extends BrainMonkeyTestCase
      */
     public function test_get_option_returns_null_for_non_configured_option(): void
     {
-        \Brain\Monkey\Functions\when("get_option")
-            ->alias(function ($option_name, $default) {
-                return $default;
-            });
+        // Delete option to ensure it doesn't exist
+        delete_option("non_existing_option");
 
+        // Should return null for non-configured option
         $value = DefaultConfig::get_option("non_existing_option");
         $this->assertNull($value);
     }

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" tests="12" assertions="46" errors="0" warnings="0" failures="1" skipped="0" time="0.032174">
+    <testcase name="test_singleton_pattern" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="58" assertions="2" time="0.006578"/>
+    <testcase name="test_wpgraphql_availability_detection" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="76" assertions="1" time="0.002116"/>
+    <testcase name="test_headless_mode_detection" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="90" assertions="2" time="0.003051"/>
+    <testcase name="test_php_execution_timeout" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="104" assertions="2" time="0.002544">
+      <failure type="PHPUnit\Framework\ExpectationFailedException">SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest::test_php_execution_timeout
+Failed asserting that 0 matches expected 30.
+
+/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php:109</failure>
+    </testcase>
+    <testcase name="test_timeout_configuration" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="118" assertions="7" time="0.002454"/>
+    <testcase name="test_configuration_retrieval" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="137" assertions="9" time="0.001965"/>
+    <testcase name="test_security_recommendations" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="158" assertions="4" time="0.001627"/>
+    <testcase name="test_settings_display" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="178" assertions="2" time="0.002037"/>
+    <testcase name="test_safe_limit_retrieval" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="192" assertions="6" time="0.003966"/>
+    <testcase name="test_rate_limiting_configuration" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="213" assertions="4" time="0.001660"/>
+    <testcase name="test_integration_status" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="229" assertions="6" time="0.001847"/>
+    <testcase name="test_cache_clearing" class="SilverAssist\Security\Tests\Unit\GraphQLConfigManagerTest" classname="SilverAssist.Security.Tests.Unit.GraphQLConfigManagerTest" file="/Users/miguel/Projects/silver-assist-security/tests/Unit/GraphQLConfigManagerTest.php" line="247" assertions="1" time="0.002329"/>
+  </testsuite>
+</testsuites>

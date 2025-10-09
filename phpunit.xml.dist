@@ -47,6 +47,9 @@
         <ini name="error_reporting" value="-1"/>
         <ini name="memory_limit" value="256M"/>
         
+        <!-- WordPress Test Suite Configuration -->
+        <const name="WP_TESTS_DIR" value="/var/folders/cc/1780l0dj06g87fnbw_nl2fkw0000gn/T/wordpress-tests-lib"/>
+        
         <!-- WordPress Test Environment -->
         <const name="WP_TESTS_DOMAIN" value="example.org"/>
         <const name="WP_TESTS_EMAIL" value="admin@example.org"/>
@@ -54,8 +57,14 @@
         <const name="WP_PHP_BINARY" value="php"/>
         <const name="WP_TESTS_FORCE_KNOWN_BUGS" value="true"/>
         
+        <!-- WordPress Configuration for Tests -->
+        <const name="WP_DEBUG" value="true"/>
+        <const name="WP_DEBUG_LOG" value="false"/>
+        <const name="WP_DEBUG_DISPLAY" value="true"/>
+        <const name="SCRIPT_DEBUG" value="false"/>
+        
         <!-- Plugin-specific constants -->
-        <const name="SILVER_ASSIST_SECURITY_VERSION" value="1.0.0"/>
+        <const name="SILVER_ASSIST_SECURITY_VERSION" value="1.1.10"/>
         <const name="SILVER_ASSIST_SECURITY_TESTING" value="true"/>
     </php>
 

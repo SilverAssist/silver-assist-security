@@ -386,15 +386,123 @@ public static function function_name($param): return_type
 
 ## Testing & Quality Assurance
 
+### 🚨 WordPress Test Suite Integration
+
+**The plugin uses WordPress Test Suite (WP_UnitTestCase) for ALL tests - both local development and GitHub Actions CI/CD.**
+
+#### **Test Infrastructure**
+- **Framework**: WordPress Test Suite with WP_UnitTestCase (extends PHPUnit\Framework\TestCase)
+- **Local Setup**: `bin/install-wp-tests.sh wordpress_test root '' localhost latest`
+- **Database**: Real MySQL database for integration tests
+- **WordPress**: Real WordPress installation in `/tmp/wordpress/`
+- **Test Suite**: Located in `/tmp/wordpress-tests-lib/`
+- **Configuration**: `phpunit.xml.dist` with WP_TESTS_DIR constant
+
+#### **Test Directory Structure**
+
+```
+tests/
+├── Unit/                          # Unit tests with WP_UnitTestCase
+│   ├── DefaultConfigTest.php     # DefaultConfig class tests
+│   ├── GraphQLConfigManagerTest.php # GraphQL configuration tests
+│   ├── LoginSecurityTest.php     # Login security tests
+│   └── SecurityHelperTest.php    # SecurityHelper utility tests
+├── Security/                      # Security-specific tests
+│   └── SecurityTest.php          # Overall security validation
+├── WordPress/                     # WordPress integration examples
+│   └── AdminPanelTest.php        # Example WP_UnitTestCase implementation
+├── Helpers/                       # Test utilities
+│   └── TestHelper.php            # Shared test helper functions
+├── bootstrap.php                  # WordPress Test Suite bootstrap
+└── results/                       # Test output (excluded from git)
+```
+
+#### **Running Tests Locally**
+
+```bash
+# First-time setup: Install WordPress Test Suite
+bin/install-wp-tests.sh wordpress_test root '' localhost latest
+
+# Run all tests
+vendor/bin/phpunit --testdox
+
+# Run specific suite
+vendor/bin/phpunit --testsuite "Unit Tests"
+
+# Run specific file
+vendor/bin/phpunit tests/Unit/DefaultConfigTest.php
+
+# With coverage (requires Xdebug)
+vendor/bin/phpunit --coverage-html coverage/
+```
+
+#### **GitHub Actions CI/CD**
+
+**Workflow**: `.github/workflows/quality-checks.yml`
+
+**Job: `wordpress-tests`** (12 test combinations)
+- **Matrix**: PHP 8.0-8.3 × WordPress 6.5, 6.6, latest
+- **Database**: MySQL 8.0 service container
+- **Installation**: Automatic via `bin/install-wp-tests.sh`
+- **Execution**: Full PHPUnit test suite with real WordPress
+
+**Job: `syntax-validation`** (4 PHP versions)
+- **Purpose**: Fast syntax validation without WordPress
+- **Checks**: PHP syntax, PSR-4 autoloading
+- **Speed**: Completes in ~30 seconds per PHP version
+
+#### **WordPress Test Suite Benefits**
+- ✅ **Real WordPress Functions**: No mocks needed - use actual WordPress APIs
+- ✅ **Real Database**: MySQL transactions with automatic rollback after each test
+- ✅ **WordPress Factories**: Built-in factories for users, posts, terms, etc.
+- ✅ **Hook System**: Test real WordPress hooks and filters
+- ✅ **Auto-Cleanup**: Each test runs in isolation with automatic cleanup
+- ✅ **Comprehensive**: Test complete WordPress functionality, not just PHP logic
+
+#### **Test Writing Pattern**
+
+```php
+use WP_UnitTestCase;
+
+class ExampleTest extends WP_UnitTestCase
+{
+    public function test_wordpress_option(): void
+    {
+        // Use real WordPress functions
+        update_option("my_option", "value");
+        $result = get_option("my_option");
+        $this->assertEquals("value", $result);
+    }
+    
+    public function test_user_creation(): void
+    {
+        // Use WordPress factories
+        $user_id = $this->factory()->user->create(['role' => 'administrator']);
+        $this->assertGreaterThan(0, $user_id);
+    }
+    
+    public function test_wordpress_hooks(): void
+    {
+        // Test real hooks
+        $called = false;
+        add_action('my_hook', function() use (&$called) {
+            $called = true;
+        });
+        do_action('my_hook');
+        $this->assertTrue($called);
+    }
+}
+```
+
 ### 🚨 MANDATORY Testing File Organization
 
 **ALL test files MUST be created within the `/tests/` directory structure:**
 
-- **Unit Tests**: `/tests/Unit/` - For testing individual classes and methods
-- **Integration Tests**: `/tests/Integration/` - For testing component interactions
-- **Security Tests**: `/tests/Security/` - For security-specific validation
-- **Helper Classes**: `/tests/Helpers/` - For shared testing utilities
-- **Test Results**: `/tests/results/` - For test output and reports
+- **Unit Tests**: `/tests/Unit/` - Individual class/method tests with WP_UnitTestCase
+- **Security Tests**: `/tests/Security/` - Security-specific validation
+- **WordPress Examples**: `/tests/WordPress/` - Integration test examples
+- **Helper Classes**: `/tests/Helpers/` - Shared testing utilities
+- **Test Results**: `/tests/results/` - Test output (git-ignored)
 
 **NEVER create test files in the project root directory. Always use the proper `/tests/` subdirectory structure.**
 
@@ -412,8 +520,8 @@ public static function function_name($param): return_type
 - **AJAX Responsiveness**: Real-time dashboard should update smoothly
 
 ### Compatibility Testing
-- **WordPress Versions**: Test with WordPress 6.5+
-- **PHP Versions**: Ensure compatibility with PHP 8.0+
+- **WordPress Versions**: Test with WordPress 6.5+ (automated in CI/CD)
+- **PHP Versions**: Ensure compatibility with PHP 8.0+ (automated in CI/CD)
 - **Plugin Conflicts**: Test with common security plugins
 - **Theme Compatibility**: Verify admin interface renders correctly
 

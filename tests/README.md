@@ -1,52 +1,119 @@
 # Silver Assist Security Essentials - Test Suite
 
-This directory contains comprehensive tests for the Silver Assist Security Essentials plugin.
+This directory contains comprehensive tests for the Silver Assist Security Essentials plugin using **WordPress Test Suite (WP_UnitTestCase)**.
+
+## Quick Start
+
+### First-Time Setup
+
+```bash
+# Install WordPress Test Suite (required once)
+bin/install-wp-tests.sh wordpress_test root '' localhost latest
+
+# Verify installation
+ls /tmp/wordpress-tests-lib/includes/functions.php
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+vendor/bin/phpunit --testdox
+
+# Run specific suite
+vendor/bin/phpunit --testsuite "Unit Tests"
+
+# Run specific file
+vendor/bin/phpunit tests/Unit/DefaultConfigTest.php
+
+# With coverage (requires Xdebug)
+vendor/bin/phpunit --coverage-html coverage/
+```
 
 ## Test Structure
 
 ```
 tests/
-├── bootstrap.php          # PHPUnit bootstrap file
+├── bootstrap.php          # WordPress Test Suite bootstrap
 ├── Helpers/
 │   └── TestHelper.php    # Test utility functions
-├── Unit/                 # Unit tests for individual classes
-│   ├── LoginSecurityTest.php
-│   └── GraphQLConfigManagerTest.php  # NEW in v1.0.4
-├── Integration/          # Integration tests for component interaction
-│   └── AdminPanelTest.php
+├── Unit/                 # Unit tests with WP_UnitTestCase
+│   ├── DefaultConfigTest.php         # Configuration management tests
+│   ├── GraphQLConfigManagerTest.php  # GraphQL configuration tests
+│   ├── LoginSecurityTest.php         # Login security tests
+│   └── SecurityHelperTest.php        # Security helper utilities tests
+├── WordPress/            # WordPress integration examples
+│   └── AdminPanelTest.php           # WP_UnitTestCase example
 ├── Security/            # Security-focused tests
-│   └── SecurityTest.php
-└── results/             # Test results and coverage reports
+│   └── SecurityTest.php             # Overall security validation
+└── results/             # Test results (git-ignored)
+```
+
+## Test Framework
+
+### WordPress Test Suite (WP_UnitTestCase)
+
+All tests extend `WP_UnitTestCase` which provides:
+- ✅ **Real WordPress Environment**: Full WordPress installation with all functions available
+- ✅ **Real Database**: MySQL with automatic transaction rollback after each test
+- ✅ **WordPress Factories**: Built-in factories for users, posts, terms, etc.
+- ✅ **Hook System**: Test real WordPress hooks and filters
+- ✅ **Auto-Cleanup**: Isolated test execution with automatic cleanup
+
+### Test Writing Pattern
+
+```php
+use WP_UnitTestCase;
+
+class ExampleTest extends WP_UnitTestCase
+{
+    public function test_wordpress_option(): void
+    {
+        // Use real WordPress functions - no mocks needed
+        update_option("my_option", "value");
+        $result = get_option("my_option");
+        $this->assertEquals("value", $result);
+    }
+    
+    public function test_user_creation(): void
+    {
+        // Use WordPress factories for test data
+        $user_id = $this->factory()->user->create(['role' => 'administrator']);
+        $this->assertGreaterThan(0, $user_id);
+    }
+    
+    public function test_hooks(): void
+    {
+        // Test real WordPress hooks
+        $called = false;
+        add_action('my_hook', function() use (&$called) {
+            $called = true;
+        });
+        do_action('my_hook');
+        $this->assertTrue($called);
+    }
+}
 ```
 
 ## Test Types
 
 ### Unit Tests (`tests/Unit/`)
-Test individual classes and methods in isolation:
-- **LoginSecurity functionality**: IP detection, session management, lockout mechanisms
-- **GraphQLConfigManager (v1.0.4)**: Centralized configuration, singleton pattern, caching, rate limiting
-- Password validation and enforcement
-- Bot detection and blocking logic
-- Failed login attempt tracking
+Test individual classes and methods with real WordPress:
+- **DefaultConfig**: Configuration management, option handling, defaults
+- **GraphQLConfigManager**: Centralized GraphQL configuration, rate limiting, caching
+- **LoginSecurity**: IP detection, session management, lockout mechanisms, bot detection
+- **SecurityHelper**: Utility functions, asset loading, IP detection, validation
 
-### Integration Tests (`tests/Integration/`)
-Test component interactions and WordPress integration:
-- Admin panel functionality with GraphQLConfigManager integration (v1.0.4)
-- AJAX endpoints and real-time updates
-- Settings management through centralized configuration
-- Menu registration and capability checks
-- Script/style enqueuing and dependencies
-- Form handling, validation, and auto-save functionality
+### WordPress Examples (`tests/WordPress/`)
+Integration test examples showing WP_UnitTestCase patterns:
+- **AdminPanel**: Admin interface, AJAX handlers, settings, menus, nonces
 
 ### Security Tests (`tests/Security/`)
 Focused on security implementations:
-- HTTPOnly cookie enforcement across all WordPress cookies
-- **GraphQL security with centralized configuration (v1.0.4)**: Query validation, depth limiting, rate limiting
-- Security headers implementation (X-Frame-Options, X-XSS-Protection, CSP)
+- HTTPOnly cookie enforcement
+- GraphQL security with centralized configuration
+- Security headers (X-Frame-Options, X-XSS-Protection, CSP)
 - Input sanitization and validation
-- XML-RPC blocking
-- User enumeration protection
-- Version hiding
 
 ## Running Tests
 

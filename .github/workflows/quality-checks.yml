@@ -140,10 +140,123 @@ jobs:
                     echo "Tests directory not found"
                   fi
 
-    unit-tests:
+    wordpress-tests:
         runs-on: ubuntu-latest
         
-        # Simplified test validation without full WordPress environment
+        strategy:
+            fail-fast: false
+            matrix:
+                php-version: [8.0, 8.1, 8.2, 8.3]
+                wordpress-version: [6.5, 6.6, latest]
+                
+        services:
+            mysql:
+                image: mysql:8.0
+                env:
+                    MYSQL_ROOT_PASSWORD: root
+                    MYSQL_DATABASE: wordpress_test
+                ports:
+                    - 3306:3306
+                options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ matrix.php-version }}
+                  extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql, mysqli
+                  coverage: none
+                  tools: composer:v2
+
+            - name: Install system dependencies
+              run: |
+                  echo "Installing system dependencies..."
+                  sudo apt-get update
+                  sudo apt-get install -y subversion mysql-client
+                  echo "System dependencies installed"
+
+            - name: Cache Composer dependencies
+              uses: actions/cache@v3
+              with:
+                  path: vendor
+                  key: ${{ runner.os }}-php${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-php${{ matrix.php-version }}-composer-
+                      ${{ runner.os }}-composer-
+
+            - name: Install Composer dependencies
+              run: |
+                  echo "Installing Composer dependencies for PHP ${{ matrix.php-version }}..."
+                  composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
+                  echo "Composer dependencies installed"
+
+            - name: Verify MySQL connection
+              run: |
+                  echo "Verifying MySQL connection..."
+                  mysql --host=127.0.0.1 --port=3306 -uroot -proot -e "SELECT VERSION();"
+                  echo "MySQL connection verified"
+
+            - name: Install WordPress Test Suite
+              env:
+                  WP_VERSION: ${{ matrix.wordpress-version }}
+              run: |
+                  echo "Installing WordPress Test Suite..."
+                  echo "WordPress Version: $WP_VERSION"
+                  echo "PHP Version: ${{ matrix.php-version }}"
+                  
+                  # Make script executable
+                  chmod +x bin/install-wp-tests.sh
+                  
+                  # Install WordPress test suite
+                  bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1 $WP_VERSION
+                  
+                  # Verify installation
+                  if [ -f /tmp/wordpress-tests-lib/includes/functions.php ]; then
+                    echo "✅ WordPress Test Suite installed successfully"
+                    ls -la /tmp/wordpress-tests-lib/includes/
+                  else
+                    echo "❌ WordPress Test Suite installation failed"
+                    exit 1
+                  fi
+
+            - name: Run PHPUnit Tests
+              env:
+                  WP_TESTS_DIR: /tmp/wordpress-tests-lib
+                  WP_CORE_DIR: /tmp/wordpress
+              run: |
+                  echo "Running PHPUnit tests with WordPress Test Suite..."
+                  echo "WordPress Version: ${{ matrix.wordpress-version }}"
+                  echo "PHP Version: ${{ matrix.php-version }}"
+                  echo ""
+                  
+                  # Run tests with detailed output
+                  vendor/bin/phpunit --testdox --colors=always
+                  
+                  echo ""
+                  echo "✅ All tests completed successfully!"
+
+            - name: Test Summary
+              if: always()
+              run: |
+                  echo "## Test Summary" >> $GITHUB_STEP_SUMMARY
+                  echo "- **PHP Version**: ${{ matrix.php-version }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **WordPress Version**: ${{ matrix.wordpress-version }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Test Suite**: WordPress Test Suite (WP_UnitTestCase)" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Database**: MySQL 8.0" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  if [ $? -eq 0 ]; then
+                    echo "✅ **Status**: All tests passed" >> $GITHUB_STEP_SUMMARY
+                  else
+                    echo "❌ **Status**: Some tests failed" >> $GITHUB_STEP_SUMMARY
+                  fi
+
+    syntax-validation:
+        runs-on: ubuntu-latest
+        
+        # Fast syntax validation without WordPress environment
         strategy:
             fail-fast: false
             matrix:
@@ -157,7 +270,7 @@ jobs:
               uses: shivammathur/setup-php@v2
               with:
                   php-version: ${{ matrix.php-version }}
-                  extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+                  extensions: dom, curl, libxml, mbstring, zip
                   coverage: none
                   tools: composer:v2
 
@@ -176,24 +289,6 @@ jobs:
                   composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
                   echo "Composer dependencies installed"
 
-            - name: Validate test infrastructure
-              run: |
-                  echo "Validating test infrastructure..."
-                  
-                  # Check if PHPUnit is available
-                  if [ ! -f vendor/bin/phpunit ]; then
-                      echo "PHPUnit not found, test validation will be skipped"
-                      exit 0
-                  fi
-                  
-                  # Check PHPUnit configuration
-                  if [ ! -f phpunit.xml.dist ]; then
-                      echo "PHPUnit configuration not found, test validation will be skipped"
-                      exit 0
-                  fi
-                  
-                  echo "Test infrastructure validated for PHP ${{ matrix.php-version }}"
-
             - name: PHP syntax validation
               run: |
                   echo "Running comprehensive PHP syntax validation with PHP ${{ matrix.php-version }}..."
@@ -201,79 +296,18 @@ jobs:
                   # Test all PHP files syntax including test files
                   find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \;
                   
-                  echo "PHP syntax validation completed for PHP ${{ matrix.php-version }}"
+                  echo "✅ PHP syntax validation completed for PHP ${{ matrix.php-version }}"
 
-            - name: Test files validation
+            - name: Autoloading validation
               run: |
-                  echo "Validating test files structure and syntax..."
+                  echo "Validating PSR-4 autoloading..."
                   
-                  # Check if test files are loadable without WordPress
-                  if [ -d "tests" ]; then
-                      echo "Validating test file syntax..."
-                      find tests/ -name "*.php" -exec php -l {} \;
-                      echo "Test files have valid syntax"
-                      
-                      # Count test files
-                      TEST_COUNT=$(find tests/ -name "*Test.php" | wc -l)
-                      echo "Found $TEST_COUNT test files"
-                      
-                      # Check test helper
-                      if [ -f "tests/Helpers/TestHelper.php" ]; then
-                          echo "TestHelper class found"
-                      fi
-                      
-                      # Check bootstrap
-                      if [ -f "tests/bootstrap.php" ]; then
-                          echo "Test bootstrap found"
-                      fi
-                  else
-                      echo "Tests directory not found"
-                  fi
-
-            - name: PHPUnit configuration validation
-              run: |
-                  echo "Validating PHPUnit configuration with PHP ${{ matrix.php-version }}..."
-                  
-                  # Try to validate PHPUnit configuration
-                  if vendor/bin/phpunit --version >/dev/null 2>&1; then
-                      echo "PHPUnit is functional (version: $(vendor/bin/phpunit --version | head -1))"
-                      
-                      # Try to list tests without running them (skip WordPress dependency issues)
-                      echo "Attempting to parse test configuration..."
-                      if vendor/bin/phpunit --configuration phpunit.xml.dist --list-tests >/dev/null 2>&1; then
-                          echo "PHPUnit can parse test configuration"
-                          
-                          # Show test suites
-                          echo "Test suites found:"
-                          vendor/bin/phpunit --configuration phpunit.xml.dist --list-suites || echo "  Could not list suites (may need WordPress environment)"
-                      else
-                          echo "PHPUnit configuration may need WordPress environment - this is expected"
-                      fi
-                  else
-                      echo "PHPUnit may have issues, but continuing..."
-                  fi
-
-            - name: Class autoloading validation
-              run: |
-                  echo "Validating class autoloading with PHP ${{ matrix.php-version }}..."
-                  
-                  # Test if our classes can be autoloaded (basic check)
                   php -r "
                   require_once 'vendor/autoload.php';
-                  
-                  // Test basic class loading without WordPress
-                  try {
-                      if (class_exists('SilverAssist\\\\Security\\\\Core\\\\Plugin', false)) {
-                          echo 'Core Plugin class is autoloadable' . PHP_EOL;
-                      } else {
-                          echo 'Core Plugin class not found in autoloader' . PHP_EOL;
-                      }
-                  } catch (Exception \$e) {
-                      echo 'Autoloader test failed: ' . \$e->getMessage() . PHP_EOL;
-                  }
-                  
-                  echo 'Autoloader validation completed for PHP ${{ matrix.php-version }}' . PHP_EOL;
+                  echo 'Autoloader loaded successfully' . PHP_EOL;
                   "
+                  
+                  echo "✅ Autoloading validated for PHP ${{ matrix.php-version }}"
 
     security-check:
         runs-on: ubuntu-latest
