@@ -20,6 +20,7 @@ use SilverAssist\Security\Core\PathValidator;
 use SilverAssist\Security\Core\Plugin;
 use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
+use SilverAssist\SettingsHub\SettingsHub;
 
 /**
  * Admin Panel class
@@ -64,7 +65,7 @@ class AdminPanel
      */
     private function init(): void
     {
-        \add_action("admin_menu", [$this, "add_admin_menu"]);
+        \add_action("admin_menu", [$this, "register_with_hub"]);
         \add_action("admin_init", [$this, "register_settings"]);
         \add_action("admin_init", [$this, "save_security_settings"]);
         \add_action("admin_enqueue_scripts", [$this, "enqueue_admin_scripts"]);
@@ -76,19 +77,87 @@ class AdminPanel
         \add_action("wp_ajax_silver_assist_get_security_logs", [$this, "ajax_get_security_logs"]);
         \add_action("wp_ajax_silver_assist_auto_save", [$this, "ajax_auto_save"]);
         \add_action("wp_ajax_silver_assist_validate_admin_path", [$this, "ajax_validate_admin_path"]);
+        \add_action("wp_ajax_silver_assist_check_updates", [$this, "ajax_check_updates"]);
     }
 
     /**
-     * Add admin menu item
+     * Register plugin with Settings Hub or fallback to standalone menu
+     * 
+     * @since 1.1.13
+     * @return void
+     */
+    public function register_with_hub(): void
+    {
+        // Check if Settings Hub is available
+        if (!\class_exists(SettingsHub::class)) {
+            // Fallback to standalone menu when hub is not available
+            $this->add_admin_menu();
+            return;
+        }
+
+        try {
+            $hub = SettingsHub::get_instance();
+            
+            // Get actions array for plugin card
+            $actions = $this->get_hub_actions();
+            
+            // Register plugin with hub
+            $hub->register_plugin(
+                "silver-assist-security",
+                \__("Security", "silver-assist-security"),
+                [$this, "render_admin_page"],
+                [
+                    "description" => \__("Security configuration for WordPress", "silver-assist-security"),
+                    "version" => $this->plugin_version,
+                    "tab_title" => \__("Security", "silver-assist-security"),
+                    "actions" => $actions,
+                ]
+            );
+        } catch (Exception $e) {
+            // Log error and fallback to standalone menu
+            SecurityHelper::log_security_event(
+                "SETTINGS_HUB_ERROR",
+                "Failed to register with Settings Hub: " . $e->getMessage(),
+                ["exception" => $e->getMessage()]
+            );
+            $this->add_admin_menu();
+        }
+    }
+
+    /**
+     * Get actions array for Settings Hub plugin card
+     * 
+     * @since 1.1.13
+     * @return array Array of action configurations
+     */
+    private function get_hub_actions(): array
+    {
+        $actions = [];
+        
+        // Add "Check Updates" button if updater is available
+        $plugin = Plugin::getInstance();
+        if ($plugin->get_updater()) {
+            $actions[] = [
+                "label" => \__("Check Updates", "silver-assist-security"),
+                "callback" => [$this, "render_update_check_script"],
+                "class" => "button button-primary",
+            ];
+        }
+        
+        return $actions;
+    }
+
+    /**
+     * Add standalone admin menu (fallback when Settings Hub is not available)
      * 
      * @since 1.1.1
      * @return void
      */
-    public function add_admin_menu(): void
+    private function add_admin_menu(): void
     {
         \add_options_page(
-            __("Silver Assist Security", "silver-assist-security"),
-            __("Security Essentials", "silver-assist-security"),
+            \__("Silver Assist Security", "silver-assist-security"),
+            \__("Security Essentials", "silver-assist-security"),
             "manage_options",
             "silver-assist-security",
             [$this, "render_admin_page"]
@@ -1317,25 +1386,21 @@ class AdminPanel
 
                     <?php submit_button(__("Save Security Settings", "silver-assist-security"), "primary", "save_silver_assist_security"); ?>
                 </form>
-
-                <!-- Updates Information Section -->
-                <?php $this->render_updates_section(); ?>
             </div>
             <?php
     }
 
     /**
-     * Render updates information section
+     * Render update check script for Settings Hub action button
      * 
-     * Displays current plugin version, latest available version, update status,
-     * and provides manual update checking functionality with GitHub integration.
+     * Outputs inline JavaScript that triggers an AJAX update check when called
+     * by the Settings Hub action button. Integrates with wp-github-updater.
      * 
-     * @since 1.1.1
+     * @since 1.1.13
      * @return void
      */
-    private function render_updates_section(): void
+    public function render_update_check_script(): void
     {
-        // Get updater instance from Plugin
         $plugin = Plugin::getInstance();
         $updater = $plugin->get_updater();
 
@@ -1343,56 +1408,100 @@ class AdminPanel
             return;
         }
 
-        $current_version = $updater->getCurrentVersion();
-        $latest_version = $updater->getLatestVersion();
-        $update_available = $updater->isUpdateAvailable();
-        $github_repo = $updater->getGithubRepo();
-
+        $nonce = \wp_create_nonce("silver_assist_security_updates_nonce");
         ?>
-            <div class="card">
-                <h2><?php echo \esc_html(\__("Plugin Updates", "silver-assist-security")); ?></h2>
-                <table class="form-table">
-                    <tr>
-                        <th scope="row"><?php echo \esc_html(\__("Current Version", "silver-assist-security")); ?></th>
-                        <td><?php echo \esc_html($current_version); ?></td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php echo \esc_html(\__("Latest Version", "silver-assist-security")); ?></th>
-                        <td>
-                            <?php echo \esc_html($latest_version ?: "Unknown"); ?>
-                            <?php if ($update_available): ?>
-                                <span class="dashicons dashicons-update" style="color: #d63638;"></span>
-                                <strong
-                                    style="color: #d63638;"><?php echo \esc_html(\__("Update Available!", "silver-assist-security")); ?></strong>
-                            <?php else: ?>
-                                <span class="dashicons dashicons-yes-alt" style="color: #00a32a;"></span>
-                                <span
-                                    style="color: #00a32a;"><?php echo \esc_html(\__("Up to date", "silver-assist-security")); ?></span>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php echo \esc_html(\__("Repository", "silver-assist-security")); ?></th>
-                        <td>
-                            <a href="https://github.com/<?php echo \esc_attr($github_repo); ?>" target="_blank">
-                                <?php echo \esc_html($github_repo); ?>
-                            </a>
-                        </td>
-                    </tr>
-                </table>
+        <script type="text/javascript">
+        (($) => {
+            "use strict";
+            
+            // Trigger update check immediately when action button is clicked
+            $.ajax({
+                url: ajaxurl,
+                type: "POST",
+                data: {
+                    action: "silver_assist_check_updates",
+                    nonce: "<?php echo \esc_js($nonce); ?>"
+                },
+                success: (response) => {
+                    if (response.success) {
+                        if (response.data.update_available) {
+                            alert("<?php echo \esc_js(\__("Update available! Redirecting to Updates page...", "silver-assist-security")); ?>");
+                            window.location.href = "<?php echo \esc_url(\admin_url("update-core.php")); ?>";
+                        } else {
+                            alert("<?php echo \esc_js(\__("You're up to date!", "silver-assist-security")); ?>");
+                        }
+                    } else {
+                        alert("<?php echo \esc_js(\__("Error checking updates. Please try again.", "silver-assist-security")); ?>");
+                    }
+                },
+                error: () => {
+                    alert("<?php echo \esc_js(\__("Error connecting to update server.", "silver-assist-security")); ?>");
+                }
+            });
+        })(jQuery);
+        </script>
+        <?php
+    }
 
-                <p class="submit">
-                    <button type="button" class="button button-secondary" id="check-silver-assist-version">
-                        <?php echo \esc_html(\__("Check for Updates", "silver-assist-security")); ?>
-                    </button>
-                    <?php if ($update_available): ?>
-                        <a href="<?php echo \esc_url(\admin_url("update-core.php")); ?>" class="button button-primary">
-                            <?php echo \esc_html(\__("Go to Updates", "silver-assist-security")); ?>
-                        </a>
-                    <?php endif; ?>
-                </p>
-            </div>
-            <?php
+    /**
+     * AJAX handler for checking plugin updates
+     * 
+     * Validates nonce, checks for updates using wp-github-updater,
+     * and returns update status information.
+     * 
+     * @since 1.1.13
+     * @return void
+     */
+    public function ajax_check_updates(): void
+    {
+        // Validate nonce
+        if (!isset($_POST["nonce"]) || !\wp_verify_nonce($_POST["nonce"], "silver_assist_security_updates_nonce")) {
+            \wp_send_json_error(["message" => \__("Security validation failed", "silver-assist-security")]);
+            return;
+        }
+
+        // Check user capability
+        if (!\current_user_can("manage_options")) {
+            \wp_send_json_error(["message" => \__("Insufficient permissions", "silver-assist-security")]);
+            return;
+        }
+
+        $plugin = Plugin::getInstance();
+        $updater = $plugin->get_updater();
+
+        if (!$updater) {
+            \wp_send_json_error(["message" => \__("Updater not available", "silver-assist-security")]);
+            return;
+        }
+
+        try {
+            // Clear cached version to force fresh check
+            $transient_key = "silver-assist-security_version_check";
+            \delete_transient($transient_key);
+            
+            $update_available = $updater->isUpdateAvailable();
+            $current_version = $updater->getCurrentVersion();
+            $latest_version = $updater->getLatestVersion();
+
+            \wp_send_json_success([
+                "update_available" => $update_available,
+                "current_version" => $current_version,
+                "latest_version" => $latest_version,
+                "message" => $update_available 
+                    ? \__("Update available!", "silver-assist-security")
+                    : \__("You're up to date!", "silver-assist-security")
+            ]);
+        } catch (Exception $e) {
+            SecurityHelper::log_security_event(
+                "UPDATE_CHECK_ERROR",
+                "Failed to check for updates: " . $e->getMessage(),
+                ["exception" => $e->getMessage()]
+            );
+
+            \wp_send_json_error([
+                "message" => \__("Error checking for updates", "silver-assist-security")
+            ]);
+        }
     }
 
     /**
