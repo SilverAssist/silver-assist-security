@@ -41,16 +41,17 @@ class SecurityHelper
     self::$plugin_url = SILVER_ASSIST_SECURITY_URL;
   }
   /**
-   * Get asset URL with minification support
+   * Get asset URL with automatic minification support
    * 
    * Returns minified version when SCRIPT_DEBUG is not true, regular version otherwise.
    * This centralizes asset loading logic across all components.
    * 
    * @since 1.1.10
    * @param string $asset_path The relative path to the asset (e.g., 'assets/css/admin.css')
+   * @param bool|null $force_debug Optional. Force debug mode for testing. Defaults to SCRIPT_DEBUG constant.
    * @return string The full URL to the asset
    */
-  public static function get_asset_url(string $asset_path): string
+  public static function get_asset_url(string $asset_path, ?bool $force_debug = null): string
   {
     // Initialize if not already done
     if (!isset(self::$plugin_url)) {
@@ -58,7 +59,12 @@ class SecurityHelper
     }
 
     // Determine if we should use minified version
-    $use_minified = !(defined("SCRIPT_DEBUG") && SCRIPT_DEBUG);
+    // Allow override for testing purposes
+    if ($force_debug !== null) {
+      $use_minified = !$force_debug;
+    } else {
+      $use_minified = !(defined("SCRIPT_DEBUG") && SCRIPT_DEBUG);
+    }
 
     if ($use_minified) {
       $file_info = pathinfo($asset_path);
@@ -71,9 +77,7 @@ class SecurityHelper
 
     // Return original path for debug mode
     return self::$plugin_url . $asset_path;
-  }
-
-  /**
+  }  /**
    * Get client IP address with proper header detection
    * 
    * Checks various headers for real IP address detection, especially

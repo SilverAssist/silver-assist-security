@@ -61,11 +61,8 @@ class SecurityHelperTest extends WP_UnitTestCase
      */
     public function test_get_asset_url_returns_non_minified_with_script_debug(): void
     {
-        if (!defined("SCRIPT_DEBUG")) {
-            define("SCRIPT_DEBUG", true);
-        }
-
-        $url = SecurityHelper::get_asset_url("assets/css/admin.css");
+        // Use force_debug parameter to simulate SCRIPT_DEBUG = true
+        $url = SecurityHelper::get_asset_url("assets/css/admin.css", true);
         
         $this->assertStringContainsString("admin.css", $url);
         $this->assertStringNotContainsString(".min.", $url);
@@ -79,17 +76,18 @@ class SecurityHelperTest extends WP_UnitTestCase
      */
     public function test_get_asset_url_handles_javascript_files(): void
     {
-        // Note: SCRIPT_DEBUG is already defined from earlier test, so it returns non-minified
-        if (!defined("SCRIPT_DEBUG")) {
-            $url = SecurityHelper::get_asset_url("assets/js/admin.js");
-            $this->assertStringContainsString("admin.min.js", $url);
-        } else {
-            // When SCRIPT_DEBUG is true, returns non-minified version
-            $url = SecurityHelper::get_asset_url("assets/js/admin.js");
-            $this->assertStringContainsString("admin.js", $url);
-        }
+        // Test with debug mode (non-minified)
+        $url_debug = SecurityHelper::get_asset_url("assets/js/admin.js", true);
+        $this->assertStringContainsString("admin.js", $url_debug);
+        $this->assertStringNotContainsString(".min.", $url_debug);
         
-        $this->assertStringContainsString("assets/js", $url);
+        // Test with production mode (minified)
+        $url_prod = SecurityHelper::get_asset_url("assets/js/admin.js", false);
+        $this->assertStringContainsString("admin.min.js", $url_prod);
+        
+        // Both should contain assets/js
+        $this->assertStringContainsString("assets/js", $url_debug);
+        $this->assertStringContainsString("assets/js", $url_prod);
     }
 
     /**
