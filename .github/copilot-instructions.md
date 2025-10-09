@@ -392,7 +392,7 @@ public static function function_name($param): return_type
 
 #### **Test Infrastructure**
 - **Framework**: WordPress Test Suite with WP_UnitTestCase (extends PHPUnit\Framework\TestCase)
-- **Local Setup**: `bin/install-wp-tests.sh wordpress_test root '' localhost latest`
+- **Local Setup**: `scripts/install-wp-tests.sh wordpress_test root '' localhost latest`
 - **Database**: Real MySQL database for integration tests
 - **WordPress**: Real WordPress installation in `/tmp/wordpress/`
 - **Test Suite**: Located in `/tmp/wordpress-tests-lib/`
@@ -421,7 +421,7 @@ tests/
 
 ```bash
 # First-time setup: Install WordPress Test Suite
-bin/install-wp-tests.sh wordpress_test root '' localhost latest
+scripts/install-wp-tests.sh wordpress_test root '' localhost latest
 
 # Run all tests
 vendor/bin/phpunit --testdox
@@ -443,7 +443,7 @@ vendor/bin/phpunit --coverage-html coverage/
 **Job: `wordpress-tests`** (12 test combinations)
 - **Matrix**: PHP 8.0-8.3 × WordPress 6.5, 6.6, latest
 - **Database**: MySQL 8.0 service container
-- **Installation**: Automatic via `bin/install-wp-tests.sh`
+- **Installation**: Automatic via `scripts/install-wp-tests.sh`
 - **Execution**: Full PHPUnit test suite with real WordPress
 
 **Job: `syntax-validation`** (4 PHP versions)

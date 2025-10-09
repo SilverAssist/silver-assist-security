@@ -8,7 +8,7 @@ This directory contains comprehensive tests for the Silver Assist Security Essen
 
 ```bash
 # Install WordPress Test Suite (required once)
-bin/install-wp-tests.sh wordpress_test root '' localhost latest
+scripts/install-wp-tests.sh wordpress_test root '' localhost latest
 
 # Verify installation
 ls /tmp/wordpress-tests-lib/includes/functions.php
@@ -122,7 +122,7 @@ Focused on security implementations:
 1. **WordPress Test Environment**:
    ```bash
    # Install WordPress tests
-   bin/install-wp-tests.sh wordpress_test root '' localhost latest
+   scripts/install-wp-tests.sh wordpress_test root '' localhost latest
    ```
 
 2. **PHPUnit Installation**:
@@ -253,7 +253,7 @@ jobs:
       - name: Install dependencies
         run: composer install
       - name: Setup WordPress tests
-        run: bin/install-wp-tests.sh wordpress_test root '' localhost ${{ matrix.wordpress }}
+        run: scripts/install-wp-tests.sh wordpress_test root '' localhost ${{ matrix.wordpress }}
       - name: Run tests
         run: vendor/bin/phpunit
       - name: Check coding standards
@@ -297,7 +297,7 @@ HTML coverage reports are generated in `tests/coverage/`:
 **WordPress Test Environment Not Found**:
 ```bash
 # Install WordPress tests
-bin/install-wp-tests.sh wordpress_test root '' localhost latest
+scripts/install-wp-tests.sh wordpress_test root '' localhost latest
 ```
 
 **Database Connection Errors**:

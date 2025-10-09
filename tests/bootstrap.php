@@ -25,9 +25,9 @@ if (file_exists($_phpunit_polyfills_path)) {
 if (!file_exists("{$_tests_dir}/includes/functions.php")) {
     echo "\n❌ Could not find WordPress test suite at: {$_tests_dir}/includes/functions.php\n\n";
     echo "📋 Run the following command to install WordPress test suite:\n";
-    echo "   bin/install-wp-tests.sh <db-name> <db-user> <db-pass> [db-host] [wp-version]\n\n";
+    echo "   scripts/install-wp-tests.sh <db-name> <db-user> <db-pass> [db-host] [wp-version]\n\n";
     echo "💡 Example:\n";
-    echo "   bin/install-wp-tests.sh wordpress_test root '' localhost latest\n\n";
+    echo "   scripts/install-wp-tests.sh wordpress_test root '' localhost latest\n\n";
     echo "ℹ️  Or set WP_TESTS_DIR environment variable to your WordPress test installation:\n";
     echo "   export WP_TESTS_DIR=/path/to/wordpress-tests-lib\n\n";
     exit(1);
