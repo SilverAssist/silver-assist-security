@@ -174,6 +174,9 @@ install_db() {
 		return 0
 	fi
 
+	# Use DB_HOST for compatibility (script historically used DB_HOSTNAME)
+	DB_HOSTNAME=${DB_HOST}
+	
 	EXTRA=""
 
 	if ! [ -z $DB_HOSTNAME ] ; then
