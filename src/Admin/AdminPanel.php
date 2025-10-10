@@ -916,6 +916,15 @@ class AdminPanel
      */
     public function render_admin_page(): void
     {
+        // MANDATORY capability check - prevent unauthorized access
+        if (!\current_user_can("manage_options")) {
+            \wp_die(
+                \esc_html__("Sorry, you are not allowed to access this page.", "silver-assist-security"),
+                \esc_html__("Permission Denied", "silver-assist-security"),
+                ["response" => 403]
+            );
+        }
+
         // Get current values
         $login_attempts = DefaultConfig::get_option("silver_assist_login_attempts");
         $lockout_duration = DefaultConfig::get_option("silver_assist_lockout_duration");
@@ -1393,54 +1402,45 @@ class AdminPanel
     /**
      * Render update check script for Settings Hub action button
      * 
-     * Outputs inline JavaScript that triggers an AJAX update check when called
-     * by the Settings Hub action button. Integrates with wp-github-updater.
+     * Loads external JavaScript file and returns onclick handler that calls
+     * the global update check function. Much cleaner than inline JavaScript.
      * 
-     * @since 1.1.13
-     * @return void
+     * @since 1.1.14
+     * @return string Onclick JavaScript handler
      */
-    public function render_update_check_script(): void
+    public function render_update_check_script(): string
     {
         $plugin = Plugin::getInstance();
         $updater = $plugin->get_updater();
 
         if (!$updater) {
-            return;
+            return "";
         }
 
-        $nonce = \wp_create_nonce("silver_assist_security_updates_nonce");
-        ?>
-        <script type="text/javascript">
-        (($) => {
-            "use strict";
-            
-            // Trigger update check immediately when action button is clicked
-            $.ajax({
-                url: ajaxurl,
-                type: "POST",
-                data: {
-                    action: "silver_assist_check_updates",
-                    nonce: "<?php echo \esc_js($nonce); ?>"
-                },
-                success: (response) => {
-                    if (response.success) {
-                        if (response.data.update_available) {
-                            alert("<?php echo \esc_js(\__("Update available! Redirecting to Updates page...", "silver-assist-security")); ?>");
-                            window.location.href = "<?php echo \esc_url(\admin_url("update-core.php")); ?>";
-                        } else {
-                            alert("<?php echo \esc_js(\__("You're up to date!", "silver-assist-security")); ?>");
-                        }
-                    } else {
-                        alert("<?php echo \esc_js(\__("Error checking updates. Please try again.", "silver-assist-security")); ?>");
-                    }
-                },
-                error: () => {
-                    alert("<?php echo \esc_js(\__("Error connecting to update server.", "silver-assist-security")); ?>");
-                }
-            });
-        })(jQuery);
-        </script>
-        <?php
+        // Enqueue update check script
+        \wp_enqueue_script(
+            "silver-assist-update-check",
+            $this->get_asset_url("assets/js/update-check.js"),
+            ["jquery"],
+            $this->plugin_version,
+            true
+        );
+
+        // Localize script with configuration data
+        \wp_localize_script("silver-assist-update-check", "silverAssistUpdateCheck", [
+            "ajaxurl" => \admin_url("admin-ajax.php"),
+            "nonce" => \wp_create_nonce("silver_assist_security_updates_nonce"),
+            "updateUrl" => \admin_url("update-core.php"),
+            "strings" => [
+                "updateAvailable" => \__("Update available! Redirecting to Updates page...", "silver-assist-security"),
+                "upToDate" => \__("You're up to date!", "silver-assist-security"),
+                "checkError" => \__("Error checking updates. Please try again.", "silver-assist-security"),
+                "connectError" => \__("Error connecting to update server.", "silver-assist-security")
+            ]
+        ]);
+
+        // Return simple onclick handler that calls global function
+        return "silverAssistCheckUpdates(); return false;";
     }
 
     /**

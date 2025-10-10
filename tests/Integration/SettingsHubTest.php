@@ -198,24 +198,56 @@ class SettingsHubTest extends WP_UnitTestCase
      */
     public function test_update_check_script_rendering(): void
     {
-        // Start output buffering
-        ob_start();
-        
-        // Call render method
-        $this->admin_panel->render_update_check_script();
-        
-        // Get output
-        $output = ob_get_clean();
+        // Call render method - now returns string instead of echoing
+        $output = $this->admin_panel->render_update_check_script();
 
-        // Verify JavaScript is rendered
+        // Verify JavaScript handler is returned
         if (!empty($output)) {
-            $this->assertStringContainsString("<script", $output, "Output should contain script tag");
-            $this->assertStringContainsString("silver_assist_check_updates", $output, "Script should reference update action");
-            $this->assertStringContainsString("ajaxurl", $output, "Script should use ajaxurl");
+            // Method now returns onclick handler string, not full script tag
+            $this->assertIsString($output, "Output should be a string");
+            $this->assertStringContainsString("silverAssistCheckUpdates", $output, "Handler should call global function");
+            $this->assertStringContainsString("return false", $output, "Handler should prevent default action");
+            
+            // Verify it's a valid onclick handler format (no script tags)
+            $this->assertStringNotContainsString("<script", $output, "Should not contain script tags");
+            $this->assertStringNotContainsString("</script>", $output, "Should not contain script closing tags");
+            
+            // Verify script was enqueued
+            $this->assertTrue(\wp_script_is("silver-assist-update-check", "registered"), "Update check script should be registered");
+            $this->assertTrue(\wp_script_is("silver-assist-update-check", "enqueued"), "Update check script should be enqueued");
+            
+            // Verify script has correct dependencies
+            global $wp_scripts;
+            $script_data = $wp_scripts->registered["silver-assist-update-check"];
+            $this->assertContains("jquery", $script_data->deps, "Script should depend on jQuery");
+            
+            // Verify script is loaded in footer (WordPress stores this in extra['group'] = 1)
+            $extra_data = $wp_scripts->get_data("silver-assist-update-check", "group");
+            $this->assertEquals(1, $extra_data, "Script should load in footer (group 1)");
+            
+            // Verify localization data was registered
+            $localized_data = $wp_scripts->get_data("silver-assist-update-check", "data");
+            $this->assertNotEmpty($localized_data, "Script should have localized data");
+            
+            // Verify localized data contains required properties
+            $this->assertStringContainsString("silverAssistUpdateCheck", $localized_data, "Should define silverAssistUpdateCheck object");
+            $this->assertStringContainsString("ajaxurl", $localized_data, "Should contain ajaxurl");
+            $this->assertStringContainsString("nonce", $localized_data, "Should contain nonce");
+            $this->assertStringContainsString("updateUrl", $localized_data, "Should contain updateUrl");
+            $this->assertStringContainsString("strings", $localized_data, "Should contain strings object");
+            
+            // Verify translation strings are present
+            $this->assertStringContainsString("updateAvailable", $localized_data, "Should contain updateAvailable string");
+            $this->assertStringContainsString("upToDate", $localized_data, "Should contain upToDate string");
+            $this->assertStringContainsString("checkError", $localized_data, "Should contain checkError string");
+            $this->assertStringContainsString("connectError", $localized_data, "Should contain connectError string");
         } else {
-            // If no updater, output may be empty
+            // If no updater, output should be empty string
             $updater = $this->plugin->get_updater();
             $this->assertNull($updater, "Empty output is only valid when updater is unavailable");
+            
+            // Verify script was NOT enqueued when no updater
+            $this->assertFalse(\wp_script_is("silver-assist-update-check", "enqueued"), "Script should not be enqueued without updater");
         }
     }
 
