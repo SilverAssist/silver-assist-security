@@ -1475,9 +1475,16 @@ class AdminPanel
         }
 
         try {
-            // Clear cached version to force fresh check
+            // Clear cached version to force fresh check from GitHub
             $transient_key = "silver-assist-security_version_check";
             \delete_transient($transient_key);
+            
+            // CRITICAL: Clear WordPress update cache to force refresh
+            // This is required for WordPress to detect the update on the Updates page
+            \delete_site_transient("update_plugins");
+            
+            // Force WordPress to check for updates immediately
+            \wp_update_plugins();
             
             $update_available = $updater->isUpdateAvailable();
             $current_version = $updater->getCurrentVersion();
@@ -1491,7 +1498,7 @@ class AdminPanel
                     ? \__("Update available!", "silver-assist-security")
                     : \__("You're up to date!", "silver-assist-security")
             ]);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             SecurityHelper::log_security_event(
                 "UPDATE_CHECK_ERROR",
                 "Failed to check for updates: " . $e->getMessage(),
