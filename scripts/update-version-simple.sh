@@ -222,7 +222,20 @@ update_file "${PROJECT_ROOT}/silver-assist-security.php" \
 
 print_success "Main plugin file processing completed"
 
-# 2. Update PHP files
+# 2. Update package.json
+print_status "Updating package.json..."
+
+if [ -f "${PROJECT_ROOT}/package.json" ]; then
+    update_file "${PROJECT_ROOT}/package.json" \
+        "s/\"version\": \"[0-9]+\\.[0-9]+\\.[0-9]+\"/\"version\": \"${NEW_VERSION}\"/g" \
+        "package.json version"
+    
+    print_success "package.json processing completed"
+else
+    print_warning "package.json not found"
+fi
+
+# 3. Update PHP files
 print_status "Updating PHP files..."
 
 # Get all PHP files with @version tags
@@ -255,7 +268,7 @@ else
     print_warning "No PHP files with @version tags found in src/ directory"
 fi
 
-# 3. Update CSS files  
+# 4. Update CSS files
 print_status "Updating CSS files..."
 
 # Get all CSS files with @version tags
@@ -291,7 +304,7 @@ else
     fi
 fi
 
-# 4. Update JavaScript files
+# 5. Update JavaScript files
 print_status "Updating JavaScript files..."
 
 # Get all JavaScript files with @version tags
@@ -327,7 +340,7 @@ else
     fi
 fi
 
-# 5. Update HEADER-STANDARDS.md
+# 6. Update HEADER-STANDARDS.md
 print_status "Updating header standards documentation..."
 
 if [ -f "${PROJECT_ROOT}/HEADER-STANDARDS.md" ]; then
@@ -358,7 +371,7 @@ else
     print_warning "HEADER-STANDARDS.md not found"
 fi
 
-# 6. Update version scripts
+# 7. Update version scripts
 print_status "Updating version scripts..."
 
 # Get all script files with @version tags
@@ -390,7 +403,7 @@ else
     print_warning "No script files with @version tags found in scripts/ directory"
 fi
 
-# 7. Update README.md if it contains version references
+# 8. Update README.md if it contains version references
 print_status "Checking README.md for version references..."
 
 if [ -f "${PROJECT_ROOT}/README.md" ]; then
@@ -433,6 +446,7 @@ fi
 echo ""
 print_status "Summary of changes:"
 echo "  • Main plugin file: silver-assist-security.php"
+echo "  • Package file: package.json"
 echo "  • PHP files: src/**/*.php"
 echo "  • CSS files: assets/css/*.css"
 echo "  • JavaScript files: assets/js/*.js"

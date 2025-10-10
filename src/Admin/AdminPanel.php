@@ -65,7 +65,8 @@ class AdminPanel
      */
     private function init(): void
     {
-        \add_action("admin_menu", [$this, "register_with_hub"]);
+        // Register with Settings Hub early (priority 4) to ensure hub processes it at priority 5
+        \add_action("admin_menu", [$this, "register_with_hub"], 4);
         \add_action("admin_init", [$this, "register_settings"]);
         \add_action("admin_init", [$this, "save_security_settings"]);
         \add_action("admin_enqueue_scripts", [$this, "enqueue_admin_scripts"]);
@@ -90,9 +91,15 @@ class AdminPanel
     {
         // Check if Settings Hub is available
         if (!\class_exists(SettingsHub::class)) {
+            
             // Fallback to standalone menu when hub is not available
             $this->add_admin_menu();
             return;
+        }
+
+        // XDebug: Settings Hub available
+        if (\defined("WP_DEBUG") && WP_DEBUG) {
+            \error_log("Silver Assist Security: Settings Hub class found, proceeding with registration");
         }
 
         try {
@@ -110,10 +117,13 @@ class AdminPanel
                     "description" => \__("Security configuration for WordPress", "silver-assist-security"),
                     "version" => $this->plugin_version,
                     "tab_title" => \__("Security", "silver-assist-security"),
+                    "capability" => "manage_options",
                     "actions" => $actions,
                 ]
             );
+            
         } catch (Exception $e) {
+            
             // Log error and fallback to standalone menu
             SecurityHelper::log_security_event(
                 "SETTINGS_HUB_ERROR",
@@ -213,7 +223,16 @@ class AdminPanel
      */
     public function enqueue_admin_scripts(string $hook_suffix): void
     {
-        if ($hook_suffix !== "settings_page_silver-assist-security") {
+        // Allow loading on both standalone menu and Settings Hub submenu
+        // Settings Hub uses: "silver-assist_page_silver-assist-security"
+        // Standalone menu uses: "settings_page_silver-assist-security"
+        $allowed_hooks = [
+            "settings_page_silver-assist-security",        // Standalone fallback menu
+            "silver-assist_page_silver-assist-security",   // Settings Hub submenu
+            "toplevel_page_silver-assist-security"         // Direct top-level (if ever used)
+        ];
+        
+        if (!\in_array($hook_suffix, $allowed_hooks, true)) {
             return;
         }
 
@@ -911,20 +930,15 @@ class AdminPanel
     /**
      * Render admin page
      * 
+     * WordPress handles capability checks via add_options_page() and Settings Hub.
+     * No need for manual check here as it causes double-checking issues.
+     * 
      * @since 1.1.1
      * @return void
      */
     public function render_admin_page(): void
     {
-        // MANDATORY capability check - prevent unauthorized access
-        if (!\current_user_can("manage_options")) {
-            \wp_die(
-                \esc_html__("Sorry, you are not allowed to access this page.", "silver-assist-security"),
-                \esc_html__("Permission Denied", "silver-assist-security"),
-                ["response" => 403]
-            );
-        }
-
+        
         // Get current values
         $login_attempts = DefaultConfig::get_option("silver_assist_login_attempts");
         $lockout_duration = DefaultConfig::get_option("silver_assist_lockout_duration");
@@ -1402,19 +1416,20 @@ class AdminPanel
     /**
      * Render update check script for Settings Hub action button
      * 
-     * Loads external JavaScript file and returns onclick handler that calls
-     * the global update check function. Much cleaner than inline JavaScript.
+     * Loads external JavaScript file and echoes onclick handler that calls
+     * the global update check function. Settings Hub expects echo, not return.
      * 
-     * @since 1.1.14
-     * @return string Onclick JavaScript handler
+     * @since 1.1.13
+     * @param string $plugin_slug Plugin slug passed by Settings Hub
+     * @return void
      */
-    public function render_update_check_script(): string
+    public function render_update_check_script(string $plugin_slug = ""): void
     {
         $plugin = Plugin::getInstance();
         $updater = $plugin->get_updater();
 
         if (!$updater) {
-            return "";
+            return;
         }
 
         // Enqueue update check script
@@ -1439,8 +1454,8 @@ class AdminPanel
             ]
         ]);
 
-        // Return simple onclick handler that calls global function
-        return "silverAssistCheckUpdates(); return false;";
+        // Echo JavaScript that will be injected by Settings Hub into the event listener
+        echo "silverAssistCheckUpdates(); return false;";
     }
 
     /**

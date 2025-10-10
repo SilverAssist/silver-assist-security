@@ -7,7 +7,7 @@
  * proper permission handling and prevent unauthorized access.
  *
  * @package SilverAssist\Security\Tests\Integration
- * @since 1.1.14
+ * @since 1.1.13
  */
 
 declare(strict_types=1);
@@ -20,7 +20,7 @@ use WP_UnitTestCase;
 /**
  * Test class for admin page access permissions
  *
- * @since 1.1.14
+ * @since 1.1.13
  */
 class AdminAccessTest extends WP_UnitTestCase
 {

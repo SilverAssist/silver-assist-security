@@ -39,6 +39,11 @@ module.exports = function (grunt) {
                 files: {
                     "assets/js/password-validation.min.js": ["assets/js/password-validation.js"]
                 }
+            },
+            updateCheck: {
+                files: {
+                    "assets/js/update-check.min.js": ["assets/js/update-check.js"]
+                }
             }
         },
 
