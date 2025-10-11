@@ -96,7 +96,11 @@ class AdminPanel {
 
 		// XDebug: Settings Hub available
 		if ( \defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			\error_log( 'Silver Assist Security: Settings Hub class found, proceeding with registration' );
+			SecurityHelper::log_security_event(
+				'SETTINGS_HUB_REGISTRATION',
+				'Settings Hub class found, proceeding with registration',
+				[ 'hub_available' => true ]
+			);
 		}
 
 		try {
@@ -368,7 +372,8 @@ class AdminPanel {
 	public function ajax_get_login_stats(): void {
 		try {
 			// Verify nonce
-			if ( ! \wp_verify_nonce( $_POST['nonce'] ?? '', 'silver_assist_security_ajax' ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verification doesn't require sanitization
+			if ( ! \wp_verify_nonce( \wp_unslash( $_POST['nonce'] ?? '' ), 'silver_assist_security_ajax' ) ) {
 				\wp_send_json_error( [ 'message' => 'Security check failed' ] );
 			}
 
@@ -399,7 +404,8 @@ class AdminPanel {
 	public function ajax_get_blocked_ips(): void {
 		try {
 			// Verify nonce
-			if ( ! \wp_verify_nonce( $_POST['nonce'] ?? '', 'silver_assist_security_ajax' ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verification doesn't require sanitization
+			if ( ! \wp_verify_nonce( \wp_unslash( $_POST['nonce'] ?? '' ), 'silver_assist_security_ajax' ) ) {
 				\wp_send_json_error( [ 'message' => 'Security check failed' ] );
 			}
 
@@ -430,7 +436,8 @@ class AdminPanel {
 	public function ajax_get_security_logs(): void {
 		try {
 			// Verify nonce
-			if ( ! \wp_verify_nonce( $_POST['nonce'] ?? '', 'silver_assist_security_ajax' ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verification doesn't require sanitization
+			if ( ! \wp_verify_nonce( \wp_unslash( $_POST['nonce'] ?? '' ), 'silver_assist_security_ajax' ) ) {
 				\wp_send_json_error( [ 'message' => 'Security check failed' ] );
 			}
 
@@ -461,7 +468,8 @@ class AdminPanel {
 	public function ajax_auto_save(): void {
 		try {
 			// Verify nonce
-			if ( ! \wp_verify_nonce( $_POST['nonce'] ?? '', 'silver_assist_security_ajax' ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verification doesn't require sanitization
+			if ( ! \wp_verify_nonce( \wp_unslash( $_POST['nonce'] ?? '' ), 'silver_assist_security_ajax' ) ) {
 				\wp_send_json_error( [ 'message' => 'Security check failed' ] );
 			}
 
@@ -470,20 +478,18 @@ class AdminPanel {
 				\wp_send_json_error( [ 'message' => 'Insufficient permissions' ] );
 			}
 
-			// Process form data - handle checkboxes that may not be present when unchecked
-			$settings = [
-				// Login Security
-				'silver_assist_login_attempts'        => (int) ( $_POST['silver_assist_login_attempts'] ?? 5 ),
-				'silver_assist_lockout_duration'      => (int) ( $_POST['silver_assist_lockout_duration'] ?? 900 ),
-				'silver_assist_session_timeout'       => (int) ( $_POST['silver_assist_session_timeout'] ?? 30 ),
-				'silver_assist_password_strength_enforcement' => (int) ( $_POST['silver_assist_password_strength_enforcement'] ?? 0 ),
-				'silver_assist_bot_protection'        => (int) ( $_POST['silver_assist_bot_protection'] ?? 0 ),
+		// Process form data - handle checkboxes that may not be present when unchecked
+		$settings = [
+			// Login Security
+			'silver_assist_login_attempts'        => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_attempts'] ?? '5' ) ) ),
+			'silver_assist_lockout_duration'      => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_lockout_duration'] ?? '900' ) ) ),
+			'silver_assist_session_timeout'       => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_session_timeout'] ?? '30' ) ) ),
+			'silver_assist_password_strength_enforcement' => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_password_strength_enforcement'] ?? '0' ) ) ),
+			'silver_assist_bot_protection'        => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_bot_protection'] ?? '0' ) ) ),
 
-				// GraphQL Security
-				'silver_assist_graphql_headless_mode' => (int) ( $_POST['silver_assist_graphql_headless_mode'] ?? 0 ),
-			];
-
-			// Update all settings
+			// GraphQL Security
+			'silver_assist_graphql_headless_mode' => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_headless_mode'] ?? '0' ) ) ),
+		];          // Update all settings
 			foreach ( $settings as $option_name => $value ) {
 				\update_option( $option_name, $value );
 			}
@@ -514,18 +520,17 @@ class AdminPanel {
 	public function ajax_validate_admin_path(): void {
 		try {
 			// Verify nonce
-			if ( ! \wp_verify_nonce( $_POST['nonce'] ?? '', 'silver_assist_security_ajax' ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verification doesn't require sanitization
+			if ( ! \wp_verify_nonce( \wp_unslash( $_POST['nonce'] ?? '' ), 'silver_assist_security_ajax' ) ) {
 				\wp_send_json_error( [ 'message' => 'Security check failed' ] );
 			}
 
 			// Check user permissions
 			if ( ! \current_user_can( 'manage_options' ) ) {
-				\wp_send_json_error( [ 'message' => 'Insufficient permissions' ] );
-			}
+			\wp_send_json_error( [ 'message' => 'Insufficient permissions' ] );
+		}
 
-			$path = \sanitize_text_field( $_POST['path'] ?? '' );
-
-			// Use centralized PathValidator for validation
+		$path                  = \sanitize_text_field( \wp_unslash( $_POST['path'] ?? '' ) );            // Use centralized PathValidator for validation
 			$validation_result = PathValidator::validate_admin_path( $path );
 
 			if ( $validation_result['is_valid'] ) {
@@ -696,24 +701,27 @@ class AdminPanel {
 					$remaining        = $timeout - time();
 					$lockout_duration = (int) DefaultConfig::get_option( 'silver_assist_lockout_duration' );
 
-					$blocked_ips[] = [
-						'hash'              => $key,
-						'ip'                => 'Hidden for security',
-						'remaining_time'    => $remaining,
-						'remaining_minutes' => max( 0, round( $remaining / 60 ) ),
-						'blocked_at'        => date( 'Y-m-d H:i:s', (int) ( time() - ( $lockout_duration - $remaining ) ) ),
-					];
-				}
+				$blocked_ips[] = [
+					'hash'              => $key,
+					'ip'                => 'Hidden for security',
+					'remaining_time'    => $remaining,
+					'remaining_minutes' => max( 0, round( $remaining / 60 ) ),
+					'blocked_at'        => gmdate( 'Y-m-d H:i:s', (int) ( time() - ( $lockout_duration - $remaining ) ) ),
+				];
 			}
-
-			return $blocked_ips;
-
-		} catch ( Exception $e ) {
-			// Log error and return empty array
-			error_log( "Silver Assist Security: Error getting blocked IPs - {$e->getMessage()}" );
-			return [];
 		}
+
+		return $blocked_ips;
+	} catch ( Exception $e ) {
+		// Log error and return empty array
+		SecurityHelper::log_security_event(
+			'BLOCKED_IPS_ERROR',
+			"Error getting blocked IPs: {$e->getMessage()}",
+			[ 'exception' => $e->getMessage() ]
+		);
+		return [];
 	}
+}
 
 	/**
 	 * Count active security features
@@ -909,40 +917,41 @@ class AdminPanel {
 		}
 
 		// Verify nonce
-		if ( ! \wp_verify_nonce( $_POST['_wpnonce'], 'silver_assist_security_settings' ) ) {
-			\wp_die( \__( 'Security check failed.', 'silver-assist-security' ) );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce verification doesn't require unslashing or sanitization
+		if ( ! isset( $_POST['_wpnonce'] ) || ! \wp_verify_nonce( $_POST['_wpnonce'], 'silver_assist_security_settings' ) ) {
+			\wp_die( esc_html__( 'Security check failed.', 'silver-assist-security' ) );
 		}
 
 		// Save login security settings using null coalescing for cleaner code
-		$login_attempts = intval( $_POST['silver_assist_login_attempts'] ?? DefaultConfig::get_option( 'silver_assist_login_attempts' ) );
-		if ( $_POST['silver_assist_login_attempts'] ?? null ) {
+		$login_attempts = intval( isset( $_POST['silver_assist_login_attempts'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_attempts'] ) ) : DefaultConfig::get_option( 'silver_assist_login_attempts' ) );
+		if ( isset( $_POST['silver_assist_login_attempts'] ) ) {
 			$login_attempts = max( 1, min( 20, $login_attempts ) );
 			\update_option( 'silver_assist_login_attempts', $login_attempts );
 		}
 
-		$lockout_duration = intval( $_POST['silver_assist_lockout_duration'] ?? DefaultConfig::get_option( 'silver_assist_lockout_duration' ) );
-		if ( $_POST['silver_assist_lockout_duration'] ?? null ) {
+		$lockout_duration = intval( isset( $_POST['silver_assist_lockout_duration'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_lockout_duration'] ) ) : DefaultConfig::get_option( 'silver_assist_lockout_duration' ) );
+		if ( isset( $_POST['silver_assist_lockout_duration'] ) ) {
 			$lockout_duration = max( 60, min( 3600, $lockout_duration ) );
 			\update_option( 'silver_assist_lockout_duration', $lockout_duration );
 		}
 
-		$session_timeout = intval( $_POST['silver_assist_session_timeout'] ?? DefaultConfig::get_option( 'silver_assist_session_timeout' ) );
-		if ( $_POST['silver_assist_session_timeout'] ?? null ) {
+		$session_timeout = intval( isset( $_POST['silver_assist_session_timeout'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_session_timeout'] ) ) : DefaultConfig::get_option( 'silver_assist_session_timeout' ) );
+		if ( isset( $_POST['silver_assist_session_timeout'] ) ) {
 			$session_timeout = max( 5, min( 120, $session_timeout ) );
 			\update_option( 'silver_assist_session_timeout', $session_timeout );
 		}
 
 		// Save bot protection settings
-		\update_option( 'silver_assist_bot_protection', (int) ( $_POST['silver_assist_bot_protection'] ?? 0 ) );
+		\update_option( 'silver_assist_bot_protection', (int) ( isset( $_POST['silver_assist_bot_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_bot_protection'] ) ) : 0 ) );
 
 		// Save password settings
-		\update_option( 'silver_assist_password_strength_enforcement', (int) ( $_POST['silver_assist_password_strength_enforcement'] ?? 0 ) );
+		\update_option( 'silver_assist_password_strength_enforcement', (int) ( isset( $_POST['silver_assist_password_strength_enforcement'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_password_strength_enforcement'] ) ) : 0 ) );
 
 		// Save Admin Hide settings
-		$admin_hide_enabled = (int) ( $_POST['silver_assist_admin_hide_enabled'] ?? 0 );
+		$admin_hide_enabled = (int) ( isset( $_POST['silver_assist_admin_hide_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_admin_hide_enabled'] ) ) : 0 );
 		\update_option( 'silver_assist_admin_hide_enabled', $admin_hide_enabled );
 
-		$admin_hide_path = \sanitize_title( $_POST['silver_assist_admin_hide_path'] ?? 'silver-admin' );
+		$admin_hide_path = isset( $_POST['silver_assist_admin_hide_path'] ) ? \sanitize_title( \wp_unslash( $_POST['silver_assist_admin_hide_path'] ) ) : 'silver-admin';
 		if ( ! empty( $admin_hide_path ) && $this->validate_admin_hide_path( $admin_hide_path ) ) {
 			\update_option( 'silver_assist_admin_hide_path', $admin_hide_path );
 		} else {
@@ -956,11 +965,11 @@ class AdminPanel {
 
 		// Save GraphQL settings
 		// Save headless mode setting
-		\update_option( 'silver_assist_graphql_headless_mode', (int) ( $_POST['silver_assist_graphql_headless_mode'] ?? 0 ) );
+		\update_option( 'silver_assist_graphql_headless_mode', (int) ( isset( $_POST['silver_assist_graphql_headless_mode'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_headless_mode'] ) ) : 0 ) );
 
 		// Save GraphQL timeout setting
-		$graphql_timeout = intval( $_POST['silver_assist_graphql_query_timeout'] ?? \get_option( 'silver_assist_graphql_query_timeout', $this->config_manager->get_php_execution_timeout() ) );
-		if ( $_POST['silver_assist_graphql_query_timeout'] ?? null ) {
+		$graphql_timeout = intval( isset( $_POST['silver_assist_graphql_query_timeout'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_query_timeout'] ) ) : \get_option( 'silver_assist_graphql_query_timeout', $this->config_manager->get_php_execution_timeout() ) );
+		if ( isset( $_POST['silver_assist_graphql_query_timeout'] ) ) {
 			$php_timeout     = $this->config_manager->get_php_execution_timeout();
 			$graphql_timeout = max( 1, min( $php_timeout, $graphql_timeout ) );
 			\update_option( 'silver_assist_graphql_query_timeout', $graphql_timeout );
@@ -971,7 +980,7 @@ class AdminPanel {
 			'admin_notices',
 			function () {
 				echo '<div class="notice notice-success is-dismissible">';
-				echo '<p>' . \__( 'Security settings have been saved successfully.', 'silver-assist-security' ) . '</p>';
+				echo '<p>' . esc_html__( 'Security settings have been saved successfully.', 'silver-assist-security' ) . '</p>';
 				echo '</div>';
 			}
 		);
@@ -1356,7 +1365,7 @@ class AdminPanel {
 								<p><strong><?php esc_html_e( 'WPGraphQL Detected', 'silver-assist-security' ); ?></strong></p>
 								<p><?php esc_html_e( "WPGraphQL has its own security settings. These enhancements work alongside WPGraphQL's native configuration.", 'silver-assist-security' ); ?>
 								</p>
-								<p><a href="<?php echo admin_url( 'admin.php?page=graphql-settings' ); ?>"
+							<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=graphql-settings' ) ); ?>"
 										class="button button-secondary" target="_blank">
 										<?php esc_html_e( 'Open WPGraphQL Settings', 'silver-assist-security' ); ?>
 									</a></p>
@@ -1443,7 +1452,7 @@ class AdminPanel {
 											<p><strong><?php esc_html_e( 'Current WPGraphQL Settings:', 'silver-assist-security' ); ?></strong>
 											</p>
 											<div id="wpgraphql-current-settings" class="wpgraphql-settings-display">
-												<?php echo $this->get_wpgraphql_current_settings(); ?>
+												<?php echo wp_kses_post( $this->get_wpgraphql_current_settings() ); ?>
 											</div>
 										</div>
 									</td>
@@ -1487,6 +1496,7 @@ class AdminPanel {
 	 * @param string $plugin_slug Plugin slug passed by Settings Hub
 	 * @return void
 	 */
+	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Parameter required by Settings Hub callback signature
 	public function render_update_check_script( string $plugin_slug = '' ): void {
 		$plugin  = Plugin::getInstance();
 		$updater = $plugin->get_updater();
@@ -1536,7 +1546,8 @@ class AdminPanel {
 	 */
 	public function ajax_check_updates(): void {
 		// Validate nonce
-		if ( ! isset( $_POST['nonce'] ) || ! \wp_verify_nonce( $_POST['nonce'], 'silver_assist_security_updates_nonce' ) ) {
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verification doesn't require sanitization
+		if ( ! isset( $_POST['nonce'] ) || ! \wp_verify_nonce( \wp_unslash( $_POST['nonce'] ), 'silver_assist_security_updates_nonce' ) ) {
 			\wp_send_json_error( [ 'message' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
 		}
 
