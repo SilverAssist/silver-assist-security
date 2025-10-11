@@ -68,9 +68,9 @@ class SecurityHelper {
 			$file_info = pathinfo( $asset_path );
 
 			// Construct minified path: assets/css/admin.css -> assets/css/admin.min.css
-			$dirname = $file_info['dirname'] ?? '';
-			$filename = $file_info['filename']; // filename always exists
-			$extension = $file_info['extension'] ?? '';
+			$dirname       = $file_info['dirname'] ?? '';
+			$filename      = $file_info['filename']; // filename always exists
+			$extension     = $file_info['extension'] ?? '';
 			$minified_path = $dirname . '/' . $filename . '.min.' . $extension;
 
 			return self::$plugin_url . $minified_path;
@@ -88,7 +88,7 @@ class SecurityHelper {
 		* @return string Client IP address
 		*/
 	public static function get_client_ip(): string {
-		$ip_keys = array(
+		$ip_keys = [
 			'HTTP_CF_CONNECTING_IP',     // CloudFlare
 			'HTTP_CLIENT_IP',            // Proxy
 			'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
@@ -96,11 +96,11 @@ class SecurityHelper {
 			'HTTP_FORWARDED_FOR',        // Proxy
 			'HTTP_FORWARDED',            // Proxy
 			'REMOTE_ADDR',                // Standard
-		);
+		];
 
 		foreach ( $ip_keys as $key ) {
 			if ( array_key_exists( $key, $_SERVER ) === true ) {
-				foreach ( explode( ',', $_SERVER[ $key ] ) as $ip ) {
+				foreach ( explode( ',', \sanitize_text_field( \wp_unslash( $_SERVER[ $key ] ) ) ) as $ip ) {
 					$ip = trim( $ip );
 					// Validate IP and exclude private/reserved ranges
 					if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) !== false ) {
@@ -110,7 +110,7 @@ class SecurityHelper {
 			}
 		}
 
-		return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+		return isset( $_SERVER['REMOTE_ADDR'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
 	}
 
 	/**
@@ -212,18 +212,19 @@ class SecurityHelper {
 	 * @param array  $context Additional context data (optional)
 	 * @return void
 	 */
-	public static function log_security_event( string $event_type, string $message, array $context = array() ): void {
-		$log_data = array(
+	public static function log_security_event( string $event_type, string $message, array $context = [] ): void {
+		$log_data = [
 			'event_type'  => $event_type,
 			'message'     => $message,
 			'timestamp'   => \current_time( 'mysql' ),
 			'ip'          => self::get_client_ip(),
-			'user_agent'  => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
-			'request_uri' => $_SERVER['REQUEST_URI'] ?? '',
+			'user_agent'  => isset( $_SERVER['HTTP_USER_AGENT'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : 'Unknown',
+			'request_uri' => isset( $_SERVER['REQUEST_URI'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '',
 			'context'     => $context,
-		);
+		];
 
-		// Log as structured JSON for better parsing
+		// Log as structured JSON for better parsing.
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional security logging.
 		error_log(
 			sprintf(
 				'SILVER_ASSIST_SECURITY: %s - %s',
@@ -286,14 +287,14 @@ class SecurityHelper {
 			self::log_security_event(
 				'NONCE_VALIDATION_FAILED',
 				"Invalid nonce for action: {$action}",
-				array(
+				[
 					'action' => $action,
 					'nonce'  => $nonce,
-				)
+				]
 			);
 
 			if ( $die_on_failure ) {
-					\wp_die( \__( 'Security check failed.', 'silver-assist-security' ) );
+					\wp_die( \esc_html__( 'Security check failed.', 'silver-assist-security' ) );
 			}
 
 			return false;
@@ -321,15 +322,15 @@ class SecurityHelper {
 			self::log_security_event(
 				'CAPABILITY_CHECK_FAILED',
 				"User lacks required capability: {$capability}",
-				array(
+				[
 					'required_capability' => $capability,
 					'user_id'             => $user_id,
 					'user_login'          => $user ? $user->user_login : 'anonymous',
-				)
+				]
 			);
 
 			if ( $die_on_failure ) {
-					\wp_die( \__( 'You do not have sufficient permissions to access this page.', 'silver-assist-security' ) );
+					\wp_die( \esc_html__( 'You do not have sufficient permissions to access this page.', 'silver-assist-security' ) );
 			}
 
 			return false;
@@ -396,11 +397,11 @@ class SecurityHelper {
 	 */
 	public static function is_bot_request( ?string $user_agent = null ): bool {
 		if ( $user_agent === null ) {
-			$user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+			$user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
 		}
 
 		// Known bot/crawler patterns
-		$bot_patterns = array(
+		$bot_patterns = [
 			'bot',
 			'crawler',
 			'spider',
@@ -423,7 +424,7 @@ class SecurityHelper {
 			'wpscan',
 			'nuclei',
 			'httpx',
-		);
+		];
 
 		foreach ( $bot_patterns as $pattern ) {
 			if ( stripos( $user_agent, $pattern ) !== false ) {
@@ -465,21 +466,23 @@ class SecurityHelper {
 		string $required_capability = 'manage_options',
 		string $allowed_method = 'POST'
 	): bool {
-		// Check HTTP method
-		if ( $_SERVER['REQUEST_METHOD'] !== $allowed_method ) {
+		// Check HTTP method.
+		if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || $_SERVER['REQUEST_METHOD'] !== $allowed_method ) {
+			$actual_method = isset( $_SERVER['REQUEST_METHOD'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : 'Unknown';
 			self::log_security_event(
 				'AJAX_INVALID_METHOD',
 				'Invalid HTTP method for AJAX request',
-				array(
+				[
 					'expected' => $allowed_method,
-					'actual'   => $_SERVER['REQUEST_METHOD'],
-				)
+					'actual'   => $actual_method,
+				]
 			);
 			return false;
 		}
 
-		// Verify nonce
-		$nonce = $_POST['nonce'] ?? $_GET['nonce'] ?? '';
+		// Verify nonce.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended -- Nonce is validated right below.
+		$nonce = isset( $_POST['nonce'] ) ? \sanitize_text_field( \wp_unslash( $_POST['nonce'] ) ) : ( isset( $_GET['nonce'] ) ? \sanitize_text_field( \wp_unslash( $_GET['nonce'] ) ) : '' );
 		if ( ! self::verify_nonce( $nonce, $nonce_action, false ) ) {
 			return false;
 		}
