@@ -204,12 +204,12 @@ class AdminHideSecurity {
 
 		// Remove WordPress home path from the beginning if present
 		$home_root = \parse_url( \home_url(), PHP_URL_PATH ) ?: '/';
-		if ( $home_root !== '/' && strpos( $path, $home_root ) === 0 ) {
+		if ( $home_root !== '/' && is_string( $path ) && strpos( $path, $home_root ) === 0 ) {
 			$path = substr( $path, strlen( $home_root ) );
 		}
 
 		// Clean leading/trailing slashes
-		$cleaned_path = trim( $path, '/' );
+		$cleaned_path = is_string( $path ) ? trim( $path, '/' ) : '';
 
 		return $cleaned_path;
 	}
@@ -425,6 +425,9 @@ class AdminHideSecurity {
 
 		// Parse URL to handle existing parameters properly
 		$parsed_url = \wp_parse_url( $url );
+		if ( ! is_array( $parsed_url ) || ! isset( $parsed_url['scheme'], $parsed_url['host'] ) ) {
+			return $url; // Return original URL if parsing fails
+		}
 
 		// Build clean query parameters with token using unified method
 		$query_vars = $this->build_query_with_token( $parsed_url['query'] ?? '', $token );
@@ -546,119 +549,6 @@ class AdminHideSecurity {
 		}
 
 		return $redirect_to;
-	}
-
-	/**
-	 * Check if request is for default admin paths
-	 *
-	 * @since 1.1.4
-	 * @param string $request_uri The request URI
-	 * @return bool True if accessing default admin paths
-	 */
-	private function is_default_admin_path( string $request_uri ): bool {
-		// Normalize the URI
-		$request_uri = parse_url( $request_uri, PHP_URL_PATH );
-
-		$admin_paths = array(
-			'/wp-admin/',
-			'/wp-admin',
-			'/wp-login.php',
-		);
-
-		foreach ( $admin_paths as $path ) {
-			if ( $request_uri === $path || strpos( $request_uri, $path ) === 0 ) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Check if accessing via custom admin path
-	 *
-	 * @since 1.1.4
-	 * @return bool True if accessing via custom admin path
-	 */
-	private function is_custom_admin_access(): bool {
-		$request_uri = $_SERVER['REQUEST_URI'] ?? '';
-		$custom_path = "/{$this->custom_admin_path}";
-
-		return strpos( $request_uri, $custom_path ) === 0;
-	}
-
-	/**
-	 * Check if request has valid authentication parameter
-	 *
-	 * @since 1.1.4
-	 * @param string $query_string The query string
-	 * @return bool True if has valid auth parameter
-	 */
-	private function has_valid_auth_param( string $query_string ): bool {
-		parse_str( $query_string, $params );
-
-		if ( ! isset( $params[ $this->validation_param ] ) ) {
-			return false;
-		}
-
-		return $this->validate_token( $params[ $this->validation_param ] );
-	}
-
-	/**
-	 * Generate validation token
-	 *
-	 * @since 1.1.4
-	 * @return string Generated token
-	 */
-	private function generate_validation_token(): string {
-		$timestamp = time();
-		$nonce     = \wp_create_nonce( "silver_admin_access_{$timestamp}" );
-		return base64_encode( "{$timestamp}:{$nonce}" );
-	}
-
-	/**
-	 * Validate authentication token
-	 *
-	 * @since 1.1.4
-	 * @param string $token The token to validate
-	 * @return bool True if token is valid
-	 */
-	private function validate_token( string $token ): bool {
-		$decoded = base64_decode( $token );
-		if ( ! $decoded || ! strpos( $decoded, ':' ) ) {
-			return false;
-		}
-
-		[$timestamp, $nonce] = explode( ':', $decoded, 2 );
-
-		// Token expires after 30 minutes
-		if ( time() - (int) $timestamp > 1800 ) {
-			return false;
-		}
-
-		return \wp_verify_nonce( $nonce, "silver_admin_access_{$timestamp}" );
-	}
-
-	/**
-	 * Set admin session cookie
-	 *
-	 * @since 1.1.4
-	 * @return void
-	 */
-	private function set_admin_session_cookie(): void {
-		$cookie_name  = 'silver_admin_session';
-		$cookie_value = \wp_create_nonce( 'silver_admin_session_' . \get_current_user_id() );
-		$expire_time  = time() + ( 30 * 60 ); // 30 minutes
-
-		\setcookie(
-			$cookie_name,
-			$cookie_value,
-			$expire_time,
-			'/',
-			'',
-			\is_ssl(),
-			true // HttpOnly
-		);
 	}
 
 	/**

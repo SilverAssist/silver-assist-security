@@ -749,15 +749,4 @@ class LoginSecurity {
 		SecurityHelper::send_404_response( false );
 	}
 
-	/**
-	 * Check if IP is in extended bot block list
-	 *
-	 * @since 1.1.1
-	 * @param string $ip IP address to check
-	 * @return bool True if blocked
-	 */
-	private function is_bot_blocked( string $ip ): bool {
-		$extended_block_key = "extended_bot_block_{md5($ip)}";
-		return \get_transient( $extended_block_key ) !== false;
-	}
 }
