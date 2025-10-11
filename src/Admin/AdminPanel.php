@@ -644,16 +644,25 @@ class AdminPanel {
 				return $blocked_ips;
 			}
 
-			// Query transients for lockout entries
-			$lockout_transients = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT option_name, option_value 
+			// Try to get from cache first
+			$cache_key          = 'silver_assist_lockout_transients';
+			$lockout_transients = \wp_cache_get( $cache_key, 'silver-assist-security' );
+
+			if ( false === $lockout_transients ) {
+				// Query transients for lockout entries
+				$lockout_transients = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT option_name, option_value 
                      FROM {$wpdb->options} 
                      WHERE option_name LIKE %s 
                      AND option_value = \"1\"",
-					'_transient_lockout_%'
-				)
-			);
+						'_transient_lockout_%'
+					)
+				);
+
+				// Cache for 60 seconds (short cache for real-time security data)
+				\wp_cache_set( $cache_key, $lockout_transients, 'silver-assist-security', 60 );
+			}
 
 			if ( ! $lockout_transients ) {
 				return $blocked_ips;
@@ -666,14 +675,22 @@ class AdminPanel {
 
 				$key = str_replace( '_transient_lockout_', '', $transient->option_name );
 
-				// Get timeout info
-				$timeout_key = "_transient_timeout_lockout_{$key}";
-				$timeout     = $wpdb->get_var(
-					$wpdb->prepare(
-						"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
-						$timeout_key
-					)
-				);
+				// Get timeout info with caching
+				$timeout_key       = "_transient_timeout_lockout_{$key}";
+				$timeout_cache_key = "silver_assist_timeout_{$key}";
+				$timeout           = \wp_cache_get( $timeout_cache_key, 'silver-assist-security' );
+
+				if ( false === $timeout ) {
+					$timeout = $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+							$timeout_key
+						)
+					);
+
+					// Cache for 60 seconds
+					\wp_cache_set( $timeout_cache_key, $timeout, 'silver-assist-security', 60 );
+				}
 
 				if ( $timeout && is_numeric( $timeout ) && $timeout > time() ) {
 					$remaining        = $timeout - time();
@@ -749,12 +766,21 @@ class AdminPanel {
 	private function get_blocked_ips_count(): int {
 		global $wpdb;
 
-		$count = $wpdb->get_var(
-			"SELECT COUNT(*) 
+		// Try to get from cache first
+		$cache_key = 'silver_assist_blocked_ips_count';
+		$count     = \wp_cache_get( $cache_key, 'silver-assist-security' );
+
+		if ( false === $count ) {
+			$count = $wpdb->get_var(
+				"SELECT COUNT(*) 
              FROM {$wpdb->options} 
              WHERE option_name LIKE \"_transient_lockout_%\" 
              AND option_value = \"1\""
-		);
+			);
+
+			// Cache for 60 seconds
+			\wp_cache_set( $cache_key, $count, 'silver-assist-security', 60 );
+		}
 
 		return (int) $count;
 	}
@@ -768,12 +794,21 @@ class AdminPanel {
 	private function get_recent_failed_attempts(): int {
 		global $wpdb;
 
-		// Count active login attempt transients
-		$count = $wpdb->get_var(
-			"SELECT COUNT(*) 
+		// Try to get from cache first
+		$cache_key = 'silver_assist_failed_attempts_count';
+		$count     = \wp_cache_get( $cache_key, 'silver-assist-security' );
+
+		if ( false === $count ) {
+			// Count active login attempt transients
+			$count = $wpdb->get_var(
+				"SELECT COUNT(*) 
              FROM {$wpdb->options} 
              WHERE option_name LIKE \"_transient_login_attempts_%\""
-		);
+			);
+
+			// Cache for 60 seconds
+			\wp_cache_set( $cache_key, $count, 'silver-assist-security', 60 );
+		}
 
 		return (int) $count;
 	}
@@ -789,14 +824,23 @@ class AdminPanel {
 
 		$logs = array();
 
-		// Get recent login attempts (transients)
-		$attempt_transients = $wpdb->get_results(
-			"SELECT option_name, option_value 
+		// Try to get from cache first
+		$cache_key          = 'silver_assist_attempt_transients';
+		$attempt_transients = \wp_cache_get( $cache_key, 'silver-assist-security' );
+
+		if ( false === $attempt_transients ) {
+			// Get recent login attempts (transients)
+			$attempt_transients = $wpdb->get_results(
+				"SELECT option_name, option_value 
              FROM {$wpdb->options} 
              WHERE option_name LIKE \"_transient_login_attempts_%\" 
              ORDER BY option_id DESC 
              LIMIT 10"
-		);
+			);
+
+			// Cache for 60 seconds
+			\wp_cache_set( $cache_key, $attempt_transients, 'silver-assist-security', 60 );
+		}
 
 		foreach ( $attempt_transients as $transient ) {
 			$ip_hash  = str_replace( '_transient_login_attempts_', '', $transient->option_name );
@@ -811,15 +855,24 @@ class AdminPanel {
 			);
 		}
 
-		// Get recent lockouts
-		$lockout_transients = $wpdb->get_results(
-			"SELECT option_name, option_value 
+		// Try to get from cache first
+		$lockout_cache_key  = 'silver_assist_recent_lockouts';
+		$lockout_transients = \wp_cache_get( $lockout_cache_key, 'silver-assist-security' );
+
+		if ( false === $lockout_transients ) {
+			// Get recent lockouts
+			$lockout_transients = $wpdb->get_results(
+				"SELECT option_name, option_value 
              FROM {$wpdb->options} 
              WHERE option_name LIKE \"_transient_lockout_%\" 
              AND option_value = \"1\"
              ORDER BY option_id DESC 
              LIMIT 5"
-		);
+			);
+
+			// Cache for 60 seconds
+			\wp_cache_set( $lockout_cache_key, $lockout_transients, 'silver-assist-security', 60 );
+		}
 
 		foreach ( $lockout_transients as $lockout ) {
 			$ip_hash = str_replace( '_transient_lockout_', '', $lockout->option_name );
