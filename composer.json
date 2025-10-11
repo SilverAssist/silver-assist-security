@@ -25,7 +25,7 @@
         "silverassist/wp-settings-hub": "^1.1"
     },
     "require-dev": {
-        "axepress/wp-graphql-stubs": "^1.26",
+        "axepress/wp-graphql-stubs": "^2.3",
         "dealerdirect/phpcodesniffer-composer-installer": "^1.1.2",
         "php-stubs/wordpress-stubs": "^6.6",
         "php-stubs/wordpress-tests-stubs": "^6.6",
