@@ -68,7 +68,10 @@ class SecurityHelper {
 			$file_info = pathinfo( $asset_path );
 
 			// Construct minified path: assets/css/admin.css -> assets/css/admin.min.css
-			$minified_path = $file_info['dirname'] . '/' . $file_info['filename'] . '.min.' . $file_info['extension'];
+			$dirname = $file_info['dirname'] ?? '';
+			$filename = $file_info['filename']; // filename always exists
+			$extension = $file_info['extension'] ?? '';
+			$minified_path = $dirname . '/' . $filename . '.min.' . $extension;
 
 			return self::$plugin_url . $minified_path;
 		}

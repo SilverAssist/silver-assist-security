@@ -167,7 +167,7 @@ class GraphQLConfigManager {
 		if ( $this->config_cache === null ) {
 			$this->load_configuration();
 		}
-		return $this->config_cache;
+		return $this->config_cache ?? array();
 	}
 
 	/**

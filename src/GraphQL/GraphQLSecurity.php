@@ -284,30 +284,26 @@ class GraphQLSecurity {
 	}
 
 	/**
-	 * Estimate connection complexity based on arguments
+	 * Estimate connection query complexity based on pagination arguments
 	 *
 	 * @since 1.1.1
 	 * @param array $args Connection arguments
-	 * @return int Estimated complexity points
+	 * @return int Estimated complexity score
 	 */
 	private function estimate_connection_complexity( array $args ): int {
-		$base_cost = 1;
+		$base_cost = 5; // Base cost for connection queries
 
-		// Factor in the number of items requested
-		$first      = $args['first'] ?? 10;
-		$last       = $args['last'] ?? 10;
-		$item_count = max( $first, $last );
+		// Extract pagination info
+		$item_count = (int) ( $args['first'] ?? $args['last'] ?? 10 );
 
 		// Higher item counts increase complexity
-		$item_complexity = ceil( $item_count / 10 );
+		$item_complexity = (int) ceil( $item_count / 10 );
 
 		// Factor in where arguments (filtering increases complexity)
 		$where_complexity = ! empty( $args['where'] ) ? count( $args['where'] ) : 0;
 
 		return $base_cost + $item_complexity + $where_complexity;
-	}
-
-	/**
+	}	/**
 	 * Add custom validation rules with WPGraphQL integration
 	 *
 	 * @since 1.1.1
@@ -316,12 +312,10 @@ class GraphQLSecurity {
 	 */
 	public function add_custom_validation_rules( array $validation_rules ): array {
 		// Add our enhanced complexity validation
-		$validation_rules[] = new class($this->max_query_complexity, $this->config_manager) {
-			private int $max_complexity;
+		$validation_rules[] = new class($this->config_manager) {
 			private GraphQLConfigManager $config_manager;
 
-			public function __construct( int $max_complexity, GraphQLConfigManager $config_manager ) {
-				$this->max_complexity = $max_complexity;
+			public function __construct( GraphQLConfigManager $config_manager ) {
 				$this->config_manager = $config_manager;
 			}
 
@@ -391,14 +385,16 @@ class GraphQLSecurity {
 				// Field count estimation (each field adds complexity)
 				$field_matches = array();
 				preg_match_all( '/\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*[{\(]/', $query_string, $field_matches );
-				$field_complexity = count( $field_matches[1] ?? array() );
+				$field_complexity = ! empty( $field_matches[1] ) ? count( $field_matches[1] ) : 0;
 
 				// Connection complexity (connections with arguments)
 				$connection_matches = array();
 				preg_match_all( '/\(\s*first:\s*(\d+)/', $query_string, $connection_matches );
 				$connection_complexity = 0;
-				foreach ( $connection_matches[1] ?? array() as $first_value ) {
-					$connection_complexity += ceil( (int) $first_value / 10 );
+				if ( ! empty( $connection_matches[1] ) ) {
+					foreach ( $connection_matches[1] as $first_value ) {
+						$connection_complexity += (int) ceil( (int) $first_value / 10 );
+					}
 				}
 
 				// Where clause complexity (filtering increases complexity)
@@ -420,8 +416,8 @@ class GraphQLSecurity {
 				}
 				$nesting_complexity = $max_nesting * 2;
 
-				return $base_complexity + $field_complexity + $connection_complexity +
-					$where_complexity + $fragment_complexity + $nesting_complexity;
+				return (int) ( $base_complexity + $field_complexity + $connection_complexity +
+					$where_complexity + $fragment_complexity + $nesting_complexity );
 			}
 		};
 
@@ -475,7 +471,7 @@ class GraphQLSecurity {
 	 * @return bool
 	 */
 	private function is_introspection_query( string $query ): bool {
-		return preg_match( '/(__schema|__type|__typename|__directive)/i', $query );
+		return (bool) preg_match( '/(__schema|__type|__typename|__directive)/i', $query );
 	}
 
 	/**
@@ -711,7 +707,7 @@ class GraphQLSecurity {
 	 */
 	private function is_likely_build_process(): bool {
 		$user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-		return preg_match( '/(next|gatsby|nuxt|build|node|fetch)/i', $user_agent );
+		return (bool) preg_match( '/(next|gatsby|nuxt|build|node|fetch)/i', $user_agent );
 	}
 
 	/**

@@ -2,6 +2,10 @@ includes:
     - vendor/szepeviktor/phpstan-wordpress/extension.neon
     
 parameters:
+    # Stub files for better type coverage
+    stubFiles:
+        - vendor/axepress/wp-graphql-stubs/wp-graphql-stubs.php
+    
     level: 8
     paths:
         - src
@@ -31,6 +35,19 @@ parameters:
         - '#Parameter .+ expects .+, mixed given#'
         - '#Method .+ has parameter .+ with no type specified#'
         
-        # GraphQL library specific
-        - '#Class GraphQL\\.+Type.+ not found#'
-        - '#Access to an undefined property GraphQL\\.+#'
+        # GraphQL library specific - graphql-php classes not in development environment
+        -
+            message: '#Instantiated class GraphQL\\Error\\(Error|UserError) not found#'
+            path: src/GraphQL/GraphQLSecurity.php
+        -
+            message: '#Throwing object of an unknown class GraphQL\\Error\\UserError#'
+            path: src/GraphQL/GraphQLSecurity.php
+        -
+            message: '#PHPDoc tag @throws with type GraphQL\\Error\\UserError is not subtype of Throwable#'
+            path: src/GraphQL/GraphQLSecurity.php
+        -
+            message: '#Instantiated class GraphQL\\Executor\\ExecutionResult not found#'
+            path: src/GraphQL/GraphQLSecurity.php
+        -
+            message: '#Access to an undefined property.*GraphQL#'
+            path: src/GraphQL/GraphQLSecurity.php

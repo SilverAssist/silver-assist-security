@@ -140,6 +140,40 @@ jobs:
                     echo "Tests directory not found"
                   fi
 
+    static-analysis:
+        name: PHPStan Static Analysis
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                php-version: [8.3]
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v5
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ matrix.php-version }}
+                  extensions: dom, curl, libxml, mbstring, zip
+                  coverage: none
+
+            - name: Cache Composer dependencies
+              uses: actions/cache@v4
+              with:
+                  path: vendor
+                  key: ${{ runner.os }}-php${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-php${{ matrix.php-version }}-composer-
+                      ${{ runner.os }}-composer-
+
+            - name: Install Composer dependencies
+              run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
+
+            - name: Run PHPStan
+              run: composer phpstan
+
     wordpress-tests:
         runs-on: ubuntu-latest
         
