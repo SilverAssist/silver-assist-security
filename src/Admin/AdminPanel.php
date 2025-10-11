@@ -64,19 +64,19 @@ class AdminPanel {
 	 */
 	private function init(): void {
 		// Register with Settings Hub early (priority 4) to ensure hub processes it at priority 5
-		\add_action( 'admin_menu', array( $this, 'register_with_hub' ), 4 );
-		\add_action( 'admin_init', array( $this, 'register_settings' ) );
-		\add_action( 'admin_init', array( $this, 'save_security_settings' ) );
-		\add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+		\add_action( 'admin_menu', [ $this, 'register_with_hub' ], 4 );
+		\add_action( 'admin_init', [ $this, 'register_settings' ] );
+		\add_action( 'admin_init', [ $this, 'save_security_settings' ] );
+		\add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 
 		// AJAX endpoints for real-time status
-		\add_action( 'wp_ajax_silver_assist_get_security_status', array( $this, 'ajax_get_security_status' ) );
-		\add_action( 'wp_ajax_silver_assist_get_login_stats', array( $this, 'ajax_get_login_stats' ) );
-		\add_action( 'wp_ajax_silver_assist_get_blocked_ips', array( $this, 'ajax_get_blocked_ips' ) );
-		\add_action( 'wp_ajax_silver_assist_get_security_logs', array( $this, 'ajax_get_security_logs' ) );
-		\add_action( 'wp_ajax_silver_assist_auto_save', array( $this, 'ajax_auto_save' ) );
-		\add_action( 'wp_ajax_silver_assist_validate_admin_path', array( $this, 'ajax_validate_admin_path' ) );
-		\add_action( 'wp_ajax_silver_assist_check_updates', array( $this, 'ajax_check_updates' ) );
+		\add_action( 'wp_ajax_silver_assist_get_security_status', [ $this, 'ajax_get_security_status' ] );
+		\add_action( 'wp_ajax_silver_assist_get_login_stats', [ $this, 'ajax_get_login_stats' ] );
+		\add_action( 'wp_ajax_silver_assist_get_blocked_ips', [ $this, 'ajax_get_blocked_ips' ] );
+		\add_action( 'wp_ajax_silver_assist_get_security_logs', [ $this, 'ajax_get_security_logs' ] );
+		\add_action( 'wp_ajax_silver_assist_auto_save', [ $this, 'ajax_auto_save' ] );
+		\add_action( 'wp_ajax_silver_assist_validate_admin_path', [ $this, 'ajax_validate_admin_path' ] );
+		\add_action( 'wp_ajax_silver_assist_check_updates', [ $this, 'ajax_check_updates' ] );
 	}
 
 	/**
@@ -109,14 +109,14 @@ class AdminPanel {
 			$hub->register_plugin(
 				'silver-assist-security',
 				\__( 'Security', 'silver-assist-security' ),
-				array( $this, 'render_admin_page' ),
-				array(
+				[ $this, 'render_admin_page' ],
+				[
 					'description' => \__( 'Security configuration for WordPress', 'silver-assist-security' ),
 					'version'     => $this->plugin_version,
 					'tab_title'   => \__( 'Security', 'silver-assist-security' ),
 					'capability'  => 'manage_options',
 					'actions'     => $actions,
-				)
+				]
 			);
 
 		} catch ( Exception $e ) {
@@ -125,7 +125,7 @@ class AdminPanel {
 			SecurityHelper::log_security_event(
 				'SETTINGS_HUB_ERROR',
 				'Failed to register with Settings Hub: ' . $e->getMessage(),
-				array( 'exception' => $e->getMessage() )
+				[ 'exception' => $e->getMessage() ]
 			);
 			$this->add_admin_menu();
 		}
@@ -138,16 +138,16 @@ class AdminPanel {
 	 * @return array Array of action configurations
 	 */
 	private function get_hub_actions(): array {
-		$actions = array();
+		$actions = [];
 
 		// Add "Check Updates" button if updater is available
 		$plugin = Plugin::getInstance();
 		if ( $plugin->get_updater() ) {
-			$actions[] = array(
+			$actions[] = [
 				'label'    => \__( 'Check Updates', 'silver-assist-security' ),
-				'callback' => array( $this, 'render_update_check_script' ),
+				'callback' => [ $this, 'render_update_check_script' ],
 				'class'    => 'button button-primary',
-			);
+			];
 		}
 
 		return $actions;
@@ -165,7 +165,7 @@ class AdminPanel {
 			\__( 'Security Essentials', 'silver-assist-security' ),
 			'manage_options',
 			'silver-assist-security',
-			array( $this, 'render_admin_page' )
+			[ $this, 'render_admin_page' ]
 		);
 	}
 
@@ -218,11 +218,11 @@ class AdminPanel {
 		// Allow loading on both standalone menu and Settings Hub submenu
 		// Settings Hub uses: "silver-assist_page_silver-assist-security"
 		// Standalone menu uses: "settings_page_silver-assist-security"
-		$allowed_hooks = array(
+		$allowed_hooks = [
 			'settings_page_silver-assist-security',        // Standalone fallback menu
 			'silver-assist_page_silver-assist-security',   // Settings Hub submenu
 			'toplevel_page_silver-assist-security',         // Direct top-level (if ever used)
-		);
+		];
 
 		if ( ! \in_array( $hook_suffix, $allowed_hooks, true ) ) {
 			return;
@@ -231,21 +231,21 @@ class AdminPanel {
 		\wp_enqueue_style(
 			'silver-assist-variables',
 			$this->get_asset_url( 'assets/css/variables.css' ),
-			array(),
+			[],
 			$this->plugin_version
 		);
 
 		\wp_enqueue_style(
 			'silver-assist-security-admin',
 			$this->get_asset_url( 'assets/css/admin.css' ),
-			array( 'silver-assist-variables' ),
+			[ 'silver-assist-variables' ],
 			$this->plugin_version
 		);
 
 		\wp_enqueue_script(
 			'silver-assist-security-admin',
 			$this->get_asset_url( 'assets/js/admin.js' ),
-			array( 'jquery' ),
+			[ 'jquery' ],
 			$this->plugin_version,
 			true
 		);
@@ -254,14 +254,14 @@ class AdminPanel {
 		\wp_localize_script(
 			'silver-assist-security-admin',
 			'silverAssistSecurity',
-			array(
+			[
 				'ajaxurl'             => \admin_url( 'admin-ajax.php' ),
 				'admin_url'           => \admin_url( '' ),
 				'nonce'               => \wp_create_nonce( 'silver_assist_security_ajax' ),
 				'logout_nonce'        => \wp_create_nonce( 'log-out' ),
 				'refreshInterval'     => 30000, // 30 seconds
 				'phpExecutionTimeout' => $this->config_manager->get_php_execution_timeout(),
-				'strings'             => array(
+				'strings'             => [
 					'loading'                => __( 'Loading...', 'silver-assist-security' ),
 					'error'                  => __( 'Error loading data', 'silver-assist-security' ),
 					'lastUpdated'            => __( 'Last updated:', 'silver-assist-security' ),
@@ -322,8 +322,8 @@ class AdminPanel {
 					'disabled'               => __( 'Disabled', 'silver-assist-security' ),
 					'headlessCms'            => __( 'Headless CMS', 'silver-assist-security' ),
 					'standard'               => __( 'Standard', 'silver-assist-security' ),
-				),
-			)
+				],
+			]
 		);
 	}
 
@@ -337,7 +337,7 @@ class AdminPanel {
 		try {
 			// Use centralized AJAX validation
 			if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-				\wp_send_json_error( array( 'message' => 'Security validation failed' ) );
+				\wp_send_json_error( [ 'message' => 'Security validation failed' ] );
 			}
 
 			$status = $this->get_security_status();
@@ -347,14 +347,14 @@ class AdminPanel {
 			SecurityHelper::log_security_event(
 				'AJAX_ERROR',
 				'Security status AJAX error: ' . $e->getMessage(),
-				array( 'function' => 'ajax_get_security_status' )
+				[ 'function' => 'ajax_get_security_status' ]
 			);
 
 			\wp_send_json_error(
-				array(
+				[
 					'message' => 'Error loading security status',
 					'error'   => $e->getMessage(),
-				)
+				]
 			);
 		}
 	}
@@ -369,12 +369,12 @@ class AdminPanel {
 		try {
 			// Verify nonce
 			if ( ! \wp_verify_nonce( $_POST['nonce'] ?? '', 'silver_assist_security_ajax' ) ) {
-				\wp_send_json_error( array( 'message' => 'Security check failed' ) );
+				\wp_send_json_error( [ 'message' => 'Security check failed' ] );
 			}
 
 			// Check user permissions
 			if ( ! \current_user_can( 'manage_options' ) ) {
-				\wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+				\wp_send_json_error( [ 'message' => 'Insufficient permissions' ] );
 			}
 
 			$stats = $this->get_login_statistics();
@@ -382,10 +382,10 @@ class AdminPanel {
 
 		} catch ( Exception $e ) {
 			\wp_send_json_error(
-				array(
+				[
 					'message' => 'Error loading login statistics',
 					'error'   => $e->getMessage(),
-				)
+				]
 			);
 		}
 	}
@@ -400,12 +400,12 @@ class AdminPanel {
 		try {
 			// Verify nonce
 			if ( ! \wp_verify_nonce( $_POST['nonce'] ?? '', 'silver_assist_security_ajax' ) ) {
-				\wp_send_json_error( array( 'message' => 'Security check failed' ) );
+				\wp_send_json_error( [ 'message' => 'Security check failed' ] );
 			}
 
 			// Check user permissions
 			if ( ! \current_user_can( 'manage_options' ) ) {
-				\wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+				\wp_send_json_error( [ 'message' => 'Insufficient permissions' ] );
 			}
 
 			$blocked_ips = $this->get_blocked_ips();
@@ -413,10 +413,10 @@ class AdminPanel {
 
 		} catch ( Exception $e ) {
 			\wp_send_json_error(
-				array(
+				[
 					'message' => 'Error loading blocked IPs',
 					'error'   => $e->getMessage(),
-				)
+				]
 			);
 		}
 	}
@@ -431,12 +431,12 @@ class AdminPanel {
 		try {
 			// Verify nonce
 			if ( ! \wp_verify_nonce( $_POST['nonce'] ?? '', 'silver_assist_security_ajax' ) ) {
-				\wp_send_json_error( array( 'message' => 'Security check failed' ) );
+				\wp_send_json_error( [ 'message' => 'Security check failed' ] );
 			}
 
 			// Check user permissions
 			if ( ! \current_user_can( 'manage_options' ) ) {
-				\wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+				\wp_send_json_error( [ 'message' => 'Insufficient permissions' ] );
 			}
 
 			$logs = $this->get_recent_security_logs();
@@ -444,10 +444,10 @@ class AdminPanel {
 
 		} catch ( Exception $e ) {
 			\wp_send_json_error(
-				array(
+				[
 					'message' => 'Error loading security logs',
 					'error'   => $e->getMessage(),
-				)
+				]
 			);
 		}
 	}
@@ -462,16 +462,16 @@ class AdminPanel {
 		try {
 			// Verify nonce
 			if ( ! \wp_verify_nonce( $_POST['nonce'] ?? '', 'silver_assist_security_ajax' ) ) {
-				\wp_send_json_error( array( 'message' => 'Security check failed' ) );
+				\wp_send_json_error( [ 'message' => 'Security check failed' ] );
 			}
 
 			// Check user permissions
 			if ( ! \current_user_can( 'manage_options' ) ) {
-				\wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+				\wp_send_json_error( [ 'message' => 'Insufficient permissions' ] );
 			}
 
 			// Process form data - handle checkboxes that may not be present when unchecked
-			$settings = array(
+			$settings = [
 				// Login Security
 				'silver_assist_login_attempts'        => (int) ( $_POST['silver_assist_login_attempts'] ?? 5 ),
 				'silver_assist_lockout_duration'      => (int) ( $_POST['silver_assist_lockout_duration'] ?? 900 ),
@@ -481,7 +481,7 @@ class AdminPanel {
 
 				// GraphQL Security
 				'silver_assist_graphql_headless_mode' => (int) ( $_POST['silver_assist_graphql_headless_mode'] ?? 0 ),
-			);
+			];
 
 			// Update all settings
 			foreach ( $settings as $option_name => $value ) {
@@ -489,18 +489,18 @@ class AdminPanel {
 			}
 
 			\wp_send_json_success(
-				array(
+				[
 					'message'   => \__( 'Settings saved automatically', 'silver-assist-security' ),
 					'timestamp' => current_time( 'mysql' ),
-				)
+				]
 			);
 
 		} catch ( Exception $e ) {
 			\wp_send_json_error(
-				array(
+				[
 					'message' => \__( 'Error saving settings', 'silver-assist-security' ),
 					'error'   => $e->getMessage(),
-				)
+				]
 			);
 		}
 	}
@@ -515,12 +515,12 @@ class AdminPanel {
 		try {
 			// Verify nonce
 			if ( ! \wp_verify_nonce( $_POST['nonce'] ?? '', 'silver_assist_security_ajax' ) ) {
-				\wp_send_json_error( array( 'message' => 'Security check failed' ) );
+				\wp_send_json_error( [ 'message' => 'Security check failed' ] );
 			}
 
 			// Check user permissions
 			if ( ! \current_user_can( 'manage_options' ) ) {
-				\wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+				\wp_send_json_error( [ 'message' => 'Insufficient permissions' ] );
 			}
 
 			$path = \sanitize_text_field( $_POST['path'] ?? '' );
@@ -530,26 +530,26 @@ class AdminPanel {
 
 			if ( $validation_result['is_valid'] ) {
 				\wp_send_json_success(
-					array(
+					[
 						'message'        => $validation_result['error_message'], // Contains success message
 						'preview_url'    => \home_url( '/' . $path ),
 						'sanitized_path' => $validation_result['sanitized_path'],
-					)
+					]
 				);
 			} else {
 				\wp_send_json_error(
-					array(
+					[
 						'message' => $validation_result['error_message'],
 						'type'    => $validation_result['error_type'],
-					)
+					]
 				);
 			}
 		} catch ( Exception $e ) {
 			\wp_send_json_error(
-				array(
+				[
 					'message' => \__( 'Error validating path', 'silver-assist-security' ),
 					'error'   => $e->getMessage(),
-				)
+				]
 			);
 		}
 	}
@@ -564,20 +564,20 @@ class AdminPanel {
 		// Use config manager for GraphQL configuration
 		$graphql_config = $this->config_manager->get_configuration();
 
-		$status = array(
-			'login_security'   => array(
+		$status = [
+			'login_security'   => [
 				'enabled'          => true,
 				'max_attempts'     => (int) DefaultConfig::get_option( 'silver_assist_login_attempts' ),
 				'lockout_duration' => (int) DefaultConfig::get_option( 'silver_assist_lockout_duration' ),
 				'session_timeout'  => (int) DefaultConfig::get_option( 'silver_assist_session_timeout' ),
 				'status'           => 'active',
-			),
-			'admin_security'   => array(
+			],
+			'admin_security'   => [
 				'password_strength_enforcement' => (bool) DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' ),
 				'bot_protection'                => (bool) DefaultConfig::get_option( 'silver_assist_bot_protection' ),
 				'status'                        => $this->get_admin_security_status(),
-			),
-			'graphql_security' => array(
+			],
+			'graphql_security' => [
 				'enabled'                => class_exists( 'WPGraphQL' ),
 				'headless_mode'          => (bool) DefaultConfig::get_option( 'silver_assist_graphql_headless_mode' ),
 				'query_depth_limit'      => $graphql_config['query_depth_limit'],
@@ -587,18 +587,18 @@ class AdminPanel {
 				'debug_mode'             => $graphql_config['debug_mode'],
 				'endpoint_access'        => $graphql_config['endpoint_access'],
 				'status'                 => class_exists( 'WPGraphQL' ) ? 'active' : 'disabled',
-			),
-			'general_security' => array(
+			],
+			'general_security' => [
 				'httponly_cookies' => true,
 				'xml_rpc_disabled' => true,
 				'version_hiding'   => true,
 				'ssl_enabled'      => \is_ssl(),
 				'status'           => 'active',
-			),
+			],
 			'overall_status'   => 'secure',
 			'last_updated'     => current_time( 'mysql' ),
 			'active_features'  => $this->count_active_features(),
-		);
+		];
 
 		return $status;
 	}
@@ -618,13 +618,13 @@ class AdminPanel {
 		// Get recent failed attempts (last 24 hours)
 		$recent_attempts = $this->get_recent_failed_attempts();
 
-		return array(
+		return [
 			'blocked_ips_count'        => $blocked_count,
 			'recent_failed_attempts'   => $recent_attempts,
 			'lockout_duration_minutes' => round( DefaultConfig::get_option( 'silver_assist_lockout_duration' ) / 60 ),
 			'max_attempts'             => (int) DefaultConfig::get_option( 'silver_assist_login_attempts' ),
 			'last_updated'             => current_time( 'mysql' ),
-		);
+		];
 	}
 
 	/**
@@ -637,7 +637,7 @@ class AdminPanel {
 		global $wpdb;
 
 		try {
-			$blocked_ips = array();
+			$blocked_ips = [];
 
 			// Check if wpdb is available
 			if ( ! $wpdb ) {
@@ -696,13 +696,13 @@ class AdminPanel {
 					$remaining        = $timeout - time();
 					$lockout_duration = (int) DefaultConfig::get_option( 'silver_assist_lockout_duration' );
 
-					$blocked_ips[] = array(
+					$blocked_ips[] = [
 						'hash'              => $key,
 						'ip'                => 'Hidden for security',
 						'remaining_time'    => $remaining,
 						'remaining_minutes' => max( 0, round( $remaining / 60 ) ),
 						'blocked_at'        => date( 'Y-m-d H:i:s', (int) ( time() - ( $lockout_duration - $remaining ) ) ),
-					);
+					];
 				}
 			}
 
@@ -711,7 +711,7 @@ class AdminPanel {
 		} catch ( Exception $e ) {
 			// Log error and return empty array
 			error_log( "Silver Assist Security: Error getting blocked IPs - {$e->getMessage()}" );
-			return array();
+			return [];
 		}
 	}
 
@@ -822,7 +822,7 @@ class AdminPanel {
 	private function get_recent_security_logs(): array {
 		global $wpdb;
 
-		$logs = array();
+		$logs = [];
 
 		// Try to get from cache first
 		$cache_key          = 'silver_assist_attempt_transients';
@@ -846,13 +846,13 @@ class AdminPanel {
 			$ip_hash  = str_replace( '_transient_login_attempts_', '', $transient->option_name );
 			$attempts = (int) $transient->option_value;
 
-			$logs[] = array(
+			$logs[] = [
 				'type'      => 'failed_login',
 				'ip_hash'   => substr( $ip_hash, 0, 8 ) . '...',
 				'attempts'  => $attempts,
 				'timestamp' => current_time( 'mysql' ),
 				'status'    => $attempts >= DefaultConfig::get_option( 'silver_assist_login_attempts' ) ? 'blocked' : 'monitoring',
-			);
+			];
 		}
 
 		// Try to get from cache first
@@ -877,13 +877,13 @@ class AdminPanel {
 		foreach ( $lockout_transients as $lockout ) {
 			$ip_hash = str_replace( '_transient_lockout_', '', $lockout->option_name );
 
-			$logs[] = array(
+			$logs[] = [
 				'type'      => 'ip_blocked',
 				'ip_hash'   => substr( $ip_hash, 0, 8 ) . '...',
 				'timestamp' => current_time( 'mysql' ),
 				'status'    => 'active',
 				'action'    => 'IP blocked due to excessive failed login attempts',
-			);
+			];
 		}
 
 		// Sort by timestamp (most recent first)
@@ -993,7 +993,7 @@ class AdminPanel {
 			\wp_die(
 				esc_html__( 'You do not have sufficient permissions to access this page.', 'silver-assist-security' ),
 				esc_html__( 'Permission Denied', 'silver-assist-security' ),
-				array( 'response' => 403 )
+				[ 'response' => 403 ]
 			);
 		}
 
@@ -1499,7 +1499,7 @@ class AdminPanel {
 		\wp_enqueue_script(
 			'silver-assist-update-check',
 			$this->get_asset_url( 'assets/js/update-check.js' ),
-			array( 'jquery' ),
+			[ 'jquery' ],
 			$this->plugin_version,
 			true
 		);
@@ -1508,17 +1508,17 @@ class AdminPanel {
 		\wp_localize_script(
 			'silver-assist-update-check',
 			'silverAssistUpdateCheck',
-			array(
+			[
 				'ajaxurl'   => \admin_url( 'admin-ajax.php' ),
 				'nonce'     => \wp_create_nonce( 'silver_assist_security_updates_nonce' ),
 				'updateUrl' => \admin_url( 'update-core.php' ),
-				'strings'   => array(
+				'strings'   => [
 					'updateAvailable' => \__( 'Update available! Redirecting to Updates page...', 'silver-assist-security' ),
 					'upToDate'        => \__( "You're up to date!", 'silver-assist-security' ),
 					'checkError'      => \__( 'Error checking updates. Please try again.', 'silver-assist-security' ),
 					'connectError'    => \__( 'Error connecting to update server.', 'silver-assist-security' ),
-				),
-			)
+				],
+			]
 		);
 
 		// Echo JavaScript that will be injected by Settings Hub into the event listener
@@ -1537,19 +1537,19 @@ class AdminPanel {
 	public function ajax_check_updates(): void {
 		// Validate nonce
 		if ( ! isset( $_POST['nonce'] ) || ! \wp_verify_nonce( $_POST['nonce'], 'silver_assist_security_updates_nonce' ) ) {
-			\wp_send_json_error( array( 'message' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
+			\wp_send_json_error( [ 'message' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
 		}
 
 		// Check user capability
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( array( 'message' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
+			\wp_send_json_error( [ 'message' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
 		}
 
 		$plugin  = Plugin::getInstance();
 		$updater = $plugin->get_updater();
 
 		if ( ! $updater ) {
-			\wp_send_json_error( array( 'message' => \__( 'Updater not available', 'silver-assist-security' ) ) );
+			\wp_send_json_error( [ 'message' => \__( 'Updater not available', 'silver-assist-security' ) ] );
 		}
 
 		try {
@@ -1569,26 +1569,26 @@ class AdminPanel {
 			$latest_version   = $updater->getLatestVersion();
 
 			\wp_send_json_success(
-				array(
+				[
 					'update_available' => $update_available,
 					'current_version'  => $current_version,
 					'latest_version'   => $latest_version,
 					'message'          => $update_available
 						? \__( 'Update available!', 'silver-assist-security' )
 						: \__( "You're up to date!", 'silver-assist-security' ),
-				)
+				]
 			);
 		} catch ( \Exception $e ) {
 			SecurityHelper::log_security_event(
 				'UPDATE_CHECK_ERROR',
 				'Failed to check for updates: ' . $e->getMessage(),
-				array( 'exception' => $e->getMessage() )
+				[ 'exception' => $e->getMessage() ]
 			);
 
 			\wp_send_json_error(
-				array(
+				[
 					'message' => \__( 'Error checking for updates', 'silver-assist-security' ),
-				)
+				]
 			);
 		}
 	}
