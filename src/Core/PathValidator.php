@@ -25,6 +25,8 @@ class PathValidator {
 		'login',
 		'wp-admin',
 		'wp-login',
+		'wp-content',
+		'wp-includes',
 		'dashboard',
 		'backend',
 		'administrator',
