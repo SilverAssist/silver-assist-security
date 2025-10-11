@@ -52,7 +52,7 @@ class GraphQLConfigManager {
 	 *
 	 * @var array
 	 */
-	private const DEFAULT_CONFIG = array(
+	private const DEFAULT_CONFIG = [
 		'query_depth_limit'      => 8,
 		'query_complexity_limit' => 100,
 		'query_timeout'          => 5,
@@ -61,7 +61,7 @@ class GraphQLConfigManager {
 		'endpoint_access'        => 'public',
 		'batch_enabled'          => true,
 		'batch_limit'            => 10,
-	);
+	];
 
 	/**
 	 * Private constructor to enforce singleton pattern
@@ -131,30 +131,30 @@ class GraphQLConfigManager {
 		$php_timeout     = $this->get_php_execution_timeout();
 		$current_timeout = (int) DefaultConfig::get_option( 'silver_assist_graphql_query_timeout' );
 
-		return array(
+		return [
 			'php_timeout'          => $php_timeout,
 			'current_timeout'      => $current_timeout,
 			'is_unlimited_php'     => $php_timeout === 0,
 			'is_using_php_default' => ! DefaultConfig::get_option( 'silver_assist_graphql_query_timeout' ),
 			'recommended_min'      => 5,
 			'recommended_max'      => $php_timeout > 0 ? min( $php_timeout, 60 ) : 60,
-		);
+		];
 	}
 
 	/**
 	 * Get WPGraphQL setting with fallback
 	 *
 	 * @since 1.1.1
-	 * @param string $setting_key The setting key to retrieve
-	 * @param mixed  $default Default value if setting not found
-	 * @return mixed Setting value or default
+	 * @param string $setting_key Setting key to retrieve.
+	 * @param mixed  $default_value Default value if setting not found.
+	 * @return mixed Setting value or default.
 	 */
-	public function get_wpgraphql_setting( string $setting_key, $default = null ) {
+	public function get_wpgraphql_setting( string $setting_key, $default_value = null ) {
 		if ( ! $this->is_wpgraphql_available() ) {
-			return $default;
+			return $default_value;
 		}
 
-		return \get_graphql_setting( $setting_key, $default );
+		return \get_graphql_setting( $setting_key, $default_value );
 	}
 
 	/**
@@ -167,7 +167,7 @@ class GraphQLConfigManager {
 		if ( $this->config_cache === null ) {
 			$this->load_configuration();
 		}
-		return $this->config_cache ?? array();
+		return $this->config_cache ?? [];
 	}
 
 	/**
@@ -249,27 +249,27 @@ class GraphQLConfigManager {
 	 */
 	public function get_security_recommendations(): array {
 		$config          = $this->get_configuration();
-		$recommendations = array();
+		$recommendations = [];
 
 		if ( $config['introspection_enabled'] ) {
-			$recommendations[] = array(
+			$recommendations[] = [
 				'level'   => 'warning',
 				'message' => \__( 'Public introspection enabled (security risk)', 'silver-assist-security' ),
-			);
+			];
 		}
 
 		if ( $config['debug_mode'] ) {
-			$recommendations[] = array(
+			$recommendations[] = [
 				'level'   => 'warning',
 				'message' => \__( 'Debug mode enabled (not recommended for production)', 'silver-assist-security' ),
-			);
+			];
 		}
 
 		if ( $config['endpoint_access'] === 'public' ) {
-			$recommendations[] = array(
+			$recommendations[] = [
 				'level'   => 'info',
 				'message' => \__( 'GraphQL endpoint is publicly accessible', 'silver-assist-security' ),
-			);
+			];
 		}
 
 		return $recommendations;
@@ -287,7 +287,7 @@ class GraphQLConfigManager {
 		}
 
 		$config   = $this->get_configuration();
-		$settings = array();
+		$settings = [];
 
 		// Endpoint Access (most important for security)
 		$auth_status = $config['endpoint_access'] === 'restricted' ?
@@ -405,11 +405,11 @@ class GraphQLConfigManager {
 			$adjusted_limit = $base_limit;
 		}
 
-		return array(
+		return [
 			'requests_per_minute' => $adjusted_limit,
 			'burst_limit'         => (int) ( $adjusted_limit * 1.5 ), // Allow 50% burst
 			'timeout_seconds'     => $config['query_timeout'],
-		);
+		];
 	}
 
 	/**
@@ -432,13 +432,13 @@ class GraphQLConfigManager {
 	public function get_integration_status(): array {
 		$config = $this->get_configuration();
 
-		return array(
+		return [
 			'wpgraphql_available' => $this->is_wpgraphql_available(),
 			'headless_mode'       => $this->is_headless_mode(),
 			'current_config'      => $config,
 			'security_level'      => $this->calculate_security_level( $config ),
 			'recommendations'     => $this->get_security_recommendations(),
-		);
+		];
 	}
 
 	/**
@@ -465,7 +465,7 @@ class GraphQLConfigManager {
 			$score += 2;
 		}
 		if ( $config['batch_limit'] <= 20 ) {
-			$score += 1;
+			++$score;
 		}
 
 		// Determine level
