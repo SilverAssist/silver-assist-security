@@ -37,11 +37,11 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "silverassist/wp-github-updater"
         update-types: ["version-update:semver-major"]
-# PHPUnit 12+ incompatible with WordPress Test Suite (WP_UnitTestCase)
-# WordPress Test Suite still requires PHPUnit 9.x
-# See: https://github.com/SilverAssist/silver-assist-security/pull/9
-- dependency-name: "phpunit/phpunit"
-  update-types: [ "version-update:semver-major" ]
+      # PHPUnit 12+ incompatible with WordPress Test Suite (WP_UnitTestCase)
+      # WordPress Test Suite still requires PHPUnit 9.x
+      # See: https://github.com/SilverAssist/silver-assist-security/pull/9
+      - dependency-name: "phpunit/phpunit"
+        update-types: ["version-update:semver-major"]
 
   # npm dependencies (JavaScript packages)
   - package-ecosystem: "npm"
