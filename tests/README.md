@@ -41,12 +41,23 @@ tests/
 │   ├── DefaultConfigTest.php         # Configuration management tests
 │   ├── GraphQLConfigManagerTest.php  # GraphQL configuration tests
 │   ├── LoginSecurityTest.php         # Login security tests
-│   └── SecurityHelperTest.php        # Security helper utilities tests
+│   ├── SecurityHelperTest.php        # Security helper utilities tests
+│   └── UpdaterTest.php               # GitHub updater unit tests (11 tests) ✅
+├── Integration/          # Integration tests
+│   ├── AdminAccessTest.php           # Admin panel access control tests
+│   ├── SettingsHubTest.php           # Settings Hub integration tests
+│   ├── UpdaterIntegrationTest.php    # Updater WordPress integration (16 tests) ✅
+│   └── GraphQLSecurityIntegrationTest.php  # GraphQL security integration (25 tests) ✅
 ├── WordPress/            # WordPress integration examples
 │   └── AdminPanelTest.php           # WP_UnitTestCase example
 ├── Security/            # Security-focused tests
 │   └── SecurityTest.php             # Overall security validation
+├── Core/                 # Core functionality tests
+│   └── PathValidatorTest.php        # Path validation tests (11 tests) ✅
 └── results/             # Test results (git-ignored)
+    ├── junit.xml                              # PHPUnit test results
+    ├── test-coverage-report.md                # Coverage analysis
+    └── graphql-integration-report.md          # GraphQL tests detailed report ✅
 ```
 
 ## Test Framework
