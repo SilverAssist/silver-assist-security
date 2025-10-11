@@ -100,21 +100,21 @@ class Plugin {
 	 * @since 1.1.1
 	 */
 	private function __construct() {
-		// Initialize SecurityHelper first
+		// Initialize SecurityHelper first.
 		SecurityHelper::init();
 
-		// Initialize security components early (before setup_theme)
+		// Initialize security components early (before setup_theme).
 		\add_action( 'plugins_loaded', array( $this, 'init_security_components' ), 1 );
 
-		// Load text domain for translations (safe to call here since we're in init hook)
+		// Load text domain for translations (safe to call here since we're in init hook).
 		\add_action( 'init', array( $this, 'load_textdomain' ) );
 
-		// Initialize components
+		// Initialize components.
 		\add_action( 'init', array( $this, 'init_admin_panel' ) );
 		\add_action( 'init', array( $this, 'init_graphql_security' ) );
 		\add_action( 'init', array( $this, 'init_updater' ) );
 
-		// Add plugin action links
+		// Add plugin action links.
 		\add_filter( 'plugin_action_links_' . SILVER_ASSIST_SECURITY_BASENAME, array( $this, 'add_action_links' ) );
 	}
 
@@ -125,7 +125,7 @@ class Plugin {
 	 * @return void
 	 */
 	public function load_textdomain(): void {
-		// Default languages directory for silver-assist-security
+		// Default languages directory for silver-assist-security.
 		$lang_dir = SILVER_ASSIST_SECURITY_PATH . '/languages/';
 
 		/**
@@ -136,7 +136,7 @@ class Plugin {
 		 */
 		$lang_dir = \apply_filters( 'silver_assist_security_languages_directory', $lang_dir );
 
-		// Get user locale (WordPress 6.5+ always has get_user_locale)
+		// Get user locale (WordPress 6.5+ always has get_user_locale).
 		$get_locale = \get_user_locale();
 
 		/**
@@ -149,18 +149,18 @@ class Plugin {
 		$locale = \apply_filters( 'plugin_locale', $get_locale, 'silver-assist-security' );
 		$mofile = sprintf( '%1$s-%2$s.mo', 'silver-assist-security', $locale );
 
-		// Setup paths to current locale file
+		// Setup paths to current locale file.
 		$mofile_local  = "{$lang_dir}{$mofile}";
 		$mofile_global = WP_LANG_DIR . '/silver-assist-security/' . $mofile;
 
 		if ( file_exists( $mofile_global ) ) {
-			// Look in global /wp-content/languages/silver-assist-security/ folder first
+			// Look in global /wp-content/languages/silver-assist-security/ folder first.
 			\load_textdomain( 'silver-assist-security', $mofile_global );
 		} elseif ( file_exists( $mofile_local ) ) {
-			// Look in local /wp-content/plugins/silver-assist-security/languages/ folder
+			// Look in local /wp-content/plugins/silver-assist-security/languages/ folder.
 			\load_textdomain( 'silver-assist-security', $mofile_local );
 		} else {
-			// Load the default language files as fallback
+			// Load the default language files as fallback.
 			\load_plugin_textdomain( 'silver-assist-security', false, dirname( plugin_basename( SILVER_ASSIST_SECURITY_PATH . '/silver-assist-security.php' ) ) . '/languages/' );
 		}
 	}
@@ -187,7 +187,7 @@ class Plugin {
 		$this->login_security   = new LoginSecurity();
 		$this->general_security = new GeneralSecurity();
 
-		// Only initialize AdminHideSecurity if it's enabled
+		// Only initialize AdminHideSecurity if it's enabled.
 		$admin_hide_enabled = (bool) DefaultConfig::get_option( 'silver_assist_admin_hide_enabled' );
 		if ( $admin_hide_enabled ) {
 			$this->admin_hide_security = new AdminHideSecurity();
@@ -201,7 +201,7 @@ class Plugin {
 	 * @return void
 	 */
 	public function init_graphql_security(): void {
-		// Only initialize if WPGraphQL is active
+		// Only initialize if WPGraphQL is active.
 		if ( \class_exists( 'WPGraphQL' ) ) {
 			$this->graphql_security = new GraphQLSecurity();
 		}
@@ -224,7 +224,7 @@ class Plugin {
 	 * Add plugin action links
 	 *
 	 * @since 1.1.1
-	 * @param array $links Existing action links
+	 * @param array $links Existing action links.
 	 * @return array Modified action links
 	 */
 	public function add_action_links( array $links ): array {
