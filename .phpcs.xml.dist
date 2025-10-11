@@ -43,11 +43,15 @@
         <exclude name="Squiz.Commenting.ClassComment.Missing"/>
         <exclude name="Squiz.Commenting.FunctionComment.MissingParamComment"/>
         <exclude name="Squiz.Commenting.VariableComment.Missing"/>
+        <exclude name="Generic.Commenting.DocComment.ShortNotCapital"/>
         
         <!-- Allow modern PHP features -->
         <exclude name="WordPress.PHP.DisallowShortTernary"/>
         <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
         <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
+        
+        <!-- Allow PSR-4 naming (getInstance instead of get_instance) -->
+        <exclude name="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid"/>
     </rule>
 
     <!-- Rules: WordPress Extra -->
