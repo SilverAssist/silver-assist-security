@@ -239,12 +239,13 @@ jobs:
         run: |
           echo "Validating PHP syntax in all files..."
           find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" -exec php -l {} \; > syntax-check.log 2>&1
-          if grep -i "parse error\|syntax error" syntax-check.log; then
+          if grep -iE "^(Parse|Fatal) error:" syntax-check.log; then
             echo "❌ PHP syntax errors found"
             cat syntax-check.log
             exit 1
           else
             echo "✅ All PHP files validated successfully"
+            rm -f syntax-check.log
           fi
       
       - name: Run PHPStan
