@@ -140,7 +140,15 @@ check_dependencies() {
     
     # Check WordPress Test Suite (for PHPUnit tests)
     if [ "$RUN_TESTS" = true ]; then
-        if [ ! -f "/tmp/wordpress-tests-lib/includes/functions.php" ]; then
+        WP_TESTS_FOUND=false
+        # Check common locations for WordPress Test Suite
+        if [ -f "/tmp/wordpress-tests-lib/includes/functions.php" ]; then
+            WP_TESTS_FOUND=true
+        elif [ -f "${TMPDIR}wordpress-tests-lib/includes/functions.php" ]; then
+            WP_TESTS_FOUND=true
+        fi
+        
+        if [ "$WP_TESTS_FOUND" = false ]; then
             print_warning "WordPress Test Suite not found"
             print_info "Run: ./scripts/install-wp-tests.sh wordpress_test root '' localhost latest"
             missing_deps=1
@@ -228,7 +236,14 @@ run_phpunit() {
     echo ""
     
     # Check if WordPress Test Suite is installed
-    if [ ! -f "/tmp/wordpress-tests-lib/includes/functions.php" ]; then
+    WP_TESTS_FOUND=false
+    if [ -f "/tmp/wordpress-tests-lib/includes/functions.php" ]; then
+        WP_TESTS_FOUND=true
+    elif [ -f "${TMPDIR}wordpress-tests-lib/includes/functions.php" ]; then
+        WP_TESTS_FOUND=true
+    fi
+    
+    if [ "$WP_TESTS_FOUND" = false ]; then
         print_error "WordPress Test Suite not installed"
         print_warning "CRITICAL: Cannot test security features without WordPress!"
         echo ""
@@ -392,9 +407,16 @@ else
     print_warning "Fix the issues above before pushing to GitHub"
     print_info "CI/CD pipeline will fail with current code"
     echo ""
-    if [ "$RUN_TESTS" = true ] && [ ! -f "/tmp/wordpress-tests-lib/includes/functions.php" ]; then
-        print_warning "WordPress Test Suite not installed!"
-        print_info "Install: ./scripts/install-wp-tests.sh wordpress_test root '' localhost latest"
+    if [ "$RUN_TESTS" = true ]; then
+        WP_TESTS_CHECK=false
+        if [ -f "/tmp/wordpress-tests-lib/includes/functions.php" ] || [ -f "${TMPDIR}wordpress-tests-lib/includes/functions.php" ]; then
+            WP_TESTS_CHECK=true
+        fi
+        
+        if [ "$WP_TESTS_CHECK" = false ]; then
+            print_warning "WordPress Test Suite not installed!"
+            print_info "Install: ./scripts/install-wp-tests.sh wordpress_test root '' localhost latest"
+        fi
     fi
 fi
 
