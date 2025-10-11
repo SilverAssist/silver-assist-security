@@ -116,6 +116,17 @@
     <!-- Allow modern array syntax -->
     <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
 
+    <!-- Modern PHP: Prefer string interpolation over concatenation -->
+    <!-- Detects unnecessary concatenation like 'string1' . 'string2' -->
+    <!-- For variable interpolation, prefer "text $variable" over 'text ' . $variable -->
+    <!-- or use "{$variable}" for complex expressions like "text {$array['key']}" -->
+    <rule ref="Generic.Strings.UnnecessaryStringConcat">
+        <properties>
+            <!-- Enforce as error, not warning -->
+            <property name="error" value="true"/>
+        </properties>
+    </rule>
+
     <!-- Excluded: WordPress.PHP.StrictComparisons - sniff not found in current WPCS -->
 
     <!-- Enforce proper nonce verification -->

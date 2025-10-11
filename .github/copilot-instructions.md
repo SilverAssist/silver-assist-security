@@ -1640,7 +1640,7 @@ class BadSecurityClass {
 - **Property types**: All class properties have explicit types
 
 ### PHP Coding Standards
-- **String interpolation**: Use `"prefix_{$variable}"` or `'prefix_' . $variable` for variable concatenation
+- **String interpolation**: MANDATORY - Use double-quoted strings with interpolation `"prefix_{$variable}"` or `"text {$array['key']}"` instead of concatenation `'text ' . $variable`. Only use concatenation for multi-line readability or when mixing single/double quotes is necessary.
 - **Short array syntax**: `[]` not `array()`
 - **Namespaces**: Use descriptive namespaces like `SilverAssist\Security\ComponentType`
 - **Singleton pattern**: `Class_Name::getInstance()` method pattern
@@ -2086,6 +2086,105 @@ $option_name = "_transient_timeout_" . $lockout_key;
 - **Hash Functions**: `md5()`, `sha1()`, `hash()`
 - **Time Functions**: `microtime()`, `time()`, `date()`
 - **System Functions**: `ini_get()`, `set_time_limit()`, `header()`, `error_log()`
+
+### String Interpolation Standards - MANDATORY
+
+**🚨 CRITICAL: Always prefer double-quoted string interpolation over concatenation for cleaner, more readable code**
+
+#### **Correct String Interpolation Patterns**
+
+```php
+// ✅ CORRECT - Simple variable interpolation
+$message = "Hello {$username}!";
+$path = "/var/www/{$site}/public";
+$key = "user_{$user_id}_session";
+
+// ✅ CORRECT - Array key interpolation with curly braces
+$value = "Setting: {$config['database']['host']}";
+$name = "User: {$user['name']}";
+$status = "Status: {$_SERVER['REQUEST_METHOD']}";
+
+// ✅ CORRECT - Object property interpolation
+$output = "Name: {$user->name}, Email: {$user->email}";
+$log = "Class: {$object->getClass()}, Method: {$object->getMethod()}";
+
+// ✅ CORRECT - Complex expressions with curly braces
+$transient = "cache_{md5($ip)}_{$timestamp}";
+$option = "setting_{strtolower($type)}_{$id}";
+$key = "lock_{$user_id}_{time()}";
+
+// ✅ CORRECT - Multi-variable interpolation
+$message = "User {$username} from {$country} logged in at {$timestamp}";
+$path = "{$base_dir}/{$category}/{$filename}.{$extension}";
+$log = "[{$date}] {$level}: {$message} (IP: {$ip})";
+
+// ✅ CORRECT - Concatenation for multi-line readability
+$long_message = "This is a very long message that spans " .
+                "multiple lines for better readability " .
+                "and code organization.";
+```
+
+#### **Incorrect Concatenation Patterns**
+
+```php
+// ❌ INCORRECT - Unnecessary concatenation with variables
+$message = "Hello " . $username . "!";
+$path = "/var/www/" . $site . "/public";
+$key = "user_" . $user_id . "_session";
+
+// ❌ INCORRECT - Concatenation instead of interpolation
+$value = "Setting: " . $config['database']['host'];
+$name = "User: " . $user['name'];
+$status = "Status: " . $_SERVER['REQUEST_METHOD'];
+
+// ❌ INCORRECT - Mixed concatenation and interpolation
+$message = "Hello " . $username . " from {$country}";
+$path = $base_dir . "/" . $category . "/{$filename}";
+
+// ❌ INCORRECT - Concatenating literal strings
+$full_string = "Hello " . "World";  // Should be: "Hello World"
+$path = "path/" . "to/" . "file";   // Should be: "path/to/file"
+```
+
+#### **When Concatenation is Acceptable**
+
+```php
+// ✅ ACCEPTABLE - Multi-line for readability
+$sql = "SELECT * FROM users " .
+       "WHERE status = 'active' " .
+       "AND created_at > NOW() - INTERVAL 30 DAY " .
+       "ORDER BY created_at DESC";
+
+// ✅ ACCEPTABLE - Mixing single and double quotes
+$html = '<div class="container">' .
+        "Welcome {$username}!" .
+        '</div>';
+
+// ✅ ACCEPTABLE - Building complex strings incrementally
+$query = "SELECT id, name";
+if ($include_email) {
+    $query .= ", email";
+}
+if ($include_phone) {
+    $query .= ", phone";
+}
+$query .= " FROM users";
+```
+
+#### **Benefits of String Interpolation**
+
+1. **Readability**: Cleaner, more natural syntax
+2. **Maintainability**: Easier to understand variable placement
+3. **Performance**: Slightly faster than concatenation in most cases
+4. **Modern PHP**: Aligns with PSR-12 and modern PHP best practices
+5. **Less Error-Prone**: Reduces risk of spacing/quote errors
+
+#### **PHPCS Rule Enforcement**
+
+The plugin enforces this via `Generic.Strings.UnnecessaryStringConcat`:
+- Detects unnecessary concatenation of literal strings
+- Flags code like `'Hello ' . 'World'` → should be `'Hello World'`
+- Encourages interpolation over concatenation with variables
 
 ### Match vs Switch Statement Guidelines
 Use PHP 8+ `match` expressions instead of `switch` statements when possible for cleaner, more concise code:
