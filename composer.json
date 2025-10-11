@@ -26,7 +26,7 @@
     },
     "require-dev": {
         "axepress/wp-graphql-stubs": "^1.26",
-        "dealerdirect/phpcodesniffer-composer-installer": "^0.7.2",
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.1.2",
         "php-stubs/wordpress-stubs": "^6.6",
         "php-stubs/wordpress-tests-stubs": "^6.6",
         "phpcompatibility/phpcompatibility-wp": "^2.1",
