@@ -17,6 +17,7 @@ namespace SilverAssist\Security\GraphQL;
 use GraphQL\Error\Error;
 use GraphQL\Error\UserError;
 use GraphQL\Executor\ExecutionResult;
+use SilverAssist\Security\Core\SecurityHelper;
 
 /**
  * GraphQL Security class
@@ -583,7 +584,7 @@ class GraphQLSecurity {
 			SecurityHelper::log_security_event(
 				'GRAPHQL_TIMEOUT_CONFIG',
 				sprintf(
-					'GraphQL Security timeout configuration',
+					'GraphQL Security timeout configuration: PHP timeout %d seconds, current timeout %d seconds',
 					$timeout_config['php_timeout'],
 					$timeout_config['current_timeout']
 				),
