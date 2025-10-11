@@ -18,7 +18,7 @@ use SilverAssist\Security\Core\PathValidator;
 use SilverAssist\Security\Core\SecurityHelper;
 
 // Prevent direct access
-defined( 'ABSPATH' ) or exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Class AdminHideSecurity
@@ -100,13 +100,13 @@ class AdminHideSecurity {
 		}
 
 		// Handle requests using setup_theme like professional plugin
-		\add_action( 'setup_theme', array( $this, 'handle_specific_page_requests' ) );
+		\add_action( 'setup_theme', [ $this, 'handle_specific_page_requests' ] );
 
 		// Filter generated URLs to include access tokens
-		\add_filter( 'site_url', array( $this, 'filter_generated_url' ), 100, 2 );
-		\add_filter( 'admin_url', array( $this, 'filter_admin_url' ), 100, 2 );
-		\add_filter( 'wp_redirect', array( $this, 'filter_redirect' ) );
-		\add_filter( 'logout_redirect', array( $this, 'handle_logout_redirect' ), 10, 3 );
+		\add_filter( 'site_url', [ $this, 'filter_generated_url' ], 100, 2 );
+		\add_filter( 'admin_url', [ $this, 'filter_admin_url' ], 100, 2 );
+		\add_filter( 'wp_redirect', [ $this, 'filter_redirect' ] );
+		\add_filter( 'logout_redirect', [ $this, 'handle_logout_redirect' ], 10, 3 );
 
 		// Remove WordPress default admin redirect behavior
 		\remove_action( 'template_redirect', 'wp_redirect_admin_locations', 1000 );
@@ -119,12 +119,13 @@ class AdminHideSecurity {
 	 * @return void
 	 */
 	public function handle_login_page_access(): void {
-		$action = $_REQUEST['action'] ?? '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public login page access check, no form submission.
+		$action = isset( $_REQUEST['action'] ) ? \sanitize_text_field( \wp_unslash( $_REQUEST['action'] ) ) : '';
 
-		// Allow specific actions that should work without admin hide protection
-		$allowed_actions = DefaultConfig::get_legitimate_actions( true ); // Include logout
+		// Allow specific actions that should work without admin hide protection.
+		$allowed_actions = DefaultConfig::get_legitimate_actions( true ); // Include logout.
 
-		if ( in_array( $action, $allowed_actions ) ) {
+		if ( in_array( $action, $allowed_actions, true ) ) {
 			return;
 		}
 
@@ -197,18 +198,21 @@ class AdminHideSecurity {
 	 * @return string The request path
 	 */
 	private function get_request_path(): string {
-		$request_uri = $_SERVER['REQUEST_URI'] ?? '';
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 
-		// Parse just the path part, removing query parameters
-		$path = \parse_url( $request_uri, PHP_URL_PATH );
+		// Parse just the path part, removing query parameters.
+		$path = \wp_parse_url( $request_uri, PHP_URL_PATH );
 
-		// Remove WordPress home path from the beginning if present
-		$home_root = \parse_url( \home_url(), PHP_URL_PATH ) ?: '/';
+		// Remove WordPress home path from the beginning if present.
+		$home_root = \wp_parse_url( \home_url(), PHP_URL_PATH );
+		if ( $home_root === null || $home_root === false ) {
+			$home_root = '/';
+		}
 		if ( $home_root !== '/' && is_string( $path ) && strpos( $path, $home_root ) === 0 ) {
 			$path = substr( $path, strlen( $home_root ) );
 		}
 
-		// Clean leading/trailing slashes
+		// Clean leading/trailing slashes.
 		$cleaned_path = is_string( $path ) ? trim( $path, '/' ) : '';
 
 		return $cleaned_path;
@@ -229,7 +233,7 @@ class AdminHideSecurity {
 		if ( $clean_request_path === $clean_custom_path ) {
 			$this->handle_custom_admin_access();
 		} elseif (
-			in_array( $clean_request_path, array( 'wp-login.php', 'wp-login' ) ) ||
+			in_array( $clean_request_path, [ 'wp-login.php', 'wp-login' ], true ) ||
 			strpos( $clean_request_path, 'wp-login.php' ) !== false
 		) {
 			$this->handle_login_page_access();
@@ -248,9 +252,9 @@ class AdminHideSecurity {
 	 * @return void
 	 */
 	private function handle_custom_admin_access(): void {
-		// If user is already logged in, redirect to admin
+		// If user is already logged in, redirect to admin.
 		if ( \is_user_logged_in() && \current_user_can( 'manage_options' ) ) {
-			\wp_redirect( \admin_url() );
+			\wp_safe_redirect( \admin_url() );
 			exit;
 		}
 
@@ -297,7 +301,7 @@ class AdminHideSecurity {
 	 * @return array Clean query variables array with token
 	 */
 	private function build_query_with_token( $source_params, string $token ): array {
-		$query_vars = array();
+		$query_vars = [];
 
 		if ( is_array( $source_params ) ) {
 			// Source is $_GET array
@@ -329,14 +333,15 @@ class AdminHideSecurity {
 		$this->set_access_cookie( $type );
 
 		// Build clean query parameters with token
-		$token      = $this->get_access_token( $type );
+		$token = $this->get_access_token( $type );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Using custom token validation system.
 		$query_vars = $this->build_query_with_token( $_GET, $token );
 		$query      = http_build_query( $query_vars, '', '&' );
 
 		// Build redirect URL
 		$url = \site_url( $path . ( strpos( $path, '?' ) === false ? '?' : '&' ) . $query );
 
-		\wp_redirect( $url );
+		\wp_safe_redirect( $url );
 		exit;
 	}
 
@@ -459,8 +464,10 @@ class AdminHideSecurity {
 		$token = $this->get_access_token( $type );
 
 		// Check query parameter
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Using custom token validation system.
 		if ( isset( $_REQUEST[ $this->validation_param ] ) ) {
-			$received_token = $_REQUEST[ $this->validation_param ];
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Using custom token validation system.
+			$received_token = \sanitize_text_field( \wp_unslash( $_REQUEST[ $this->validation_param ] ) );
 			if ( $received_token === $token ) {
 				$this->set_access_cookie( $type );
 				return true;
@@ -471,7 +478,7 @@ class AdminHideSecurity {
 		$cookie_hash = defined( 'COOKIEHASH' ) ? COOKIEHASH : \md5( \site_url() );
 		$cookie_name = "silver_admin_session_{$type}_{$cookie_hash}";
 		if ( isset( $_COOKIE[ $cookie_name ] ) ) {
-			$cookie_token = $_COOKIE[ $cookie_name ];
+			$cookie_token = \sanitize_text_field( \wp_unslash( $_COOKIE[ $cookie_name ] ) );
 			if ( $cookie_token === $token ) {
 				return true;
 			}
@@ -509,7 +516,10 @@ class AdminHideSecurity {
 		$cookie_name  = "silver_admin_session_{$type}_{$cookie_hash}";
 		$cookie_value = $this->get_access_token( $type );
 
-		$home_root     = \parse_url( \home_url(), PHP_URL_PATH ) ?: '/';
+		$home_root = \wp_parse_url( \home_url(), PHP_URL_PATH );
+		if ( $home_root === null || $home_root === false ) {
+			$home_root = '/';
+		}
 		$cookie_domain = defined( 'COOKIE_DOMAIN' ) ? COOKIE_DOMAIN : '';
 
 		\setcookie(
@@ -532,6 +542,7 @@ class AdminHideSecurity {
 	 * @param mixed  $user The user object
 	 * @return string Modified redirect URL
 	 */
+	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Parameters required by WordPress hook.
 	public function handle_logout_redirect( string $redirect_to, string $requested_redirect_to, $user ): string {
 		// Double-check if admin hiding is enabled
 		if ( ! $this->admin_hide_enabled ) {
@@ -545,7 +556,7 @@ class AdminHideSecurity {
 		if ( strpos( $redirect_to, '/wp-login.php' ) !== false ) {
 			// Manually add the query parameter
 			$separator   = strpos( $redirect_to, '?' ) !== false ? '&' : '?';
-			$redirect_to = $redirect_to . $separator . $this->validation_param . '=' . urlencode( $validation_token );
+			$redirect_to = $redirect_to . $separator . $this->validation_param . '=' . rawurlencode( $validation_token );
 		}
 
 		return $redirect_to;
