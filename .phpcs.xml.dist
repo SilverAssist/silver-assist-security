@@ -45,10 +45,9 @@
         <exclude name="Squiz.Commenting.VariableComment.Missing"/>
         <exclude name="Generic.Commenting.DocComment.ShortNotCapital"/>
         
-        <!-- Allow modern PHP features -->
-        <exclude name="WordPress.PHP.DisallowShortTernary"/>
-        <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
-        <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
+        <!-- Excluded: WordPress.PHP.DisallowShortTernary - sniff not found in current WPCS -->
+        <!-- Excluded: PSR2.Classes.PropertyDeclaration.Underscore - moved to PSR12 -->
+        <!-- Excluded: PSR2.Methods.MethodDeclaration.Underscore - moved to PSR12 -->
         
         <!-- Allow PSR-4 naming (getInstance instead of get_instance) -->
         <exclude name="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid"/>
@@ -56,8 +55,9 @@
 
     <!-- Rules: WordPress Extra -->
     <rule ref="WordPress-Extra">
+        <!-- Excluded: WordPress.WhiteSpace.PrecisionAlignment - sniff not found in current WPCS -->
+        
         <!-- Exclude overly strict formatting rules -->
-        <exclude name="WordPress.WhiteSpace.PrecisionAlignment"/>
         <exclude name="Generic.WhiteSpace.ScopeIndent.IncorrectExact"/>
         <exclude name="Generic.WhiteSpace.ScopeIndent.Incorrect"/>
         <exclude name="PEAR.Functions.FunctionCallSignature.Indent"/>
@@ -96,8 +96,7 @@
     <!-- Allow modern array syntax -->
     <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
 
-    <!-- Enforce strict comparison -->
-    <rule ref="WordPress.PHP.StrictComparisons"/>
+    <!-- Excluded: WordPress.PHP.StrictComparisons - sniff not found in current WPCS -->
 
     <!-- Enforce proper nonce verification -->
     <rule ref="WordPress.Security.NonceVerification"/>
@@ -115,13 +114,7 @@
         </properties>
     </rule>
 
-    <!-- Ignore WordPress VIP rules for plugin development -->
-    <rule ref="WordPress.VIP">
-        <exclude name="WordPress.VIP.DirectDatabaseQuery"/>
-        <exclude name="WordPress.VIP.FileSystemWritesDisallow"/>
-        <exclude name="WordPress.VIP.RestrictedFunctions"/>
-        <exclude name="WordPress.VIP.SlowDBQuery"/>
-    </rule>
+    <!-- Excluded: WordPress.VIP.* - VIP sniffs not found in current WPCS installation -->
 
     <!-- Custom severity levels -->
     <rule ref="WordPress.Security">
