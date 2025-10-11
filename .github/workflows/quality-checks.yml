@@ -36,7 +36,7 @@ jobs:
                   fi
 
             - name: Cache Composer dependencies
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: vendor
                   key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -179,7 +179,7 @@ jobs:
                   echo "System dependencies installed"
 
             - name: Cache Composer dependencies
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: vendor
                   key: ${{ runner.os }}-php${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -275,7 +275,7 @@ jobs:
                   tools: composer:v2
 
             - name: Cache Composer dependencies
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: vendor
                   key: ${{ runner.os }}-php${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -323,7 +323,7 @@ jobs:
                   tools: composer:v2
 
             - name: Cache Composer dependencies
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: vendor
                   key: ${{ runner.os }}-composer-security-${{ hashFiles('**/composer.lock') }}
@@ -422,7 +422,7 @@ jobs:
                   tools: composer:v2
 
             - name: Cache Composer dependencies
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: vendor
                   key: ${{ runner.os }}-composer-test-validation-${{ hashFiles('**/composer.lock') }}
