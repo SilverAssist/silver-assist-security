@@ -34,7 +34,7 @@
 
     <!-- Rules: WordPress Coding Standards -->
     <rule ref="WordPress">
-        <!-- Exclude rules that conflict with modern PHP -->
+        <!-- Exclude rules that conflict with modern PHP/PSR-4/PSR-12 -->
         <exclude name="WordPress.PHP.YodaConditions"/>
         <exclude name="WordPress.Arrays.MultipleStatementAlignment"/>
         <exclude name="WordPress.WhiteSpace.ControlStructureSpacing"/>
@@ -45,12 +45,27 @@
         <exclude name="Squiz.Commenting.VariableComment.Missing"/>
         <exclude name="Generic.Commenting.DocComment.ShortNotCapital"/>
         
+        <!-- Exclude comment punctuation rules (modern style) -->
+        <exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
+        <exclude name="Generic.Commenting.DocComment.ParamNotFirst"/>
+        <exclude name="Squiz.Commenting.FunctionComment.ParamCommentFullStop"/>
+        
+        <!-- Exclude file naming rules (PSR-4 uses PascalCase) -->
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+        <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+        
         <!-- Excluded: WordPress.PHP.DisallowShortTernary - sniff not found in current WPCS -->
         <!-- Excluded: PSR2.Classes.PropertyDeclaration.Underscore - moved to PSR12 -->
         <!-- Excluded: PSR2.Methods.MethodDeclaration.Underscore - moved to PSR12 -->
         
-        <!-- Allow PSR-4 naming (getInstance instead of get_instance) -->
+        <!-- Allow PSR-4 naming conventions -->
         <exclude name="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid"/>
+        <exclude name="PEAR.NamingConventions.ValidFunctionName.PrivateNoUnderscore"/>
+        <exclude name="PSR2.Methods.FunctionCallSignature.SpaceAfterOpenBracket"/>
+        
+        <!-- Allow modern short array syntax [] -->
+        <exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+        <exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
     </rule>
 
     <!-- Rules: WordPress Extra -->
@@ -76,13 +91,18 @@
     <!-- Rules: PHP compatibility -->
     <rule ref="PHPCompatibilityWP"/>
 
-    <!-- Rules: Modern PHP -->
+    <!-- Rules: Modern PHP - Commented out to avoid conflicts with WordPress tab indentation -->
+    <!--
     <rule ref="PSR12">
-        <!-- Exclude rules that conflict with WordPress -->
         <exclude name="PSR12.Files.FileHeader.IncorrectOrder"/>
         <exclude name="PSR12.Files.FileHeader.SpacingAfterBlock"/>
         <exclude name="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
+        <exclude name="Generic.WhiteSpace.DisallowTabIndent"/>
+        <exclude name="PSR2.Classes.PropertyDeclaration"/>
+        <exclude name="PSR2.Methods.FunctionCallSignature"/>
+        <exclude name="Squiz.Functions.MultiLineFunctionDeclaration"/>
     </rule>
+    -->
 
     <!-- Custom rules for Silver Assist Security -->
     <rule ref="WordPress.WP.I18n">
@@ -112,6 +132,8 @@
         <properties>
             <property name="strict_class_file_names" value="false"/>
         </properties>
+        <!-- Completely exclude file naming for PSR-4 compatibility -->
+        <exclude name="WordPress.Files.FileName"/>
     </rule>
 
     <!-- Excluded: WordPress.VIP.* - VIP sniffs not found in current WPCS installation -->

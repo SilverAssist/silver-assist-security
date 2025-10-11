@@ -28,7 +28,7 @@ class DefaultConfig {
 	 * @return array<string, mixed>
 	 */
 	public static function get_defaults(): array {
-		return array(
+		return [
 			'silver_assist_login_attempts'                => 5,
 			'silver_assist_lockout_duration'              => 900, // 15 minutes
 			'silver_assist_session_timeout'               => 30, // 30 minutes
@@ -40,7 +40,7 @@ class DefaultConfig {
 			'silver_assist_graphql_query_complexity'      => 100,
 			'silver_assist_graphql_query_timeout'         => 30, // Dynamic: Based on PHP timeout, capped at 30s.
 			'silver_assist_graphql_headless_mode'         => 0,
-		);
+		];
 	}
 
 	/**
@@ -63,8 +63,8 @@ class DefaultConfig {
 	 * @return mixed Option value or default value
 	 */
 	public static function get_option( string $option_name ) {
-		// Handle special case for GraphQL timeout that depends on PHP settings
-		if ( $option_name === 'silver_assist_graphql_query_timeout' ) {
+		// Handle special case for GraphQL timeout that depends on PHP settings.
+		if ( 'silver_assist_graphql_query_timeout' === $option_name ) {
 			return self::get_graphql_timeout_option();
 		}
 
@@ -80,7 +80,7 @@ class DefaultConfig {
 	private static function get_graphql_timeout_option(): int {
 		// Check if option is already set in database.
 		$saved_timeout = \get_option( 'silver_assist_graphql_query_timeout' );
-		if ( $saved_timeout !== false ) {
+		if ( false !== $saved_timeout ) {
 			return (int) $saved_timeout;
 		}
 
@@ -117,7 +117,7 @@ class DefaultConfig {
 	 * @return array<string> List of legitimate WordPress actions
 	 */
 	public static function get_legitimate_actions( bool $include_logout = true ): array {
-		$actions = array(
+		$actions = [
 			'checkemail',       // Check email confirmation page.
 			'confirm_admin_email', // Admin email confirmation.
 			'confirmaction',     // Confirm action (used in admin email confirmation).
@@ -130,7 +130,7 @@ class DefaultConfig {
 			'resetpass',        // Reset password form after clicking email link.
 			'retrievepassword', // Retrieve password (alias for lostpassword).
 			'rp',                // Reset password request.
-		);
+		];
 
 		if ( $include_logout ) {
 			$actions[] = 'logout'; // User logout process.
@@ -146,7 +146,7 @@ class DefaultConfig {
 	 * @return array<string> List of actions that should bypass bot protection
 	 */
 	public static function get_bot_protection_bypass_actions(): array {
-		return self::get_legitimate_actions( true ); // Include logout
+		return self::get_legitimate_actions( true ); // Include logout.
 	}
 
 	/**
@@ -156,6 +156,6 @@ class DefaultConfig {
 	 * @return array<string> List of actions that should not get access tokens
 	 */
 	public static function get_admin_hide_bypass_actions(): array {
-		return self::get_legitimate_actions( false ); // Exclude logout for URL token filtering
+		return self::get_legitimate_actions( false ); // Exclude logout for URL token filtering.
 	}
 }
