@@ -6,13 +6,13 @@ parameters:
     stubFiles:
         - vendor/axepress/wp-graphql-stubs/wp-graphql-stubs.php
     
+    # Bootstrap for constants
+    bootstrapFiles:
+        - tests/phpstan-constants.php
+    
     level: 8
     paths:
         - src
-    
-    # Bootstrap file for PHPStan - shared with PHPUnit
-    bootstrapFiles:
-        - tests/bootstrap.php
     
     # Ignore patterns
     excludePaths:
@@ -20,20 +20,14 @@ parameters:
         - tests/
         - node_modules/
     
-    # Type coverage
-    checkMissingIterableValueType: false
-    checkGenericClassInNonGenericObjectType: false
-    
     # WordPress-specific ignores
     ignoreErrors:
+        # Allow missing typehints from arrays (WordPress context)
+        -
+            identifier: missingType.iterableValue
+        
         # WordPress functions that PHPStan doesn't understand
         - '#Function (wp_|get_|add_|do_|apply_|esc_|__)\w+ not found#'
-        - '#Constant WP_DEBUG(_LOG|_DISPLAY)? not found#'
-        - '#Access to an undefined property WP_Error::\$\w+#'
-        
-        # Allow mixed types for WordPress flexibility
-        - '#Parameter .+ expects .+, mixed given#'
-        - '#Method .+ has parameter .+ with no type specified#'
         
         # GraphQL library specific - graphql-php classes not in development environment
         -

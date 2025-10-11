@@ -60,13 +60,6 @@ class Plugin {
 	private ?GeneralSecurity $general_security = null;
 
 	/**
-	 * Admin hide security instance
-	 *
-	 * @var AdminHideSecurity|null
-	 */
-	private ?AdminHideSecurity $admin_hide_security = null;
-
-	/**
 	 * GraphQL security instance
 	 *
 	 * @var GraphQLSecurity|null
@@ -187,10 +180,10 @@ class Plugin {
 		$this->login_security   = new LoginSecurity();
 		$this->general_security = new GeneralSecurity();
 
-		// Only initialize AdminHideSecurity if it's enabled.
+		// Initialize AdminHideSecurity if it's enabled
 		$admin_hide_enabled = (bool) DefaultConfig::get_option( 'silver_assist_admin_hide_enabled' );
 		if ( $admin_hide_enabled ) {
-			$this->admin_hide_security = new AdminHideSecurity();
+			new AdminHideSecurity();
 		}
 	}
 

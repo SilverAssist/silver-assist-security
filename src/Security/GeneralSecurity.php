@@ -151,14 +151,16 @@ class GeneralSecurity {
 		if ( strpos( $src, 'ver=' ) !== false ) {
 			// Remove all occurrences of ver parameter using regex
 			// This handles both ?ver= and &ver= patterns
-			$src = preg_replace( '/[\?&]ver=[^&]*/', '', $src );
+			$cleaned = preg_replace( '/[\?&]ver=[^&]*/', '', $src );
 
-			// Clean up any remaining orphaned ? or & at the end
-			$src = rtrim( $src, '?&' );
+			// If preg_replace succeeded, use the cleaned version
+			if ( $cleaned !== null ) {
+				$src = rtrim( $cleaned, '?&' );
 
-			// If we have parameters but no ?, add it back
-			if ( strpos( $src, '&' ) !== false && strpos( $src, '?' ) === false ) {
-				$src = str_replace( '&', '?', $src );
+				// If we have parameters but no ?, add it back
+				if ( strpos( $src, '&' ) !== false && strpos( $src, '?' ) === false ) {
+					$src = str_replace( '&', '?', $src );
+				}
 			}
 		}
 

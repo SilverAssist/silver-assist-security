@@ -254,6 +254,63 @@ Yes! Go to **Settings → Security Essentials** to configure login attempt limit
 - Currently optimized for single WordPress installations
 - Multisite compatibility coming in future versions
 
+## 🧪 Development & Testing
+
+### Quality Assurance Script
+
+Run comprehensive quality checks matching CI/CD pipeline:
+
+```bash
+# Run all checks (PHPStan, PHPCS, PHPUnit)
+./scripts/run-quality-checks.sh
+
+# Run only WordPress tests (real environment)
+./scripts/run-quality-checks.sh --skip-phpstan --skip-phpcs
+
+# Run only type checking
+./scripts/run-quality-checks.sh --skip-tests
+```
+
+### Testing Strategy for Security Plugin
+
+**🔒 CRITICAL**: This is a security plugin - testing requires real WordPress environment.
+
+#### Two-Stage Testing Approach
+
+**1. PHPStan (Static Analysis - Standalone)**
+- Validates PHP type safety WITHOUT WordPress
+- Fast static analysis (30 seconds)
+- Catches type errors before running tests
+- Configuration: `phpstan.neon` (Level 8)
+
+**2. PHPUnit (Integration Testing - WordPress Environment)**
+- Validates security features in REAL WordPress with MySQL
+- Tests actual login protection, cookie security, GraphQL limits
+- **CRITICAL** for security plugin validation
+- Configuration: `phpunit.xml.dist`
+
+#### Local Testing Setup
+
+```bash
+# One-time: Install WordPress Test Suite
+./scripts/install-wp-tests.sh wordpress_test root '' localhost latest
+
+# Daily: Run quality checks before committing
+./scripts/run-quality-checks.sh
+```
+
+#### Why Both Tests Are Required
+
+**PHPStan alone ❌**: Cannot validate WordPress hooks, database operations, or security features  
+**PHPUnit alone ❌**: Doesn't catch type errors early  
+**Both together ✅**: Complete validation - type safety + real security testing
+
+#### Test Coverage
+- **Unit Tests**: 250+ tests across all security components
+- **Integration Tests**: 25+ tests for WordPress environment
+- **Security Tests**: Comprehensive coverage of login, cookies, GraphQL
+- **CI/CD Matrix**: 12 environment combinations (PHP 8.0-8.3 × WordPress 6.5-latest)
+
 ## 🆘 Support & Troubleshooting
 
 **Common Issues**
@@ -265,6 +322,11 @@ Yes! Go to **Settings → Security Essentials** to configure login attempt limit
 *Website seems slower?*
 - Review rate limiting settings in Security Essentials
 - Adjust GraphQL query limits if needed
+
+*Tests failing locally?*
+- Ensure WordPress Test Suite is installed: `./scripts/install-wp-tests.sh wordpress_test root '' localhost latest`
+- Verify MySQL is running: `brew services start mysql` (macOS)
+- Run quality checks: `./scripts/run-quality-checks.sh`
 
 ## 🌍 Multi-Language Support
 

@@ -282,7 +282,7 @@ class LoginSecurity {
 	 * @param \WP_User|\WP_Error|null $user User object or error
 	 * @param string                  $username Username
 	 * @param string                  $password Password
-	 * @return \WP_User|\WP_Error
+	 * @return \WP_User|\WP_Error|null
 	 */
 	public function check_login_lockout( $user, string $username, string $password ) {
 		// Skip if no username/password provided
@@ -583,7 +583,7 @@ class LoginSecurity {
 		);
 
 		if ( $transient_timeout ) {
-			return max( 0, $transient_timeout - time() );
+			return (int) max( 0, $transient_timeout - time() );
 		}
 
 		return 0;
