@@ -30,6 +30,25 @@ jobs:
               run: |
                   composer install --no-dev --optimize-autoloader --no-interaction
                   echo "✅ Composer dependencies installed successfully"
+            
+            - name: 🔧 Validate Code Quality
+              run: |
+                  # Install dev dependencies for quality checks
+                  composer install --optimize-autoloader --no-interaction
+                  
+                  # Run PHPStan static analysis
+                  echo "Running PHPStan static analysis..."
+                  composer phpstan || {
+                    echo "⚠️ PHPStan found issues - review recommended before release"
+                  }
+                  
+                  # Run PHPCS coding standards
+                  echo "Running PHPCS coding standards check..."
+                  composer phpcs || {
+                    echo "⚠️ PHPCS found issues - review recommended before release"
+                  }
+                  
+                  echo "✅ Code quality validation completed"
 
             - name: Validate wp-github-updater package
               run: |

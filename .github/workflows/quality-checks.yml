@@ -7,182 +7,17 @@ on:
         branches: [main]
 
 jobs:
-    quality-checks:
+    # Unified quality checks using centralized script
+    unified-quality-checks:
+        name: Quality Checks (PHP ${{ matrix.php-version }}, WP ${{ matrix.wordpress-version }})
         runs-on: ubuntu-latest
 
-        strategy:
-            matrix:
-                php-version: [8.3]
-                wordpress-version: [6.5, 6.6, latest]
-
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v5
-
-            - name: Setup PHP
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: ${{ matrix.php-version }}
-                  extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
-                  coverage: none
-
-            - name: Validate composer.json
-              run: |
-                  echo "Validating composer.json..."
-                  if composer validate --strict; then
-                    echo "composer.json is valid"
-                  else
-                    echo "composer.json has warnings, but continuing..."
-                  fi
-
-            - name: Cache Composer dependencies
-              uses: actions/cache@v4
-              with:
-                  path: vendor
-                  key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-                  restore-keys: |
-                      ${{ runner.os }}-composer-
-
-            - name: Install Composer dependencies
-              run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
-
-            - name: Configure WordPress Coding Standards
-              run: |
-                  # Only configure if vendor directory exists and has the right structure
-                  if [ -d "vendor/wp-coding-standards/wpcs" ]; then
-                    vendor/bin/phpcs --config-set installed_paths vendor/wp-coding-standards/wpcs
-                    echo "WPCS configured successfully"
-                  else
-                    echo "WPCS not found, skipping configuration"
-                  fi
-
-            - name: Run PHP CodeSniffer
-              run: |
-                  # Run basic syntax validation
-                  echo "Running PHP syntax validation..."
-                  find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \;
-                  echo "PHP syntax validation completed"
-
-            - name: WordPress Coding Standards Check
-              run: |
-                  echo "Running WordPress Coding Standards check..."
-                  # Use basic PSR12 standard as fallback if WordPress standard fails
-                  if vendor/bin/phpcs --standard=WordPress --extensions=php --ignore=vendor/ . 2>/dev/null; then
-                    echo "WordPress Coding Standards check completed"
-                  else
-                    echo "WordPress standard failed, trying PSR12 as fallback..."
-                    vendor/bin/phpcs --standard=PSR12 --extensions=php --ignore=vendor/ src/ || echo "Some coding standard issues found, but continuing..."
-                  fi
-
-            - name: Validate plugin structure
-              run: |
-                  echo "Validating plugin structure..."
-
-                  # Check main plugin file exists
-                  if [ ! -f "silver-assist-security.php" ]; then
-                    echo "Main plugin file missing: silver-assist-security.php"
-                    exit 1
-                  fi
-                  echo "Main plugin file exists"
-
-                  # Check required directories
-                  for dir in "src" "assets" "languages"; do
-                    if [ ! -d "$dir" ]; then
-                      echo "Required directory missing: $dir"
-                      exit 1
-                    fi
-                    echo "Directory exists: $dir"
-                  done
-
-                  # Check core classes exist
-                  for class in "src/Core/Plugin.php" "src/Core/Updater.php" "src/Admin/AdminPanel.php"; do
-                    if [ ! -f "$class" ]; then
-                      echo "Core class missing: $class"
-                      exit 1
-                    fi
-                    echo "Core class exists: $class"
-                  done
-                  
-                  # Check test configuration files
-                  echo "Checking test configuration..."
-                  if [ -f "phpunit.xml.dist" ]; then
-                    echo "PHPUnit configuration exists"
-                  else
-                    echo "PHPUnit configuration missing"
-                  fi
-                  
-                  if [ -f ".phpcs.xml.dist" ]; then
-                    echo "PHP CodeSniffer configuration exists"
-                  else
-                    echo "PHP CodeSniffer configuration missing"
-                  fi
-                  
-                  # Check test directory structure
-                  if [ -d "tests" ]; then
-                    echo "Tests directory exists"
-                    
-                    # Check test subdirectories
-                    for test_dir in "tests/Unit" "tests/Integration" "tests/Security"; do
-                      if [ -d "$test_dir" ]; then
-                        echo "Test directory exists: $test_dir"
-                      else
-                        echo "Test directory missing: $test_dir"
-                      fi
-                    done
-                    
-                    # Check test helper
-                    if [ -f "tests/Helpers/TestHelper.php" ]; then
-                      echo "Test helper exists"
-                    else
-                      echo "Test helper missing"
-                    fi
-                  else
-                    echo "Tests directory not found"
-                  fi
-
-    static-analysis:
-        name: PHPStan Static Analysis
-        runs-on: ubuntu-latest
-
-        strategy:
-            matrix:
-                php-version: [8.3]
-
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v5
-
-            - name: Setup PHP
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: ${{ matrix.php-version }}
-                  extensions: dom, curl, libxml, mbstring, zip
-                  coverage: none
-
-            - name: Cache Composer dependencies
-              uses: actions/cache@v4
-              with:
-                  path: vendor
-                  key: ${{ runner.os }}-php${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.lock') }}
-                  restore-keys: |
-                      ${{ runner.os }}-php${{ matrix.php-version }}-composer-
-                      ${{ runner.os }}-composer-
-
-            - name: Install Composer dependencies
-              run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
-
-            - name: Run PHPStan
-              run: composer phpstan
-
-    wordpress-tests:
-        runs-on: ubuntu-latest
-        
         strategy:
             fail-fast: false
             matrix:
                 php-version: [8.3]
                 wordpress-version: [6.5, 6.6, latest]
-                
+
         services:
             mysql:
                 image: mysql:8.0
@@ -222,10 +57,7 @@ jobs:
                       ${{ runner.os }}-composer-
 
             - name: Install Composer dependencies
-              run: |
-                  echo "Installing Composer dependencies for PHP ${{ matrix.php-version }}..."
-                  composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
-                  echo "Composer dependencies installed"
+              run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
 
             - name: Verify MySQL connection
               run: |
@@ -244,49 +76,35 @@ jobs:
                   # Make script executable
                   chmod +x scripts/install-wp-tests.sh
                   
-                  # Install WordPress test suite (script detects non-interactive mode automatically)
+                  # Install WordPress test suite (non-interactive mode)
                   bash scripts/install-wp-tests.sh wordpress_test root root 127.0.0.1 $WP_VERSION
                   
                   # Verify installation
-                  if [ -f /tmp/wordpress-tests-lib/includes/functions.php ]; then
+                  if [ -f "/tmp/wordpress-tests-lib/includes/functions.php" ]; then
                     echo "✅ WordPress Test Suite installed successfully"
-                    ls -la /tmp/wordpress-tests-lib/includes/
                   else
                     echo "❌ WordPress Test Suite installation failed"
                     exit 1
                   fi
 
-            - name: Run PHPUnit Tests
-              env:
-                  WP_TESTS_DIR: /tmp/wordpress-tests-lib
-                  WP_CORE_DIR: /tmp/wordpress
+            - name: 🔧 Run Unified Quality Checks Script
               run: |
-                  echo "Running PHPUnit tests with WordPress Test Suite..."
-                  echo "WordPress Version: ${{ matrix.wordpress-version }}"
-                  echo "PHP Version: ${{ matrix.php-version }}"
-                  echo ""
-                  
-                  # Run tests with detailed output
-                  vendor/bin/phpunit --testdox --colors=always
-                  
-                  echo ""
-                  echo "✅ All tests completed successfully!"
+                  chmod +x scripts/run-quality-checks.sh
+                  ./scripts/run-quality-checks.sh --verbose
 
-            - name: Test Summary
+            - name: 📊 Upload Test Results
               if: always()
-              run: |
-                  echo "## Test Summary" >> $GITHUB_STEP_SUMMARY
-                  echo "- **PHP Version**: ${{ matrix.php-version }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **WordPress Version**: ${{ matrix.wordpress-version }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Test Suite**: WordPress Test Suite (WP_UnitTestCase)" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Database**: MySQL 8.0" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  if [ $? -eq 0 ]; then
-                    echo "✅ **Status**: All tests passed" >> $GITHUB_STEP_SUMMARY
-                  else
-                    echo "❌ **Status**: Some tests failed" >> $GITHUB_STEP_SUMMARY
-                  fi
+              uses: actions/upload-artifact@v4
+              with:
+                  name: test-results-php${{ matrix.php-version }}-wp${{ matrix.wordpress-version }}
+                  path: |
+                      tests/results/
+                      coverage/
+                  retention-days: 30
 
+    # ===================================
+    # ✅ Syntax Validation (Fast Check)
+    # ===================================
     syntax-validation:
         runs-on: ubuntu-latest
         

@@ -235,24 +235,15 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
       
-      - name: Check PHP syntax
+      - name: 🔧 Run Complete Quality Checks
         run: |
-          echo "Validating PHP syntax in all files..."
-          find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" -exec php -l {} \; > syntax-check.log 2>&1
-          if grep -iE "^(Parse|Fatal) error:" syntax-check.log; then
-            echo "❌ PHP syntax errors found"
-            cat syntax-check.log
+          # Use unified quality checks script for consistency
+          chmod +x scripts/run-quality-checks.sh
+          ./scripts/run-quality-checks.sh --skip-tests || {
+            echo "❌ Quality checks failed - release validation incomplete"
             exit 1
-          else
-            echo "✅ All PHP files validated successfully"
-            rm -f syntax-check.log
-          fi
-      
-      - name: Run PHPStan
-        run: composer phpstan
-      
-      - name: Run PHPCS
-        run: composer phpcs
+          }
+          echo "✅ All quality checks passed - ready for release"
       
       - name: Setup Node.js
         uses: actions/setup-node@v5

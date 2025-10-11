@@ -51,16 +51,17 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "| Package | Current | Latest | Status |" >> $GITHUB_STEP_SUMMARY
             echo "|---------|---------|--------|--------|" >> $GITHUB_STEP_SUMMARY
-            jq -r '.installed[] | "| \(.name) | \(.version) | \(.latest) | \(."latest-status") |"' composer-outdated.json >> $GITHUB_STEP_SUMMARY
+            jq -r '.installed[] | "| \(.name) | \(.version) | \(.latest) | \(.\"latest-status\") |"' composer-outdated.json >> $GITHUB_STEP_SUMMARY
           else
             echo "## ✅ All Composer packages are up to date!" >> $GITHUB_STEP_SUMMARY
           fi
       
-      - name: Run PHPStan
-        run: composer phpstan || true
-      
-      - name: Run PHPCS
-        run: composer phpcs || true
+      - name: 🔧 Run Quality Validation (PHPStan + PHPCS)
+        run: |
+          # Run PHPStan and PHPCS without blocking the workflow
+          # (dependency updates shouldn't fail if code quality needs improvement)
+          composer phpstan || echo "⚠️ PHPStan found issues - review recommended"
+          composer phpcs || echo "⚠️ PHPCS found issues - review recommended"
       
       - name: Upload Composer outdated report
         if: steps.composer-outdated.outputs.outdated_count > 0
