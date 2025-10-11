@@ -238,7 +238,14 @@ jobs:
       - name: Check PHP syntax
         run: |
           echo "Validating PHP syntax in all files..."
-          find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" -exec php -l {} \; | grep -v "No syntax errors"
+          find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" -exec php -l {} \; > syntax-check.log 2>&1
+          if grep -i "parse error\|syntax error" syntax-check.log; then
+            echo "❌ PHP syntax errors found"
+            cat syntax-check.log
+            exit 1
+          else
+            echo "✅ All PHP files validated successfully"
+          fi
       
       - name: Run PHPStan
         run: composer phpstan
