@@ -1,5 +1,40 @@
 # Silver Assist Security Essentials - AI Coding Instructions
 
+## 🚨 CRITICAL DOCUMENTATION RULE - READ FIRST
+
+**⛔ NEVER CREATE SEPARATE .md DOCUMENTATION FILES ⛔**
+
+**MANDATORY: All documentation MUST be maintained ONLY in these three files:**
+1. **README.md** - User-facing documentation, features, installation, configuration
+2. **CHANGELOG.md** - Version history, changes, updates, release notes
+3. **.github/copilot-instructions.md** (this file) - Development guidelines, architecture, coding standards
+
+**FORBIDDEN:**
+- ❌ Creating files like `docs/FEATURE-GUIDE.md`
+- ❌ Creating `CONTRIBUTING.md`, `ARCHITECTURE.md`, `API.md`, etc.
+- ❌ Any separate documentation files in `docs/` directory
+- ❌ Splitting documentation across multiple files
+
+**REQUIRED:**
+- ✅ Add all new documentation to appropriate section in README.md
+- ✅ Document all changes in CHANGELOG.md under [Unreleased] section
+- ✅ Update copilot-instructions.md for development guidelines
+- ✅ Keep documentation consolidated in these three files ONLY
+
+**Why this rule exists:**
+- Prevents documentation fragmentation
+- Reduces maintenance overhead
+- Single source of truth for all information
+- Easier to find and update documentation
+- Consistent with project philosophy
+
+**If you need to document something:**
+1. **User features/guides** → Add to README.md
+2. **Version changes/updates** → Add to CHANGELOG.md
+3. **Development patterns/architecture** → Add to copilot-instructions.md
+
+---
+
 ## Architecture Overview
 
 This is a **WordPress security plugin** that resolves critical security vulnerabilities found in WordPress security audits. It uses **PSR-4 autoloading** with modern PHP 8+ patterns and follows a **modular component architecture** with strict separation of concerns.
@@ -998,6 +1033,216 @@ git commit -m "✨ Add IP blocking with TDD validation"
 - **Security Testing**: Full security audit before release
 - **Documentation**: Update README and CHANGELOG
 - **Backup Recommendations**: Always advise users to backup before updates
+
+## 🤖 Automated Dependency Management (CI/CD)
+
+### GitHub Actions + Dependabot System
+
+**CRITICAL: This plugin uses a fully automated CI/CD system for dependency management. Never manually update dependencies without understanding this workflow.**
+
+#### System Overview
+
+**Configuration Files:**
+- `.github/dependabot.yml` - Dependency scanning configuration for Composer, npm, and GitHub Actions
+- `.github/workflows/dependency-updates.yml` - Automated validation and auto-merge workflow
+
+**What It Does:**
+- ✅ **Weekly Checks**: Automatically verifies all dependencies every Monday (9:00 AM, 9:30 AM, 10:00 AM Mexico City)
+- ✅ **Auto-PRs**: Creates Pull Requests with dependency updates
+- ✅ **Quality Gates**: Runs PHPStan, PHPCS, npm builds, and security audits
+- ✅ **Auto-Merge**: Safe updates (minor/patch) merge automatically after validation
+- ✅ **Manual Review**: Major version updates require human approval
+- ✅ **Security Audits**: Continuous CVE scanning with 90-day report retention
+- ✅ **Copilot Reviews**: All PRs automatically reviewed by GitHub Copilot
+
+#### Workflow Jobs
+
+**Job 1: `check-composer-updates`**
+- Validates `composer.json` and `composer.lock`
+- Executes `composer outdated --direct --format=json`
+- Runs PHPStan (static analysis)
+- Runs PHPCS (WordPress Coding Standards)
+- Generates markdown table of outdated packages
+- Saves report artifact (30-day retention)
+
+**Job 2: `check-npm-updates`**
+- Executes `npm outdated --json`
+- Runs `npm run build` for asset validation
+- Verifies all minified files exist
+- Generates markdown table of outdated packages
+- Saves report artifact (30-day retention)
+
+**Job 3: `security-audit`**
+- Executes `composer audit --format=json`
+- Executes `npm audit --json`
+- Detects CVEs and security advisories
+- Saves security reports (90-day retention)
+- Generates summary with vulnerability counts
+
+**Job 4: `validate-pr`**
+- Only runs on Dependabot PRs
+- Validates PHP syntax across all files
+- Runs PHPCS and PHPStan
+- Builds all assets with `npm run build`
+- Comments validation results on PR
+- Blocks merge if critical checks fail
+
+**Job 5: `auto-merge-dependabot`**
+- Auto-approves PRs for `version-update:semver-patch` and `version-update:semver-minor`
+- Enables auto-merge for safe updates
+- Requires all checks to pass first
+- Comments alert for major version updates
+- Major versions require manual review
+
+#### Critical Packages Configuration
+
+**Always Create Separate PRs (Never Group):**
+```yaml
+ignore:
+  - dependency-name: "silverassist/wp-settings-hub"
+    update-types: ["version-update:semver-major"]
+  - dependency-name: "silverassist/wp-github-updater"
+    update-types: ["version-update:semver-major"]
+```
+
+**Why These Are Critical:**
+- `silverassist/wp-settings-hub` - Breaking changes can break entire admin UI
+- `silverassist/wp-github-updater` - Breaking changes can break update system
+
+#### Schedule & Timing
+
+| Time (Mexico City) | Action | Package Ecosystem |
+|--------------------|--------|-------------------|
+| Monday 9:00 AM | Composer Check | PHP dependencies |
+| Monday 9:30 AM | npm Check | JavaScript dependencies |
+| Monday 10:00 AM | GitHub Actions Check | Workflow dependencies |
+| 24/7 | Security Alerts | All ecosystems |
+
+#### Dependabot Configuration Patterns
+
+**Grouping Strategy:**
+```yaml
+groups:
+  composer-minor-patch:
+    patterns: ["*"]
+    update-types: ["minor", "patch"]
+  npm-minor-patch:
+    patterns: ["*"]
+    update-types: ["minor", "patch"]
+```
+
+**Labels Applied:**
+- `dependencies` - All dependency updates
+- `composer` - Composer package updates
+- `npm` - npm package updates
+- `github-actions` - Workflow updates
+- `automated` - Automated PRs
+
+**Reviewers:**
+- `copilot` - GitHub Copilot AI reviews all PRs
+- Assignees: `SilverAssist` - Human oversight
+
+#### Developer Workflow
+
+**When Dependabot Creates a PR:**
+
+**Minor/Patch Update (Automatic):**
+1. Dependabot creates PR with grouped updates
+2. Workflow runs all 5 jobs automatically
+3. If all checks pass → Auto-approved
+4. Auto-merge executes → PR merged to main
+5. No human intervention needed
+
+**Major Update (Manual Review Required):**
+1. Dependabot creates separate PR for each major update
+2. Workflow runs validation jobs
+3. Comments alert: "Manual review required"
+4. Developer must:
+   - Review changelog of dependency
+   - Check for breaking changes
+   - Test locally if needed
+   - Approve PR manually
+   - Merge when ready
+
+**Security Vulnerability (Priority):**
+1. Dependabot creates immediate PR
+2. Label: `security` added automatically
+3. Workflow runs security-audit job
+4. Team notified for urgent review
+5. Fast-track merge after validation
+
+#### Manual Execution
+
+**Trigger Workflow Manually:**
+```bash
+# Via GitHub CLI
+gh workflow run dependency-updates.yml
+
+# Via GitHub web interface
+Actions → Dependency Updates Check → Run workflow
+```
+
+**Check Dependabot Status:**
+```bash
+# View alerts
+gh api /repos/SilverAssist/silver-assist-security/dependabot/alerts
+
+# View security vulnerabilities
+https://github.com/SilverAssist/silver-assist-security/security/dependabot
+```
+
+#### Local Validation
+
+**Before Pushing Dependency Changes:**
+```bash
+# Check outdated packages locally
+composer outdated --direct
+npm outdated
+
+# Run security audits locally
+composer audit
+npm audit
+
+# Validate everything works
+composer install
+npm ci
+npm run build
+composer phpcs
+composer phpstan
+```
+
+#### Troubleshooting
+
+**PR Not Auto-Merging:**
+- Verify: Settings → Actions → General
+- Enable: "Read and write permissions"
+- Enable: "Allow GitHub Actions to create and approve pull requests"
+
+**Checks Failing:**
+- Run locally: `composer phpcs && composer phpstan`
+- Fix issues before pushing
+- Temporarily disable auto-merge if codebase has problems
+
+**Dependabot Not Creating PRs:**
+- Verify `.github/dependabot.yml` syntax
+- Check: Settings → Security → Dependabot (must be enabled)
+- Verify repository permissions
+
+#### Best Practices
+
+**DO:**
+- ✅ Trust auto-merge for minor/patch updates
+- ✅ Review major updates carefully
+- ✅ Check Dependabot PRs weekly
+- ✅ Keep critical packages up-to-date
+- ✅ Monitor security alerts daily
+
+**DON'T:**
+- ❌ Manually update dependencies without checking Dependabot first
+- ❌ Ignore major version PRs for long periods
+- ❌ Disable Dependabot without understanding implications
+- ❌ Skip reviewing security vulnerability PRs
+- ❌ Bypass quality checks in workflow
 
 ### Production Dependencies & Version Management
 

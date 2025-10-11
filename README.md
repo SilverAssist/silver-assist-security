@@ -184,6 +184,47 @@ After configuration, your website will be protected against the three critical s
 
 ⚠️ **Always backup your website before applying updates**
 
+## 🤖 Automated Dependency Management (Development)
+
+### GitHub Actions + Dependabot System
+**For developers and contributors**: This plugin uses an automated CI/CD system for dependency management.
+
+**What it does:**
+- ✅ **Weekly Checks**: Automatically verifies Composer, npm, and GitHub Actions updates every Monday
+- ✅ **Auto-PRs**: Creates Pull Requests with dependency updates
+- ✅ **Quality Gates**: Runs PHPStan, PHPCS, builds, and security audits
+- ✅ **Auto-Merge**: Safe updates (minor/patch) merge automatically
+- ✅ **Manual Review**: Major version updates require human approval
+- ✅ **Security Audits**: Continuous vulnerability scanning (90-day reports)
+- ✅ **Copilot Reviews**: All PRs automatically reviewed by GitHub Copilot
+
+**Configuration files:**
+- `.github/dependabot.yml` - Dependency scanning configuration
+- `.github/workflows/dependency-updates.yml` - Validation and auto-merge workflow
+
+**Critical packages** (separate PRs for major versions):
+- `silverassist/wp-settings-hub` - Settings Hub integration
+- `silverassist/wp-github-updater` - Update system
+
+**Schedule:**
+- **Monday 9:00 AM**: Composer packages check
+- **Monday 9:30 AM**: npm packages check  
+- **Monday 10:00 AM**: GitHub Actions check
+- **24/7**: Security vulnerability alerts
+
+**Workflow jobs:**
+1. `check-composer-updates` - PHP dependencies validation
+2. `check-npm-updates` - JavaScript dependencies validation
+3. `security-audit` - CVE scanning and reports
+4. `validate-pr` - Quality checks on Dependabot PRs
+5. `auto-merge-dependabot` - Safe updates auto-merge
+
+**For contributors:**
+- All PRs include automated validation
+- Quality checks must pass before merge
+- GitHub Copilot reviews all changes
+- Security is validated on every update
+
 ## 💡 Frequently Asked Questions
 
 **Will this plugin slow down my website?**  
