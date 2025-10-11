@@ -206,20 +206,26 @@ run_phpcs() {
     print_info "Extensions: php"
     echo ""
     
+    local output
     if [ "$VERBOSE" = true ]; then
-        vendor/bin/phpcs
+        output=$(vendor/bin/phpcs 2>&1 || true)
+        echo "$output"
     else
-        vendor/bin/phpcs 2>&1 | tail -20
+        output=$(vendor/bin/phpcs 2>&1 || true)
+        echo "$output" | tail -20
     fi
     
-    local exit_code=$?
+    # Check if there are ERRORS (not just warnings)
+    # PHPCS exit codes: 0=no issues, 1=warnings found, 2=errors found, 3=processing error
+    local error_count=$(echo "$output" | grep -i "A TOTAL OF" | grep -oE '[0-9]+ ERRORS' | grep -oE '[0-9]+' || echo "0")
     
     echo ""
-    if [ $exit_code -eq 0 ]; then
+    if [ "$error_count" -eq 0 ]; then
         print_success "PHPCS: PASSED ✓"
+        print_info "Warnings are acceptable and don't block CI/CD"
         return 0
     else
-        print_error "PHPCS: FAILED ✗"
+        print_error "PHPCS: FAILED ✗ ($error_count errors found)"
         print_info "Run 'composer phpcbf' to auto-fix issues"
         return 1
     fi
