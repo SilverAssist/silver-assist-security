@@ -44,7 +44,7 @@ class Updater extends GitHubUpdater {
 				'plugin_author'      => 'Silver Assist',
 				'plugin_homepage'    => 'https://github.com/SilverAssist/silver-assist-security',
 				'requires_wordpress' => '6.5',
-				'requires_php'       => '8.0',
+				'requires_php'       => '8.3',
 				'asset_pattern'      => 'silver-assist-security-v{version}.zip',
 				'cache_duration'     => 12 * 3600,
 				'ajax_action'        => 'silver_assist_security_check_version',
