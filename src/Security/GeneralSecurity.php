@@ -96,8 +96,8 @@ class GeneralSecurity {
 			header( 'Referrer-Policy: strict-origin-when-cross-origin' );
 			header( 'Permissions-Policy: geolocation=(), microphone=(), camera=()' );
 
-			// HSTS for HTTPS sites
-			if ( \is_ssl() ) {
+			// HSTS for HTTPS sites (only in production, not in development environments)
+			if ( \is_ssl() && ! $this->is_development_environment() ) {
 				header( 'Strict-Transport-Security: max-age=31536000; includeSubDomains' );
 			}
 		}
@@ -320,5 +320,53 @@ class GeneralSecurity {
 	 */
 	public function get_client_ip(): string {
 		return SecurityHelper::get_client_ip();
+	}
+
+	/**
+	 * Check if current environment is development
+	 *
+	 * Detects development environments to avoid applying HSTS which can
+	 * cause issues in local development when HTTPS is not properly configured.
+	 *
+	 * @since 1.1.14
+	 * @return bool True if development environment, false otherwise
+	 */
+	private function is_development_environment(): bool {
+		// Get server name
+		$server_name = $_SERVER['SERVER_NAME'] ?? $_SERVER['HTTP_HOST'] ?? '';
+
+		// Check for common development indicators
+		$dev_patterns = [
+			'localhost',
+			'127.0.0.1',
+			'::1',
+			'.local',
+			'.test',
+			'.dev',
+			'.localhost',
+			'192.168.',
+			'10.0.',
+			'172.16.',
+		];
+
+		foreach ( $dev_patterns as $pattern ) {
+			if ( stripos( $server_name, $pattern ) !== false ) {
+				return true;
+			}
+		}
+
+		// Check for WP_DEBUG or WP_ENVIRONMENT_TYPE
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true ) {
+			return true;
+		}
+
+		if ( function_exists( 'wp_get_environment_type' ) ) {
+			$env_type = \wp_get_environment_type();
+			if ( in_array( $env_type, [ 'local', 'development' ], true ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }
