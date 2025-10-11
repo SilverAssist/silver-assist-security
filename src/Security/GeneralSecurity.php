@@ -43,42 +43,42 @@ class GeneralSecurity {
 	 */
 	private function init(): void {
 		// Security headers
-		\add_action( 'send_headers', array( $this, 'add_security_headers' ) );
+		\add_action( 'send_headers', [ $this, 'add_security_headers' ] );
 
 		// Hide WordPress version
-		\add_filter( 'the_generator', array( $this, 'remove_version' ) );
+		\add_filter( 'the_generator', [ $this, 'remove_version' ] );
 
 		// Remove unnecessary headers
-		\add_action( 'init', array( $this, 'remove_unnecessary_headers' ) );
+		\add_action( 'init', [ $this, 'remove_unnecessary_headers' ] );
 
 		// Remove version from scripts and styles
-		\add_filter( 'script_loader_src', array( $this, 'remove_version_query_string' ) );
-		\add_filter( 'style_loader_src', array( $this, 'remove_version_query_string' ) );
+		\add_filter( 'script_loader_src', [ $this, 'remove_version_query_string' ] );
+		\add_filter( 'style_loader_src', [ $this, 'remove_version_query_string' ] );
 
 		// Disable XML-RPC
-		\add_filter( 'xmlrpc_methods', array( $this, 'remove_xmlrpc_methods' ) );
+		\add_filter( 'xmlrpc_methods', [ $this, 'remove_xmlrpc_methods' ] );
 		\add_filter( 'xmlrpc_enabled', '__return_false' );
 
 		// Configure secure cookies
-		\add_action( 'init', array( $this, 'configure_secure_cookies' ) );
-		\add_filter( 'secure_auth_cookie', array( $this, 'force_secure_cookies' ) );
-		\add_filter( 'secure_logged_in_cookie', array( $this, 'force_secure_cookies' ) );
+		\add_action( 'init', [ $this, 'configure_secure_cookies' ] );
+		\add_filter( 'secure_auth_cookie', [ $this, 'force_secure_cookies' ] );
+		\add_filter( 'secure_logged_in_cookie', [ $this, 'force_secure_cookies' ] );
 
 		// Disable user enumeration
-		\add_action( 'init', array( $this, 'disable_user_enumeration' ) );
+		\add_action( 'init', [ $this, 'disable_user_enumeration' ] );
 
 		// Hide login errors
-		\add_filter( 'login_errors', array( $this, 'hide_login_errors' ) );
+		\add_filter( 'login_errors', [ $this, 'hide_login_errors' ] );
 
 		// Remove admin bar for non-admins
-		\add_action( 'after_setup_theme', array( $this, 'remove_admin_bar_for_non_admins' ) );
+		\add_action( 'after_setup_theme', [ $this, 'remove_admin_bar_for_non_admins' ] );
 
 		// Disable file editing
 		$this->disable_file_editing();
 
 		// Remove WordPress branding
-		\add_action( 'wp_before_admin_bar_render', array( $this, 'remove_wp_logo' ) );
-		\add_filter( 'admin_footer_text', array( $this, 'change_admin_footer' ) );
+		\add_action( 'wp_before_admin_bar_render', [ $this, 'remove_wp_logo' ] );
+		\add_filter( 'admin_footer_text', [ $this, 'change_admin_footer' ] );
 	}
 
 	/**
@@ -174,8 +174,9 @@ class GeneralSecurity {
 	 * @param array $methods XML-RPC methods
 	 * @return array
 	 */
+	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WordPress filter signature.
 	public function remove_xmlrpc_methods( array $methods ): array {
-		return array();
+		return [];
 	}
 
 	/**
@@ -191,14 +192,14 @@ class GeneralSecurity {
 			$secure = \is_ssl();
 
 			session_set_cookie_params(
-				array(
+				[
 					'lifetime' => 0,
 					'path'     => '/',
 					'domain'   => '',
 					'secure'   => $secure,
 					'httponly' => true,
 					'samesite' => 'Lax',
-				)
+				]
 			);
 		}
 	}
@@ -210,6 +211,7 @@ class GeneralSecurity {
 	 * @param bool $secure Current secure flag
 	 * @return bool
 	 */
+	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WordPress filter signature.
 	public function force_secure_cookies( bool $secure ): bool {
 		return \is_ssl();
 	}
@@ -239,8 +241,10 @@ class GeneralSecurity {
 		\add_action(
 			'template_redirect',
 			function () {
-				if ( \is_author() || ( $_GET['author'] ?? false ) ) {
-					\wp_redirect( \home_url() );
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public page check, no form submission.
+				$author_param = isset( $_GET['author'] ) ? \sanitize_text_field( \wp_unslash( $_GET['author'] ) ) : false;
+				if ( \is_author() || $author_param ) {
+					\wp_safe_redirect( \home_url() );
 					exit;
 				}
 			}
@@ -272,7 +276,7 @@ class GeneralSecurity {
 	 * @return void
 	 */
 	public function remove_admin_bar_for_non_admins(): void {
-		if ( ! \current_user_can( 'administrator' ) && ! \is_admin() ) {
+		if ( ! \current_user_can( 'manage_options' ) && ! \is_admin() ) {
 			\show_admin_bar( false );
 		}
 	}
@@ -334,8 +338,11 @@ class GeneralSecurity {
 	 * @return bool True if development environment, false otherwise
 	 */
 	private function is_development_environment(): bool {
-		// Get server name
-		$server_name = $_SERVER['SERVER_NAME'] ?? $_SERVER['HTTP_HOST'] ?? '';
+		// Get server name.
+		$server_name = isset( $_SERVER['SERVER_NAME'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '';
+		if ( empty( $server_name ) && isset( $_SERVER['HTTP_HOST'] ) ) {
+			$server_name = \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_HOST'] ) );
+		}
 
 		// Check for common development indicators
 		$dev_patterns = [
