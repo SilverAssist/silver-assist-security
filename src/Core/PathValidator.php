@@ -20,7 +20,7 @@ class PathValidator {
 	 * @var array<string>
 	 * @since 1.1.4
 	 */
-	private static array $forbidden_paths = array(
+	private static array $forbidden_paths = [
 		'admin',
 		'login',
 		'wp-admin',
@@ -38,7 +38,7 @@ class PathValidator {
 		'control',
 		'manage',
 		'system',
-	);
+	];
 
 	/**
 	 * Validation result structure
@@ -46,12 +46,12 @@ class PathValidator {
 	 * @var array
 	 * @since 1.1.4
 	 */
-	public const RESULT_STRUCTURE = array(
+	public const RESULT_STRUCTURE = [
 		'is_valid'       => false,
 		'error_message'  => '',
 		'error_type'     => '',
 		'sanitized_path' => '',
-	);
+	];
 
 	/**
 	 * Validate admin path for security compliance
@@ -119,62 +119,62 @@ class PathValidator {
 			// Reject if:
 			// 1. Exact match with forbidden word
 			if ( $path === $forbidden ) {
-				return array(
+				return [
 					'is_valid'      => false,
 					'error_message' => sprintf(
 						/* translators: %s: forbidden path keyword */
 						\__( 'Path cannot contain "%s" for security reasons', 'silver-assist-security' ),
 						$forbidden
 					),
-				);
+				];
 			}
 
 			// 2. Starts with forbidden word followed by separator (admin-panel)
 			if ( preg_match( "/^{$forbidden}[-_]/", $path ) ) {
-				return array(
+				return [
 					'is_valid'      => false,
 					'error_message' => sprintf(
 						/* translators: %s: forbidden path keyword */
 						\__( 'Path cannot contain "%s" for security reasons', 'silver-assist-security' ),
 						$forbidden
 					),
-				);
+				];
 			}
 
 			// 3. Ends with forbidden word preceded by separator, but allow any valid prefix
 			if ( preg_match( "/[-_]{$forbidden}$/", $path ) ) {
 				// Allow if it has any prefix (regardless of length)
-				$prefix = preg_replace( "/[-_]{$forbidden}$/", '', $path );
-				// Only reject if no prefix or if prefix is also forbidden
-				if ( empty( $prefix ) || in_array( $prefix, self::$forbidden_paths ) ) {
-					return array(
+			$prefix = preg_replace( "/[-_]{$forbidden}$/", '', $path );
+			// Only reject if no prefix or if prefix is also forbidden.
+			if ( empty( $prefix ) || in_array( $prefix, self::$forbidden_paths, true ) ) {
+					return [
 						'is_valid'      => false,
 						'error_message' => sprintf(
 							/* translators: %s: forbidden path keyword */
 							\__( 'Path cannot contain "%s" for security reasons', 'silver-assist-security' ),
 							$forbidden
 						),
-					);
+					];
 				}
 			}
 
 			// 4. Forbidden word in the middle surrounded by separators
 			if ( preg_match( "/[-_]{$forbidden}[-_]/", $path ) ) {
-				return array(
+				return [
 					'is_valid'      => false,
 					'error_message' => sprintf(
 						/* translators: %s: forbidden path keyword */
 						\__( 'Path cannot contain "%s" for security reasons', 'silver-assist-security' ),
 						$forbidden
 					),
-				);
+				];
 			}
 		}
 
-		return array(
+		return [
 			'is_valid'      => true,
 			'error_message' => '',
-		);
+		];
 	}
 
 	/**
@@ -208,7 +208,7 @@ class PathValidator {
 	 */
 	public static function add_forbidden_path( string $path ): void {
 		$path = strtolower( trim( $path ) );
-		if ( ! empty( $path ) && ! in_array( $path, self::$forbidden_paths ) ) {
+		if ( ! empty( $path ) && ! in_array( $path, self::$forbidden_paths, true ) ) {
 			self::$forbidden_paths[] = $path;
 		}
 	}
@@ -222,7 +222,7 @@ class PathValidator {
 	 */
 	public static function remove_forbidden_path( string $path ): void {
 		$path = strtolower( trim( $path ) );
-		$key  = array_search( $path, self::$forbidden_paths );
+		$key  = array_search( $path, self::$forbidden_paths, true );
 		if ( $key !== false ) {
 			unset( self::$forbidden_paths[ $key ] );
 			self::$forbidden_paths = array_values( self::$forbidden_paths ); // Re-index
