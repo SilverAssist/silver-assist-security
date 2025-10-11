@@ -927,13 +927,22 @@ class AdminPanel {
 	/**
 	 * Render admin page
 	 *
-	 * WordPress handles capability checks via add_options_page() and Settings Hub.
-	 * No need for manual check here as it causes double-checking issues.
+	 * Includes capability check for security and direct method calls (e.g., in tests).
+	 * WordPress also checks via add_options_page() and Settings Hub, providing defense in depth.
 	 *
 	 * @since 1.1.1
 	 * @return void
 	 */
 	public function render_admin_page(): void {
+
+		// Verify user has permission to manage options
+		if ( ! \current_user_can( 'manage_options' ) ) {
+			\wp_die(
+				esc_html__( 'You do not have sufficient permissions to access this page.', 'silver-assist-security' ),
+				esc_html__( 'Permission Denied', 'silver-assist-security' ),
+				array( 'response' => 403 )
+			);
+		}
 
 		// Get current values
 		$login_attempts                = DefaultConfig::get_option( 'silver_assist_login_attempts' );
