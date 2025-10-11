@@ -103,8 +103,15 @@ class DefaultConfig
    */
   private static function get_php_execution_timeout(): int
   {
-    $timeout = ini_get("max_execution_time");
-    return $timeout !== false ? (int) $timeout : 30;
+    $timeout = \ini_get("max_execution_time");
+    // Handle false return from ini_get
+    if (!\is_string($timeout)) {
+      return 30;
+    }
+    // Cast to int - empty string becomes 0
+    $timeout_int = (int) $timeout;
+    // Return 30 if timeout is 0 or negative
+    return $timeout_int > 0 ? $timeout_int : 30;
   }
 
   /**

@@ -374,13 +374,11 @@ class AdminPanel
             // Verify nonce
             if (!\wp_verify_nonce($_POST["nonce"] ?? "", "silver_assist_security_ajax")) {
                 \wp_send_json_error(["message" => "Security check failed"]);
-                return;
             }
 
             // Check user permissions
             if (!\current_user_can("manage_options")) {
                 \wp_send_json_error(["message" => "Insufficient permissions"]);
-                return;
             }
 
             $stats = $this->get_login_statistics();
@@ -680,7 +678,7 @@ class AdminPanel
                         "ip" => "Hidden for security",
                         "remaining_time" => $remaining,
                         "remaining_minutes" => max(0, round($remaining / 60)),
-                        "blocked_at" => date("Y-m-d H:i:s", time() - ($lockout_duration - $remaining))
+                        "blocked_at" => date("Y-m-d H:i:s", (int)(time() - ($lockout_duration - $remaining)))
                     ];
                 }
             }
@@ -981,7 +979,7 @@ class AdminPanel
                             </div>
                             <div class="stat">
                                 <span
-                                    class="stat-value"><?php echo esc_html(round($security_status["login_security"]["lockout_duration"] / 60)); ?></span>
+                                    class="stat-value"><?php echo esc_html((string)round($security_status["login_security"]["lockout_duration"] / 60)); ?></span>
                                 <span class="stat-label"><?php esc_html_e("Lockout (min)", "silver-assist-security"); ?></span>
                             </div>
                         </div>
@@ -1311,13 +1309,13 @@ class AdminPanel
                                     <td>
                                         <input type="range" name="silver_assist_graphql_query_timeout"
                                             id="silver_assist_graphql_query_timeout" min="1"
-                                            max="<?php echo esc_attr($this->config_manager->get_php_execution_timeout()); ?>"
-                                            value="<?php echo esc_attr($graphql_query_timeout); ?>" step="1" />
-                                        <span id="graphql-timeout-value"><?php echo esc_html($graphql_query_timeout); ?></span>
+                                            max="<?php echo esc_attr((string)$this->config_manager->get_php_execution_timeout()); ?>"
+                                            value="<?php echo esc_attr((string)$graphql_query_timeout); ?>" step="1" />
+                                        <span id="graphql-timeout-value"><?php echo esc_html((string)$graphql_query_timeout); ?></span>
                                         <?php esc_html_e("seconds", "silver-assist-security"); ?>
                                         <p class="description">
                                             <strong><?php esc_html_e("PHP Limit:", "silver-assist-security"); ?></strong>
-                                            <?php echo esc_html($this->config_manager->get_php_execution_timeout()); ?>
+                                            <?php echo esc_html((string)$this->config_manager->get_php_execution_timeout()); ?>
                                             <?php esc_html_e("seconds", "silver-assist-security"); ?>
                                             <br>
                                             <?php esc_html_e("Maximum time allowed for GraphQL query execution. Cannot exceed PHP execution time limit.", "silver-assist-security"); ?>
@@ -1463,13 +1461,11 @@ class AdminPanel
         // Validate nonce
         if (!isset($_POST["nonce"]) || !\wp_verify_nonce($_POST["nonce"], "silver_assist_security_updates_nonce")) {
             \wp_send_json_error(["message" => \__("Security validation failed", "silver-assist-security")]);
-            return;
         }
 
         // Check user capability
         if (!\current_user_can("manage_options")) {
             \wp_send_json_error(["message" => \__("Insufficient permissions", "silver-assist-security")]);
-            return;
         }
 
         $plugin = Plugin::getInstance();
@@ -1477,7 +1473,6 @@ class AdminPanel
 
         if (!$updater) {
             \wp_send_json_error(["message" => \__("Updater not available", "silver-assist-security")]);
-            return;
         }
 
         try {
