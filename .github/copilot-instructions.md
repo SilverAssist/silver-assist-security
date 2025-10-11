@@ -1612,14 +1612,6 @@ class BadSecurityClass {
 }
 ```
 
-### String Quotation Standards
-- **MANDATORY**: ALL strings in PHP and JavaScript MUST use double quotes: `"string"`
-- **i18n Functions**: ALL WordPress i18n functions MUST use double quotes: `__("Text", "silver-assist-security")`, `esc_html_e("Text", "silver-assist-security")`
-- **FORBIDDEN**: Single quotes for strings: `'string'` or `__('text', 'domain')`
-- **Exception**: Only use single quotes inside double-quoted strings when necessary
-- **SQL Queries**: Use double quotes for string literals in SQL: `WHERE option_value = "1"`
-- **sprintf() Placeholders**: When using `sprintf()` with positional placeholders like `%1$d`, escape the `$` to prevent PHP variable interpretation: `"Query complexity %1\$d exceeds maximum %2\$d"`
-
 ### Documentation Requirements
 - **PHP**: Complete PHPDoc documentation for ALL classes, methods, and properties
 - **JavaScript**: Complete JSDoc documentation for ALL functions (in English)
@@ -1648,8 +1640,7 @@ class BadSecurityClass {
 - **Property types**: All class properties have explicit types
 
 ### PHP Coding Standards
-- **Double quotes for all strings**: `"string"` not `'string'` - MANDATORY for both PHP and JavaScript
-- **String interpolation**: Use `"prefix_{$variable}"` instead of `"prefix_" . $variable` when concatenating variables into strings
+- **String interpolation**: Use `"prefix_{$variable}"` or `'prefix_' . $variable` for variable concatenation
 - **Short array syntax**: `[]` not `array()`
 - **Namespaces**: Use descriptive namespaces like `SilverAssist\Security\ComponentType`
 - **Singleton pattern**: `Class_Name::getInstance()` method pattern
@@ -1789,7 +1780,6 @@ use GraphQL\Error\Error;
 
 ### JavaScript Coding Standards
 - **Modern ES6+ Syntax**: MANDATORY use of ES6+ features for all new JavaScript code
-- **Double quotes for all strings**: `"string"` not `'string'` - MANDATORY consistency with PHP
 - **Arrow functions**: Use `const functionName = () => {}` instead of `function functionName() {}`
 - **Template literals**: Use backticks and `${variable}` interpolation instead of string concatenation
 - **const/let declarations**: Use `const` for constants and `let` for variables, avoid `var`
@@ -1809,7 +1799,7 @@ use GraphQL\Error\Error;
 ```javascript
 // ✅ CORRECT: ES6 arrow functions with const, jQuery $ prefix, and centralized constants
 (($ => {
-    "use strict";
+    'use strict';
 
     // Centralized timing constants at file top
     const TIMING = {
