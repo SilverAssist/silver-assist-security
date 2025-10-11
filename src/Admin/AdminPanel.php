@@ -343,7 +343,6 @@ class AdminPanel
             // Use centralized AJAX validation
             if (!SecurityHelper::validate_ajax_request("silver_assist_security_ajax")) {
                 \wp_send_json_error(["message" => "Security validation failed"]);
-                return;
             }
 
             $status = $this->get_security_status();
@@ -407,13 +406,11 @@ class AdminPanel
             // Verify nonce
             if (!\wp_verify_nonce($_POST["nonce"] ?? "", "silver_assist_security_ajax")) {
                 \wp_send_json_error(["message" => "Security check failed"]);
-                return;
             }
 
             // Check user permissions
             if (!\current_user_can("manage_options")) {
                 \wp_send_json_error(["message" => "Insufficient permissions"]);
-                return;
             }
 
             $blocked_ips = $this->get_blocked_ips();
@@ -439,13 +436,11 @@ class AdminPanel
             // Verify nonce
             if (!\wp_verify_nonce($_POST["nonce"] ?? "", "silver_assist_security_ajax")) {
                 \wp_send_json_error(["message" => "Security check failed"]);
-                return;
             }
 
             // Check user permissions
             if (!\current_user_can("manage_options")) {
                 \wp_send_json_error(["message" => "Insufficient permissions"]);
-                return;
             }
 
             $logs = $this->get_recent_security_logs();
@@ -471,13 +466,11 @@ class AdminPanel
             // Verify nonce
             if (!\wp_verify_nonce($_POST["nonce"] ?? "", "silver_assist_security_ajax")) {
                 \wp_send_json_error(["message" => "Security check failed"]);
-                return;
             }
 
             // Check user permissions
             if (!\current_user_can("manage_options")) {
                 \wp_send_json_error(["message" => "Insufficient permissions"]);
-                return;
             }
 
             // Process form data - handle checkboxes that may not be present when unchecked
@@ -523,13 +516,11 @@ class AdminPanel
             // Verify nonce
             if (!\wp_verify_nonce($_POST["nonce"] ?? "", "silver_assist_security_ajax")) {
                 \wp_send_json_error(["message" => "Security check failed"]);
-                return;
             }
 
             // Check user permissions
             if (!\current_user_can("manage_options")) {
                 \wp_send_json_error(["message" => "Insufficient permissions"]);
-                return;
             }
 
             $path = \sanitize_text_field($_POST["path"] ?? "");

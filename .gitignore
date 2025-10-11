@@ -7,7 +7,7 @@ composer.lock
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
+# package-lock.json tracked for CI/CD dependency management
 
 # Development tools
 *.tmp
