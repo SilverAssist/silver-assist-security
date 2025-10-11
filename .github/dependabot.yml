@@ -14,12 +14,6 @@ updates:
     open-pull-requests-limit: 5
     reviewers:
       - "copilot"
-    assignees:
-      - "SilverAssist/web"
-    labels:
-      - "dependencies"
-      - "composer"
-      - "automated"
     commit-message:
       prefix: "🔧"
       prefix-development: "🔧"
@@ -50,12 +44,6 @@ updates:
     open-pull-requests-limit: 5
     reviewers:
       - "copilot"
-    assignees:
-      - "SilverAssist/web"
-    labels:
-      - "dependencies"
-      - "npm"
-      - "automated"
     commit-message:
       prefix: "🔧"
       prefix-development: "🔧"
@@ -86,12 +74,6 @@ updates:
     open-pull-requests-limit: 3
     reviewers:
       - "copilot"
-    assignees:
-      - "SilverAssist/web"
-    labels:
-      - "dependencies"
-      - "github-actions"
-      - "automated"
     commit-message:
       prefix: "🔧"
       include: "scope"
