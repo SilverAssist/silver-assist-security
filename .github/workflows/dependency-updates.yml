@@ -198,6 +198,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     
+    permissions:
+      contents: read
+      pull-requests: write
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

@@ -1191,6 +1191,46 @@ gh api /repos/SilverAssist/silver-assist-security/dependabot/alerts
 https://github.com/SilverAssist/silver-assist-security/security/dependabot
 ```
 
+#### 🚨 CRITICAL: GitHub CLI Pager Management
+
+**MANDATORY: Always disable pager for `gh` commands to prevent terminal blocking**
+
+When using GitHub CLI (`gh`) commands, the output is sent to a pager by default (like `less`), which blocks the terminal and requires manual interaction to exit. This is problematic for automation and quick checks.
+
+**✅ CORRECT - Use PAGER=cat prefix:**
+```bash
+# Disable pager with PAGER=cat environment variable
+PAGER=cat gh run list --limit 3
+PAGER=cat gh pr view 1
+PAGER=cat gh run view 18422501653
+PAGER=cat gh pr checks 1
+PAGER=cat gh workflow list
+```
+
+**✅ CORRECT - Pipe to cat:**
+```bash
+# Alternative: pipe output to cat
+gh run list --limit 3 | cat
+gh pr view 1 | cat
+gh run view 18422501653 | cat
+```
+
+**❌ INCORRECT - Without pager management:**
+```bash
+# These will block terminal waiting for user input
+gh run list --limit 3          # ❌ Blocks terminal
+gh pr view 1                   # ❌ Blocks terminal
+gh run view 18422501653        # ❌ Blocks terminal
+```
+
+**Why This Matters:**
+- Terminal remains blocked waiting for pager exit (q key)
+- Breaks automation and scripting workflows
+- Prevents rapid command execution
+- Causes workflow interruptions
+
+**Rule: ALL `gh` commands MUST use `PAGER=cat` prefix or `| cat` suffix**
+
 #### Local Validation
 
 **Before Pushing Dependency Changes:**
