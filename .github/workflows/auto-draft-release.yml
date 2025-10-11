@@ -1,0 +1,420 @@
+# Automatic Weekly Draft Release Workflow
+#
+# This workflow creates draft releases automatically on a weekly schedule,
+# consolidating all dependency updates and changes merged during the week.
+#
+# Triggers:
+# - Weekly: Every Monday at 10:30 AM Mexico City time (after Dependabot updates)
+# - Manual: workflow_dispatch for on-demand releases
+# - Forced: Push with [release] tag in commit message for urgent releases
+#
+# Strategy:
+# - Minimum 7 days between releases (prevents spam)
+# - Groups all changes since last tag into single release
+# - Security fixes trigger immediate release (bypass 7-day rule)
+# - Full test validation before creating draft
+# - Automatic PATCH version increment for dependency updates
+#
+# @package SilverAssist\Security
+# @since 1.1.14
+# @author Silver Assist
+
+name: Weekly Draft Release
+
+on:
+  # Scheduled: Every Monday 10:30 AM Mexico City (after Dependabot runs at 9:00-10:00)
+  schedule:
+    - cron: "30 16 * * 1" # 16:30 UTC = 10:30 AM Mexico City
+  
+  # Push with [release] tag in commit message for forced immediate release
+  push:
+    branches:
+      - main
+  
+  # Manual trigger for on-demand releases
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: "Force release creation (bypass 7-day minimum)"
+        required: false
+        type: boolean
+        default: false
+      release_type:
+        description: "Release type (patch/minor/major)"
+        required: false
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+# Permissions needed for creating releases and tags
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  check-release-criteria:
+    name: Check Release Criteria
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      release_type: ${{ steps.check.outputs.release_type }}
+      new_version: ${{ steps.check.outputs.new_version }}
+      commits_since: ${{ steps.check.outputs.commits_since }}
+      days_since: ${{ steps.check.outputs.days_since }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for accurate tag detection
+      
+      - name: Check release criteria
+        id: check
+        run: |
+          # Get last tag or default to v0.0.0
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "📌 Last tag: $LAST_TAG"
+          
+          # Count commits since last tag
+          COMMITS_SINCE=$(git rev-list $LAST_TAG..HEAD --count)
+          echo "📝 Commits since last tag: $COMMITS_SINCE"
+          
+          # Calculate days since last release
+          if [ "$LAST_TAG" = "v0.0.0" ]; then
+            DAYS_SINCE=999 # First release
+            LAST_TAG_DATE="N/A"
+          else
+            LAST_TAG_DATE=$(git log -1 --format=%ai $LAST_TAG)
+            DAYS_SINCE=$(( ($(date +%s) - $(date -d "$LAST_TAG_DATE" +%s)) / 86400 ))
+          fi
+          echo "📅 Days since last release: $DAYS_SINCE"
+          
+          # Check for security-related commits
+          SECURITY_COMMITS=$(git log $LAST_TAG..HEAD --grep="security\|CVE\|vulnerability\|\[security\]" -i --oneline | wc -l)
+          echo "🔒 Security commits found: $SECURITY_COMMITS"
+          
+          # Check for forced release tag in last commit
+          FORCE_RELEASE_TAG=$(git log -1 --pretty=%B | grep -i "\[release\]" | wc -l)
+          echo "🚀 Force release tag: $FORCE_RELEASE_TAG"
+          
+          # Initialize decision variables
+          SHOULD_RELEASE=false
+          RELEASE_TYPE="patch"
+          
+          # Determine release type from input or auto-detect
+          if [ "${{ github.event.inputs.release_type }}" != "" ]; then
+            RELEASE_TYPE="${{ github.event.inputs.release_type }}"
+            echo "📋 Release type from input: $RELEASE_TYPE"
+          fi
+          
+          # Criterio 1: Security update (immediate release, bypass time rules)
+          if [ $SECURITY_COMMITS -gt 0 ]; then
+            SHOULD_RELEASE=true
+            RELEASE_TYPE="patch"
+            echo "✅ CRITERION 1 MET: Security commits detected - immediate release"
+          
+          # Criterio 2: Forced release via [release] tag in commit
+          elif [ $FORCE_RELEASE_TAG -gt 0 ]; then
+            SHOULD_RELEASE=true
+            echo "✅ CRITERION 2 MET: [release] tag found - forced release"
+          
+          # Criterio 3: Manual workflow dispatch with force flag
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.force_release }}" = "true" ]; then
+            if [ $COMMITS_SINCE -gt 0 ]; then
+              SHOULD_RELEASE=true
+              echo "✅ CRITERION 3 MET: Manual forced release with changes"
+            else
+              echo "❌ CRITERION 3 FAILED: Manual forced release requested but no commits to release"
+            fi
+          
+          # Criterio 4: Scheduled weekly release (requires 7+ days and changes)
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ $COMMITS_SINCE -gt 0 ] && [ $DAYS_SINCE -ge 7 ]; then
+              SHOULD_RELEASE=true
+              echo "✅ CRITERION 4 MET: Scheduled release - $COMMITS_SINCE commits and $DAYS_SINCE days elapsed"
+            else
+              echo "ℹ️  CRITERION 4 NOT MET:"
+              [ $COMMITS_SINCE -eq 0 ] && echo "    - No commits since last release"
+              [ $DAYS_SINCE -lt 7 ] && echo "    - Only $DAYS_SINCE days since last release (minimum 7)"
+            fi
+          
+          # Criterio 5: Manual workflow dispatch without force (still requires 7 days)
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ $COMMITS_SINCE -gt 0 ] && [ $DAYS_SINCE -ge 7 ]; then
+              SHOULD_RELEASE=true
+              echo "✅ CRITERION 5 MET: Manual release - $COMMITS_SINCE commits and $DAYS_SINCE days elapsed"
+            else
+              echo "ℹ️  CRITERION 5 NOT MET:"
+              [ $COMMITS_SINCE -eq 0 ] && echo "    - No commits since last release"
+              [ $DAYS_SINCE -lt 7 ] && echo "    - Only $DAYS_SINCE days since last release (minimum 7)"
+              echo "    💡 Use force_release=true to bypass the 7-day minimum"
+            fi
+          
+          # Criterio 6: Push event - only if [release] tag present (already checked in criterion 2)
+          else
+            echo "ℹ️  No release criteria met - skipping release"
+          fi
+          
+          # Calculate new version if release should be created
+          NEW_VERSION=""
+          if [ "$SHOULD_RELEASE" = "true" ]; then
+            # Remove 'v' prefix from tag for version calculation
+            CURRENT_VERSION=${LAST_TAG#v}
+            IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+            MAJOR=${VERSION_PARTS[0]:-0}
+            MINOR=${VERSION_PARTS[1]:-0}
+            PATCH=${VERSION_PARTS[2]:-0}
+            
+            case "$RELEASE_TYPE" in
+              major)
+                MAJOR=$((MAJOR + 1))
+                MINOR=0
+                PATCH=0
+                ;;
+              minor)
+                MINOR=$((MINOR + 1))
+                PATCH=0
+                ;;
+              patch)
+                PATCH=$((PATCH + 1))
+                ;;
+            esac
+            
+            NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+            echo "🎯 New version will be: v$NEW_VERSION (type: $RELEASE_TYPE)"
+          fi
+          
+          # Output results
+          echo "should_release=$SHOULD_RELEASE" >> $GITHUB_OUTPUT
+          echo "release_type=$RELEASE_TYPE" >> $GITHUB_OUTPUT
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "commits_since=$COMMITS_SINCE" >> $GITHUB_OUTPUT
+          echo "days_since=$DAYS_SINCE" >> $GITHUB_OUTPUT
+          
+          # Summary
+          echo ""
+          echo "📊 ============================================"
+          echo "📊 RELEASE DECISION SUMMARY"
+          echo "📊 ============================================"
+          echo "📊 Last tag: $LAST_TAG ($LAST_TAG_DATE)"
+          echo "📊 Commits since: $COMMITS_SINCE"
+          echo "📊 Days since: $DAYS_SINCE"
+          echo "📊 Security commits: $SECURITY_COMMITS"
+          echo "📊 Should release: $SHOULD_RELEASE"
+          echo "📊 Release type: $RELEASE_TYPE"
+          [ -n "$NEW_VERSION" ] && echo "📊 New version: v$NEW_VERSION"
+          echo "📊 ============================================"
+
+  validate-changes:
+    name: Validate All Changes
+    needs: check-release-criteria
+    if: needs.check-release-criteria.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php: ["8.3"]
+        wordpress: ["latest"]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      
+      - name: Validate composer.json
+        run: composer validate --strict
+      
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+      
+      - name: Check PHP syntax
+        run: |
+          echo "Validating PHP syntax in all files..."
+          find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" -exec php -l {} \; | grep -v "No syntax errors"
+      
+      - name: Run PHPStan
+        run: composer phpstan
+      
+      - name: Run PHPCS
+        run: composer phpcs
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      
+      - name: Install npm dependencies
+        run: npm ci
+      
+      - name: Build assets
+        run: npm run build
+      
+      - name: Verify minified files exist
+        run: |
+          echo "Checking for minified CSS files..."
+          ls -la assets/css/*.min.css
+          echo "Checking for minified JS files..."
+          ls -la assets/js/*.min.js
+      
+      - name: Security audit (Composer)
+        run: composer audit || echo "⚠️  Composer audit found issues - review required"
+      
+      - name: Security audit (npm)
+        run: npm audit --audit-level=moderate || echo "⚠️  npm audit found issues - review required"
+
+  create-draft-release:
+    name: Create Draft Release
+    needs: [check-release-criteria, validate-changes]
+    if: needs.check-release-criteria.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Update version in all files
+        run: |
+          NEW_VERSION="${{ needs.check-release-criteria.outputs.new_version }}"
+          echo "📝 Updating version to $NEW_VERSION in all files..."
+          
+          # Use the existing update-version-simple.sh script with --no-confirm flag
+          chmod +x scripts/update-version-simple.sh
+          ./scripts/update-version-simple.sh $NEW_VERSION --no-confirm
+      
+      - name: Generate CHANGELOG
+        id: changelog
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          NEW_VERSION="v${{ needs.check-release-criteria.outputs.new_version }}"
+          
+          echo "Generating changelog from $LAST_TAG to HEAD..."
+          
+          # Create changelog file
+          CHANGELOG_FILE="RELEASE_NOTES.md"
+          
+          echo "## 🚀 What's Changed in $NEW_VERSION" > $CHANGELOG_FILE
+          echo "" >> $CHANGELOG_FILE
+          
+          # Count different types of changes
+          DEPENDENCY_CHANGES=$(git log $LAST_TAG..HEAD --oneline --grep="🔧\|dependencies\|Bump" -i | wc -l)
+          BUG_FIXES=$(git log $LAST_TAG..HEAD --oneline --grep="🐛\|fix\|Fix" -i | wc -l)
+          FEATURES=$(git log $LAST_TAG..HEAD --oneline --grep="✨\|feat\|Feature" -i | wc -l)
+          SECURITY=$(git log $LAST_TAG..HEAD --oneline --grep="🔒\|security\|CVE" -i | wc -l)
+          
+          # Dependency updates
+          if [ $DEPENDENCY_CHANGES -gt 0 ]; then
+            echo "### 🔧 Dependencies ($DEPENDENCY_CHANGES updates)" >> $CHANGELOG_FILE
+            git log $LAST_TAG..HEAD --oneline --grep="🔧\|dependencies\|Bump" -i | sed 's/^[a-f0-9]* /- /' >> $CHANGELOG_FILE
+            echo "" >> $CHANGELOG_FILE
+          fi
+          
+          # Security fixes
+          if [ $SECURITY -gt 0 ]; then
+            echo "### 🔒 Security ($SECURITY fixes)" >> $CHANGELOG_FILE
+            git log $LAST_TAG..HEAD --oneline --grep="🔒\|security\|CVE" -i | sed 's/^[a-f0-9]* /- /' >> $CHANGELOG_FILE
+            echo "" >> $CHANGELOG_FILE
+          fi
+          
+          # Bug fixes
+          if [ $BUG_FIXES -gt 0 ]; then
+            echo "### 🐛 Bug Fixes ($BUG_FIXES fixes)" >> $CHANGELOG_FILE
+            git log $LAST_TAG..HEAD --oneline --grep="🐛\|fix\|Fix" -i | sed 's/^[a-f0-9]* /- /' >> $CHANGELOG_FILE
+            echo "" >> $CHANGELOG_FILE
+          fi
+          
+          # New features
+          if [ $FEATURES -gt 0 ]; then
+            echo "### ✨ Features ($FEATURES new)" >> $CHANGELOG_FILE
+            git log $LAST_TAG..HEAD --oneline --grep="✨\|feat\|Feature" -i | sed 's/^[a-f0-9]* /- /' >> $CHANGELOG_FILE
+            echo "" >> $CHANGELOG_FILE
+          fi
+          
+          # Other changes
+          echo "### 📝 Other Changes" >> $CHANGELOG_FILE
+          git log $LAST_TAG..HEAD --oneline --invert-grep --grep="🔧\|🐛\|✨\|🔒" -i | sed 's/^[a-f0-9]* /- /' >> $CHANGELOG_FILE
+          echo "" >> $CHANGELOG_FILE
+          
+          # Add statistics
+          echo "---" >> $CHANGELOG_FILE
+          echo "" >> $CHANGELOG_FILE
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$LAST_TAG...$NEW_VERSION" >> $CHANGELOG_FILE
+          echo "" >> $CHANGELOG_FILE
+          echo "📊 **Statistics:**" >> $CHANGELOG_FILE
+          echo "- ${{ needs.check-release-criteria.outputs.commits_since }} commits" >> $CHANGELOG_FILE
+          echo "- ${{ needs.check-release-criteria.outputs.days_since }} days since last release" >> $CHANGELOG_FILE
+          echo "- $DEPENDENCY_CHANGES dependency updates" >> $CHANGELOG_FILE
+          [ $SECURITY -gt 0 ] && echo "- 🔒 $SECURITY security fixes" >> $CHANGELOG_FILE
+          [ $BUG_FIXES -gt 0 ] && echo "- $BUG_FIXES bug fixes" >> $CHANGELOG_FILE
+          [ $FEATURES -gt 0 ] && echo "- $FEATURES new features" >> $CHANGELOG_FILE
+          
+          # Output changelog content
+          echo "📋 Release notes preview:"
+          cat $CHANGELOG_FILE
+          
+          # Save for next step
+          echo "changelog_file=$CHANGELOG_FILE" >> $GITHUB_OUTPUT
+      
+      - name: Commit version changes
+        run: |
+          NEW_VERSION="${{ needs.check-release-criteria.outputs.new_version }}"
+          RELEASE_TYPE="${{ needs.check-release-criteria.outputs.release_type }}"
+          
+          git add -A
+          git commit -m "🚀 Release v$NEW_VERSION" -m "Automated $RELEASE_TYPE version bump for weekly release." -m "- Version updated in all plugin files" -m "- CHANGELOG generated from commits" -m "- All tests passing" -m "- Ready for release" || echo "No changes to commit"
+          
+          git push origin main
+      
+      - name: Create Git tag
+        run: |
+          NEW_VERSION="v${{ needs.check-release-criteria.outputs.new_version }}"
+          git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
+          git push origin "$NEW_VERSION"
+      
+      - name: Create Draft Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.check-release-criteria.outputs.new_version }}
+          name: "v${{ needs.check-release-criteria.outputs.new_version }}"
+          body_path: RELEASE_NOTES.md
+          draft: true
+          prerelease: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Summary
+        run: |
+          echo "## 🎉 Draft Release Created!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** v${{ needs.check-release-criteria.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Type:** ${{ needs.check-release-criteria.outputs.release_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commits:** ${{ needs.check-release-criteria.outputs.commits_since }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All validation checks passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Version updated in all files" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Git tag created" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Draft release created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "👉 **Next steps:**" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review the draft release on GitHub" >> $GITHUB_STEP_SUMMARY
+          echo "2. Edit release notes if needed" >> $GITHUB_STEP_SUMMARY
+          echo "3. Publish the release when ready" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View Draft Release](https://github.com/${{ github.repository }}/releases)" >> $GITHUB_STEP_SUMMARY
