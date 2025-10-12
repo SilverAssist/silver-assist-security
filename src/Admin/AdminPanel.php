@@ -478,18 +478,18 @@ class AdminPanel {
 				\wp_send_json_error( [ 'message' => 'Insufficient permissions' ] );
 			}
 
-		// Process form data - handle checkboxes that may not be present when unchecked
-		$settings = [
-			// Login Security
-			'silver_assist_login_attempts'        => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_attempts'] ?? '5' ) ) ),
-			'silver_assist_lockout_duration'      => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_lockout_duration'] ?? '900' ) ) ),
-			'silver_assist_session_timeout'       => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_session_timeout'] ?? '30' ) ) ),
-			'silver_assist_password_strength_enforcement' => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_password_strength_enforcement'] ?? '0' ) ) ),
-			'silver_assist_bot_protection'        => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_bot_protection'] ?? '0' ) ) ),
+			// Process form data - handle checkboxes that may not be present when unchecked
+			$settings = [
+				// Login Security
+				'silver_assist_login_attempts'        => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_attempts'] ?? '5' ) ) ),
+				'silver_assist_lockout_duration'      => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_lockout_duration'] ?? '900' ) ) ),
+				'silver_assist_session_timeout'       => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_session_timeout'] ?? '30' ) ) ),
+				'silver_assist_password_strength_enforcement' => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_password_strength_enforcement'] ?? '0' ) ) ),
+				'silver_assist_bot_protection'        => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_bot_protection'] ?? '0' ) ) ),
 
-			// GraphQL Security
-			'silver_assist_graphql_headless_mode' => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_headless_mode'] ?? '0' ) ) ),
-		];          // Update all settings
+				// GraphQL Security
+				'silver_assist_graphql_headless_mode' => (int) ( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_headless_mode'] ?? '0' ) ) ),
+			];          // Update all settings
 			foreach ( $settings as $option_name => $value ) {
 				\update_option( $option_name, $value );
 			}
@@ -527,10 +527,10 @@ class AdminPanel {
 
 			// Check user permissions
 			if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'message' => 'Insufficient permissions' ] );
-		}
+				\wp_send_json_error( [ 'message' => 'Insufficient permissions' ] );
+			}
 
-		$path                  = \sanitize_text_field( \wp_unslash( $_POST['path'] ?? '' ) );            // Use centralized PathValidator for validation
+			$path              = \sanitize_text_field( \wp_unslash( $_POST['path'] ?? '' ) );            // Use centralized PathValidator for validation
 			$validation_result = PathValidator::validate_admin_path( $path );
 
 			if ( $validation_result['is_valid'] ) {
@@ -701,27 +701,27 @@ class AdminPanel {
 					$remaining        = $timeout - time();
 					$lockout_duration = (int) DefaultConfig::get_option( 'silver_assist_lockout_duration' );
 
-				$blocked_ips[] = [
-					'hash'              => $key,
-					'ip'                => 'Hidden for security',
-					'remaining_time'    => $remaining,
-					'remaining_minutes' => max( 0, round( $remaining / 60 ) ),
-					'blocked_at'        => gmdate( 'Y-m-d H:i:s', (int) ( time() - ( $lockout_duration - $remaining ) ) ),
-				];
+					$blocked_ips[] = [
+						'hash'              => $key,
+						'ip'                => 'Hidden for security',
+						'remaining_time'    => $remaining,
+						'remaining_minutes' => max( 0, round( $remaining / 60 ) ),
+						'blocked_at'        => gmdate( 'Y-m-d H:i:s', (int) ( time() - ( $lockout_duration - $remaining ) ) ),
+					];
+				}
 			}
-		}
 
-		return $blocked_ips;
-	} catch ( Exception $e ) {
-		// Log error and return empty array
-		SecurityHelper::log_security_event(
-			'BLOCKED_IPS_ERROR',
-			"Error getting blocked IPs: {$e->getMessage()}",
-			[ 'exception' => $e->getMessage() ]
-		);
-		return [];
+			return $blocked_ips;
+		} catch ( Exception $e ) {
+			// Log error and return empty array
+			SecurityHelper::log_security_event(
+				'BLOCKED_IPS_ERROR',
+				"Error getting blocked IPs: {$e->getMessage()}",
+				[ 'exception' => $e->getMessage() ]
+			);
+			return [];
+		}
 	}
-}
 
 	/**
 	 * Count active security features

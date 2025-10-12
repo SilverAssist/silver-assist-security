@@ -144,9 +144,9 @@ class PathValidator {
 			// 3. Ends with forbidden word preceded by separator, but allow any valid prefix
 			if ( preg_match( "/[-_]{$forbidden}$/", $path ) ) {
 				// Allow if it has any prefix (regardless of length)
-			$prefix = preg_replace( "/[-_]{$forbidden}$/", '', $path );
-			// Only reject if no prefix or if prefix is also forbidden.
-			if ( empty( $prefix ) || in_array( $prefix, self::$forbidden_paths, true ) ) {
+				$prefix = preg_replace( "/[-_]{$forbidden}$/", '', $path );
+				// Only reject if no prefix or if prefix is also forbidden.
+				if ( empty( $prefix ) || in_array( $prefix, self::$forbidden_paths, true ) ) {
 					return [
 						'is_valid'      => false,
 						'error_message' => sprintf(

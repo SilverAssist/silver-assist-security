@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<ruleset name="Silver Assist Security - Modern PHP 8+ Standards">
+	<description>WordPress Coding Standards adapted for modern PHP 8+ development</description>
+
+	<!-- Show sniff codes in all reports -->
+	<arg value="ps"/>
+	
+	<!-- Check all PHP files in the project -->
+	<file>./src</file>
+	
+	<!-- Exclude vendor and other directories -->
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/tests/*</exclude-pattern>
+	<exclude-pattern>*/languages/*</exclude-pattern>
+
+	<!-- Use WordPress-Core ruleset as base -->
+	<rule ref="WordPress-Core">
+		<!-- EXCLUDED: Modern PHP 8+ short array syntax [] -->
+		<exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+		
+		<!-- EXCLUDED: We use PSR-4 naming (AdminPanel.php not class-adminpanel.php) -->
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+		
+		<!-- EXCLUDED: Inline comments don't require punctuation in modern code -->
+		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
+		
+		<!-- EXCLUDED: We use modern comparison style ($var === 'value') -->
+		<exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
+		
+		<!-- EXCLUDED: Function comments not required for self-documenting code -->
+		<exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+		<exclude name="Squiz.Commenting.FunctionComment.MissingParamComment"/>
+		<exclude name="Squiz.Commenting.FunctionComment.ParamCommentFullStop"/>
+		
+		<!-- EXCLUDED: We use modern string interpolation -->
+		<exclude name="WordPress.WP.AlternativeFunctions.strip_tags_strip_tags"/>
+		
+		<!-- EXCLUDED: Standard design patterns (Singleton, GraphQL interfaces) -->
+		<exclude name="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid"/>
+		
+		<!-- EXCLUDED: Direct DB queries are sometimes necessary for performance -->
+		<!-- We'll review these manually -->
+		<exclude name="WordPress.DB.DirectDatabaseQuery.DirectQuery"/>
+		<exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching"/>
+		
+		<!-- EXCLUDED: File docblocks not required (we use PHPDoc for classes/methods) -->
+		<exclude name="Squiz.Commenting.FileComment.Missing"/>
+		
+		<!-- EXCLUDED: Variable naming - we use camelCase for modern PHP -->
+		<exclude name="WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase"/>
+		<exclude name="WordPress.NamingConventions.ValidVariableName.PropertyNotSnakeCase"/>
+	</rule>
+
+	<!-- Minimum supported PHP version -->
+	<config name="minimum_supported_wp_version" value="6.5"/>
+	<config name="testVersion" value="8.2-"/>
+
+	<!-- Show progress and use colors -->
+	<arg name="colors"/>
+	<arg value="p"/>
+
+	<!-- Enable parallel processing -->
+	<arg name="parallel" value="8"/>
+
+	<!-- Show sniff names on failure -->
+	<arg value="s"/>
+</ruleset>

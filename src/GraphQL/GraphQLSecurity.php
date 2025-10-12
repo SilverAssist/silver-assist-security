@@ -589,9 +589,9 @@ class GraphQLSecurity {
 					$timeout_config['current_timeout']
 				),
 				[
-					'php_timeout'      => $timeout_config['php_timeout'],
-					'graphql_timeout'  => $timeout_config['current_timeout'],
-					'applied_timeout'  => $timeout_config['php_timeout'] === 0 ? $timeout_config['current_timeout'] :
+					'php_timeout'     => $timeout_config['php_timeout'],
+					'graphql_timeout' => $timeout_config['current_timeout'],
+					'applied_timeout' => $timeout_config['php_timeout'] === 0 ? $timeout_config['current_timeout'] :
 						min( $timeout_config['php_timeout'], $timeout_config['current_timeout'] ),
 				]
 			);
