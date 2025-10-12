@@ -246,7 +246,7 @@ Yes! Go to **Settings → Security Essentials** to configure login attempt limit
 
 **System Requirements**
 - **WordPress**: 6.5 or higher
-- **PHP**: 8.3 or higher
+- **PHP**: 8.2 or higher
 - **HTTPS**: Recommended for full security features
 
 **Important Notes**
@@ -309,7 +309,7 @@ Run comprehensive quality checks matching CI/CD pipeline:
 - **Unit Tests**: 250+ tests across all security components
 - **Integration Tests**: 25+ tests for WordPress environment
 - **Security Tests**: Comprehensive coverage of login, cookies, GraphQL
-- **CI/CD Matrix**: 12 environment combinations (PHP 8.0-8.3 × WordPress 6.5-latest)
+- **CI/CD Matrix**: 12 environment combinations (PHP 8.0-8.2 × WordPress 6.5-latest)
 
 ## 🆘 Support & Troubleshooting
 

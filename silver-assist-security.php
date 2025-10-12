@@ -8,9 +8,9 @@
  * Author URI: http://silverassist.com/
  * Text Domain: silver-assist-security
  * Domain Path: /languages
- * Requires PHP: 8.3
+ * Requires PHP: 8.2
  * Requires at least: 6.5
- * Tested up to: 6.4
+ * Tested up to: 6.7
  * Network: false
  * License: Polyform Noncommercial License 1.0.0
  * License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/

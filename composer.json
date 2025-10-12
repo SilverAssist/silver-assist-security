@@ -20,7 +20,7 @@
     ],
     "homepage": "http://silverassist.com/",
     "require": {
-        "php": ">=8.3",
+		"php": ">=8.2",
         "silverassist/wp-github-updater": "^1.0",
         "silverassist/wp-settings-hub": "^1.1"
     },
