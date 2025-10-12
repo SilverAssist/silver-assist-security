@@ -353,12 +353,12 @@ jobs:
               with:
                   php-version: 8.2
 
-            - name: Check PHP 8.3+ compatibility
+            - name: Check PHP 8.2+ compatibility
               run: |
-                  # Check for PHP 8.3+ features usage
+                  # Check for PHP 8.2+ features usage
                   php -r "
-                    if (version_compare(PHP_VERSION, '8.3.0', '<')) {
-                      echo 'PHP 8.3+ required';
+                    if (version_compare(PHP_VERSION, '8.2.0', '<')) {
+                      echo 'PHP 8.2+ required';
                       exit(1);
                     }
                     echo 'PHP version compatible';
