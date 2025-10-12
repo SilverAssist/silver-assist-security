@@ -3,7 +3,7 @@
  * Plugin Name: Silver Assist Security Essentials
  * Plugin URI: https://github.com/SilverAssist/silver-assist-security
  * Description: Resolves critical security vulnerabilities: WordPress login protection, HTTPOnly cookie implementation, and comprehensive GraphQL security. Addresses security audit findings automatically.
- * Version: 1.1.15
+ * Version: 1.1.14
  * Author: Silver Assist
  * Author URI: http://silverassist.com/
  * Text Domain: silver-assist-security
@@ -18,7 +18,7 @@
  * @package SilverAssist\Security
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.15
+ * @version 1.1.14
  */
 
 // Prevent direct access
@@ -26,13 +26,13 @@ if ( ! defined( 'ABSPATH' )) {
 	exit;
 }
 
-// PHP version check - Require PHP 8.3+
-if (version_compare( PHP_VERSION, '8.3.0', '<' )) {
+// PHP version check - Require PHP 8.2+
+if (version_compare( PHP_VERSION, '8.2.0', '<' )) {
 	add_action(
 		'admin_notices',
 		function () {
 		echo '<div class="notice notice-error"><p>';
-		echo '<strong>Silver Assist Security Essentials:</strong> This plugin requires PHP 8.3 or higher. ';
+		echo '<strong>Silver Assist Security Essentials:</strong> This plugin requires PHP 8.2 or higher. ';
 		echo 'You are currently running PHP ' . PHP_VERSION . '. ';
 		echo 'Please contact your hosting provider to upgrade PHP.';
 		echo '</p></div>';
