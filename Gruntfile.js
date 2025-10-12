@@ -45,54 +45,28 @@ module.exports = function (grunt) {
                     "assets/js/update-check.min.js": ["assets/js/update-check.js"]
                 }
             }
-        },
-
-        // CSS minification with PostCSS and cssnano (supports modern CSS)
-        postcss: {
-            options: {
-                processors: [
-                    require("cssnano")({
-                        preset: "default"
-                    })
-                ]
-            },
-            admin: {
-                src: "assets/css/admin.css",
-                dest: "assets/css/admin.min.css"
-            },
-            passwordValidation: {
-                src: "assets/css/password-validation.css", 
-                dest: "assets/css/password-validation.min.css"
-            },
-            variables: {
-                src: "assets/css/variables.css",
-                dest: "assets/css/variables.min.css"
-            }
         }
     });
 
     // Load grunt plugins
-    grunt.loadNpmTasks("grunt-postcss");
     grunt.loadNpmTasks("grunt-contrib-uglify");
 
     // Register tasks
-    grunt.registerTask("css", ["postcss"]);
     grunt.registerTask("js", ["uglify"]);
-    grunt.registerTask("default", ["postcss", "uglify"]);
-    grunt.registerTask("minify", ["postcss", "uglify"]);
+    grunt.registerTask("default", ["uglify"]);
+    grunt.registerTask("minify", ["uglify"]);
 
     // Custom task to show minification results
     grunt.registerTask("build", "Build minified assets", function() {
-        grunt.task.run(["postcss", "uglify"]);
+        grunt.task.run(["uglify"]);
         grunt.log.writeln("");
-        grunt.log.writeln("✨ Asset minification completed successfully!");
+        grunt.log.writeln("✨ JavaScript minification completed successfully!");
         grunt.log.writeln("📦 Generated files:");
-        grunt.log.writeln("   • assets/css/admin.min.css");
-        grunt.log.writeln("   • assets/css/password-validation.min.css");
-        grunt.log.writeln("   • assets/css/variables.min.css");
         grunt.log.writeln("   • assets/js/admin.min.js");
         grunt.log.writeln("   • assets/js/password-validation.min.js");
+        grunt.log.writeln("   • assets/js/update-check.min.js");
         grunt.log.writeln("");
+        grunt.log.writeln("ℹ CSS minification: Run 'npm run minify:css' separately");
         grunt.log.writeln("🚀 Ready for production build!");
     });
 };
