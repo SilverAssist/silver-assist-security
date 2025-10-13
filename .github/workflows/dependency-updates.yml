@@ -51,7 +51,7 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "| Package | Current | Latest | Status |" >> $GITHUB_STEP_SUMMARY
             echo "|---------|---------|--------|--------|" >> $GITHUB_STEP_SUMMARY
-            jq -r '.installed[] | "| \(.name) | \(.version) | \(.latest) | \(.\"latest-status\") |"' composer-outdated.json >> $GITHUB_STEP_SUMMARY
+            jq -r '.installed[] | "| \(.name) | \(.version) | \(.latest) | \(."latest-status") |"' composer-outdated.json >> $GITHUB_STEP_SUMMARY
           else
             echo "## ✅ All Composer packages are up to date!" >> $GITHUB_STEP_SUMMARY
           fi
