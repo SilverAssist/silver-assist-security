@@ -65,7 +65,7 @@ jobs:
       
       - name: Upload Composer outdated report
         if: steps.composer-outdated.outputs.outdated_count > 0
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: composer-outdated-report
           path: composer-outdated.json
@@ -131,7 +131,7 @@ jobs:
       
       - name: Upload npm outdated report
         if: steps.npm-outdated.outputs.has_outdated == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: npm-outdated-report
           path: npm-outdated.json
@@ -186,7 +186,7 @@ jobs:
       
       - name: Upload security reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: security-audit-reports
           path: |
