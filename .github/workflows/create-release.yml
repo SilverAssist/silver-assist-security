@@ -314,7 +314,7 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Upload package as artifact
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v5
               with:
                   name: silver-assist-security-v${{ steps.version.outputs.version }}
                   path: ${{ steps.package.outputs.zip_path }}
