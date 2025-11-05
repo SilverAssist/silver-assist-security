@@ -6,7 +6,7 @@
  * and blacklist management functionality.
  *
  * @package SilverAssist\Security\Tests\Security
- * @since 1.1.16
+ * @since 1.1.15
  */
 
 use SilverAssist\Security\Security\IPBlacklist;
@@ -15,14 +15,14 @@ use SilverAssist\Security\Core\SecurityHelper;
 /**
  * IP Blacklist Test class
  *
- * @since 1.1.16
+ * @since 1.1.15
  */
 class IPBlacklistTest extends WP_UnitTestCase {
 
 	/**
 	 * Set up before each test
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function setUp(): void {
@@ -33,7 +33,7 @@ class IPBlacklistTest extends WP_UnitTestCase {
 	/**
 	 * Clean up test transients using aggressive database cleanup
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	private function clean_test_transients(): void {
@@ -54,7 +54,7 @@ class IPBlacklistTest extends WP_UnitTestCase {
 	/**
 	 * Test manual IP blacklisting functionality
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_ip_blacklist_blocks_malicious_ip(): void {
@@ -80,7 +80,7 @@ class IPBlacklistTest extends WP_UnitTestCase {
 	/**
 	 * Test automatic blacklist after violation threshold
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_automatic_blacklist_after_threshold(): void {
@@ -117,7 +117,7 @@ class IPBlacklistTest extends WP_UnitTestCase {
 	/**
 	 * Test different violation types are tracked separately
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_violation_types_tracking(): void {
@@ -147,7 +147,7 @@ class IPBlacklistTest extends WP_UnitTestCase {
 	/**
 	 * Test blacklist expiration
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_blacklist_expiration(): void {
@@ -174,7 +174,7 @@ class IPBlacklistTest extends WP_UnitTestCase {
 	/**
 	 * Test getting blacklist details
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_get_blacklist_details(): void {
@@ -196,7 +196,7 @@ class IPBlacklistTest extends WP_UnitTestCase {
 	/**
 	 * Test removing IP from blacklist
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_remove_from_blacklist(): void {
@@ -218,7 +218,7 @@ class IPBlacklistTest extends WP_UnitTestCase {
 	/**
 	 * Test violation count tracking
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_violation_count_tracking(): void {
@@ -243,7 +243,7 @@ class IPBlacklistTest extends WP_UnitTestCase {
 	/**
 	 * Test getting all blacklisted IPs
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_get_all_blacklisted_ips(): void {
@@ -278,7 +278,7 @@ class IPBlacklistTest extends WP_UnitTestCase {
 	/**
 	 * Test violation window expiration
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_violation_window_expiration(): void {
@@ -313,7 +313,7 @@ class IPBlacklistTest extends WP_UnitTestCase {
 	/**
 	 * Clean up after each test
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function tearDown(): void {

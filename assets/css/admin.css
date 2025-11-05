@@ -730,10 +730,6 @@
     button,
     input[type="submit"],
     #refresh-dashboard {
-        background: var(--silver-primary-blue);
-        color: var(--silver-bg-primary);
-        border: none;
-        border-radius: var(--silver-radius-base);
         cursor: pointer;
         transition: background-color var(--silver-transition-fast);
 

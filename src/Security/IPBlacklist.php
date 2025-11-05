@@ -6,9 +6,9 @@
  * based on violation thresholds and manual management capabilities.
  *
  * @package SilverAssist\Security\Security
- * @since 1.1.16
+ * @since 1.1.15
  * @author Silver Assist
- * @version 1.1.16
+ * @version 1.1.15
  */
 
 namespace SilverAssist\Security\Security;
@@ -22,7 +22,7 @@ use SilverAssist\Security\Core\SecurityHelper;
  * Manages IP blacklisting for malicious IPs and automatic blacklisting
  * based on violation patterns.
  *
- * @since 1.1.16
+ * @since 1.1.15
  */
 class IPBlacklist {
 
@@ -36,7 +36,7 @@ class IPBlacklist {
 	/**
 	 * Constructor
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 */
 	public function __construct() {
 		// Initialize if needed
@@ -45,7 +45,7 @@ class IPBlacklist {
 	/**
 	 * Get singleton instance
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return IPBlacklist
 	 */
 	public static function getInstance(): IPBlacklist {
@@ -58,7 +58,7 @@ class IPBlacklist {
 	/**
 	 * Add IP to blacklist manually
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $ip IP address to blacklist
 	 * @param string $reason Reason for blacklisting
 	 * @param int    $duration Duration in seconds
@@ -92,7 +92,7 @@ class IPBlacklist {
 	/**
 	 * Check if IP is blacklisted
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $ip IP address to check
 	 * @return bool True if blacklisted, false otherwise
 	 */
@@ -106,7 +106,7 @@ class IPBlacklist {
 	 *
 	 * Tracks violations and automatically blacklists IP when threshold is reached.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $ip IP address
 	 * @param string $type Type of violation
 	 * @return void
@@ -148,7 +148,7 @@ class IPBlacklist {
 	/**
 	 * Automatically blacklist IP due to violations
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $ip IP address to blacklist
 	 * @param array  $violations Array of violations
 	 * @return void
@@ -191,7 +191,7 @@ class IPBlacklist {
 	/**
 	 * Get blacklist details for IP
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $ip IP address
 	 * @return array|false Blacklist details or false if not blacklisted
 	 */
@@ -203,7 +203,7 @@ class IPBlacklist {
 	/**
 	 * Remove IP from blacklist
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $ip IP address to remove
 	 * @return bool True if removed, false if not found
 	 */
@@ -227,7 +227,7 @@ class IPBlacklist {
 	/**
 	 * Get violation count for IP
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $ip IP address
 	 * @return int Number of violations
 	 */
@@ -244,7 +244,7 @@ class IPBlacklist {
 	 * Note: This is a simplified implementation. In a production environment,
 	 * you might want to store blacklist keys in a separate index for efficiency.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return array Array of blacklisted IP data
 	 */
 	public function get_all_blacklisted_ips(): array {
@@ -280,7 +280,7 @@ class IPBlacklist {
 	 *
 	 * This method would typically be called by a cron job.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return int Number of expired violations cleaned
 	 */
 	public function clean_expired_violations(): int {
@@ -292,7 +292,7 @@ class IPBlacklist {
 	/**
 	 * Get blacklist statistics
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return array Statistics about blacklisted IPs
 	 */
 	public function get_blacklist_stats(): array {
@@ -311,7 +311,7 @@ class IPBlacklist {
 	/**
 	 * Get CF7 specific blocked IPs
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return array Array of CF7 blocked IPs with their data
 	 */
 	public function get_cf7_blocked_ips(): array {
@@ -339,7 +339,7 @@ class IPBlacklist {
 	/**
 	 * Get CF7 attack count
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return int Total number of CF7 attacks
 	 */
 	public function get_cf7_attack_count(): int {
@@ -350,7 +350,7 @@ class IPBlacklist {
 	/**
 	 * Clear all CF7 related blocked IPs
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return int Number of IPs cleared
 	 */
 	public function clear_cf7_blacklist(): int {
@@ -376,7 +376,7 @@ class IPBlacklist {
 	/**
 	 * Add CF7-specific IP to blacklist
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $ip IP address to blacklist
 	 * @param string $reason Reason for blacklisting
 	 * @param string $type Type of block (cf7_manual, cf7_auto, etc)
@@ -421,7 +421,7 @@ class IPBlacklist {
 	/**
 	 * Check if a block reason is CF7 related
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $reason Block reason
 	 * @return bool True if CF7 related
 	 */
@@ -441,7 +441,7 @@ class IPBlacklist {
 	/**
 	 * Get CF7 violation count for specific IP
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $ip IP address
 	 * @return int Violation count
 	 */
@@ -463,7 +463,7 @@ class IPBlacklist {
 	/**
 	 * Increment CF7 attack count
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	private function increment_cf7_attack_count(): void {

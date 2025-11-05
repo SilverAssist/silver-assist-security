@@ -6,9 +6,9 @@
  * rate limiting, obsolete browser detection, and SQL injection detection.
  *
  * @package SilverAssist\Security\Security
- * @since 1.1.16
+ * @since 1.1.15
  * @author Silver Assist
- * @version 1.1.16
+ * @version 1.1.15
  */
 
 namespace SilverAssist\Security\Security;
@@ -21,14 +21,14 @@ use SilverAssist\Security\Core\SecurityHelper;
  *
  * Handles protection for all form submissions across the site
  *
- * @since 1.1.16
+ * @since 1.1.15
  */
 class FormProtection {
 
 	/**
 	 * Constructor
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 */
 	public function __construct() {
 		// Initialize if needed
@@ -39,7 +39,7 @@ class FormProtection {
 	 *
 	 * Implements rate limiting to prevent spam submissions.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $ip The client IP address
 	 * @return bool True if submission is allowed, false if rate limited
 	 */
@@ -73,7 +73,7 @@ class FormProtection {
 	 * Identifies old browsers, bots, and suspicious patterns that are
 	 * commonly used in automated attacks.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $user_agent User agent string to analyze
 	 * @return bool True if browser appears obsolete or suspicious
 	 */
@@ -106,7 +106,7 @@ class FormProtection {
 	 *
 	 * Analyzes both GET and POST data for common SQL injection patterns.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return bool True if SQL injection attempt detected
 	 */
 	public static function has_sql_injection_attempt(): bool {
@@ -155,7 +155,7 @@ class FormProtection {
 	/**
 	 * Get current rate limit configuration
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return int Current rate limit
 	 */
 	public function get_rate_limit(): int {
@@ -165,7 +165,7 @@ class FormProtection {
 	/**
 	 * Get rate limiting window in seconds
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return int Rate limiting window
 	 */
 	public function get_rate_window(): int {

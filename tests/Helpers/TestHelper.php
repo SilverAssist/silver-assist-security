@@ -170,7 +170,7 @@ class TestHelper
     /**
      * Clean up test transients
      *
-     * @since 1.1.16
+     * @since 1.1.15
      * @return void
      */
     public static function cleanup_test_transients(): void

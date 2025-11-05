@@ -6,7 +6,7 @@
  * CF7 IP management, filtering, and statistics.
  *
  * @package SilverAssist\Security\Tests\Integration
- * @since 1.1.16
+ * @since 1.1.15
  */
 
 namespace SilverAssist\Security\Tests\Integration;

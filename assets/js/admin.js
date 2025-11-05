@@ -77,8 +77,7 @@
         // Initialize admin path validation
         initAdminPathValidation();
 
-        // Initialize dashboard
-        initDashboard();
+                // Initialize dashboard components - refreshDashboard is available globally
     });
 
     /**
@@ -1031,12 +1030,86 @@
     // ========================================
 
     /**
+     * Load CF7 blocked IPs via AJAX (Global function for tab navigation)
+     * 
+     * @since 1.1.15
+     * @returns {void}
+     */
+    const loadCF7BlockedIPs = () => {
+        const $cf7Panel = $("#cf7-blocked-ips-content");
+        const $cf7Count = $("#cf7-threat-count");
+        
+        if (!$cf7Panel.length) return;
+        
+        $cf7Panel.html('<p class="loading">Loading CF7 blocked IPs...</p>');
+
+        const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
+
+        $.ajax({
+            url: ajaxurl,
+            type: "POST",
+            data: {
+                action: "silver_assist_get_cf7_blocked_ips",
+                nonce: nonce
+            },
+            success: response => {
+                const { success, data = {} } = response || {};
+                
+                if (success) {
+                    $cf7Panel.html(data.html || strings.noCF7BlockedIPs || "No CF7 blocked IPs found.");
+                    $cf7Count.text(data.count || 0);
+                    
+                    // Initialize unblock buttons after content load
+                    $cf7Panel.find(".unblock-cf7-ip").off("click").on("click", function() {
+                        const $btn = $(this);
+                        const ip = $btn.data("ip");
+                        
+                        if (!ip) return;
+                        
+                        const originalText = $btn.text();
+                        $btn.prop("disabled", true).text(strings.unblocking || "Unblocking...");
+
+                        $.ajax({
+                            url: ajaxurl,
+                            type: "POST",
+                            data: {
+                                action: "silver_assist_unblock_cf7_ip",
+                                nonce: nonce,
+                                ip: ip
+                            },
+                            success: response => {
+                                const { success, data = {} } = response || {};
+                                
+                                if (success) {
+                                    loadCF7BlockedIPs(); // Reload the list
+                                } else {
+                                    showMessage(data.error || strings.errorUnblockingCF7IP || "Error unblocking CF7 IP", "error");
+                                    $btn.prop("disabled", false).text(originalText);
+                                }
+                            },
+                            error: () => {
+                                showMessage(strings.errorUnblockingCF7IP || "Error unblocking CF7 IP", "error");
+                                $btn.prop("disabled", false).text(originalText);
+                            }
+                        });
+                    });
+                } else {
+                    $cf7Panel.html(`<p class="error">${data.error || strings.errorLoadingCF7IPs || "Error loading CF7 blocked IPs"}</p>`);
+                }
+            },
+            error: () => {
+                $cf7Panel.html(`<p class="error">${strings.errorLoadingCF7IPs || "Error loading CF7 blocked IPs"}</p>`);
+            }
+        });
+    };
+
+    /**
      * Initialize CF7 blocked IPs panel
      * 
      * Sets up event handlers for CF7 IP management including
      * viewing, blocking, unblocking, and exporting CF7 blocked IPs.
      * 
-     * @since 1.1.16
+     * @since 1.1.15
      * @returns {void}
      */
     const initCF7BlockedIPs = () => {
@@ -1051,58 +1124,7 @@
 
         let cf7RefreshTimeout;
 
-        /**
-         * Load CF7 blocked IPs via AJAX
-         */
-        const loadCF7BlockedIPs = () => {
-            $cf7Panel.html('<p class="loading">Loading CF7 blocked IPs...</p>');
-
-            const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
-
-            $.ajax({
-                url: ajaxurl,
-                type: "POST",
-                data: {
-                    action: "silver_assist_get_cf7_blocked_ips",
-                    nonce: nonce
-                },
-                success: response => {
-                    const { success, data = {} } = response || {};
-                    
-                    if (success) {
-                        $cf7Panel.html(data.html || strings.noCF7BlockedIPs || "No CF7 blocked IPs found.");
-                        $cf7Count.text(data.count || 0);
-                        
-                        // Initialize unblock buttons
-                        initUnblockCF7Buttons();
-                    } else {
-                        $cf7Panel.html(`<p class="error">${data.error || strings.errorLoadingCF7IPs || "Error loading CF7 blocked IPs"}</p>`);
-                    }
-                },
-                error: () => {
-                    $cf7Panel.html(`<p class="error">${strings.errorLoadingCF7IPs || "Error loading CF7 blocked IPs"}</p>`);
-                }
-            });
-        };
-
-        /**
-         * Initialize unblock buttons for CF7 IPs
-         */
-        const initUnblockCF7Buttons = () => {
-            $cf7Panel.find(".unblock-cf7-ip").off("click").on("click", function() {
-                const $btn = $(this);
-                const ip = $btn.data("ip");
-                
-                if (!ip) return;
-                
-                const { strings = {} } = silverAssistSecurity || {};
-                if (!confirm(strings.confirmUnblockCF7IP || `Are you sure you want to unblock CF7 access for ${ip}?`)) {
-                    return;
-                }
-                
-                unblockCF7IP(ip, $btn);
-            });
-        };
+        // Note: loadCF7BlockedIPs is now defined globally above for tab navigation
 
         /**
          * Block new CF7 IP
@@ -1312,7 +1334,7 @@
      * Handles tab switching, URL hash updates, and maintains state
      * across page loads. Supports deep linking via URL hash.
      * 
-     * @since 1.1.16
+     * @since 1.1.15
      * @returns {void}
      */
     const initTabNavigation = () => {
@@ -1396,9 +1418,9 @@
     $(document).ready(() => {
         initTabNavigation();   // Initialize tab system first
         initFormValidation();
-        initDashboardRefresh();
+        // Dashboard refresh is initialized in initFormValidation()
         initAutoSave();
-        initPathValidation();
+        initAdminPathValidation();
         initCF7BlockedIPs(); // Initialize CF7 panel
     });
 

@@ -3,7 +3,7 @@
  * Plugin Name: Silver Assist Security Essentials
  * Plugin URI: https://github.com/SilverAssist/silver-assist-security
  * Description: Resolves critical security vulnerabilities: WordPress login protection, HTTPOnly cookie implementation, and comprehensive GraphQL security. Addresses security audit findings automatically.
- * Version: 1.1.14
+ * Version: 1.1.15
  * Author: Silver Assist
  * Author URI: http://silverassist.com/
  * Text Domain: silver-assist-security
@@ -18,7 +18,7 @@
  * @package SilverAssist\Security
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.14
+ * @version 1.1.15
  */
 
 // Prevent direct access

@@ -6,7 +6,7 @@
  * rate limiting, IP blacklist, Under Attack mode, and spam detection.
  *
  * @package SilverAssist\Security\Security
- * @since 1.1.16
+ * @since 1.1.15
  */
 
 namespace SilverAssist\Security\Security;
@@ -19,14 +19,14 @@ use SilverAssist\Security\Core\SecurityHelper;
  *
  * Provides comprehensive security integration for Contact Form 7 forms
  *
- * @since 1.1.16
+ * @since 1.1.15
  */
 class ContactForm7Integration {
 
 	/**
 	 * Form Protection instance
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @var FormProtection|null
 	 */
 	private ?FormProtection $form_protection = null;
@@ -34,7 +34,7 @@ class ContactForm7Integration {
 	/**
 	 * IP Blacklist instance
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @var IPBlacklist|null
 	 */
 	private ?IPBlacklist $ip_blacklist = null;
@@ -42,7 +42,7 @@ class ContactForm7Integration {
 	/**
 	 * Under Attack Mode instance
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @var UnderAttackMode|null
 	 */
 	private ?UnderAttackMode $under_attack = null;
@@ -50,7 +50,7 @@ class ContactForm7Integration {
 	/**
 	 * Constructor
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 */
 	public function __construct() {
 		$this->init_security_components();
@@ -60,7 +60,7 @@ class ContactForm7Integration {
 	/**
 	 * Initialize security components
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	private function init_security_components(): void {
@@ -74,7 +74,7 @@ class ContactForm7Integration {
 	/**
 	 * Initialize WordPress hooks
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	private function init_hooks(): void {
@@ -100,7 +100,7 @@ class ContactForm7Integration {
 	/**
 	 * Validate CF7 form submission
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param mixed $result CF7 validation result
 	 * @param mixed $tags Form tags
 	 * @return mixed Modified validation result
@@ -125,7 +125,7 @@ class ContactForm7Integration {
 	/**
 	 * Main CF7 submission validation method
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param object $contact_form CF7 form object
 	 * @param array $submission_data Form submission data
 	 * @param string|null $client_ip Client IP address (optional)
@@ -275,7 +275,7 @@ class ContactForm7Integration {
 	/**
 	 * Process CF7 submission before sending
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param object $contact_form CF7 form object
 	 * @param bool $abort Whether to abort sending
 	 * @param object $submission CF7 submission object
@@ -295,7 +295,7 @@ class ContactForm7Integration {
 	/**
 	 * Handle CF7 spam detection
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param object $contact_form CF7 form object
 	 * @return void
 	 */
@@ -321,7 +321,7 @@ class ContactForm7Integration {
 	/**
 	 * Inject honeypot field into CF7 form
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $form CF7 form HTML
 	 * @return string Modified form HTML with honeypot
 	 */
@@ -337,7 +337,7 @@ class ContactForm7Integration {
 	/**
 	 * Validate Under Attack mode CAPTCHA
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param array $submission_data Form submission data
 	 * @return bool True if CAPTCHA is valid or not required
 	 */
@@ -359,7 +359,7 @@ class ContactForm7Integration {
 	/**
 	 * Get CF7 submission data from current request
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return array Submission data
 	 */
 	private function get_cf7_submission_data(): array {
@@ -369,7 +369,7 @@ class ContactForm7Integration {
 	/**
 	 * Get current CF7 form object
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return object|null CF7 form object or null
 	 */
 	private function get_current_cf7_form(): ?object {
@@ -384,7 +384,7 @@ class ContactForm7Integration {
 	/**
 	 * Check submission data for spam patterns
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param array $submission_data Form submission data
 	 * @return bool True if spam patterns detected
 	 */

@@ -6,9 +6,9 @@
  * Automatically activates when attack thresholds are exceeded.
  *
  * @package SilverAssist\Security\Security
- * @since 1.1.16
+ * @since 1.1.15
  * @author Silver Assist
- * @version 1.1.16
+ * @version 1.1.15
  */
 
 namespace SilverAssist\Security\Security;
@@ -21,14 +21,14 @@ use SilverAssist\Security\Core\SecurityHelper;
  *
  * Manages emergency CAPTCHA protection during coordinated attacks
  *
- * @since 1.1.16
+ * @since 1.1.15
  */
 class UnderAttackMode {
 
 	/**
 	 * Constructor
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 */
 	public function __construct() {
 		// Initialize if needed
@@ -37,7 +37,7 @@ class UnderAttackMode {
 	/**
 	 * Check if site is currently under attack
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return bool True if Under Attack mode is active
 	 */
 	public function is_under_attack(): bool {
@@ -50,7 +50,7 @@ class UnderAttackMode {
 	 *
 	 * Increments attack counter and activates Under Attack mode if threshold reached.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $ip Optional IP address of attacker
 	 * @return void
 	 */
@@ -84,7 +84,7 @@ class UnderAttackMode {
 	/**
 	 * Manually activate Under Attack mode
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $reason Reason for activation
 	 * @param int    $duration Optional custom duration (seconds)
 	 * @return void
@@ -117,7 +117,7 @@ class UnderAttackMode {
 	/**
 	 * Deactivate Under Attack mode
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function deactivate_under_attack_mode(): void {
@@ -136,7 +136,7 @@ class UnderAttackMode {
 	 *
 	 * During Under Attack mode, requires valid CAPTCHA.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param array $form_data Form submission data
 	 * @return bool True if submission allowed, false otherwise
 	 */
@@ -167,7 +167,7 @@ class UnderAttackMode {
 	/**
 	 * Generate CAPTCHA challenge
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $difficulty CAPTCHA difficulty level
 	 * @return array CAPTCHA data with question, answer, and token
 	 */
@@ -190,7 +190,7 @@ class UnderAttackMode {
 	/**
 	 * Validate CAPTCHA response
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $user_answer User's CAPTCHA answer
 	 * @param string $token CAPTCHA token
 	 * @return bool True if valid, false otherwise
@@ -240,7 +240,7 @@ class UnderAttackMode {
 	/**
 	 * Get current attack count for monitoring
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return int Current attack count in window
 	 */
 	public function get_current_attack_count(): int {
@@ -251,7 +251,7 @@ class UnderAttackMode {
 	/**
 	 * Get attack statistics
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return array Attack statistics and mode status
 	 */
 	public function get_attack_statistics(): array {
@@ -271,7 +271,7 @@ class UnderAttackMode {
 	/**
 	 * Create mathematical CAPTCHA based on difficulty
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $difficulty Difficulty level (easy, medium, hard)
 	 * @return array CAPTCHA question and answer
 	 */
@@ -310,7 +310,7 @@ class UnderAttackMode {
 	/**
 	 * Generate secure token for CAPTCHA
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $answer CAPTCHA answer
 	 * @return string Secure token
 	 */
@@ -327,7 +327,7 @@ class UnderAttackMode {
 	/**
 	 * Retrieve CAPTCHA answer from token
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $token CAPTCHA token
 	 * @return string|false CAPTCHA answer or false if invalid
 	 */
@@ -339,7 +339,7 @@ class UnderAttackMode {
 	/**
 	 * Clean up used CAPTCHA token
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @param string $token CAPTCHA token to remove
 	 * @return void
 	 */

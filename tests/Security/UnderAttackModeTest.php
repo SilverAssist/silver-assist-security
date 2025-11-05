@@ -6,7 +6,7 @@
  * CAPTCHA protection during coordinated attacks.
  *
  * @package SilverAssist\Security\Tests
- * @since 1.1.16
+ * @since 1.1.15
  */
 
 use SilverAssist\Security\Security\UnderAttackMode;
@@ -18,14 +18,14 @@ use SilverAssist\Security\Core\SecurityHelper;
  *
  * Tests the emergency mode that activates CAPTCHA during mass attacks
  *
- * @since 1.1.16
+ * @since 1.1.15
  */
 class UnderAttackModeTest extends WP_UnitTestCase {
 
 	/**
 	 * Setup test environment
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function setUp(): void {
@@ -36,7 +36,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	/**
 	 * Cleanup test environment
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function tearDown(): void {
@@ -47,7 +47,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	/**
 	 * Clean up test transients using aggressive database cleanup
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	private function clean_test_transients(): void {
@@ -68,7 +68,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	 *
 	 * Should activate when attack rate exceeds configured threshold.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_under_attack_mode_activation(): void {
@@ -97,7 +97,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	/**
 	 * Test Under Attack mode prevents form submissions without CAPTCHA
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_under_attack_blocks_submissions_without_captcha(): void {
@@ -129,7 +129,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	/**
 	 * Test CAPTCHA generation and validation
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_captcha_generation_and_validation(): void {
@@ -165,7 +165,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	/**
 	 * Test Under Attack mode automatic expiration
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_under_attack_mode_expiration(): void {
@@ -191,7 +191,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	/**
 	 * Test Under Attack mode can be manually deactivated
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_manual_deactivation(): void {
@@ -212,7 +212,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	/**
 	 * Test attack counter resets after time window
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_attack_counter_window_reset(): void {
@@ -242,7 +242,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	/**
 	 * Test Under Attack mode statistics and monitoring
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_under_attack_statistics(): void {
@@ -273,7 +273,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	/**
 	 * Test different CAPTCHA difficulty levels
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_captcha_difficulty_levels(): void {
@@ -299,7 +299,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	 *
 	 * Simulates the actual Contact Form 7 attack pattern from multiple IPs.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_coordinated_attack_response(): void {

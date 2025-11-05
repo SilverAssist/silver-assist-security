@@ -6,29 +6,27 @@
  * measures (rate limiting, IP blacklist, Under Attack mode) to CF7 forms.
  *
  * @package SilverAssist\Security\Tests
- * @since 1.1.16
+ * @since 1.1.15
  */
 
 use SilverAssist\Security\Security\ContactForm7Integration;
-use SilverAssist\Security\Security\FormProtection;
 use SilverAssist\Security\Security\IPBlacklist;
 use SilverAssist\Security\Security\UnderAttackMode;
 use SilverAssist\Security\Core\DefaultConfig;
-use SilverAssist\Security\Core\SecurityHelper;
 
 /**
  * Contact Form 7 Integration Test Class
  *
  * Tests security integration with Contact Form 7 forms
  *
- * @since 1.1.16
+ * @since 1.1.15
  */
 class ContactForm7IntegrationTest extends WP_UnitTestCase {
 
 	/**
 	 * Setup test environment
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function setUp(): void {
@@ -42,7 +40,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Cleanup test environment
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function tearDown(): void {
@@ -53,7 +51,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Clean up all security-related transients
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	private function clean_test_transients(): void {
@@ -73,7 +71,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Mock Contact Form 7 environment for testing
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	private function mock_cf7_environment(): void {
@@ -88,7 +86,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	 *
 	 * Should properly register all necessary WordPress hooks.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_cf7_hooks_registration(): void {
@@ -121,7 +119,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	 *
 	 * Should apply all security measures to form submissions.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_cf7_security_validation(): void {
@@ -155,7 +153,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	 *
 	 * Should apply form rate limiting to CF7 submissions.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_cf7_rate_limiting(): void {
@@ -196,7 +194,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	 *
 	 * Should block submissions from blacklisted IPs.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_cf7_ip_blacklist_blocking(): void {
@@ -226,7 +224,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	 *
 	 * Should require CAPTCHA during Under Attack mode.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_cf7_under_attack_mode(): void {
@@ -276,7 +274,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	 *
 	 * Should block submissions with honeypot field filled.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_cf7_honeypot_protection(): void {
@@ -322,7 +320,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	 *
 	 * Should block submissions from obsolete browsers.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_cf7_obsolete_browser_blocking(): void {
@@ -352,7 +350,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	 *
 	 * Should block submissions that are too fast (bot behavior).
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_cf7_submission_timing(): void {
@@ -403,7 +401,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	 *
 	 * Should detect and block common spam patterns.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_cf7_spam_pattern_detection(): void {
@@ -443,7 +441,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	 *
 	 * Simulates the exact attack scenario from the user's report.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_cf7_comprehensive_attack_scenario(): void {
@@ -512,7 +510,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Create mock Contact Form 7 form for testing
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return object Mock CF7 form object
 	 */
 	private function create_mock_cf7_form(): object {

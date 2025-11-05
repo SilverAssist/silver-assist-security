@@ -1185,7 +1185,7 @@ class AdminPanel {
 					<div class="status-card form-security">
 						<div class="card-header">
 							<h3><?php \esc_html_e( 'Form Protection', 'silver-assist-security' ); ?></h3>
-							<span class="status-indicator enabled" id="form-protection-status">Active</span>
+							<span class="status-indicator active" id="form-protection-status">Active</span>
 						</div>
 						<div class="card-content">
 							<div class="feature-status">
@@ -1276,8 +1276,8 @@ class AdminPanel {
 
 					<div class="status-card cf7-security">
 						<div class="card-header">
-							<h3><?php esc_html_e( 'Contact Form 7 Security', 'silver-assist-security' ); ?></h3>
-							<span class="status-indicator" id="cf7-status">
+							<h3><?php esc_html_e( 'CF7 Security', 'silver-assist-security' ); ?></h3>
+							<span class="status-indicator <?php echo $cf7_protection_enabled ? 'active' : 'inactive'; ?>" id="cf7-status">
 								<?php echo $cf7_protection_enabled ? esc_html__( 'Active', 'silver-assist-security' ) : esc_html__( 'Disabled', 'silver-assist-security' ); ?>
 							</span>
 						</div>
@@ -2059,11 +2059,11 @@ class AdminPanel {
 	/**
 	 * AJAX handler to get CF7 blocked IPs
 	 *
-	 * @since 1.1.4
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function ajax_get_cf7_blocked_ips(): void {
-		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_admin_nonce' ) ) {
+		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
 			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
 			return;
 		}
@@ -2127,11 +2127,11 @@ class AdminPanel {
 	/**
 	 * AJAX handler to manually block CF7 IP
 	 *
-	 * @since 1.1.4
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function ajax_block_cf7_ip(): void {
-		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_admin_nonce' ) ) {
+		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
 			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
 			return;
 		}
@@ -2173,11 +2173,11 @@ class AdminPanel {
 	/**
 	 * AJAX handler to unblock CF7 IP
 	 *
-	 * @since 1.1.4
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function ajax_unblock_cf7_ip(): void {
-		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_admin_nonce' ) ) {
+		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
 			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
 			return;
 		}
@@ -2215,11 +2215,11 @@ class AdminPanel {
 	/**
 	 * AJAX handler to clear all CF7 blocked IPs
 	 *
-	 * @since 1.1.4
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function ajax_clear_cf7_blocked_ips(): void {
-		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_admin_nonce' ) ) {
+		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
 			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
 			return;
 		}
@@ -2248,11 +2248,11 @@ class AdminPanel {
 	/**
 	 * AJAX handler to export CF7 blocked IPs
 	 *
-	 * @since 1.1.4
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function ajax_export_cf7_blocked_ips(): void {
-		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_admin_nonce' ) ) {
+		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
 			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
 			return;
 		}

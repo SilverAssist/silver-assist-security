@@ -6,7 +6,7 @@
  * for form submissions across the site (not just login forms).
  *
  * @package SilverAssist\Security\Tests\Security
- * @since 1.1.16
+ * @since 1.1.15
  */
 
 use SilverAssist\Security\Security\FormProtection;
@@ -15,7 +15,7 @@ use SilverAssist\Security\Core\SecurityHelper;
 /**
  * Form Protection Test class
  *
- * @since 1.1.16
+ * @since 1.1.15
  */
 class FormProtectionTest extends WP_UnitTestCase {
 
@@ -25,7 +25,7 @@ class FormProtectionTest extends WP_UnitTestCase {
 	 * Verifies that multiple form submissions from same IP are limited
 	 * according to configured thresholds.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_form_rate_limiting_blocks_excessive_submissions(): void {
@@ -53,7 +53,7 @@ class FormProtectionTest extends WP_UnitTestCase {
 	/**
 	 * Test that rate limiting resets after time window
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_form_rate_limiting_resets_after_time_window(): void {
@@ -84,7 +84,7 @@ class FormProtectionTest extends WP_UnitTestCase {
 	 * Verifies detection of old browsers like IE 7.0 and suspicious patterns
 	 * from the actual attack.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_obsolete_browser_detection(): void {
@@ -131,7 +131,7 @@ class FormProtectionTest extends WP_UnitTestCase {
 	 *
 	 * Tests detection of the exact SQL injection pattern from the attack.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_sql_injection_detection_in_url_parameters(): void {
@@ -168,7 +168,7 @@ class FormProtectionTest extends WP_UnitTestCase {
 	/**
 	 * Test SQL injection detection in POST data
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_sql_injection_detection_in_post_data(): void {
@@ -203,7 +203,7 @@ class FormProtectionTest extends WP_UnitTestCase {
 	 * Tests multiple security checks working together as they would
 	 * in a real attack scenario.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_combined_security_validation(): void {
@@ -241,7 +241,7 @@ class FormProtectionTest extends WP_UnitTestCase {
 	 *
 	 * Verifies that rate limiting is per-IP, not global.
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_rate_limiting_is_per_ip(): void {
@@ -267,7 +267,7 @@ class FormProtectionTest extends WP_UnitTestCase {
 	/**
 	 * Test empty and malformed User-Agent detection
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function test_empty_and_malformed_user_agent_detection(): void {
@@ -293,7 +293,7 @@ class FormProtectionTest extends WP_UnitTestCase {
 	/**
 	 * Clean up after each test
 	 *
-	 * @since 1.1.16
+	 * @since 1.1.15
 	 * @return void
 	 */
 	public function tearDown(): void {
