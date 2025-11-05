@@ -1097,7 +1097,25 @@ class AdminPanel {
 		<div class="wrap">
 			<h1><?php echo esc_html( __( 'Silver Assist Security Essentials', 'silver-assist-security' ) ); ?></h1>
 
-			<!-- Real-time Security Status Dashboard -->
+			<!-- Tab Navigation -->
+			<nav class="nav-tab-wrapper">
+				<a href="#dashboard" class="nav-tab nav-tab-active" id="dashboard-tab">
+					<span class="dashicons dashicons-dashboard"></span>
+					<?php \esc_html_e( 'Dashboard', 'silver-assist-security' ); ?>
+				</a>
+				<a href="#monitoring" class="nav-tab" id="monitoring-tab">
+					<span class="dashicons dashicons-shield-alt"></span>
+					<?php \esc_html_e( 'Monitoring', 'silver-assist-security' ); ?>
+				</a>
+				<a href="#settings" class="nav-tab" id="settings-tab">
+					<span class="dashicons dashicons-admin-settings"></span>
+					<?php \esc_html_e( 'Settings', 'silver-assist-security' ); ?>
+				</a>
+			</nav>
+
+			<!-- Dashboard Tab Content -->
+			<div id="dashboard-content" class="tab-content active">
+				<!-- Real-time Security Status Dashboard -->
 			<div class="silver-assist-dashboard">
 				<div class="dashboard-header">
 					<h2><?php esc_html_e( 'Security Status Dashboard', 'silver-assist-security' ); ?></h2>
@@ -1159,6 +1177,33 @@ class AdminPanel {
 								<span
 									class="feature-value <?php echo $security_status['admin_security']['bot_protection'] ? 'enabled' : 'disabled'; ?>">
 									<?php echo $security_status['admin_security']['bot_protection'] ? esc_html__( 'Enabled', 'silver-assist-security' ) : esc_html__( 'Disabled', 'silver-assist-security' ); ?>
+								</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="status-card form-security">
+						<div class="card-header">
+							<h3><?php \esc_html_e( 'Form Protection', 'silver-assist-security' ); ?></h3>
+							<span class="status-indicator enabled" id="form-protection-status">Active</span>
+						</div>
+						<div class="card-content">
+							<div class="feature-status">
+								<span class="feature-name"><?php \esc_html_e( 'Contact Form 7', 'silver-assist-security' ); ?></span>
+								<span class="feature-value enabled" id="cf7-protection-status">
+									<?php echo DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) ? \esc_html__( 'Protected', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
+								</span>
+							</div>
+							<div class="feature-status">
+								<span class="feature-name"><?php \esc_html_e( 'IP Blacklist', 'silver-assist-security' ); ?></span>
+								<span class="feature-value enabled" id="ip-blacklist-status">
+									<?php echo DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' ) ? \esc_html__( 'Active', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
+								</span>
+							</div>
+							<div class="feature-status">
+								<span class="feature-name"><?php \esc_html_e( 'Under Attack Mode', 'silver-assist-security' ); ?></span>
+								<span class="feature-value" id="under-attack-status">
+									<?php echo DefaultConfig::get_option( 'silver_assist_under_attack_enabled' ) ? \esc_html__( 'Active', 'silver-assist-security' ) : \esc_html__( 'Standby', 'silver-assist-security' ); ?>
 								</span>
 							</div>
 						</div>
@@ -1308,6 +1353,13 @@ class AdminPanel {
 					</div>
 				</div>
 
+			</div>
+			</div>
+
+			<!-- Monitoring Tab Content -->
+			<div id="monitoring-content" class="tab-content">
+				<h2><?php esc_html_e( 'Security Monitoring', 'silver-assist-security' ); ?></h2>
+
 				<!-- Active Threats and Blocked IPs -->
 				<div class="dashboard-threats">
 					<div class="threats-header">
@@ -1318,9 +1370,8 @@ class AdminPanel {
 						<p class="loading"><?php esc_html_e( 'Loading blocked IPs...', 'silver-assist-security' ); ?></p>
 					</div>
 				</div>
-			</div>
 
-			<!-- CF7 Blocked IPs & Form Attacks Panel -->
+				<!-- CF7 Blocked IPs & Form Attacks Panel -->
 			<div class="dashboard-card">
 				<div class="card-content cf7-threats">
 					<div class="cf7-threats-header">
@@ -1348,8 +1399,11 @@ class AdminPanel {
 					</div>
 				</div>
 			</div>
+			</div>
 
-			<!-- Security Configuration Form -->
+			<!-- Settings Tab Content -->
+			<div id="settings-content" class="tab-content">
+				<!-- Security Configuration Form -->
 			<div class="silver-assist-configuration">
 				<h2><?php esc_html_e( 'Security Configuration', 'silver-assist-security' ); ?></h2>
 
@@ -1847,7 +1901,9 @@ class AdminPanel {
 					<?php submit_button( __( 'Save Security Settings', 'silver-assist-security' ), 'primary', 'save_silver_assist_security' ); ?>
 				</form>
 			</div>
-			<?php
+			</div>
+		</div>
+		<?php
 	}
 
 	/**

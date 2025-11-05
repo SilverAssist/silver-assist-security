@@ -1303,11 +1303,98 @@
     };
 
     // ========================================
+    // TAB NAVIGATION SYSTEM
+    // ========================================
+
+    /**
+     * Initialize tab navigation system
+     * 
+     * Handles tab switching, URL hash updates, and maintains state
+     * across page loads. Supports deep linking via URL hash.
+     * 
+     * @since 1.1.16
+     * @returns {void}
+     */
+    const initTabNavigation = () => {
+        const $tabs = $(".nav-tab");
+        const $tabContents = $(".tab-content");
+        
+        if (!$tabs.length || !$tabContents.length) {
+            return; // No tabs found
+        }
+
+        /**
+         * Switch to specific tab
+         * 
+         * @param {string} tabId - Tab identifier (dashboard, monitoring, settings)
+         * @returns {void}
+         */
+        const switchToTab = tabId => {
+            // Validate tab exists
+            const $targetTab = $(`#${tabId}-tab`);
+            const $targetContent = $(`#${tabId}-content`);
+            
+            if (!$targetTab.length || !$targetContent.length) {
+                return;
+            }
+
+            // Update tab navigation
+            $tabs.removeClass("nav-tab-active");
+            $targetTab.addClass("nav-tab-active");
+
+            // Update tab content with fade effect
+            $tabContents.removeClass("active").hide();
+            $targetContent.addClass("active").fadeIn(TIMING.VALIDATION_DEBOUNCE);
+
+            // Update URL hash without triggering scroll
+            if (window.history && window.history.pushState) {
+                window.history.pushState(null, null, `#${tabId}`);
+            }
+
+            // Trigger refresh for active data in new tab
+            if (tabId === "monitoring") {
+                // Refresh monitoring data when tab becomes active
+                loadBlockedIPs();
+                loadCF7BlockedIPs();
+            } else if (tabId === "dashboard") {
+                // Refresh dashboard data when tab becomes active
+                loadSecurityStatus();
+                loadLoginStats();
+            }
+        };
+
+        // Handle tab clicks
+        $tabs.on("click", function(e) {
+            e.preventDefault();
+            
+            const tabId = $(this).attr("href").substring(1); // Remove # from href
+            switchToTab(tabId);
+        });
+
+        // Handle browser back/forward with tab URLs
+        $(window).on("hashchange", () => {
+            const hash = window.location.hash.substring(1); // Remove #
+            if (hash && ["dashboard", "monitoring", "settings"].includes(hash)) {
+                switchToTab(hash);
+            }
+        });
+
+        // Initialize tab from URL hash or default to dashboard
+        const initialHash = window.location.hash.substring(1);
+        const initialTab = initialHash && ["dashboard", "monitoring", "settings"].includes(initialHash) 
+            ? initialHash 
+            : "dashboard";
+        
+        switchToTab(initialTab);
+    };
+
+    // ========================================
     // INITIALIZATION
     // ========================================
 
     // Initialize all features when document is ready
     $(document).ready(() => {
+        initTabNavigation();   // Initialize tab system first
         initFormValidation();
         initDashboardRefresh();
         initAutoSave();

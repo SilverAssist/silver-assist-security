@@ -877,3 +877,92 @@
         transform: scale(1.02);
     }
 }
+
+/* =============================================================================
+   TAB NAVIGATION SYSTEM
+   ============================================================================= */
+
+/* Tab Navigation */
+.nav-tab-wrapper {
+    border-block-end: var(--silver-border-width-thin) solid var(--silver-border-primary);
+    margin-block-end: var(--silver-spacing-xl);
+}
+
+.nav-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--silver-spacing-sm);
+    padding: var(--silver-spacing-md) var(--silver-spacing-lg);
+    margin-inline-end: var(--silver-spacing-sm);
+    text-decoration: none;
+    border: var(--silver-border-width-thin) solid var(--silver-border-primary);
+    border-block-end: none;
+    background: var(--silver-bg-secondary);
+    color: var(--silver-text-secondary);
+    font-weight: var(--silver-font-weight-medium);
+    border-radius: var(--silver-radius-base) var(--silver-radius-base) 0 0;
+    transition: all var(--silver-transition-base) var(--silver-transition-ease);
+}
+
+.nav-tab:hover {
+    background: var(--silver-bg-primary);
+    color: var(--silver-text-primary);
+    text-decoration: none;
+}
+
+.nav-tab.nav-tab-active {
+    background: var(--silver-bg-primary);
+    color: var(--silver-primary-blue);
+    border-block-end: var(--silver-border-width-base) solid var(--silver-bg-primary);
+    margin-block-end: calc(-1 * var(--silver-border-width-thin));
+    position: relative;
+    z-index: 2;
+}
+
+.nav-tab .dashicons {
+    font-size: var(--silver-font-size-base);
+    line-height: 1;
+    margin-inline-end: var(--silver-spacing-xs);
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+    animation: fadeIn var(--silver-transition-base) var(--silver-transition-ease);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Tab Content Fade Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(var(--silver-spacing-sm));
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Tab Navigation */
+@container (max-width: 600px) {
+    .nav-tab-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--silver-spacing-xs);
+    }
+    
+    .nav-tab {
+        flex: 1;
+        justify-content: center;
+        margin-inline-end: 0;
+        text-align: center;
+    }
+    
+    .nav-tab .dashicons {
+        display: none;
+    }
+}
