@@ -313,6 +313,128 @@
         padding: var(--silver-spacing-xl);
     }
 
+    /* CF7 Threats Panel Styles */
+    .cf7-threats {
+        border-left: var(--silver-border-width-thick) solid var(--silver-warning-primary);
+    }
+
+    .cf7-threats-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--silver-spacing-xl);
+        background: var(--silver-warning-bg-light);
+        border-bottom: var(--silver-border-width-thin) solid var(--silver-warning-border);
+    }
+
+    .cf7-threats-header h3 {
+        margin: 0;
+        color: var(--silver-warning-text);
+        font-size: var(--silver-font-size-xl);
+        font-weight: var(--silver-font-weight-semibold);
+    }
+
+    .cf7-threat-count {
+        background: var(--silver-warning-primary);
+        color: var(--silver-bg-primary);
+        padding: var(--silver-spacing-xs) var(--silver-spacing-md);
+        border-radius: var(--silver-radius-pill);
+        font-size: var(--silver-font-size-md);
+        font-weight: var(--silver-font-weight-semibold);
+    }
+
+    .cf7-threats-content {
+        padding: var(--silver-spacing-xl);
+        background: var(--silver-bg-primary);
+    }
+
+    .cf7-ip-actions {
+        margin-top: var(--silver-spacing-xl);
+        padding-top: var(--silver-spacing-xl);
+        border-top: var(--silver-border-width-thin) solid var(--silver-border-secondary);
+    }
+
+    .add-cf7-ip {
+        display: flex;
+        gap: var(--silver-spacing-md);
+        align-items: center;
+        margin-bottom: var(--silver-spacing-lg);
+        flex-wrap: wrap;
+    }
+
+    .add-cf7-ip input[type="text"] {
+        flex: 1;
+        min-width: 200px;
+        padding: var(--silver-spacing-sm) var(--silver-spacing-md);
+        border: var(--silver-border-width-thin) solid var(--silver-border-primary);
+        border-radius: var(--silver-radius-base);
+        font-family: var(--silver-font-family-mono);
+    }
+
+    .add-cf7-ip input[type="text"]:focus {
+        border-color: var(--silver-warning-primary);
+        box-shadow: 0 0 0 2px rgba(255, 185, 0, 0.2);
+        outline: none;
+    }
+
+    .cf7-bulk-actions {
+        display: flex;
+        gap: var(--silver-spacing-md);
+        flex-wrap: wrap;
+    }
+
+    .cf7-ip-item {
+        display: grid;
+        grid-template-columns: auto 1fr auto auto auto;
+        gap: var(--silver-spacing-md);
+        padding: var(--silver-spacing-md) var(--silver-spacing-lg);
+        background: var(--silver-warning-bg-light);
+        border: var(--silver-border-width-thin) solid var(--silver-warning-border);
+        border-radius: var(--silver-radius-base);
+        margin-bottom: var(--silver-spacing-sm);
+        align-items: center;
+    }
+
+    .cf7-ip-item .ip-address {
+        font-family: var(--silver-font-family-mono);
+        font-weight: var(--silver-font-weight-semibold);
+        color: var(--silver-text-primary);
+    }
+
+    .cf7-ip-item .block-reason {
+        color: var(--silver-text-secondary);
+        font-size: var(--silver-font-size-sm);
+    }
+
+    .cf7-ip-item .block-time {
+        color: var(--silver-text-tertiary);
+        font-size: var(--silver-font-size-sm);
+    }
+
+    .cf7-ip-item .violation-count {
+        background: var(--silver-warning-bg);
+        color: var(--silver-warning-text);
+        padding: var(--silver-spacing-xs) var(--silver-spacing-sm);
+        border-radius: var(--silver-radius-base);
+        font-size: var(--silver-font-size-xs);
+        font-weight: var(--silver-font-weight-semibold);
+    }
+
+    .unblock-cf7-ip {
+        background: var(--silver-success-primary) !important;
+        color: var(--silver-bg-primary) !important;
+        border: none !important;
+        padding: var(--silver-spacing-xs) var(--silver-spacing-sm) !important;
+        border-radius: var(--silver-radius-base) !important;
+        font-size: var(--silver-font-size-xs) !important;
+        cursor: pointer;
+        transition: background-color var(--silver-transition-base) ease;
+    }
+
+    .unblock-cf7-ip:hover {
+        background: var(--silver-success-secondary) !important;
+    }
+
     /* Path Validation Styles */
     .validation-indicator {
         margin-top: var(--silver-spacing-sm);

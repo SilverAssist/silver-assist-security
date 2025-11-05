@@ -18,6 +18,7 @@ use Exception;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\PathValidator;
 use SilverAssist\Security\Core\Plugin;
+use SilverAssist\Security\Security\IPBlacklist;
 use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 use SilverAssist\SettingsHub\SettingsHub;
@@ -77,6 +78,13 @@ class AdminPanel {
 		\add_action( 'wp_ajax_silver_assist_auto_save', [ $this, 'ajax_auto_save' ] );
 		\add_action( 'wp_ajax_silver_assist_validate_admin_path', [ $this, 'ajax_validate_admin_path' ] );
 		\add_action( 'wp_ajax_silver_assist_check_updates', [ $this, 'ajax_check_updates' ] );
+
+		// CF7 blocked IP management AJAX handlers
+		\add_action( 'wp_ajax_silver_assist_get_cf7_blocked_ips', [ $this, 'ajax_get_cf7_blocked_ips' ] );
+		\add_action( 'wp_ajax_silver_assist_block_cf7_ip', [ $this, 'ajax_block_cf7_ip' ] );
+		\add_action( 'wp_ajax_silver_assist_unblock_cf7_ip', [ $this, 'ajax_unblock_cf7_ip' ] );
+		\add_action( 'wp_ajax_silver_assist_clear_cf7_blocked_ips', [ $this, 'ajax_clear_cf7_blocked_ips' ] );
+		\add_action( 'wp_ajax_silver_assist_export_cf7_blocked_ips', [ $this, 'ajax_export_cf7_blocked_ips' ] );
 	}
 
 	/**
@@ -975,6 +983,58 @@ class AdminPanel {
 			\update_option( 'silver_assist_graphql_query_timeout', $graphql_timeout );
 		}
 
+		// Save Contact Form 7 Security Settings
+		\update_option( 'silver_assist_cf7_protection_enabled', (int) ( isset( $_POST['silver_assist_cf7_protection_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_protection_enabled'] ) ) : 0 ) );
+
+		// CF7 Rate Limiting
+		$cf7_rate_limit = intval( isset( $_POST['silver_assist_cf7_rate_limit'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_rate_limit'] ) ) : DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' ) );
+		if ( isset( $_POST['silver_assist_cf7_rate_limit'] ) ) {
+			$cf7_rate_limit = max( 1, min( 10, $cf7_rate_limit ) );
+			\update_option( 'silver_assist_cf7_rate_limit', $cf7_rate_limit );
+		}
+
+		$cf7_rate_window = intval( isset( $_POST['silver_assist_cf7_rate_window'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_rate_window'] ) ) : DefaultConfig::get_option( 'silver_assist_cf7_rate_window' ) );
+		if ( isset( $_POST['silver_assist_cf7_rate_window'] ) ) {
+			$cf7_rate_window = max( 30, min( 300, $cf7_rate_window ) );
+			\update_option( 'silver_assist_cf7_rate_window', $cf7_rate_window );
+		}
+
+		// IP Blacklist Settings
+		\update_option( 'silver_assist_ip_blacklist_enabled', (int) ( isset( $_POST['silver_assist_ip_blacklist_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_enabled'] ) ) : 0 ) );
+		
+		$ip_violation_threshold = intval( isset( $_POST['silver_assist_ip_violation_threshold'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_violation_threshold'] ) ) : DefaultConfig::get_option( 'silver_assist_ip_violation_threshold' ) );
+		if ( isset( $_POST['silver_assist_ip_violation_threshold'] ) ) {
+			$ip_violation_threshold = max( 3, min( 20, $ip_violation_threshold ) );
+			\update_option( 'silver_assist_ip_violation_threshold', $ip_violation_threshold );
+		}
+
+		$ip_blacklist_duration = intval( isset( $_POST['silver_assist_ip_blacklist_duration'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_duration'] ) ) : DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' ) );
+		if ( isset( $_POST['silver_assist_ip_blacklist_duration'] ) ) {
+			$ip_blacklist_duration = max( 3600, min( 604800, $ip_blacklist_duration ) );
+			\update_option( 'silver_assist_ip_blacklist_duration', $ip_blacklist_duration );
+		}
+
+		// Under Attack Mode Settings
+		\update_option( 'silver_assist_under_attack_enabled', (int) ( isset( $_POST['silver_assist_under_attack_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_under_attack_enabled'] ) ) : 0 ) );
+		
+		$attack_threshold = intval( isset( $_POST['silver_assist_attack_threshold'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_attack_threshold'] ) ) : DefaultConfig::get_option( 'silver_assist_attack_threshold' ) );
+		if ( isset( $_POST['silver_assist_attack_threshold'] ) ) {
+			$attack_threshold = max( 5, min( 50, $attack_threshold ) );
+			\update_option( 'silver_assist_attack_threshold', $attack_threshold );
+		}
+
+		$under_attack_duration = intval( isset( $_POST['silver_assist_under_attack_duration'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_under_attack_duration'] ) ) : DefaultConfig::get_option( 'silver_assist_under_attack_duration' ) );
+		if ( isset( $_POST['silver_assist_under_attack_duration'] ) ) {
+			$under_attack_duration = max( 300, min( 7200, $under_attack_duration ) );
+			\update_option( 'silver_assist_under_attack_duration', $under_attack_duration );
+		}
+
+		// Advanced Protection Settings
+		\update_option( 'silver_assist_cf7_honeypot_enabled', (int) ( isset( $_POST['silver_assist_cf7_honeypot_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_honeypot_enabled'] ) ) : 0 ) );
+		\update_option( 'silver_assist_cf7_timing_protection', (int) ( isset( $_POST['silver_assist_cf7_timing_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_timing_protection'] ) ) : 0 ) );
+		\update_option( 'silver_assist_cf7_obsolete_browser_blocking', (int) ( isset( $_POST['silver_assist_cf7_obsolete_browser_blocking'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_obsolete_browser_blocking'] ) ) : 0 ) );
+		\update_option( 'silver_assist_cf7_sql_injection_protection', (int) ( isset( $_POST['silver_assist_cf7_sql_injection_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_sql_injection_protection'] ) ) : 0 ) );
+
 		// Add success message
 		\add_action(
 			'admin_notices',
@@ -1014,6 +1074,21 @@ class AdminPanel {
 		$password_strength_enforcement = DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' );
 		$graphql_headless_mode         = DefaultConfig::get_option( 'silver_assist_graphql_headless_mode' );
 		$graphql_query_timeout         = \get_option( 'silver_assist_graphql_query_timeout', $this->config_manager->get_php_execution_timeout() );
+
+		// Get Contact Form 7 Security Settings
+		$cf7_protection_enabled        = DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' );
+		$cf7_rate_limit               = DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' );
+		$cf7_rate_window              = DefaultConfig::get_option( 'silver_assist_cf7_rate_window' );
+		$ip_blacklist_enabled         = DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' );
+		$ip_violation_threshold       = DefaultConfig::get_option( 'silver_assist_ip_violation_threshold' );
+		$ip_blacklist_duration        = DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' );
+		$under_attack_enabled         = DefaultConfig::get_option( 'silver_assist_under_attack_enabled' );
+		$attack_threshold             = DefaultConfig::get_option( 'silver_assist_attack_threshold' );
+		$under_attack_duration        = DefaultConfig::get_option( 'silver_assist_under_attack_duration' );
+		$cf7_honeypot_enabled         = DefaultConfig::get_option( 'silver_assist_cf7_honeypot_enabled' );
+		$cf7_timing_protection        = DefaultConfig::get_option( 'silver_assist_cf7_timing_protection' );
+		$cf7_obsolete_browser_blocking = DefaultConfig::get_option( 'silver_assist_cf7_obsolete_browser_blocking' );
+		$cf7_sql_injection_protection = DefaultConfig::get_option( 'silver_assist_cf7_sql_injection_protection' );
 
 		// Get initial security status for display
 		$security_status = $this->get_security_status();
@@ -1154,6 +1229,49 @@ class AdminPanel {
 						</div>
 					</div>
 
+					<div class="status-card cf7-security">
+						<div class="card-header">
+							<h3><?php esc_html_e( 'Contact Form 7 Security', 'silver-assist-security' ); ?></h3>
+							<span class="status-indicator" id="cf7-status">
+								<?php echo $cf7_protection_enabled ? esc_html__( 'Active', 'silver-assist-security' ) : esc_html__( 'Disabled', 'silver-assist-security' ); ?>
+							</span>
+						</div>
+						<div class="card-content">
+							<?php if ( $cf7_protection_enabled ) : ?>
+								<div class="stat">
+									<span class="stat-value"><?php echo esc_html( $cf7_rate_limit ); ?></span>
+									<span class="stat-label"><?php esc_html_e( 'Submissions/Min', 'silver-assist-security' ); ?></span>
+								</div>
+								<div class="stat">
+									<span class="stat-value" id="cf7-blocked-count">0</span>
+									<span class="stat-label"><?php esc_html_e( 'Blocked Today', 'silver-assist-security' ); ?></span>
+								</div>
+								<div class="stat">
+									<span class="stat-value" id="under-attack-status">
+										<?php echo $under_attack_enabled ? esc_html__( 'Ready', 'silver-assist-security' ) : esc_html__( 'Off', 'silver-assist-security' ); ?>
+									</span>
+									<span class="stat-label"><?php esc_html_e( 'Under Attack Mode', 'silver-assist-security' ); ?></span>
+								</div>
+								<div class="feature-status">
+									<span class="feature-name"><?php esc_html_e( 'IP Blacklist', 'silver-assist-security' ); ?></span>
+									<span class="feature-value <?php echo $ip_blacklist_enabled ? 'enabled' : 'disabled'; ?>">
+										<?php echo $ip_blacklist_enabled ? esc_html__( 'Enabled', 'silver-assist-security' ) : esc_html__( 'Disabled', 'silver-assist-security' ); ?>
+									</span>
+								</div>
+								<div class="feature-status">
+									<span class="feature-name"><?php esc_html_e( 'Honeypot Protection', 'silver-assist-security' ); ?></span>
+									<span class="feature-value <?php echo $cf7_honeypot_enabled ? 'enabled' : 'disabled'; ?>">
+										<?php echo $cf7_honeypot_enabled ? esc_html__( 'Enabled', 'silver-assist-security' ) : esc_html__( 'Disabled', 'silver-assist-security' ); ?>
+									</span>
+								</div>
+							<?php else : ?>
+								<p class="cf7-disabled">
+									<?php esc_html_e( 'Contact Form 7 protection is disabled. Enable it below to protect against spam attacks.', 'silver-assist-security' ); ?>
+								</p>
+							<?php endif; ?>
+						</div>
+					</div>
+
 					<div class="status-card general-security">
 						<div class="card-header">
 							<h3><?php esc_html_e( 'General Security', 'silver-assist-security' ); ?></h3>
@@ -1198,6 +1316,35 @@ class AdminPanel {
 					</div>
 					<div class="threats-content" id="blocked-ips-list">
 						<p class="loading"><?php esc_html_e( 'Loading blocked IPs...', 'silver-assist-security' ); ?></p>
+					</div>
+				</div>
+			</div>
+
+			<!-- CF7 Blocked IPs & Form Attacks Panel -->
+			<div class="dashboard-card">
+				<div class="card-content cf7-threats">
+					<div class="cf7-threats-header">
+						<h3><?php esc_html_e( 'CF7 Blocked IPs & Form Attacks', 'silver-assist-security' ); ?></h3>
+						<span class="cf7-threat-count" id="cf7-threat-count">0</span>
+					</div>
+					<div class="cf7-threats-content" id="cf7-blocked-ips-content">
+						<p class="loading"><?php esc_html_e( 'Loading CF7 blocked IPs...', 'silver-assist-security' ); ?></p>
+					</div>
+					<div class="cf7-ip-actions">
+						<div class="add-cf7-ip">
+							<input type="text" id="cf7-new-ip" placeholder="<?php esc_attr_e( 'Enter IP address to block', 'silver-assist-security' ); ?>" pattern="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" />
+							<button type="button" id="cf7-block-ip-btn" class="button button-secondary">
+								<?php esc_html_e( 'Block IP', 'silver-assist-security' ); ?>
+							</button>
+						</div>
+						<div class="cf7-bulk-actions">
+							<button type="button" id="cf7-clear-blocked-ips" class="button button-secondary">
+								<?php esc_html_e( 'Clear All CF7 Blocks', 'silver-assist-security' ); ?>
+							</button>
+							<button type="button" id="cf7-export-blocked-ips" class="button button-secondary">
+								<?php esc_html_e( 'Export CF7 Blocks', 'silver-assist-security' ); ?>
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -1480,6 +1627,223 @@ class AdminPanel {
 						</div>
 					<?php endif; ?>
 
+					<!-- Contact Form 7 Security Settings -->
+					<div class="card">
+						<h2><?php esc_html_e( 'Contact Form 7 Security', 'silver-assist-security' ); ?></h2>
+						<table class="form-table">
+							<tr>
+								<th scope="row">
+									<?php esc_html_e( 'CF7 Protection', 'silver-assist-security' ); ?>
+								</th>
+								<td>
+									<label>
+										<input type="checkbox" name="silver_assist_cf7_protection_enabled" value="1" 
+											<?php checked( $cf7_protection_enabled, 1 ); ?> />
+										<?php esc_html_e( 'Enable Contact Form 7 spam protection', 'silver-assist-security' ); ?>
+									</label>
+									<p class="description">
+										<?php esc_html_e( 'Protects Contact Form 7 forms against spam attacks, rate limiting, and malicious submissions.', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="silver_assist_cf7_rate_limit">
+										<?php esc_html_e( 'Rate Limit (submissions per minute)', 'silver-assist-security' ); ?>
+									</label>
+								</th>
+								<td>
+									<input type="number" id="silver_assist_cf7_rate_limit" name="silver_assist_cf7_rate_limit"
+										value="<?php echo esc_attr( $cf7_rate_limit ); ?>" min="1" max="10" class="small-text" />
+									<p class="description">
+										<?php esc_html_e( 'Maximum number of form submissions allowed per IP address per minute (1-10)', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="silver_assist_cf7_rate_window">
+										<?php esc_html_e( 'Rate Window (seconds)', 'silver-assist-security' ); ?>
+									</label>
+								</th>
+								<td>
+									<input type="number" id="silver_assist_cf7_rate_window" name="silver_assist_cf7_rate_window"
+										value="<?php echo esc_attr( $cf7_rate_window ); ?>" min="30" max="300" class="small-text" />
+									<p class="description">
+										<?php esc_html_e( 'Time window in seconds for rate limiting calculations (30-300)', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+						</table>
+					</div>
+
+					<!-- IP Blacklist Settings -->
+					<div class="card">
+						<h2><?php esc_html_e( 'IP Blacklist Management', 'silver-assist-security' ); ?></h2>
+						<table class="form-table">
+							<tr>
+								<th scope="row">
+									<?php esc_html_e( 'IP Blacklist', 'silver-assist-security' ); ?>
+								</th>
+								<td>
+									<label>
+										<input type="checkbox" name="silver_assist_ip_blacklist_enabled" value="1" 
+											<?php checked( $ip_blacklist_enabled, 1 ); ?> />
+										<?php esc_html_e( 'Enable automatic IP blacklisting', 'silver-assist-security' ); ?>
+									</label>
+									<p class="description">
+										<?php esc_html_e( 'Automatically blacklist IPs after multiple security violations.', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="silver_assist_ip_violation_threshold">
+										<?php esc_html_e( 'Violation Threshold', 'silver-assist-security' ); ?>
+									</label>
+								</th>
+								<td>
+									<input type="number" id="silver_assist_ip_violation_threshold" name="silver_assist_ip_violation_threshold"
+										value="<?php echo esc_attr( $ip_violation_threshold ); ?>" min="3" max="20" class="small-text" />
+									<p class="description">
+										<?php esc_html_e( 'Number of security violations before automatic blacklist (3-20)', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="silver_assist_ip_blacklist_duration">
+										<?php esc_html_e( 'Blacklist Duration (seconds)', 'silver-assist-security' ); ?>
+									</label>
+								</th>
+								<td>
+									<input type="number" id="silver_assist_ip_blacklist_duration" name="silver_assist_ip_blacklist_duration"
+										value="<?php echo esc_attr( $ip_blacklist_duration ); ?>" min="3600" max="604800" class="small-text" />
+									<p class="description">
+										<?php esc_html_e( 'How long to blacklist IPs: 3600 (1 hour) to 604800 (1 week)', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+						</table>
+					</div>
+
+					<!-- Under Attack Mode Settings -->
+					<div class="card">
+						<h2><?php esc_html_e( 'Under Attack Mode', 'silver-assist-security' ); ?></h2>
+						<table class="form-table">
+							<tr>
+								<th scope="row">
+									<?php esc_html_e( 'Under Attack Mode', 'silver-assist-security' ); ?>
+								</th>
+								<td>
+									<label>
+										<input type="checkbox" name="silver_assist_under_attack_enabled" value="1" 
+											<?php checked( $under_attack_enabled, 1 ); ?> />
+										<?php esc_html_e( 'Enable Under Attack mode with CAPTCHA protection', 'silver-assist-security' ); ?>
+									</label>
+									<p class="description">
+										<?php esc_html_e( 'Automatically activates CAPTCHA protection during coordinated attacks.', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="silver_assist_attack_threshold">
+										<?php esc_html_e( 'Attack Threshold', 'silver-assist-security' ); ?>
+									</label>
+								</th>
+								<td>
+									<input type="number" id="silver_assist_attack_threshold" name="silver_assist_attack_threshold"
+										value="<?php echo esc_attr( $attack_threshold ); ?>" min="5" max="50" class="small-text" />
+									<p class="description">
+										<?php esc_html_e( 'Number of coordinated attacks to trigger Under Attack mode (5-50)', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="silver_assist_under_attack_duration">
+										<?php esc_html_e( 'Protection Duration (seconds)', 'silver-assist-security' ); ?>
+									</label>
+								</th>
+								<td>
+									<input type="number" id="silver_assist_under_attack_duration" name="silver_assist_under_attack_duration"
+										value="<?php echo esc_attr( $under_attack_duration ); ?>" min="300" max="7200" class="small-text" />
+									<p class="description">
+										<?php esc_html_e( 'How long Under Attack mode stays active: 300 (5 min) to 7200 (2 hours)', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+						</table>
+					</div>
+
+					<!-- Advanced CF7 Protection Settings -->
+					<div class="card">
+						<h2><?php esc_html_e( 'Advanced Form Protection', 'silver-assist-security' ); ?></h2>
+						<table class="form-table">
+							<tr>
+								<th scope="row">
+									<?php esc_html_e( 'Honeypot Protection', 'silver-assist-security' ); ?>
+								</th>
+								<td>
+									<label>
+										<input type="checkbox" name="silver_assist_cf7_honeypot_enabled" value="1" 
+											<?php checked( $cf7_honeypot_enabled, 1 ); ?> />
+										<?php esc_html_e( 'Add invisible honeypot fields to detect bots', 'silver-assist-security' ); ?>
+									</label>
+									<p class="description">
+										<?php esc_html_e( 'Automatically adds invisible fields that only bots fill out.', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<?php esc_html_e( 'Timing Protection', 'silver-assist-security' ); ?>
+								</th>
+								<td>
+									<label>
+										<input type="checkbox" name="silver_assist_cf7_timing_protection" value="1" 
+											<?php checked( $cf7_timing_protection, 1 ); ?> />
+										<?php esc_html_e( 'Block submissions that are filled too quickly', 'silver-assist-security' ); ?>
+									</label>
+									<p class="description">
+										<?php esc_html_e( 'Blocks forms submitted in less than 3 seconds (typical bot behavior).', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<?php esc_html_e( 'Obsolete Browser Blocking', 'silver-assist-security' ); ?>
+								</th>
+								<td>
+									<label>
+										<input type="checkbox" name="silver_assist_cf7_obsolete_browser_blocking" value="1" 
+											<?php checked( $cf7_obsolete_browser_blocking, 1 ); ?> />
+										<?php esc_html_e( 'Block submissions from obsolete browsers (Mozilla/4.0, MSIE 6-7)', 'silver-assist-security' ); ?>
+									</label>
+									<p class="description">
+										<?php esc_html_e( 'Blocks the exact type of browser used in your reported attack.', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<?php esc_html_e( 'SQL Injection Protection', 'silver-assist-security' ); ?>
+								</th>
+								<td>
+									<label>
+										<input type="checkbox" name="silver_assist_cf7_sql_injection_protection" value="1" 
+											<?php checked( $cf7_sql_injection_protection, 1 ); ?> />
+										<?php esc_html_e( 'Detect and block SQL injection attempts (PG_SLEEP, UNION SELECT, etc.)', 'silver-assist-security' ); ?>
+									</label>
+									<p class="description">
+										<?php esc_html_e( 'Blocks SQL injection patterns like PG_SLEEP found in your attack.', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+						</table>
+					</div>
+
 					<?php submit_button( __( 'Save Security Settings', 'silver-assist-security' ), 'primary', 'save_silver_assist_security' ); ?>
 				</form>
 			</div>
@@ -1634,5 +1998,244 @@ class AdminPanel {
 	 */
 	public function get_forbidden_admin_paths(): array {
 		return PathValidator::get_forbidden_paths();
+	}
+
+	/**
+	 * AJAX handler to get CF7 blocked IPs
+	 *
+	 * @since 1.1.4
+	 * @return void
+	 */
+	public function ajax_get_cf7_blocked_ips(): void {
+		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_admin_nonce' ) ) {
+			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			return;
+		}
+
+		if ( ! \current_user_can( 'manage_options' ) ) {
+			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			return;
+		}
+
+		try {
+			$blacklist = IPBlacklist::getInstance();
+			$blocked_ips = $blacklist->get_cf7_blocked_ips();
+			$total_attacks = $blacklist->get_cf7_attack_count();
+
+			$html = '';
+			if ( ! empty( $blocked_ips ) ) {
+				$html .= '<div class="blocked-ips">';
+				foreach ( $blocked_ips as $ip => $data ) {
+					$blocked_at = isset( $data['blocked_at'] ) ? \date_i18n( 'M j, Y H:i', $data['blocked_at'] ) : \__( 'Unknown', 'silver-assist-security' );
+					$reason = isset( $data['reason'] ) ? \esc_html( $data['reason'] ) : \__( 'Form security violation', 'silver-assist-security' );
+					$violations = isset( $data['violations'] ) ? (int) $data['violations'] : 1;
+					
+					$html .= sprintf(
+						'<div class="blocked-ip-item cf7-ip-item" data-ip="%s">',
+						\esc_attr( $ip )
+					);
+					$html .= sprintf( '<span class="ip-address">%s</span>', \esc_html( $ip ) );
+					$html .= sprintf( '<span class="block-reason">%s</span>', $reason );
+					$html .= sprintf( '<span class="block-time">%s</span>', $blocked_at );
+					$html .= sprintf( '<span class="violation-count">%d %s</span>', 
+						$violations, 
+						\__( 'violations', 'silver-assist-security' ) 
+					);
+					$html .= sprintf( 
+						'<button type="button" class="unblock-cf7-ip button button-small" data-ip="%s">%s</button>',
+						\esc_attr( $ip ),
+						\__( 'Unblock', 'silver-assist-security' )
+					);
+					$html .= '</div>';
+				}
+				$html .= '</div>';
+			} else {
+				$html = sprintf( 
+					'<p class="no-blocked-ips">%s</p>', 
+					\__( 'No CF7 blocked IPs found.', 'silver-assist-security' ) 
+				);
+			}
+
+			\wp_send_json_success( [
+				'html' => $html,
+				'count' => \count( $blocked_ips ),
+				'total_attacks' => $total_attacks
+			] );
+
+		} catch ( \Exception $e ) {
+			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 blocked IPs retrieval failed: {$e->getMessage()}", [ 'function' => __FUNCTION__ ] );
+			\wp_send_json_error( [ 'error' => \__( 'Failed to retrieve blocked IPs', 'silver-assist-security' ) ] );
+		}
+	}
+
+	/**
+	 * AJAX handler to manually block CF7 IP
+	 *
+	 * @since 1.1.4
+	 * @return void
+	 */
+	public function ajax_block_cf7_ip(): void {
+		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_admin_nonce' ) ) {
+			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			return;
+		}
+
+		if ( ! \current_user_can( 'manage_options' ) ) {
+			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			return;
+		}
+
+		$ip = \sanitize_text_field( $_POST['ip'] ?? '' );
+		if ( empty( $ip ) || ! \filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+			\wp_send_json_error( [ 'error' => \__( 'Invalid IP address', 'silver-assist-security' ) ] );
+			return;
+		}
+
+		try {
+			$blacklist = IPBlacklist::getInstance();
+			$success = $blacklist->add_to_cf7_blacklist( 
+				$ip, 
+				\__( 'Manually blocked via admin panel', 'silver-assist-security' ),
+				'cf7_manual'
+			);
+
+			if ( $success ) {
+				SecurityHelper::log_security_event( 'CF7_IP_BLOCKED', "IP {$ip} manually blocked via admin panel", [ 'ip' => $ip ] );
+				\wp_send_json_success( [ 
+					'message' => \sprintf( \__( 'IP %s successfully blocked for CF7 forms', 'silver-assist-security' ), $ip ) 
+				] );
+			} else {
+				\wp_send_json_error( [ 'error' => \__( 'Failed to block IP address', 'silver-assist-security' ) ] );
+			}
+
+		} catch ( \Exception $e ) {
+			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 IP blocking failed: {$e->getMessage()}", [ 'ip' => $ip ] );
+			\wp_send_json_error( [ 'error' => \__( 'Failed to block IP address', 'silver-assist-security' ) ] );
+		}
+	}
+
+	/**
+	 * AJAX handler to unblock CF7 IP
+	 *
+	 * @since 1.1.4
+	 * @return void
+	 */
+	public function ajax_unblock_cf7_ip(): void {
+		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_admin_nonce' ) ) {
+			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			return;
+		}
+
+		if ( ! \current_user_can( 'manage_options' ) ) {
+			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			return;
+		}
+
+		$ip = \sanitize_text_field( $_POST['ip'] ?? '' );
+		if ( empty( $ip ) ) {
+			\wp_send_json_error( [ 'error' => \__( 'IP address required', 'silver-assist-security' ) ] );
+			return;
+		}
+
+		try {
+			$blacklist = IPBlacklist::getInstance();
+			$success = $blacklist->remove_from_blacklist( $ip );
+
+			if ( $success ) {
+				SecurityHelper::log_security_event( 'CF7_IP_UNBLOCKED', "IP {$ip} unblocked via admin panel", [ 'ip' => $ip ] );
+				\wp_send_json_success( [ 
+					'message' => \sprintf( \__( 'IP %s successfully unblocked', 'silver-assist-security' ), $ip ) 
+				] );
+			} else {
+				\wp_send_json_error( [ 'error' => \__( 'Failed to unblock IP address', 'silver-assist-security' ) ] );
+			}
+
+		} catch ( \Exception $e ) {
+			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 IP unblocking failed: {$e->getMessage()}", [ 'ip' => $ip ] );
+			\wp_send_json_error( [ 'error' => \__( 'Failed to unblock IP address', 'silver-assist-security' ) ] );
+		}
+	}
+
+	/**
+	 * AJAX handler to clear all CF7 blocked IPs
+	 *
+	 * @since 1.1.4
+	 * @return void
+	 */
+	public function ajax_clear_cf7_blocked_ips(): void {
+		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_admin_nonce' ) ) {
+			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			return;
+		}
+
+		if ( ! \current_user_can( 'manage_options' ) ) {
+			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			return;
+		}
+
+		try {
+			$blacklist = IPBlacklist::getInstance();
+			$cleared_count = $blacklist->clear_cf7_blacklist();
+
+			SecurityHelper::log_security_event( 'CF7_BLACKLIST_CLEARED', "All CF7 blocked IPs cleared via admin panel", [ 'count' => $cleared_count ] );
+			\wp_send_json_success( [ 
+				'message' => \sprintf( \__( 'Successfully cleared %d CF7 blocked IPs', 'silver-assist-security' ), $cleared_count ),
+				'count' => $cleared_count
+			] );
+
+		} catch ( \Exception $e ) {
+			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 blacklist clearing failed: {$e->getMessage()}", [ 'function' => __FUNCTION__ ] );
+			\wp_send_json_error( [ 'error' => \__( 'Failed to clear blocked IPs', 'silver-assist-security' ) ] );
+		}
+	}
+
+	/**
+	 * AJAX handler to export CF7 blocked IPs
+	 *
+	 * @since 1.1.4
+	 * @return void
+	 */
+	public function ajax_export_cf7_blocked_ips(): void {
+		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_admin_nonce' ) ) {
+			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			return;
+		}
+
+		if ( ! \current_user_can( 'manage_options' ) ) {
+			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			return;
+		}
+
+		try {
+			$blacklist = IPBlacklist::getInstance();
+			$blocked_ips = $blacklist->get_cf7_blocked_ips();
+
+			$csv_data = "IP Address,Reason,Blocked At,Violations\n";
+			foreach ( $blocked_ips as $ip => $data ) {
+				$blocked_at = isset( $data['blocked_at'] ) ? \date( 'Y-m-d H:i:s', $data['blocked_at'] ) : 'Unknown';
+				$reason = isset( $data['reason'] ) ? $data['reason'] : 'Form security violation';
+				$violations = isset( $data['violations'] ) ? $data['violations'] : 1;
+				
+				$csv_data .= sprintf( 
+					'"%s","%s","%s","%d"\n',
+					$ip,
+					\str_replace( '"', '""', $reason ),
+					$blocked_at,
+					$violations
+				);
+			}
+
+			$filename = 'cf7-blocked-ips-' . \date( 'Y-m-d-H-i-s' ) . '.csv';
+			
+			\wp_send_json_success( [
+				'csv_data' => $csv_data,
+				'filename' => $filename,
+				'count' => \count( $blocked_ips )
+			] );
+
+		} catch ( \Exception $e ) {
+			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 blocked IPs export failed: {$e->getMessage()}", [ 'function' => __FUNCTION__ ] );
+			\wp_send_json_error( [ 'error' => \__( 'Failed to export blocked IPs', 'silver-assist-security' ) ] );
+		}
 	}
 }

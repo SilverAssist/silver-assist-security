@@ -1026,4 +1026,293 @@
         }
     };
 
+    // ========================================
+    // CF7 BLOCKED IPS MANAGEMENT
+    // ========================================
+
+    /**
+     * Initialize CF7 blocked IPs panel
+     * 
+     * Sets up event handlers for CF7 IP management including
+     * viewing, blocking, unblocking, and exporting CF7 blocked IPs.
+     * 
+     * @since 1.1.16
+     * @returns {void}
+     */
+    const initCF7BlockedIPs = () => {
+        const $cf7Panel = $("#cf7-blocked-ips-content");
+        const $cf7Count = $("#cf7-threat-count");
+        const $cf7NewIP = $("#cf7-new-ip");
+        const $cf7BlockBtn = $("#cf7-block-ip-btn");
+        const $cf7ClearBtn = $("#cf7-clear-blocked-ips");
+        const $cf7ExportBtn = $("#cf7-export-blocked-ips");
+
+        if (!$cf7Panel.length) return;
+
+        let cf7RefreshTimeout;
+
+        /**
+         * Load CF7 blocked IPs via AJAX
+         */
+        const loadCF7BlockedIPs = () => {
+            $cf7Panel.html('<p class="loading">Loading CF7 blocked IPs...</p>');
+
+            const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
+
+            $.ajax({
+                url: ajaxurl,
+                type: "POST",
+                data: {
+                    action: "silver_assist_get_cf7_blocked_ips",
+                    nonce: nonce
+                },
+                success: response => {
+                    const { success, data = {} } = response || {};
+                    
+                    if (success) {
+                        $cf7Panel.html(data.html || strings.noCF7BlockedIPs || "No CF7 blocked IPs found.");
+                        $cf7Count.text(data.count || 0);
+                        
+                        // Initialize unblock buttons
+                        initUnblockCF7Buttons();
+                    } else {
+                        $cf7Panel.html(`<p class="error">${data.error || strings.errorLoadingCF7IPs || "Error loading CF7 blocked IPs"}</p>`);
+                    }
+                },
+                error: () => {
+                    $cf7Panel.html(`<p class="error">${strings.errorLoadingCF7IPs || "Error loading CF7 blocked IPs"}</p>`);
+                }
+            });
+        };
+
+        /**
+         * Initialize unblock buttons for CF7 IPs
+         */
+        const initUnblockCF7Buttons = () => {
+            $cf7Panel.find(".unblock-cf7-ip").off("click").on("click", function() {
+                const $btn = $(this);
+                const ip = $btn.data("ip");
+                
+                if (!ip) return;
+                
+                const { strings = {} } = silverAssistSecurity || {};
+                if (!confirm(strings.confirmUnblockCF7IP || `Are you sure you want to unblock CF7 access for ${ip}?`)) {
+                    return;
+                }
+                
+                unblockCF7IP(ip, $btn);
+            });
+        };
+
+        /**
+         * Block new CF7 IP
+         */
+        const blockCF7IP = (ip) => {
+            const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
+
+            $cf7BlockBtn.prop("disabled", true).text(strings.blocking || "Blocking...");
+
+            $.ajax({
+                url: ajaxurl,
+                type: "POST",
+                data: {
+                    action: "silver_assist_block_cf7_ip",
+                    nonce: nonce,
+                    ip: ip
+                },
+                success: response => {
+                    const { success, data = {} } = response || {};
+                    
+                    if (success) {
+                        showMessage(data.message || strings.cf7IPBlocked || "CF7 IP blocked successfully", "success");
+                        $cf7NewIP.val("");
+                        
+                        // Refresh the list after a short delay
+                        clearTimeout(cf7RefreshTimeout);
+                        cf7RefreshTimeout = setTimeout(loadCF7BlockedIPs, TIMING.DATABASE_UPDATE_DELAY);
+                    } else {
+                        showMessage(data.error || strings.errorBlockingCF7IP || "Error blocking CF7 IP", "error");
+                    }
+                },
+                error: () => {
+                    showMessage(strings.errorBlockingCF7IP || "Error blocking CF7 IP", "error");
+                },
+                complete: () => {
+                    $cf7BlockBtn.prop("disabled", false).text(strings.blockIP || "Block IP");
+                }
+            });
+        };
+
+        /**
+         * Unblock CF7 IP
+         */
+        const unblockCF7IP = (ip, $btn) => {
+            const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
+            const originalText = $btn.text();
+
+            $btn.prop("disabled", true).text(strings.unblocking || "Unblocking...");
+
+            $.ajax({
+                url: ajaxurl,
+                type: "POST",
+                data: {
+                    action: "silver_assist_unblock_cf7_ip",
+                    nonce: nonce,
+                    ip: ip
+                },
+                success: response => {
+                    const { success, data = {} } = response || {};
+                    
+                    if (success) {
+                        showMessage(data.message || strings.cf7IPUnblocked || "CF7 IP unblocked successfully", "success");
+                        
+                        // Remove the IP item from display
+                        $btn.closest(".cf7-ip-item").fadeOut(300, function() {
+                            $(this).remove();
+                            // Update count
+                            const newCount = parseInt($cf7Count.text()) - 1;
+                            $cf7Count.text(Math.max(0, newCount));
+                        });
+                    } else {
+                        showMessage(data.error || strings.errorUnblockingCF7IP || "Error unblocking CF7 IP", "error");
+                        $btn.prop("disabled", false).text(originalText);
+                    }
+                },
+                error: () => {
+                    showMessage(strings.errorUnblockingCF7IP || "Error unblocking CF7 IP", "error");
+                    $btn.prop("disabled", false).text(originalText);
+                }
+            });
+        };
+
+        /**
+         * Clear all CF7 blocked IPs
+         */
+        const clearAllCF7BlockedIPs = () => {
+            const { strings = {} } = silverAssistSecurity || {};
+            
+            if (!confirm(strings.confirmClearAllCF7IPs || "Are you sure you want to clear all CF7 blocked IPs? This action cannot be undone.")) {
+                return;
+            }
+
+            const { ajaxurl, nonce } = silverAssistSecurity || {};
+
+            $cf7ClearBtn.prop("disabled", true).text(strings.clearing || "Clearing...");
+
+            $.ajax({
+                url: ajaxurl,
+                type: "POST",
+                data: {
+                    action: "silver_assist_clear_cf7_blocked_ips",
+                    nonce: nonce
+                },
+                success: response => {
+                    const { success, data = {} } = response || {};
+                    
+                    if (success) {
+                        showMessage(data.message || strings.cf7IPsCleared || "All CF7 blocked IPs cleared successfully", "success");
+                        $cf7Count.text("0");
+                        $cf7Panel.html(`<p class="no-blocked-ips">${strings.noCF7BlockedIPs || "No CF7 blocked IPs found."}</p>`);
+                    } else {
+                        showMessage(data.error || strings.errorClearingCF7IPs || "Error clearing CF7 blocked IPs", "error");
+                    }
+                },
+                error: () => {
+                    showMessage(strings.errorClearingCF7IPs || "Error clearing CF7 blocked IPs", "error");
+                },
+                complete: () => {
+                    $cf7ClearBtn.prop("disabled", false).text(strings.clearAllCF7Blocks || "Clear All CF7 Blocks");
+                }
+            });
+        };
+
+        /**
+         * Export CF7 blocked IPs as CSV
+         */
+        const exportCF7BlockedIPs = () => {
+            const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
+
+            $cf7ExportBtn.prop("disabled", true).text(strings.exporting || "Exporting...");
+
+            $.ajax({
+                url: ajaxurl,
+                type: "POST",
+                data: {
+                    action: "silver_assist_export_cf7_blocked_ips",
+                    nonce: nonce
+                },
+                success: response => {
+                    const { success, data = {} } = response || {};
+                    
+                    if (success && data.csv_data) {
+                        // Create and download CSV file
+                        const blob = new Blob([data.csv_data], { type: "text/csv" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = data.filename || "cf7-blocked-ips.csv";
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        
+                        showMessage(strings.cf7IPsExported || `Exported ${data.count} CF7 blocked IPs`, "success");
+                    } else {
+                        showMessage(data.error || strings.errorExportingCF7IPs || "Error exporting CF7 blocked IPs", "error");
+                    }
+                },
+                error: () => {
+                    showMessage(strings.errorExportingCF7IPs || "Error exporting CF7 blocked IPs", "error");
+                },
+                complete: () => {
+                    $cf7ExportBtn.prop("disabled", false).text(strings.exportCF7Blocks || "Export CF7 Blocks");
+                }
+            });
+        };
+
+        // Event handlers
+        $cf7BlockBtn.on("click", () => {
+            const ip = $cf7NewIP.val().trim();
+            if (!ip) {
+                const { strings = {} } = silverAssistSecurity || {};
+                showMessage(strings.enterValidIP || "Please enter a valid IP address", "error");
+                return;
+            }
+            
+            // Basic IP validation
+            if (!/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ip)) {
+                const { strings = {} } = silverAssistSecurity || {};
+                showMessage(strings.invalidIPFormat || "Invalid IP address format", "error");
+                return;
+            }
+            
+            blockCF7IP(ip);
+        });
+
+        $cf7NewIP.on("keypress", e => {
+            if (e.which === 13) { // Enter key
+                $cf7BlockBtn.trigger("click");
+            }
+        });
+
+        $cf7ClearBtn.on("click", clearAllCF7BlockedIPs);
+        $cf7ExportBtn.on("click", exportCF7BlockedIPs);
+
+        // Load initial data
+        loadCF7BlockedIPs();
+    };
+
+    // ========================================
+    // INITIALIZATION
+    // ========================================
+
+    // Initialize all features when document is ready
+    $(document).ready(() => {
+        initFormValidation();
+        initDashboardRefresh();
+        initAutoSave();
+        initPathValidation();
+        initCF7BlockedIPs(); // Initialize CF7 panel
+    });
+
 }))(jQuery);

@@ -166,4 +166,28 @@ class TestHelper
 
         return $query;
     }
+
+    /**
+     * Clean up test transients
+     *
+     * @since 1.1.16
+     * @return void
+     */
+    public static function cleanup_test_transients(): void
+    {
+        global $wpdb;
+        
+        // Clean up transients starting with common test prefixes
+        $prefixes = ['ip_blacklist_', 'cf7_', 'silver_assist_test_'];
+        
+        foreach ($prefixes as $prefix) {
+            $wpdb->query(
+                $wpdb->prepare(
+                    "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+                    $wpdb->esc_like('_transient_' . $prefix) . '%',
+                    $wpdb->esc_like('_transient_timeout_' . $prefix) . '%'
+                )
+            );
+        }
+    }
 }
