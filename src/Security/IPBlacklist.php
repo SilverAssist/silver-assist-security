@@ -386,7 +386,7 @@ class IPBlacklist {
 	 * @return bool Success status
 	 */
 	public function add_to_cf7_blacklist( string $ip, string $reason, string $type = 'cf7_manual' ): bool {
-		$duration = DefaultConfig::get_option( 'silver_assist_cf7_ip_block_duration' ) ?: 3600; // 1 hour default
+		$duration = DefaultConfig::get_option( 'silver_assist_cf7_ip_block_duration' ) ? DefaultConfig::get_option( 'silver_assist_cf7_ip_block_duration' ) : 3600; // 1 hour default
 
 		$blacklist_key  = 'ip_blacklist_' . md5( $ip );
 		$blacklist_data = array(

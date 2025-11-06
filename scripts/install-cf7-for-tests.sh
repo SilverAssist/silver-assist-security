@@ -77,8 +77,16 @@ if [ -d "$CF7_PLUGIN_DIR" ]; then
     fi
     
     echo ""
-    read -p "Do you want to reinstall Contact Form 7? (y/N): " -n 1 -r
-    echo
+    
+    # Check for non-interactive mode via environment variable or CI detection
+    if [[ "$FORCE_CF7_REINSTALL" == "true" ]] || [[ "$CI" == "true" ]] || [[ "$GITHUB_ACTIONS" == "true" ]] || [[ "$CONTINUOUS_INTEGRATION" == "true" ]]; then
+        print_warning "Non-interactive mode: Automatically reinstalling Contact Form 7"
+        REPLY="y"
+    else
+        read -p "Do you want to reinstall Contact Form 7? (y/N): " -n 1 -r
+        echo
+    fi
+    
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         print_success "Using existing Contact Form 7 installation"
         exit 0

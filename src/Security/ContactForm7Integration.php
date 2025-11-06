@@ -394,20 +394,24 @@ class ContactForm7Integration {
 	 * @return array Submission data
 	 */
 	private function get_cf7_submission_data(): array {
-		return $_POST ?? array();
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		return $_POST;
 	}
 
 	/**
 	 * Get current CF7 form object
 	 *
 	 * @since 1.1.15
-	 * @return object|null CF7 form object or null
+	 * @return object CF7 form object
 	 */
-	private function get_current_cf7_form(): ?object {
+	private function get_current_cf7_form(): object {
 		// In a real implementation, this would get the actual CF7 form
 		// For now, return a basic object structure
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$form_id = isset( $_POST['_wpcf7'] ) ? (int) \sanitize_text_field( \wp_unslash( $_POST['_wpcf7'] ) ) : 0;
+
 		return (object) array(
-			'id'    => $_POST['_wpcf7'] ?? 0,
+			'id'    => $form_id,
 			'title' => 'Contact Form',
 		);
 	}
@@ -460,7 +464,7 @@ class ContactForm7Integration {
 		$text_fields = array();
 		foreach ( $submission_data as $key => $value ) {
 			// Skip email fields and honeypot fields
-			if ( ! in_array( $key, array( 'your-email', 'email', 'silver_honeypot_field', 'silver_captcha_answer', 'silver_captcha_token' ) ) ) {
+			if ( ! in_array( $key, array( 'your-email', 'email', 'silver_honeypot_field', 'silver_captcha_answer', 'silver_captcha_token' ), true ) ) {
 				$text_fields[] = strtolower( (string) $value );
 			}
 		}
@@ -489,10 +493,11 @@ class ContactForm7Integration {
 
 		// Check for excessive capitalization (common in spam) - more lenient threshold
 		$uppercase_ratio = 0;
-		$total_chars     = strlen( $text_data );
+		$total_chars     = strlen( (string) $text_data );
 		if ( $total_chars > 30 ) { // Only check longer messages
-			$uppercase_chars = strlen( preg_replace( '/[^A-Z]/', '', $text_data ) );
-			$uppercase_ratio = $uppercase_chars / $total_chars;
+			$uppercase_result = preg_replace( '/[^A-Z]/', '', (string) $text_data );
+			$uppercase_chars  = strlen( $uppercase_result ? $uppercase_result : '' );
+			$uppercase_ratio  = $uppercase_chars / $total_chars;
 		}
 
 		// Higher threshold and longer text requirement to avoid false positives

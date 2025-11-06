@@ -59,7 +59,7 @@ class UnderAttackMode {
 		$threshold = (int) DefaultConfig::get_option( 'silver_assist_under_attack_threshold' );
 
 		// Use current minute as counter key for time-based grouping
-		$counter_key   = 'attack_counter_' . date( 'Y-m-d-H-i' );
+		$counter_key   = 'attack_counter_' . gmdate( 'Y-m-d-H-i' );
 		$current_count = (int) \get_transient( $counter_key );
 		$new_count     = $current_count + 1;
 
@@ -69,7 +69,7 @@ class UnderAttackMode {
 			'ATTACK_RECORDED',
 			'Attack attempt recorded',
 			array(
-				'ip'           => $ip ?: SecurityHelper::get_client_ip(),
+				'ip'           => $ip ? $ip : SecurityHelper::get_client_ip(),
 				'attack_count' => $new_count,
 				'threshold'    => $threshold,
 			)
@@ -244,7 +244,7 @@ class UnderAttackMode {
 	 * @return int Current attack count in window
 	 */
 	public function get_current_attack_count(): int {
-		$counter_key = 'attack_counter_' . date( 'Y-m-d-H-i' );
+		$counter_key = 'attack_counter_' . gmdate( 'Y-m-d-H-i' );
 		return (int) \get_transient( $counter_key );
 	}
 
@@ -264,7 +264,7 @@ class UnderAttackMode {
 			'current_attacks'  => $current_attacks,
 			'total_attacks'    => $current_attacks, // Simplified for now
 			'attack_threshold' => (int) DefaultConfig::get_option( 'silver_assist_under_attack_threshold' ),
-			'mode_data'        => $attack_data ?: null,
+			'mode_data'        => $attack_data ? $attack_data : null,
 		);
 	}
 

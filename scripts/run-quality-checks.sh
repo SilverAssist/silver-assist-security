@@ -4,7 +4,20 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Configuration with environment variable support
 SKIP_WP_SETUP="${SKIP_WP_SETUP:-false}"
+FORCE_DB_RECREATE="${FORCE_DB_RECREATE:-false}"
+FORCE_CF7_REINSTALL="${FORCE_CF7_REINSTALL:-false}"
+NON_INTERACTIVE="${NON_INTERACTIVE:-false}"
+
+# Auto-detect CI environment and set non-interactive mode
+if [[ "$CI" == "true" ]] || [[ "$GITHUB_ACTIONS" == "true" ]] || [[ "$CONTINUOUS_INTEGRATION" == "true" ]]; then
+    NON_INTERACTIVE="true"
+    FORCE_DB_RECREATE="true"
+    FORCE_CF7_REINSTALL="true"
+    echo "🤖 CI environment detected - running in non-interactive mode"
+fi
 
 # Colors
 RED='\033[0;31m'
@@ -47,10 +60,40 @@ run_phpstan() {
     print_success "PHPStan passed"
 }
 
+setup_wordpress_test_suite() {
+    if [[ "$SKIP_WP_SETUP" == "true" ]]; then
+        echo "⏭️  Skipping WordPress Test Suite setup"
+        return 0
+    fi
+    
+    print_header "🚀 Setting Up WordPress Test Suite"
+    cd "$PROJECT_ROOT"
+    
+    # Set environment variables for non-interactive installation
+    export FORCE_DB_RECREATE="$FORCE_DB_RECREATE"
+    export FORCE_CF7_REINSTALL="$FORCE_CF7_REINSTALL"
+    
+    # Install WordPress Test Suite
+    bash scripts/install-wp-tests.sh wordpress_test root '' localhost latest
+    
+    # Install Contact Form 7 for integration tests
+    if [[ -f "scripts/install-cf7-for-tests.sh" ]]; then
+        echo "📦 Installing Contact Form 7 for integration tests..."
+        bash scripts/install-cf7-for-tests.sh
+    fi
+    
+    print_success "WordPress Test Suite ready"
+}
+
 run_phpunit() {
     print_header "🧪 Running PHPUnit Tests"
     cd "$PROJECT_ROOT"
     export WP_TESTS_DIR="${WP_TESTS_DIR:-/tmp/wordpress-tests-lib}"
+    
+    # Ensure WordPress Test Suite is setup
+    if [[ ! -d "/tmp/wordpress-tests-lib" ]]; then
+        setup_wordpress_test_suite
+    fi
     
     # Run all tests with detailed output
     vendor/bin/phpunit --testdox
@@ -83,24 +126,80 @@ run_phpunit() {
     print_success "All tests completed"
 }
 
+# Show help
+show_help() {
+    echo "Silver Assist Security - Quality Checks Runner"
+    echo ""
+    echo "Usage: $0 [OPTIONS] [CHECKS...]"
+    echo ""
+    echo "Available Checks:"
+    echo "  composer     - Validate composer.json and check for vulnerabilities"
+    echo "  phpcs        - WordPress Coding Standards check"
+    echo "  phpstan      - Static analysis with PHPStan"
+    echo "  phpunit      - Run PHPUnit test suite"
+    echo "  all          - Run all checks (default)"
+    echo ""
+    echo "Options:"
+    echo "  --help, -h              Show this help message"
+    echo "  --skip-wp-setup         Skip WordPress Test Suite installation"
+    echo "  --non-interactive       Run in non-interactive mode (auto-yes to prompts)"
+    echo "  --force-db-recreate     Force database recreation without prompting"
+    echo "  --force-cf7-reinstall   Force Contact Form 7 reinstallation"
+    echo "  --verbose, -v           Enable verbose output"
+    echo ""
+    echo "Environment Variables:"
+    echo "  SKIP_WP_SETUP=true      Skip WordPress setup"
+    echo "  NON_INTERACTIVE=true    Enable non-interactive mode"
+    echo "  FORCE_DB_RECREATE=true  Force database recreation"
+    echo "  FORCE_CF7_REINSTALL=true Force CF7 reinstallation"
+    echo "  CI=true                 Auto-enables non-interactive mode"
+    echo ""
+    echo "Examples:"
+    echo "  $0                              # Run all checks"
+    echo "  $0 phpcs phpstan               # Run only coding standards and static analysis"
+    echo "  $0 --non-interactive phpunit   # Run tests non-interactively"
+    echo "  FORCE_DB_RECREATE=true $0      # Force database recreation"
+    echo "  CI=true $0                     # Simulate CI environment"
+    echo ""
+    exit 0
+}
+
 # Parse arguments
 checks=()
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --help|-h)
+            show_help
+            ;;
         --skip-wp-setup)
             SKIP_WP_SETUP="true"
+            shift
+            ;;
+        --non-interactive)
+            NON_INTERACTIVE="true"
+            FORCE_DB_RECREATE="true"
+            FORCE_CF7_REINSTALL="true"
+            shift
+            ;;
+        --force-db-recreate)
+            FORCE_DB_RECREATE="true"
+            shift
+            ;;
+        --force-cf7-reinstall)
+            FORCE_CF7_REINSTALL="true"
             shift
             ;;
         --verbose|-v)
             set -x  # Enable verbose mode
             shift
             ;;
-        phpcs|phpstan|phpunit|composer-validate|all)
+        composer|phpcs|phpstan|phpunit|all)
             checks+=("$1")
             shift
             ;;
         *)
             echo "Unknown option: $1"
+            echo "Run '$0 --help' for available options"
             exit 1
             ;;
     esac
@@ -113,21 +212,7 @@ fi
 
 # Setup WordPress Test Suite if needed
 if [[ " ${checks[*]} " =~ " phpunit " ]] || [[ " ${checks[*]} " =~ " all " ]]; then
-    if [ "$SKIP_WP_SETUP" != "true" ]; then
-        print_header "🐘 Setting up WordPress Test Suite"
-        bash "$SCRIPT_DIR/install-wp-tests.sh" wordpress_test root '' localhost latest true
-        print_success "WordPress Test Suite ready"
-        
-        print_header "📧 Installing Contact Form 7 for Integration Tests"
-        export WP_TESTS_DIR="${WP_TESTS_DIR:-/tmp/wordpress-tests-lib}"
-        if [ -f "$SCRIPT_DIR/install-cf7-for-tests.sh" ]; then
-            chmod +x "$SCRIPT_DIR/install-cf7-for-tests.sh"
-            bash "$SCRIPT_DIR/install-cf7-for-tests.sh"
-            print_success "Contact Form 7 integration ready"
-        else
-            print_error "CF7 installation script not found at: $SCRIPT_DIR/install-cf7-for-tests.sh"
-        fi
-    fi
+    setup_wordpress_test_suite
 fi
 
 # Run checks
@@ -135,13 +220,13 @@ failed_checks=()
 for check in "${checks[@]}"; do
     case $check in
         all)
-            run_composer_validate || failed_checks+=("composer-validate")
+            run_composer_validate || failed_checks+=("composer")
             run_phpcs || failed_checks+=("phpcs")
             run_phpstan || failed_checks+=("phpstan")
             run_phpunit || failed_checks+=("phpunit")
             ;;
-        composer-validate)
-            run_composer_validate || failed_checks+=("composer-validate")
+        composer)
+            run_composer_validate || failed_checks+=("composer")
             ;;
         phpcs)
             run_phpcs || failed_checks+=("phpcs")

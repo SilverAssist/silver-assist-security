@@ -49,7 +49,7 @@
     },
     "scripts": {
         "phpcs": "phpcs --standard=phpcs.xml",
-        "phpcbf": "phpcbf --standard=phpcs.xml",
+        "phpcbf": "bash scripts/run-phpcbf-safe.sh",
         "phpstan": "php -d memory_limit=1G vendor/bin/phpstan analyse src/ --no-progress",
         "test": "bash scripts/run-quality-checks.sh"
     },

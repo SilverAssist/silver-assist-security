@@ -185,7 +185,15 @@ install_db() {
 	if [ $(mysql --user="$DB_USER" --password="$DB_PASS"$EXTRA --execute="SHOW DATABASES LIKE '$DB_NAME';" | grep "$DB_NAME") ]
 	then
 		echo "Reinstalling will delete the existing test database ($DB_NAME)"
-		read -p 'Are you sure you want to proceed? [y/N]: ' DELETE_EXISTING_DB
+		
+		# Check for non-interactive mode via environment variable or CI detection
+		if [[ "$FORCE_DB_RECREATE" == "true" ]] || [[ "$CI" == "true" ]] || [[ "$GITHUB_ACTIONS" == "true" ]] || [[ "$CONTINUOUS_INTEGRATION" == "true" ]]; then
+			echo "Non-interactive mode: Automatically recreating database"
+			DELETE_EXISTING_DB="y"
+		else
+			read -p 'Are you sure you want to proceed? [y/N]: ' DELETE_EXISTING_DB
+		fi
+		
 		recreate_db $DELETE_EXISTING_DB
 	else
 		create_db

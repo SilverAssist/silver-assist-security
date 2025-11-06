@@ -535,17 +535,17 @@ class SecurityHelper {
 	 */
 	public static function get_contact_form_7_info(): array {
 		if ( ! self::is_contact_form_7_active() ) {
-			return [
+			return array(
 				'active'  => false,
 				'version' => null,
 				'message' => \__( 'Contact Form 7 plugin is not active', 'silver-assist-security' ),
-			];
+			);
 		}
 
 		$version       = \defined( 'WPCF7_VERSION' ) ? WPCF7_VERSION : 'Unknown';
 		$is_compatible = \version_compare( $version, '5.0', '>=' );
 
-		return [
+		return array(
 			'active'     => true,
 			'version'    => $version,
 			'compatible' => $is_compatible,
@@ -560,6 +560,6 @@ class SecurityHelper {
 					\__( 'Contact Form 7 v%s detected but requires v5.0 or higher', 'silver-assist-security' ),
 					$version
 				),
-		];
+		);
 	}
 }
