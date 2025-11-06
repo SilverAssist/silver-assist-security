@@ -127,6 +127,7 @@ class AdminPanel {
 
 		// Initialize asset manager
 		$this->asset_manager = new AssetManager( $this->plugin_version );
+		$this->asset_manager->init();
 
 		$this->init();
 	}

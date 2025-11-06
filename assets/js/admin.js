@@ -590,12 +590,12 @@
             const { success, data } = response || {};
 
             if (success) {
-                updateBlockedIPsDisplay(data);
+                // Ensure data is valid before passing to display function
+                updateBlockedIPsDisplay(data || []);
             } else {
                 $blockedIpsListSelector.html(`<p class="no-threats">${strings.noThreats || "No active threats detected"}</p>`);
             }
         }).fail(() => {
-            
             $blockedIpsListSelector.html(`<p class="error">${strings.error || "Error loading data"}</p>`);
         });
     };
@@ -791,20 +791,25 @@
         html += `<thead><tr><th>${strings.ipHash}</th><th>${strings.blockedTime}</th><th>${strings.remaining}</th></tr></thead>`;
         html += "<tbody>";
 
-        data.forEach(ip => {
-            // Use destructuring for cleaner object access
-            const { hash, blocked_at, remaining_minutes } = ip;
+        // Ensure data is an array before using forEach
+        if (Array.isArray(data)) {
+            data.forEach(ip => {
+                // Use destructuring for cleaner object access
+                const { ip: ipAddress, blocked_at, time_left_str } = ip;
 
-            html += "<tr>";
-            html += `<td>${hash.substring(0, 8)}...</td>`;
-            html += `<td>${blocked_at}</td>`;
-            html += `<td>${remaining_minutes} ${strings.minutes}</td>`;
-            html += "</tr>";
-        });
+                html += "<tr>";
+                html += `<td>${ipAddress ? ipAddress.substring(0, 12) + '...' : 'Unknown'}</td>`;
+                html += `<td>${blocked_at || 'Unknown'}</td>`;
+                html += `<td>${time_left_str || 'Expired'}</td>`;
+                html += "</tr>";
+            });
+        } else {
+            html += "<tr><td colspan=\"3\">No blocked IPs data available</td></tr>";
+        }
 
         html += "</tbody></table></div>";
         $container.html(html);
-        $threatCountSelector.text(data.length);
+        $threatCountSelector.text(Array.isArray(data) ? data.length : 0);
     };
 
     /**
@@ -1421,6 +1426,128 @@
     };
 
     // ========================================
+    // MANUAL IP MANAGEMENT
+    // ========================================
+
+    /**
+     * Initialize manual IP management functionality
+     * 
+     * Handles manual IP blocking/unblocking interface in IP Management tab
+     * 
+     * @since 1.1.15
+     * @returns {void}
+     */
+    const initManualIPManagement = () => {
+        const $ipInput = $("#manual-ip-address");
+        const $reasonInput = $("#manual-ip-reason");
+        const $addBtn = $("#add-manual-ip");
+
+        if (!$ipInput.length || !$addBtn.length) return;
+
+        // IP address validation pattern
+        const ipPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+        /**
+         * Validate IP address format
+         * 
+         * @param {string} ip IP address to validate
+         * @returns {boolean} True if valid IP format
+         */
+        const validateIP = ip => {
+            return ip && ipPattern.test(ip.trim());
+        };
+
+        /**
+         * Add IP to blacklist manually
+         * 
+         * @returns {void}
+         */
+        const addManualIP = () => {
+            const ip = $ipInput.val().trim();
+            const reason = $reasonInput.val().trim() || "Manual block";
+
+            // Validate IP format
+            if (!validateIP(ip)) {
+                showMessage(strings.invalidIPFormat || "Please enter a valid IP address (e.g., 192.168.1.100)", "error");
+                $ipInput.focus();
+                return;
+            }
+
+            // Disable form during request
+            $addBtn.prop("disabled", true).text(strings.blockingIP || "Blocking IP...");
+            $ipInput.prop("disabled", true);
+            $reasonInput.prop("disabled", true);
+
+            $.ajax({
+                url: ajaxurl,
+                type: "POST",
+                data: {
+                    action: "silver_assist_add_manual_ip",
+                    nonce: nonce,
+                    ip: ip,
+                    reason: reason
+                },
+                success: response => {
+                    const { success, data = {} } = response || {};
+                    
+                    if (success) {
+                        showMessage(data.message || strings.ipBlockedSuccessfully || "IP blocked successfully", "success");
+                        
+                        // Clear form
+                        $ipInput.val("");
+                        $reasonInput.val("");
+                        
+                        // Refresh blocked IPs lists
+                        loadBlockedIPs();
+                        if (typeof loadCF7BlockedIPs === "function") {
+                            loadCF7BlockedIPs();
+                        }
+                    } else {
+                        showMessage(data.error || strings.errorBlockingIP || "Error blocking IP address", "error");
+                    }
+                },
+                error: () => {
+                    showMessage(strings.errorBlockingIP || "Error blocking IP address", "error");
+                },
+                complete: () => {
+                    // Re-enable form
+                    $addBtn.prop("disabled", false).text(strings.blockIP || "Block IP");
+                    $ipInput.prop("disabled", false);
+                    $reasonInput.prop("disabled", false);
+                }
+            });
+        };
+
+        // Event handlers
+        $addBtn.on("click", addManualIP);
+
+        // Enter key support
+        $ipInput.add($reasonInput).on("keypress", e => {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                addManualIP();
+            }
+        });
+
+        // Real-time IP validation
+        $ipInput.on("input", function() {
+            const $this = $(this);
+            const ip = $this.val().trim();
+            
+            if (ip === "") {
+                $this.removeClass("validation-valid validation-invalid");
+                return;
+            }
+
+            if (validateIP(ip)) {
+                $this.removeClass("validation-invalid").addClass("validation-valid");
+            } else {
+                $this.removeClass("validation-valid").addClass("validation-invalid");
+            }
+        });
+    };
+
+    // ========================================
     // INITIALIZATION
     // ========================================
 
@@ -1432,6 +1559,7 @@
         initAutoSave();
         initAdminPathValidation();
         initCF7BlockedIPs(); // Initialize CF7 panel
+        initManualIPManagement(); // Initialize manual IP management
     });
 
 }))(jQuery);

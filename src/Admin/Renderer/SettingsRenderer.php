@@ -46,7 +46,10 @@ class SettingsRenderer {
 	 */
 	public function render_all_tabs(): void {
 		$this->render_login_security_tab();
-		$this->render_graphql_security_tab();
+
+		if ( \class_exists( 'WPGraphQL' ) ) {
+			$this->render_graphql_security_tab();
+		}
 
 		if ( SecurityHelper::is_contact_form_7_active() ) {
 			$this->render_cf7_security_tab();
@@ -86,8 +89,7 @@ class SettingsRenderer {
 										name="silver_assist_login_attempts" 
 										min="1" 
 										max="20" 
-										value="<?php echo \esc_attr( $config['login_attempts'] ); ?>" 
-										class="security-slider">
+										value="<?php echo \esc_attr( $config['login_attempts'] ); ?>">
 								<span class="slider-value" id="login-attempts-value"><?php echo \esc_html( $config['login_attempts'] ); ?></span>
 								<p class="description">
 									<?php \esc_html_e( 'Number of failed login attempts before IP lockout (1-20)', 'silver-assist-security' ); ?>
@@ -109,8 +111,7 @@ class SettingsRenderer {
 										min="60" 
 										max="3600" 
 										step="60" 
-										value="<?php echo \esc_attr( $config['lockout_duration'] ); ?>" 
-										class="security-slider">
+										value="<?php echo \esc_attr( $config['lockout_duration'] ); ?>">
 								<span class="slider-value" id="lockout-duration-value">
 									<?php echo \esc_html( \round( $config['lockout_duration'] / 60 ) ); ?>
 								</span>
@@ -133,8 +134,7 @@ class SettingsRenderer {
 										name="silver_assist_session_timeout" 
 										min="5" 
 										max="120" 
-										value="<?php echo \esc_attr( $config['session_timeout'] ); ?>" 
-										class="security-slider">
+										value="<?php echo \esc_attr( $config['session_timeout'] ); ?>">
 								<span class="slider-value" id="session-timeout-value"><?php echo \esc_html( $config['session_timeout'] ); ?></span>
 								<p class="description">
 									<?php \esc_html_e( 'Automatic logout after inactivity (5-120 minutes)', 'silver-assist-security' ); ?>
@@ -254,8 +254,7 @@ class SettingsRenderer {
 											name="silver_assist_graphql_query_timeout" 
 											min="1" 
 											max="30" 
-											value="<?php echo \esc_attr( $config['graphql_query_timeout'] ); ?>" 
-											class="security-slider">
+											value="<?php echo \esc_attr( $config['graphql_query_timeout'] ); ?>"
 									<span class="slider-value" id="graphql-timeout-value"><?php echo \esc_html( $config['graphql_query_timeout'] ); ?></span>
 									<p class="description">
 										<?php \esc_html_e( 'Maximum execution time for GraphQL queries (1-30 seconds)', 'silver-assist-security' ); ?>
@@ -348,8 +347,7 @@ class SettingsRenderer {
 										name="silver_assist_cf7_rate_limit" 
 										min="1" 
 										max="10" 
-										value="<?php echo \esc_attr( $config['cf7_rate_limit'] ); ?>" 
-										class="security-slider">
+										value="<?php echo \esc_attr( $config['cf7_rate_limit'] ); ?>"
 								<span class="slider-value" id="cf7-rate-limit-value"><?php echo \esc_html( $config['cf7_rate_limit'] ); ?></span>
 								<p class="description">
 									<?php \esc_html_e( 'Maximum form submissions per minute per IP address', 'silver-assist-security' ); ?>
@@ -447,6 +445,48 @@ class SettingsRenderer {
 							value="<?php \esc_attr_e( 'Save IP Settings', 'silver-assist-security' ); ?>">
 				</p>
 			</form>
+
+			<!-- Login Security Blocked IPs Section -->
+			<div class="security-threats-section">
+				<h3><?php \esc_html_e( 'Login Security - Blocked IPs', 'silver-assist-security' ); ?></h3>
+				<div id="blocked-ips-list">
+					<p class="loading"><?php \esc_html_e( 'Loading blocked IPs...', 'silver-assist-security' ); ?></p>
+				</div>
+			</div>
+
+			<!-- CF7 Blocked IPs Section (conditional) -->
+			<?php if ( SecurityHelper::is_contact_form_7_active() ) : ?>
+			<div class="cf7-security-threats-section">
+				<h3><?php \esc_html_e( 'Form Protection - Blocked IPs', 'silver-assist-security' ); ?></h3>
+				<div id="cf7-blocked-ips-content">
+					<p class="loading"><?php \esc_html_e( 'Loading CF7 blocked IPs...', 'silver-assist-security' ); ?></p>
+				</div>
+			</div>
+			<?php endif; ?>
+
+			<!-- Manual IP Management Section -->
+			<div class="manual-ip-management-section">
+				<h3><?php \esc_html_e( 'Manual IP Management', 'silver-assist-security' ); ?></h3>
+				<div class="add-ip-form">
+					<div class="add-ip-row">
+						<input type="text" 
+								id="manual-ip-address" 
+								placeholder="<?php \esc_attr_e( 'Enter IP address (e.g., 192.168.1.100)', 'silver-assist-security' ); ?>" 
+								pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$">
+						<input type="text" 
+								id="manual-ip-reason" 
+								placeholder="<?php \esc_attr_e( 'Reason for blocking', 'silver-assist-security' ); ?>">
+						<button type="button" 
+								id="add-manual-ip" 
+								class="button button-secondary">
+							<?php \esc_html_e( 'Block IP', 'silver-assist-security' ); ?>
+						</button>
+					</div>
+					<p class="description">
+						<?php \esc_html_e( 'Manually block specific IP addresses. Blocked IPs will be denied access to login and forms.', 'silver-assist-security' ); ?>
+					</p>
+				</div>
+			</div>
 		</div>
 		<?php
 	}
@@ -458,7 +498,7 @@ class SettingsRenderer {
 	 * @return array Configuration values
 	 */
 	private function get_current_config(): array {
-		return array(
+		return [
 			'login_attempts'                => DefaultConfig::get_option( 'silver_assist_login_attempts' ),
 			'lockout_duration'              => DefaultConfig::get_option( 'silver_assist_lockout_duration' ),
 			'session_timeout'               => DefaultConfig::get_option( 'silver_assist_session_timeout' ),
@@ -474,6 +514,6 @@ class SettingsRenderer {
 			'ip_blacklist_duration'         => DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' ),
 			'under_attack_enabled'          => DefaultConfig::get_option( 'silver_assist_under_attack_enabled' ),
 			'attack_threshold'              => DefaultConfig::get_option( 'silver_assist_attack_threshold' ),
-		);
+		];
 	}
 }

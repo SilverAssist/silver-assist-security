@@ -48,16 +48,16 @@ class StatisticsProvider {
 	 */
 	public function get_login_statistics(): array {
 		// Get statistics for the last 24 hours, 7 days, and 30 days
-		$stats = array(
+		$stats = [
 			'24_hours' => $this->get_period_stats( DAY_IN_SECONDS ),
 			'7_days'   => $this->get_period_stats( WEEK_IN_SECONDS ),
 			'30_days'  => $this->get_period_stats( MONTH_IN_SECONDS ),
-		);
+		];
 
-		return array(
+		return [
 			'stats'        => $stats,
 			'last_updated' => \current_time( 'mysql' ),
-		);
+		];
 	}
 
 	/**
@@ -79,13 +79,13 @@ class StatisticsProvider {
 		// Count bot blocks
 		$bot_blocks = $this->count_bot_blocks_since( $cutoff_time );
 
-		return array(
+		return [
 			'period'        => SecurityHelper::format_time_duration( $period_seconds ),
 			'failed_logins' => $failed_logins,
 			'blocked_ips'   => $blocked_ips,
 			'bot_blocks'    => $bot_blocks,
 			'total_events'  => $failed_logins + $blocked_ips + $bot_blocks,
-		);
+		];
 	}
 
 	/**
@@ -121,7 +121,7 @@ class StatisticsProvider {
 	 * @since 1.1.15
 	 */
 	private function count_blocked_ips_since( int $since_timestamp ): int {
-		$all_blocked = $this->ip_blacklist->get_all_blocked_ips();
+		$all_blocked = $this->ip_blacklist->get_all_blacklisted_ips();
 		$count       = 0;
 
 		foreach ( $all_blocked as $ip => $data ) {
@@ -168,10 +168,10 @@ class StatisticsProvider {
 			SecurityHelper::log_security_event(
 				'BOT_COUNT_ERROR',
 				"Failed to count bot blocks: {$e->getMessage()}",
-				array(
+				[
 					'since_timestamp' => $since_timestamp,
 					'error'           => $e->getMessage(),
-				)
+				]
 			);
 
 			return 0;
@@ -316,7 +316,7 @@ class StatisticsProvider {
 	public function get_recent_security_logs(): array {
 		global $wpdb;
 
-		$logs = array();
+		$logs = [];
 
 		// Try to get from cache first
 		$cache_key          = 'silver_assist_attempt_transients';
@@ -340,13 +340,13 @@ class StatisticsProvider {
 			$ip_hash  = str_replace( '_transient_login_attempts_', '', $transient->option_name );
 			$attempts = (int) $transient->option_value;
 
-			$logs[] = array(
+			$logs[] = [
 				'type'      => 'failed_login',
 				'ip_hash'   => substr( $ip_hash, 0, 8 ) . '...',
 				'attempts'  => $attempts,
 				'timestamp' => \current_time( 'mysql' ),
 				'status'    => $attempts >= \SilverAssist\Security\Core\DefaultConfig::get_option( 'silver_assist_login_attempts' ) ? 'blocked' : 'monitoring',
-			);
+			];
 		}
 
 		// Try to get from cache first
@@ -371,13 +371,13 @@ class StatisticsProvider {
 		foreach ( $lockout_transients as $lockout ) {
 			$ip_hash = str_replace( '_transient_lockout_', '', $lockout->option_name );
 
-			$logs[] = array(
+			$logs[] = [
 				'type'      => 'ip_blocked',
 				'ip_hash'   => substr( $ip_hash, 0, 8 ) . '...',
 				'timestamp' => \current_time( 'mysql' ),
 				'status'    => 'active',
 				'action'    => 'IP blocked due to excessive failed login attempts',
-			);
+			];
 		}
 
 		// Sort by timestamp (most recent first)

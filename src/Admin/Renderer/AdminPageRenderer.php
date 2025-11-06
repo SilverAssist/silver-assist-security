@@ -60,7 +60,7 @@ class AdminPageRenderer {
 			\wp_die(
 				\esc_html__( 'You do not have sufficient permissions to access this page.', 'silver-assist-security' ),
 				\esc_html__( 'Permission Denied', 'silver-assist-security' ),
-				array( 'response' => 403 )
+				[ 'response' => 403 ]
 			);
 		}
 
@@ -93,10 +93,12 @@ class AdminPageRenderer {
 					<span class="dashicons dashicons-lock"></span>
 					<?php \esc_html_e( 'Login Protection', 'silver-assist-security' ); ?>
 				</a>
+				<?php if ( \class_exists( 'WPGraphQL' ) ) : ?>
 				<a href="#graphql-security" class="silver-nav-tab" id="graphql-security-tab">
 					<span class="dashicons dashicons-database"></span>
 					<?php \esc_html_e( 'GraphQL Security', 'silver-assist-security' ); ?>
 				</a>
+				<?php endif; ?>
 				<?php if ( SecurityHelper::is_contact_form_7_active() ) : ?>
 				<a href="#cf7-security" class="silver-nav-tab" id="cf7-security-tab">
 					<span class="dashicons dashicons-email-alt"></span>
@@ -153,7 +155,7 @@ class AdminPageRenderer {
 	 * @return array Configuration values
 	 */
 	public function get_current_config(): array {
-		return array(
+		return [
 			'login_attempts'                => DefaultConfig::get_option( 'silver_assist_login_attempts' ),
 			'lockout_duration'              => DefaultConfig::get_option( 'silver_assist_lockout_duration' ),
 			'session_timeout'               => DefaultConfig::get_option( 'silver_assist_session_timeout' ),
@@ -169,6 +171,6 @@ class AdminPageRenderer {
 			'ip_blacklist_duration'         => DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' ),
 			'under_attack_enabled'          => DefaultConfig::get_option( 'silver_assist_under_attack_enabled' ),
 			'attack_threshold'              => DefaultConfig::get_option( 'silver_assist_attack_threshold' ),
-		);
+		];
 	}
 }

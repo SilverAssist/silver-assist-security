@@ -85,10 +85,10 @@ class DashboardRenderer {
 	private function render_security_status_cards(): void {
 		$security_status = $this->data_provider->get_security_status();
 		?>
-		<div class="security-status-grid">
+		<div class="silver-stats-grid">
 			
 			<!-- Login Security Status -->
-			<div class="security-card login-security">
+			<div class="status-card login-security">
 				<div class="card-header">
 					<span class="dashicons dashicons-lock"></span>
 					<h3><?php \esc_html_e( 'Login Protection', 'silver-assist-security' ); ?></h3>
@@ -119,7 +119,7 @@ class DashboardRenderer {
 			</div>
 
 			<!-- GraphQL Security Status -->
-			<div class="security-card graphql-security">
+			<div class="status-card graphql-security">
 				<div class="card-header">
 					<span class="dashicons dashicons-database"></span>
 					<h3><?php \esc_html_e( 'GraphQL Security', 'silver-assist-security' ); ?></h3>
@@ -154,7 +154,7 @@ class DashboardRenderer {
 			</div>
 
 			<!-- General Security Status -->
-			<div class="security-card general-security">
+			<div class="status-card general-security">
 				<div class="card-header">
 					<span class="dashicons dashicons-shield-alt"></span>
 					<h3><?php \esc_html_e( 'General Security', 'silver-assist-security' ); ?></h3>
@@ -178,7 +178,7 @@ class DashboardRenderer {
 
 			<?php if ( SecurityHelper::is_contact_form_7_active() ) : ?>
 			<!-- Contact Form 7 Security Status -->
-			<div class="security-card cf7-security">
+			<div class="status-card cf7-security">
 				<div class="card-header">
 					<span class="dashicons dashicons-email-alt"></span>
 					<h3><?php \esc_html_e( 'Form Protection', 'silver-assist-security' ); ?></h3>
@@ -206,24 +206,24 @@ class DashboardRenderer {
 		<div class="statistics-section">
 			<h2><?php \esc_html_e( 'Security Statistics', 'silver-assist-security' ); ?></h2>
 			
-			<div class="stats-grid" id="security-stats-container">
-				<div class="stat-card">
-					<div class="stat-number" id="blocked-ips-count">
-						<span class="loading-spinner"></span>
+			<div class="silver-stats-grid" id="security-stats-container">
+				<div class="status-card">
+					<div class="stat-value" id="blocked-ips-count">
+						<span class="loading"></span>
 					</div>
 					<div class="stat-label"><?php \esc_html_e( 'Blocked IPs', 'silver-assist-security' ); ?></div>
 				</div>
 				
-				<div class="stat-card">
-					<div class="stat-number" id="failed-attempts-count">
-						<span class="loading-spinner"></span>
+				<div class="status-card">
+					<div class="stat-value" id="failed-attempts-count">
+						<span class="loading"></span>
 					</div>
 					<div class="stat-label"><?php \esc_html_e( 'Failed Login Attempts (24h)', 'silver-assist-security' ); ?></div>
 				</div>
 				
-				<div class="stat-card">
-					<div class="stat-number" id="security-events-count">
-						<span class="loading-spinner"></span>
+				<div class="status-card">
+					<div class="stat-value" id="security-events-count">
+						<span class="loading"></span>
 					</div>
 					<div class="stat-label"><?php \esc_html_e( 'Security Events (7d)', 'silver-assist-security' ); ?></div>
 				</div>
