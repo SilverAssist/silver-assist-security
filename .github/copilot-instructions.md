@@ -514,10 +514,12 @@ silver-assist-security/
 - Bot and crawler detection with advanced pattern matching
 - Time duration formatting for user-friendly displays
 - Centralized nonce and capability validation helpers
+- Contact Form 7 plugin detection and status checking
 
 **🚨 MANDATORY USAGE PATTERNS**:
 - **Asset Loading**: ALWAYS use `SecurityHelper::get_asset_url($path)` instead of duplicating minification logic
 - **IP Detection**: ALWAYS use `SecurityHelper::get_client_ip()` for consistent IP detection across components
+- **CF7 Detection**: ALWAYS use `SecurityHelper::is_contact_form_7_active()` for CF7 integration checks
 - **Security Logging**: ALWAYS use `SecurityHelper::log_security_event($type, $message, $context)` instead of raw `error_log()`
 - **AJAX Validation**: ALWAYS use `SecurityHelper::validate_ajax_request($nonce_action)` for AJAX endpoints
 - **404 Responses**: ALWAYS use `SecurityHelper::send_404_response()` for security-related 404s
@@ -625,15 +627,88 @@ class BadSecurityClass {
 }
 ```
 
-### 5. Admin\AdminPanel.php
-**Purpose**: WordPress admin interface for security configuration
+### 5. Admin\AdminPanel.php (v1.1.15+ Enhanced Architecture)
+**Purpose**: Main admin interface orchestration with modular component architecture
 **Key Responsibilities**:
-- Render Security Essentials dashboard page
-- Handle AJAX requests for real-time updates
-- Process security configuration form submissions
-- Display security statistics and compliance status
-- Use GraphQLConfigManager for centralized GraphQL configuration
-- Use DefaultConfig for consistent configuration handling
+- Register with Settings Hub or fallback to standalone menu
+- Coordinate AdminPageRenderer, SettingsRenderer, and DashboardRenderer components
+- Handle AJAX requests for real-time updates with security validation
+- Process security configuration form submissions with proper sanitization
+- Settings Hub Integration (v1.1.13+) with "Check Updates" button
+- Use GraphQLConfigManager and DefaultConfig for centralized configuration
+
+**🎯 Settings Hub Integration (v1.1.13+)**:
+- **Primary Mode**: Registers plugin under centralized "Silver Assist" menu
+- **Fallback Mode**: Standalone menu in Settings when hub unavailable
+- **Update Button**: One-click update checking via Settings Hub actions
+- **Automatic Detection**: Class existence check for seamless integration
+- **Exception Handling**: Graceful degradation with error logging
+
+**Settings Hub Registration Pattern**:
+```php
+// In AdminPanel::register_with_hub()
+if (!class_exists(SettingsHub::class)) {
+    // Fallback to standalone menu
+    $this->add_admin_menu();
+    return;
+}
+
+$hub = SettingsHub::get_instance();
+$hub->register_plugin(
+    'silver-assist-security',
+    __('Security', 'silver-assist-security'),
+    [$this, 'render_admin_page'],
+    [
+        'description' => __('Security configuration for WordPress', 'silver-assist-security'),
+        'version' => SILVER_ASSIST_SECURITY_VERSION,
+        'tab_title' => __('Security', 'silver-assist-security'),
+        'actions' => $this->get_hub_actions()
+    ]
+);
+```
+
+### 5.1. Admin\Renderer\AdminPageRenderer.php (v1.1.15+)
+**Purpose**: Main page structure rendering with namespace-separated navigation
+**Key Responsibilities**:
+- Render 5-tab navigation structure with `.silver-nav-tab` classes for namespace separation
+- Coordinate DashboardRenderer and SettingsRenderer components
+- Handle conditional Contact Form 7 tab visibility based on plugin detection
+- Implement dual navigation system compatible with Settings Hub
+- Security permissions validation and admin page structure
+
+**🎛️ Tab Namespace Separation (v1.1.15+)**:
+- **Hub Level Navigation**: `.nav-tab` classes for Settings Hub plugin switching
+- **Security Internal Navigation**: `.silver-nav-tab` classes for feature navigation
+- **Zero Conflicts**: Both navigation systems coexist independently
+- **Dynamic Tab Detection**: Automatic handling of conditional CF7 tab
+
+**Tab Structure**:
+```php
+// 5-tab structure (4 when CF7 inactive)
+'dashboard-tab'      => 'Security Dashboard'
+'login-security-tab' => 'Login Protection'
+'graphql-security-tab' => 'GraphQL Security'
+'cf7-security-tab'   => 'Form Protection' (conditional)
+'ip-management-tab'  => 'IP Management'
+```
+
+### 5.2. Admin\Renderer\SettingsRenderer.php (v1.1.15+)
+**Purpose**: All settings tabs content rendering with centralized configuration
+**Key Responsibilities**:
+- Render all non-dashboard tab content using `.silver-tab-content` classes
+- Use GraphQLConfigManager for GraphQL settings and status
+- Use DefaultConfig for consistent configuration defaults
+- Handle Contact Form 7 integration status and configuration
+- Real-time validation and user feedback
+
+### 5.3. Admin\Renderer\DashboardRenderer.php (v1.1.15+)
+**Purpose**: Security dashboard tab with real-time monitoring and statistics
+**Key Responsibilities**:
+- Real-time security status overview and compliance indicators
+- Live statistics display (login attempts, blocked IPs, GraphQL queries)
+- Security recommendations and quick action buttons
+- Integration status for all security components
+- Performance monitoring and system health checks
 
 ### 6. Security\LoginSecurity.php
 **Purpose**: Brute force protection, bot blocking, and login security
@@ -676,6 +751,48 @@ class BadSecurityClass {
 - Query timeout protection (1-30 seconds, default: 5)
 - Rate limiting (30 requests/minute per IP)
 - Alias abuse and field duplication protection
+
+### 10. Security\ContactForm7Integration.php (v1.1.15+)
+**Purpose**: Contact Form 7 plugin integration and form protection
+**Key Responsibilities**:
+- Automatic CF7 plugin detection and seamless integration
+- Form submission rate limiting with IP-based tracking
+- Advanced bot protection specifically for form submissions
+- CSRF token enhancement for form security
+- Real-time monitoring and logging of blocked form attempts
+- Temporary IP blocking for excessive submission attempts
+- Integration with main security dashboard for unified monitoring
+
+**🎯 CF7 Integration Features**:
+- **Dynamic Detection**: Automatic activation when Contact Form 7 is installed
+- **Zero Configuration**: Works immediately after CF7 plugin detection
+- **Rate Limiting**: Configurable submission limits per IP address
+- **Bot Protection**: Advanced detection of automated form submission attempts
+- **Security Headers**: Enhanced CSRF protection for form endpoints
+- **Monitoring Integration**: Real-time statistics in IP Management tab
+- **Conditional Interface**: Form Protection tab appears automatically when CF7 detected
+
+**CF7 Integration Pattern**:
+```php
+// Automatic CF7 detection and integration
+if (SecurityHelper::is_contact_form_7_active()) {
+    $cf7_integration = new ContactForm7Integration();
+    $cf7_integration->init();
+    
+    // Dynamic tab rendering
+    add_action('admin_page_render_tabs', [$this, 'render_cf7_tab']);
+}
+```
+
+### 11. Security\FormProtection.php (v1.1.15+) 
+**Purpose**: Generic form protection system (foundation for CF7 integration)
+**Key Responsibilities**:
+- Base form protection mechanisms and rate limiting
+- IP-based submission tracking and validation
+- Generic bot detection patterns for any form type
+- CSRF token validation and nonce management
+- Extensible architecture for different form plugins
+- Centralized form security event logging
 
 ## Security Implementation Details
 

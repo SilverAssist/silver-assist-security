@@ -47,6 +47,17 @@ This plugin automatically implements enterprise-level security measures without 
 - **Rate Limiting**: 30 requests per minute per IP to prevent DoS attacks
 - **Alias & Field Duplication Protection**: Prevents excessive aliases and field repetition
 
+### 📧 Contact Form 7 Integration & Form Protection
+**Problem**: Contact forms vulnerable to spam, bot abuse, and resource exhaustion attacks  
+**Solution**:
+- **Automatic Integration**: Seamless integration with Contact Form 7 when plugin is active
+- **Form Submission Rate Limiting**: Prevents rapid-fire spam submissions per IP
+- **Bot Protection**: Advanced detection of automated form submission attempts
+- **IP-based Blocking**: Temporary blocks for IPs exceeding submission limits
+- **CSRF Protection**: Enhanced nonce validation for form security
+- **Real-time Monitoring**: Track blocked form submissions and suspicious IPs
+- **Conditional Interface**: Form Protection tab appears automatically when CF7 is detected
+
 ## ✨ Additional Security Features
 
 ### 🔒 WordPress Hardening *(Automatic)*
@@ -66,10 +77,40 @@ This plugin automatically implements enterprise-level security measures without 
 - **User Enumeration Protection**: Prevents discovery of valid usernames
 - **Behavioral Tracking**: Monitors and extends blocks for persistent bot activity
 
-## 📊 Real-Time Monitoring Dashboard
-- **Security Status Overview**: View all security configurations at a glance
-- **Live Statistics**: Real-time login attempt tracking and blocked IPs monitoring
-- **GraphQL Activity**: Query analysis and rate limiting statistics
+## 📊 Multi-Tab Security Dashboard
+
+### 📱 Dashboard Structure
+The plugin features a comprehensive 5-tab interface (4 tabs when Contact Form 7 is not active):
+
+**🎯 Security Dashboard Tab**
+- Real-time security status overview and compliance indicators
+- Live statistics: login attempts, blocked IPs, GraphQL queries
+- Security recommendations and quick actions
+- System health monitoring and alert center
+
+**🔐 Login Protection Tab**  
+- Brute force protection configuration and statistics
+- Session timeout management and user activity
+- Bot detection settings and blocked crawler reports
+- Failed login tracking and IP lockout management
+
+**🛡️ GraphQL Security Tab** *(When WPGraphQL is Active)*
+- Query depth and complexity limit configuration
+- Rate limiting settings and violation reports
+- Introspection control and security recommendations
+- GraphQL performance monitoring and optimization
+
+**📧 Form Protection Tab** *(When Contact Form 7 is Active)*
+- Contact Form 7 integration status and configuration
+- Form submission rate limiting and spam protection
+- Bot detection specifically for form submissions
+- Real-time monitoring of blocked form attempts
+
+**🛡️ IP Management Tab**
+- Comprehensive IP blocking and allowlist management
+- Real-time blocked IPs monitoring across all protection layers
+- Manual IP management (block/unblock specific addresses)
+- Geographic and behavioral IP analysis reports
 
 ## 🌍 Enterprise Features
 - **Easy Configuration**: Simple admin panel with toggle switches and sliders
@@ -133,6 +174,26 @@ The plugin starts protecting your website immediately after activation:
 ```bash
 composer require silverassist/wp-settings-hub
 ```
+
+### 🎛️ Tab Navigation System *(v1.1.15+)*
+**🎯 NEW**: Advanced dual-level navigation system with namespace separation!
+
+**Settings Hub Level** (Plugin Switching):
+- Switch between Silver Assist plugins (Security, SEO, etc.) 
+- Top-level tabs for different plugin categories
+- Professional dashboard with metadata cards
+
+**Security Plugin Level** (Feature Navigation):
+- Navigate between security feature areas within the plugin
+- Independent tab system that works alongside Settings Hub
+- Seamless coexistence without navigation conflicts
+- Responsive design adapts to screen size and content
+
+**Technical Implementation**:
+- **CSS Namespace Separation**: `.nav-tab` (Hub) vs `.silver-nav-tab` (Security)
+- **Dynamic Tab Detection**: Automatically handles conditional Contact Form 7 tab
+- **Conflict Resolution**: Multiple navigation levels work independently
+- **Accessibility**: Full keyboard navigation and screen reader support
 
 **Login Security Configuration**
 - 🔧 **Max Login Attempts**: 1-20 failed attempts before lockout (default: 5)
