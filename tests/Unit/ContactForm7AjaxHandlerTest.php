@@ -1,9 +1,9 @@
 <?php
 /**
- * Silver Assist Security Essentials - SecurityAjaxHandler Unit Tests
+ * Silver Assist Security Essentials - ContactForm7AjaxHandler Unit Tests
  *
- * Tests the SecurityAjaxHandler class with focus on AJAX hook registration,
- * security validation, and data provider integration. Tests the direct handler
+ * Tests the ContactForm7AjaxHandler class with focus on AJAX hook registration,
+ * security validation, and CF7 IP management functionality. Tests the direct handler
  * architecture without proxy methods.
  *
  * @package SilverAssist\Security\Tests\Unit
@@ -13,41 +13,25 @@
 
 namespace SilverAssist\Security\Tests\Unit;
 
-use SilverAssist\Security\Admin\Ajax\SecurityAjaxHandler;
-use SilverAssist\Security\Admin\Data\SecurityDataProvider;
-use SilverAssist\Security\Admin\Data\StatisticsProvider;
+use SilverAssist\Security\Admin\Ajax\ContactForm7AjaxHandler;
 use WP_UnitTestCase;
 
 /**
- * SecurityAjaxHandler unit test class
+ * ContactForm7AjaxHandler unit test class
  *
- * Tests SecurityAjaxHandler AJAX hook registration and request handling
- * with proper security validation and data provider integration.
+ * Tests ContactForm7AjaxHandler AJAX hook registration and CF7 IP management
+ * with proper security validation and conditional initialization.
  *
  * @since 1.1.15
  */
-class SecurityAjaxHandlerTest extends WP_UnitTestCase {
+class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 
 	/**
-	 * SecurityAjaxHandler instance
+	 * ContactForm7AjaxHandler instance
 	 *
-	 * @var SecurityAjaxHandler
+	 * @var ContactForm7AjaxHandler
 	 */
-	private SecurityAjaxHandler $handler;
-
-	/**
-	 * SecurityDataProvider mock
-	 *
-	 * @var SecurityDataProvider
-	 */
-	private SecurityDataProvider $data_provider;
-
-	/**
-	 * StatisticsProvider mock
-	 *
-	 * @var StatisticsProvider
-	 */
-	private StatisticsProvider $stats_provider;
+	private ContactForm7AjaxHandler $handler;
 
 	/**
 	 * Administrator user ID
@@ -65,12 +49,25 @@ class SecurityAjaxHandlerTest extends WP_UnitTestCase {
 		// Create test users
 		$this->admin_user_id = $this->factory()->user->create( [ 'role' => 'administrator' ] );
 
-		// Initialize data providers
-		$this->data_provider  = new SecurityDataProvider();
-		$this->stats_provider = new StatisticsProvider();
+		// Mock CF7 being active (since it's usually not in tests)
+		if ( ! defined( 'WPCF7_VERSION' ) ) {
+			define( 'WPCF7_VERSION', '5.9.3' );
+		}
+		
+		// Mock WPCF7 class and function existence
+		if ( ! class_exists( 'WPCF7' ) ) {
+			// Create a simple mock WPCF7 class
+			class_alias( \stdClass::class, 'WPCF7' );
+		}
+		
+		if ( ! function_exists( 'wpcf7_get_contact_form_by_id' ) ) {
+			function wpcf7_get_contact_form_by_id( $id ) {
+				return new \stdClass();
+			}
+		}
 
-		// Create SecurityAjaxHandler instance (should auto-register hooks)
-		$this->handler = new SecurityAjaxHandler( $this->data_provider, $this->stats_provider );
+		// Create ContactForm7AjaxHandler instance (should auto-register hooks if CF7 active)
+		$this->handler = new ContactForm7AjaxHandler();
 
 		// Set up admin environment
 		\set_current_screen( 'dashboard' );
@@ -80,101 +77,19 @@ class SecurityAjaxHandlerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test that AJAX hooks are automatically registered in constructor
+	 * Test that ContactForm7AjaxHandler initializes properly
 	 */
-	public function test_ajax_hooks_auto_registered(): void {
-		// Verify all security AJAX hooks are registered
-		$expected_hooks = [
-			'wp_ajax_silver_assist_get_security_status',
-			'wp_ajax_silver_assist_get_login_stats',
-			'wp_ajax_silver_assist_get_blocked_ips',
-			'wp_ajax_silver_assist_get_security_logs',
-			'wp_ajax_silver_assist_auto_save',
-			'wp_ajax_silver_assist_validate_admin_path',
-		];
-
-		foreach ( $expected_hooks as $hook ) {
-			$this->assertTrue(
-				\has_action( $hook ) !== false,
-				"AJAX hook {$hook} should be registered"
-			);
-		}
-	}
-
-	/**
-	 * Test get_security_status method with admin user
-	 */
-	public function test_get_security_status_with_admin_user(): void {
-		\wp_set_current_user( $this->admin_user_id );
-		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
-
-		// Capture output using output buffering
-		ob_start();
-		$this->handler->get_security_status();
-		$output = ob_get_clean();
-
-		// Should produce valid JSON output
-		$this->assertNotEmpty( $output );
-		$response = json_decode( $output, true );
-		$this->assertNotNull( $response );
-		$this->assertTrue( $response['success'] ?? false );
-	}
-
-	/**
-	 * Test get_security_status method fails without proper nonce
-	 */
-	public function test_get_security_status_fails_without_nonce(): void {
-		\wp_set_current_user( $this->admin_user_id );
-		// No nonce set
-
-		// Capture output
-		ob_start();
-		$this->handler->get_security_status();
-		$output = ob_get_clean();
-
-		// Should return error
-		$response = json_decode( $output, true );
-		$this->assertFalse( $response['success'] ?? true );
-		$this->assertArrayHasKey( 'data', $response );
-		$this->assertArrayHasKey( 'error', $response['data'] );
-	}
-
-	/**
-	 * Test get_security_status method fails with non-admin user
-	 */
-	public function test_get_security_status_fails_with_non_admin_user(): void {
-		$subscriber_id = $this->factory()->user->create( [ 'role' => 'subscriber' ] );
-		\wp_set_current_user( $subscriber_id );
-		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
-
-		// Capture output
-		ob_start();
-		$this->handler->get_security_status();
-		$output = ob_get_clean();
-
-		// Should return error due to insufficient permissions
-		$response = json_decode( $output, true );
-		$this->assertFalse( $response['success'] ?? true );
-		$this->assertStringContainsString( 'permissions', $response['data']['error'] ?? '' );
-	}
-
-	/**
-	 * Test get_login_stats method with admin user
-	 */
-	public function test_get_login_stats_with_admin_user(): void {
-		\wp_set_current_user( $this->admin_user_id );
-		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
-
-		// Capture output
-		ob_start();
-		$this->handler->get_login_stats();
-		$output = ob_get_clean();
-
-		// Should produce valid JSON output
-		$this->assertNotEmpty( $output );
-		$response = json_decode( $output, true );
-		$this->assertNotNull( $response );
-		$this->assertTrue( $response['success'] ?? false );
+	public function test_cf7_handler_initializes_properly(): void {
+		// Verify handler is properly instantiated
+		$this->assertInstanceOf(
+			\SilverAssist\Security\Admin\Ajax\ContactForm7AjaxHandler::class,
+			$this->handler,
+			'ContactForm7AjaxHandler should be properly instantiated'
+		);
+		
+		// If CF7 is not active in test environment, that's expected
+		// The important thing is that the handler can be created without errors
+		$this->assertTrue( true, 'Handler creation completed without errors' );
 	}
 
 	/**
@@ -184,7 +99,7 @@ class SecurityAjaxHandlerTest extends WP_UnitTestCase {
 		\wp_set_current_user( $this->admin_user_id );
 		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
 
-		// Capture output
+		// Capture output using output buffering
 		ob_start();
 		$this->handler->get_blocked_ips();
 		$output = ob_get_clean();
@@ -197,16 +112,55 @@ class SecurityAjaxHandlerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test validate_admin_path method with valid path
+	 * Test get_blocked_ips method fails without proper nonce
 	 */
-	public function test_validate_admin_path_with_valid_path(): void {
+	public function test_get_blocked_ips_fails_without_nonce(): void {
 		\wp_set_current_user( $this->admin_user_id );
-		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
-		$_POST['path'] = 'secure-admin';
+		// No nonce set
 
 		// Capture output
 		ob_start();
-		$this->handler->validate_admin_path();
+		$this->handler->get_blocked_ips();
+		$output = ob_get_clean();
+
+		// Should return error
+		$response = json_decode( $output, true );
+		$this->assertFalse( $response['success'] ?? true );
+		$this->assertArrayHasKey( 'data', $response );
+		$this->assertArrayHasKey( 'error', $response['data'] );
+	}
+
+	/**
+	 * Test get_blocked_ips method fails with non-admin user
+	 */
+	public function test_get_blocked_ips_fails_with_non_admin_user(): void {
+		$subscriber_id = $this->factory()->user->create( [ 'role' => 'subscriber' ] );
+		\wp_set_current_user( $subscriber_id );
+		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
+
+		// Capture output
+		ob_start();
+		$this->handler->get_blocked_ips();
+		$output = ob_get_clean();
+
+		// Should return error due to insufficient permissions
+		$response = json_decode( $output, true );
+		$this->assertFalse( $response['success'] ?? true );
+		$this->assertStringContainsString( 'permissions', $response['data']['error'] ?? '' );
+	}
+
+	/**
+	 * Test block_ip method with admin user
+	 */
+	public function test_block_ip_with_admin_user(): void {
+		\wp_set_current_user( $this->admin_user_id );
+		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
+		$_POST['ip'] = '192.168.1.100';
+		$_POST['reason'] = 'Test block';
+
+		// Capture output
+		ob_start();
+		$this->handler->block_ip();
 		$output = ob_get_clean();
 
 		// Should produce valid JSON output
@@ -214,41 +168,57 @@ class SecurityAjaxHandlerTest extends WP_UnitTestCase {
 		$response = json_decode( $output, true );
 		$this->assertNotNull( $response );
 		$this->assertTrue( $response['success'] ?? false );
-		$this->assertArrayHasKey( 'is_valid', $response['data'] ?? [] );
 	}
 
 	/**
-	 * Test validate_admin_path method with forbidden path
+	 * Test unblock_ip method with admin user
 	 */
-	public function test_validate_admin_path_with_forbidden_path(): void {
+	public function test_unblock_ip_with_admin_user(): void {
 		\wp_set_current_user( $this->admin_user_id );
 		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
-		$_POST['path'] = 'wp-admin'; // Forbidden path
+		$_POST['ip'] = '192.168.1.100';
 
 		// Capture output
 		ob_start();
-		$this->handler->validate_admin_path();
+		$this->handler->unblock_ip();
 		$output = ob_get_clean();
 
-		// Should produce valid JSON output with is_valid = false
+		// Should produce valid JSON output
 		$this->assertNotEmpty( $output );
 		$response = json_decode( $output, true );
 		$this->assertNotNull( $response );
 		$this->assertTrue( $response['success'] ?? false );
-		$this->assertFalse( $response['data']['is_valid'] ?? true );
 	}
 
 	/**
-	 * Test auto_save method with admin user
+	 * Test clear_blocked_ips method with admin user
 	 */
-	public function test_auto_save_with_admin_user(): void {
+	public function test_clear_blocked_ips_with_admin_user(): void {
 		\wp_set_current_user( $this->admin_user_id );
 		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
-		$_POST['form_data'] = 'silver_assist_login_attempts=5&silver_assist_lockout_duration=900';
 
 		// Capture output
 		ob_start();
-		$this->handler->auto_save();
+		$this->handler->clear_blocked_ips();
+		$output = ob_get_clean();
+
+		// Should produce valid JSON output
+		$this->assertNotEmpty( $output );
+		$response = json_decode( $output, true );
+		$this->assertNotNull( $response );
+		$this->assertTrue( $response['success'] ?? false );
+	}
+
+	/**
+	 * Test export_blocked_ips method with admin user
+	 */
+	public function test_export_blocked_ips_with_admin_user(): void {
+		\wp_set_current_user( $this->admin_user_id );
+		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
+
+		// Capture output
+		ob_start();
+		$this->handler->export_blocked_ips();
 		$output = ob_get_clean();
 
 		// Should produce valid JSON output
@@ -263,12 +233,11 @@ class SecurityAjaxHandlerTest extends WP_UnitTestCase {
 	 */
 	public function test_handler_methods_are_callable(): void {
 		$methods = [
-			'get_security_status',
-			'get_login_stats',
 			'get_blocked_ips',
-			'get_security_logs',
-			'auto_save',
-			'validate_admin_path',
+			'block_ip',
+			'unblock_ip',
+			'clear_blocked_ips',
+			'export_blocked_ips',
 		];
 
 		foreach ( $methods as $method ) {

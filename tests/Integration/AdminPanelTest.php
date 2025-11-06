@@ -242,75 +242,90 @@ class AdminPanelTest extends WP_UnitTestCase
     }
 
     /**
-     * Test AJAX security status with valid admin user
+     * Test AdminPanel component initialization
      */
-    public function test_ajax_security_status_with_admin_user(): void
+    public function test_admin_panel_components_initialized(): void
     {
-        // Login as administrator
-        \wp_set_current_user($this->admin_user_id);
-
-        // Set up AJAX request
-        $_POST['nonce'] = \wp_create_nonce('silver_assist_security_nonce');
-        $_SERVER['REQUEST_METHOD'] = 'POST';
-
-        // AJAX endpoint exists and is callable
+        // Verify that AdminPanel initializes its components properly
+        $this->assertInstanceOf(
+            \SilverAssist\Security\Admin\AdminPanel::class,
+            $this->admin_panel,
+            'AdminPanel should be properly instantiated'
+        );
+        
+        // Verify core AdminPanel methods are callable
         $this->assertTrue(
-            is_callable([$this->admin_panel, 'ajax_get_security_status']),
-            'AJAX security status endpoint should be callable'
+            is_callable([$this->admin_panel, 'render_admin_page']),
+            'AdminPanel should have render_admin_page method'
+        );
+        
+        $this->assertTrue(
+            is_callable([$this->admin_panel, 'register_settings']),
+            'AdminPanel should have register_settings method'
         );
     }
 
     /**
-     * Test AJAX login stats endpoint
+     * Test AdminPanel delegation to handlers
      */
-    public function test_ajax_login_stats_returns_statistics(): void
+    public function test_admin_panel_delegates_to_handlers(): void
     {
-        // Login as administrator
-        \wp_set_current_user($this->admin_user_id);
-
-        // AJAX endpoint exists and is callable
+        // Verify that AdminPanel delegates properly to specialized handlers
+        // These methods should exist and be callable after refactoring
         $this->assertTrue(
-            is_callable([$this->admin_panel, 'ajax_get_login_stats']),
-            'AJAX login stats endpoint should be callable'
+            is_callable([$this->admin_panel, 'save_security_settings']),
+            'AdminPanel should delegate settings save to SettingsHandler'
+        );
+        
+        $this->assertTrue(
+            is_callable([$this->admin_panel, 'enqueue_admin_scripts']),
+            'AdminPanel should delegate asset loading to AssetManager'
         );
     }
 
     /**
-     * Test AJAX blocked IPs endpoint
+     * Test AdminPanel still handles update checks directly
      */
-    public function test_ajax_blocked_ips_returns_list(): void
+    public function test_admin_panel_handles_update_checks(): void
     {
         // Login as administrator
         \wp_set_current_user($this->admin_user_id);
 
-        // Simulate some blocked IPs
-        $test_ip = '192.168.1.100';
-        $lockout_key = SecurityHelper::generate_ip_transient_key('lockout', $test_ip);
-        \set_transient($lockout_key, true, 900);
-
-        // AJAX endpoint exists and is callable
+        // Update check should remain in AdminPanel (not delegated)
         $this->assertTrue(
-            is_callable([$this->admin_panel, 'ajax_get_blocked_ips']),
-            'AJAX blocked IPs endpoint should be callable'
+            is_callable([$this->admin_panel, 'ajax_check_updates']),
+            'AdminPanel should still handle update checks directly'
         );
     }
 
     /**
-     * Test AJAX admin path validation
+     * Test AdminPanel helper methods remain available
      */
-    public function test_ajax_validate_admin_path_with_valid_path(): void
+    public function test_admin_panel_helper_methods_available(): void
+    {
+        // Helper methods should remain in AdminPanel
+        $this->assertTrue(
+            is_callable([$this->admin_panel, 'get_forbidden_admin_paths']),
+            'AdminPanel should provide helper methods'
+        );
+        
+        // Verify it returns expected data structure
+        $paths = $this->admin_panel->get_forbidden_admin_paths();
+        $this->assertIsArray($paths, 'get_forbidden_admin_paths should return array');
+    }
+
+    /**
+     * Test AdminPanel data methods still work after refactoring
+     */
+    public function test_admin_panel_data_methods_available(): void
     {
         // Login as administrator
         \wp_set_current_user($this->admin_user_id);
 
-        // Set up AJAX request with valid path
-        $_POST['path'] = 'custom-admin-2024';
-
-        // AJAX endpoint exists and is callable
-        $this->assertTrue(
-            is_callable([$this->admin_panel, 'ajax_validate_admin_path']),
-            'AJAX validate admin path endpoint should be callable'
-        );
+        // Verify AdminPanel still provides necessary data access
+        $paths = $this->admin_panel->get_forbidden_admin_paths();
+        $this->assertIsArray($paths, 'AdminPanel should provide forbidden paths data');
+        $this->assertNotEmpty($paths, 'Should have some forbidden paths defined');
     }
 
     /**

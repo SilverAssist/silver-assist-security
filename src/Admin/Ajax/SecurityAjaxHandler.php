@@ -52,6 +52,9 @@ class SecurityAjaxHandler {
 	public function __construct( SecurityDataProvider $security_data, StatisticsProvider $statistics ) {
 		$this->security_data = $security_data;
 		$this->statistics    = $statistics;
+
+		// Auto-register AJAX handlers
+		$this->register_ajax_handlers();
 	}
 
 	/**

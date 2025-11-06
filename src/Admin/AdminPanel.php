@@ -144,15 +144,14 @@ class AdminPanel {
 		\add_action( 'admin_menu', [ $this, 'register_with_hub' ], 4 );
 		\add_action( 'admin_init', [ $this, 'register_settings' ] );
 		\add_action( 'admin_init', [ $this, 'save_security_settings' ] );
-		
+
 		// Register asset management hook (delegated to AssetManager)
 		\add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 
-		// Register security AJAX handlers via SecurityAjaxHandler
-		$this->ajax_handler->register_ajax_handlers();
+		// Register only AdminPanel-specific AJAX handlers
 		\add_action( 'wp_ajax_silver_assist_check_updates', [ $this, 'ajax_check_updates' ] );
 
-		// CF7 blocked IP management AJAX handlers are now handled by ContactForm7AjaxHandler
+		// Security and CF7 AJAX handlers register themselves via their constructors
 	}
 
 	/**
@@ -300,45 +299,7 @@ class AdminPanel {
 		$this->page_renderer->render();
 	}
 
-	/**
-	 * AJAX proxy method for security status - delegates to SecurityAjaxHandler
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function ajax_get_security_status(): void {
-		$this->ajax_handler->get_security_status();
-	}
 
-	/**
-	 * AJAX proxy method for login stats - delegates to SecurityAjaxHandler
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function ajax_get_login_stats(): void {
-		$this->ajax_handler->get_login_stats();
-	}
-
-	/**
-	 * AJAX proxy method for blocked IPs - delegates to SecurityAjaxHandler
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function ajax_get_blocked_ips(): void {
-		$this->ajax_handler->get_blocked_ips();
-	}
-
-	/**
-	 * AJAX proxy method for admin path validation - delegates to SecurityAjaxHandler
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function ajax_validate_admin_path(): void {
-		$this->ajax_handler->validate_admin_path();
-	}
 
 	/**
 	 * Proxy method for settings save - delegates to SettingsHandler
@@ -482,55 +443,7 @@ class AdminPanel {
 		return PathValidator::get_forbidden_paths();
 	}
 
-	/**
-	 * CF7 AJAX proxy method for getting blocked IPs - delegates to ContactForm7AjaxHandler
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function ajax_get_cf7_blocked_ips(): void {
-		$this->cf7_ajax_handler->get_blocked_ips();
-	}
 
-	/**
-	 * CF7 AJAX proxy method for blocking IP - delegates to ContactForm7AjaxHandler
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function ajax_block_cf7_ip(): void {
-		$this->cf7_ajax_handler->block_ip();
-	}
-
-	/**
-	 * CF7 AJAX proxy method for unblocking IP - delegates to ContactForm7AjaxHandler
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function ajax_unblock_cf7_ip(): void {
-		$this->cf7_ajax_handler->unblock_ip();
-	}
-
-	/**
-	 * CF7 AJAX proxy method for clearing blocked IPs - delegates to ContactForm7AjaxHandler
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function ajax_clear_cf7_blocked_ips(): void {
-		$this->cf7_ajax_handler->clear_blocked_ips();
-	}
-
-	/**
-	 * CF7 AJAX proxy method for exporting blocked IPs - delegates to ContactForm7AjaxHandler
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function ajax_export_cf7_blocked_ips(): void {
-		$this->cf7_ajax_handler->export_blocked_ips();
-	}
 
 	/**
 	 * Asset management proxy method - delegates to AssetManager
