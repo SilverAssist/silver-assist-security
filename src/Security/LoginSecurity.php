@@ -86,31 +86,31 @@ class LoginSecurity {
 	 */
 	private function init(): void {
 		// Login form hooks
-		\add_action( 'login_form', [ $this, 'add_login_form_security' ] );
-		\add_action( 'login_init', [ $this, 'setup_login_protection' ] );
+		\add_action( 'login_form', array( $this, 'add_login_form_security' ) );
+		\add_action( 'login_init', array( $this, 'setup_login_protection' ) );
 
 		// Bot and crawler protection
-		\add_action( 'login_init', [ $this, 'block_suspicious_bots' ], 5 );
-		\add_action( 'wp_login_failed', [ $this, 'track_bot_behavior' ] );
+		\add_action( 'login_init', array( $this, 'block_suspicious_bots' ), 5 );
+		\add_action( 'wp_login_failed', array( $this, 'track_bot_behavior' ) );
 
 		// Login attempt tracking
-		\add_action( 'wp_login_failed', [ $this, 'handle_failed_login' ] );
-		\add_filter( 'authenticate', [ $this, 'check_login_lockout' ], 30, 3 );
-		\add_action( 'wp_login', [ $this, 'handle_successful_login' ], 10, 2 );
+		\add_action( 'wp_login_failed', array( $this, 'handle_failed_login' ) );
+		\add_filter( 'authenticate', array( $this, 'check_login_lockout' ), 30, 3 );
+		\add_action( 'wp_login', array( $this, 'handle_successful_login' ), 10, 2 );
 
 		// Session management
-		\add_action( 'init', [ $this, 'setup_session_timeout' ] );
-		\add_action( 'wp_logout', [ $this, 'clear_login_attempts' ] );
+		\add_action( 'init', array( $this, 'setup_session_timeout' ) );
+		\add_action( 'wp_logout', array( $this, 'clear_login_attempts' ) );
 
 		// Clear login attempts after successful password changes
-		\add_action( 'password_reset', [ $this, 'clear_login_attempts_on_password_change' ], 10, 2 );
-		\add_action( 'profile_update', [ $this, 'clear_login_attempts_on_profile_update' ], 10, 2 );
+		\add_action( 'password_reset', array( $this, 'clear_login_attempts_on_password_change' ), 10, 2 );
+		\add_action( 'profile_update', array( $this, 'clear_login_attempts_on_profile_update' ), 10, 2 );
 
 		// Password reset security
 		$this->init_password_security();
 
 		// Add password strength JavaScript for live validation
-		\add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_password_scripts' ] );
+		\add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_password_scripts' ) );
 	}
 
 	/**
@@ -122,7 +122,7 @@ class LoginSecurity {
 	 */
 	public function enqueue_password_scripts( string $hook_suffix ): void {
 		// Only load on user profile pages
-		if ( ! in_array( $hook_suffix, [ 'profile.php', 'user-edit.php', 'user-new.php' ], true ) ) {
+		if ( ! in_array( $hook_suffix, array( 'profile.php', 'user-edit.php', 'user-new.php' ), true ) ) {
 			return;
 		}
 
@@ -138,7 +138,7 @@ class LoginSecurity {
 		\wp_enqueue_style(
 			'silver-assist-variables',
 			$this->get_asset_url( 'assets/css/variables.css' ),
-			[],
+			array(),
 			$this->plugin_version
 		);
 
@@ -146,7 +146,7 @@ class LoginSecurity {
 		\wp_enqueue_style(
 			'silver-assist-password-validation',
 			$this->get_asset_url( 'assets/css/password-validation.css' ),
-			[ 'silver-assist-variables' ],
+			array( 'silver-assist-variables' ),
 			$this->plugin_version
 		);
 
@@ -154,7 +154,7 @@ class LoginSecurity {
 		\wp_enqueue_script(
 			'silver-assist-password-validation',
 			$this->get_asset_url( 'assets/js/password-validation.js' ),
-			[ 'jquery', 'password-strength-meter' ],
+			array( 'jquery', 'password-strength-meter' ),
 			$this->plugin_version,
 			true
 		);
@@ -163,11 +163,11 @@ class LoginSecurity {
 		\wp_localize_script(
 			'silver-assist-password-validation',
 			'silverAssistSecurity',
-			[
+			array(
 				'passwordError'        => \__( 'Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.', 'silver-assist-security' ),
 				'passwordSuccess'      => \__( 'Password meets security requirements', 'silver-assist-security' ),
 				'hideWeakConfirmation' => true, // Flag to indicate weak password confirmation should be hidden
-			]
+			)
 		);
 	}
 
@@ -194,8 +194,8 @@ class LoginSecurity {
 		$password_strength_enforcement = DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' );
 
 		if ( $password_strength_enforcement ) {
-			\add_action( 'user_profile_update_errors', [ $this, 'validate_password_strength' ], 10, 3 );
-			\add_action( 'validate_password_reset', [ $this, 'validate_password_strength_reset' ], 10, 2 );
+			\add_action( 'user_profile_update_errors', array( $this, 'validate_password_strength' ), 10, 3 );
+			\add_action( 'validate_password_reset', array( $this, 'validate_password_strength_reset' ), 10, 2 );
 		}
 	}
 
@@ -236,7 +236,7 @@ class LoginSecurity {
 		if ( isset( $_POST['log'] ) && function_exists( 'wp_verify_nonce' ) ) {
 			$nonce = isset( $_POST['secure_login_nonce'] ) ? \sanitize_text_field( \wp_unslash( $_POST['secure_login_nonce'] ) ) : '';
 			if ( ! \wp_verify_nonce( $nonce, 'secure_login_action' ) ) {
-				SecurityHelper::log_security_event( 'NONCE_VERIFICATION_FAILED', 'Nonce verification failed for login attempt', [] );
+				SecurityHelper::log_security_event( 'NONCE_VERIFICATION_FAILED', 'Nonce verification failed for login attempt', array() );
 			}
 		}
 	}
@@ -265,12 +265,12 @@ class LoginSecurity {
 			SecurityHelper::log_security_event(
 				'LOGIN_LOCKOUT',
 				"IP locked out after {$attempts} failed login attempts",
-				[
+				array(
 					'username'         => $username,
 					'attempts'         => $attempts,
 					'max_attempts'     => $this->max_attempts,
 					'lockout_duration' => $this->lockout_duration,
-				]
+				)
 			);
 
 			// Set lockout flag
@@ -430,7 +430,7 @@ class LoginSecurity {
 		// Check for specific login-related actions
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Checking action type, not processing form data.
 		$action        = isset( $_REQUEST['action'] ) ? \sanitize_text_field( \wp_unslash( $_REQUEST['action'] ) ) : '';
-		$login_actions = [ 'login', 'logout', 'register', 'resetpass', 'rp', 'lostpassword' ];
+		$login_actions = array( 'login', 'logout', 'register', 'resetpass', 'rp', 'lostpassword' );
 		if ( in_array( $action, $login_actions, true ) ) {
 			return true;
 		}
@@ -481,7 +481,7 @@ class LoginSecurity {
 		SecurityHelper::log_security_event(
 			'LOGIN_ATTEMPTS_CLEARED',
 			sprintf( 'Login attempts cleared after password reset for user: %s', $user->user_login ),
-			[ 'user_login' => $user->user_login ]
+			array( 'user_login' => $user->user_login )
 		);
 	}
 
@@ -503,7 +503,7 @@ class LoginSecurity {
 			SecurityHelper::log_security_event(
 				'LOGIN_ATTEMPTS_CLEARED',
 				sprintf( 'Login attempts cleared after profile password change for user: %s', $new_user->user_login ),
-				[ 'user_login' => $new_user->user_login ]
+				array( 'user_login' => $new_user->user_login )
 			);
 		}
 	}
@@ -640,7 +640,7 @@ class LoginSecurity {
 		$ip         = $this->get_client_ip();
 
 		// List of known bot/crawler patterns
-		$bot_patterns = [
+		$bot_patterns = array(
 			'bot',
 			'crawler',
 			'spider',
@@ -663,7 +663,7 @@ class LoginSecurity {
 			'wpscan',
 			'nuclei',
 			'httpx',
-		];
+		);
 
 		// Check if user agent matches bot patterns
 		$is_bot = false;
@@ -726,15 +726,15 @@ class LoginSecurity {
 		$bot_log_key  = "bot_activity_{md5($ip)}";
 		$bot_activity = \get_transient( $bot_log_key );
 		if ( $bot_activity === false ) {
-			$bot_activity = [];
+			$bot_activity = array();
 		}
 
-		$bot_activity[] = [
+		$bot_activity[] = array(
 			'time'       => time(),
 			'user_agent' => $user_agent,
 			'method'     => isset( $_SERVER['REQUEST_METHOD'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '',
 			'uri'        => isset( $_SERVER['REQUEST_URI'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '',
-		];
+		);
 
 		// Keep only last 10 activities
 		if ( count( $bot_activity ) > 10 ) {
@@ -761,10 +761,10 @@ class LoginSecurity {
 		SecurityHelper::log_security_event(
 			'BOT_BLOCKED',
 			'Bot/crawler blocked from login page',
-			[
+			array(
 				'user_agent'  => isset( $_SERVER['HTTP_USER_AGENT'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : 'Unknown',
 				'request_uri' => isset( $_SERVER['REQUEST_URI'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '',
-			]
+			)
 		);
 
 		// Use centralized 404 response without WordPress template to avoid conflicts

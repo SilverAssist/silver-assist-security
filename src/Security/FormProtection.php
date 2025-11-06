@@ -44,20 +44,20 @@ class FormProtection {
 	 * @return bool True if submission is allowed, false if rate limited
 	 */
 	public function allow_form_submission( string $ip ): bool {
-		$rate_key = SecurityHelper::generate_ip_transient_key( $ip, 'form_rate' );
+		$rate_key    = SecurityHelper::generate_ip_transient_key( $ip, 'form_rate' );
 		$submissions = (int) \get_transient( $rate_key );
-		$rate_limit = DefaultConfig::get_option( 'silver_assist_form_rate_limit' );
+		$rate_limit  = DefaultConfig::get_option( 'silver_assist_form_rate_limit' );
 		$rate_window = DefaultConfig::get_option( 'silver_assist_form_rate_window' );
 
 		if ( $submissions >= $rate_limit ) {
 			SecurityHelper::log_security_event(
 				'FORM_SPAM_BLOCKED',
 				'Form submission rate limit exceeded',
-				[
-					'ip' => $ip,
+				array(
+					'ip'          => $ip,
 					'submissions' => $submissions,
-					'limit' => $rate_limit
-				]
+					'limit'       => $rate_limit,
+				)
 			);
 			return false;
 		}
@@ -84,13 +84,23 @@ class FormProtection {
 		}
 
 		// Patterns for obsolete browsers and suspicious agents
-		$obsolete_patterns = [
-			'MSIE 6.0', 'MSIE 7.0', 'MSIE 8.0', 'MSIE 9.0',
-			'Mozilla/4.0', 'Mozilla/3.0', 'Mozilla/2.0',
-			'Windows NT 5.1', 'Windows NT 5.0', 'Windows 98',
-			'360SE', 'QQBrowser', 'Baidu', 'SogouWeb',
+		$obsolete_patterns = array(
+			'MSIE 6.0',
+			'MSIE 7.0',
+			'MSIE 8.0',
+			'MSIE 9.0',
+			'Mozilla/4.0',
+			'Mozilla/3.0',
+			'Mozilla/2.0',
+			'Windows NT 5.1',
+			'Windows NT 5.0',
+			'Windows 98',
+			'360SE',
+			'QQBrowser',
+			'Baidu',
+			'SogouWeb',
 			'compatible; MSIE', // General old IE pattern
-		];
+		);
 
 		foreach ( $obsolete_patterns as $pattern ) {
 			if ( stripos( $user_agent, $pattern ) !== false ) {
@@ -112,38 +122,57 @@ class FormProtection {
 	public static function has_sql_injection_attempt(): bool {
 		// Get all request data
 		$query_string = $_SERVER['QUERY_STRING'] ?? '';
-		$post_data = http_build_query( $_POST );
-		$full_data = $query_string . '&' . $post_data;
+		$post_data    = http_build_query( $_POST );
+		$full_data    = $query_string . '&' . $post_data;
 
 		// Decode URL encoding to catch encoded attacks
 		$full_data = urldecode( $full_data );
 
 		// Common SQL injection patterns
-		$sql_patterns = [
-			'PG_SLEEP', 'SLEEP(', 'WAITFOR DELAY',
-			'UNION SELECT', 'DROP TABLE', 'DELETE FROM',
-			'INSERT INTO', 'UPDATE SET', 'CREATE TABLE',
-			'ALTER TABLE', 'EXEC(', 'EXECUTE(',
-			'OR 1=1', 'AND 1=1', 'OR 128=128',
-			'CONCAT(', 'CHAR(', 'ASCII(',
-			'BENCHMARK(', 'LOAD_FILE(', 'INTO OUTFILE',
-			'xp_cmdshell', 'sp_executesql',
-			"'; DROP", '\' OR \'', '" OR "',
-			'--', '/*', '*/',
-		];
+		$sql_patterns = array(
+			'PG_SLEEP',
+			'SLEEP(',
+			'WAITFOR DELAY',
+			'UNION SELECT',
+			'DROP TABLE',
+			'DELETE FROM',
+			'INSERT INTO',
+			'UPDATE SET',
+			'CREATE TABLE',
+			'ALTER TABLE',
+			'EXEC(',
+			'EXECUTE(',
+			'OR 1=1',
+			'AND 1=1',
+			'OR 128=128',
+			'CONCAT(',
+			'CHAR(',
+			'ASCII(',
+			'BENCHMARK(',
+			'LOAD_FILE(',
+			'INTO OUTFILE',
+			'xp_cmdshell',
+			'sp_executesql',
+			"'; DROP",
+			'\' OR \'',
+			'" OR "',
+			'--',
+			'/*',
+			'*/',
+		);
 
 		foreach ( $sql_patterns as $pattern ) {
 			if ( stripos( $full_data, $pattern ) !== false ) {
 				SecurityHelper::log_security_event(
 					'SQL_INJECTION_DETECTED',
 					'SQL injection pattern detected in request',
-					[
-						'pattern' => $pattern,
-						'ip' => SecurityHelper::get_client_ip(),
-						'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
-						'query_string' => $query_string,
+					array(
+						'pattern'       => $pattern,
+						'ip'            => SecurityHelper::get_client_ip(),
+						'user_agent'    => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
+						'query_string'  => $query_string,
 						'has_post_data' => ! empty( $_POST ),
-					]
+					)
 				);
 				return true;
 			}

@@ -55,26 +55,26 @@ class UnderAttackMode {
 	 * @return void
 	 */
 	public function record_attack( string $ip = '' ): void {
-		$window = (int) DefaultConfig::get_option( 'silver_assist_under_attack_window' );
+		$window    = (int) DefaultConfig::get_option( 'silver_assist_under_attack_window' );
 		$threshold = (int) DefaultConfig::get_option( 'silver_assist_under_attack_threshold' );
-		
+
 		// Use current minute as counter key for time-based grouping
-		$counter_key = 'attack_counter_' . date( 'Y-m-d-H-i' );
+		$counter_key   = 'attack_counter_' . date( 'Y-m-d-H-i' );
 		$current_count = (int) \get_transient( $counter_key );
-		$new_count = $current_count + 1;
-		
+		$new_count     = $current_count + 1;
+
 		\set_transient( $counter_key, $new_count, $window );
-		
+
 		SecurityHelper::log_security_event(
 			'ATTACK_RECORDED',
 			'Attack attempt recorded',
-			[
-				'ip' => $ip ?: SecurityHelper::get_client_ip(),
+			array(
+				'ip'           => $ip ?: SecurityHelper::get_client_ip(),
 				'attack_count' => $new_count,
-				'threshold' => $threshold,
-			]
+				'threshold'    => $threshold,
+			)
 		);
-		
+
 		// Activate Under Attack mode if threshold exceeded
 		if ( $new_count >= $threshold ) {
 			$this->activate_under_attack_mode( "Automatic: {$new_count} attacks detected" );
@@ -93,24 +93,24 @@ class UnderAttackMode {
 		if ( $duration === 0 ) {
 			$duration = (int) DefaultConfig::get_option( 'silver_assist_under_attack_duration' );
 		}
-		
-		$attack_key = 'under_attack_mode';
-		$attack_data = [
-			'reason' => $reason,
+
+		$attack_key  = 'under_attack_mode';
+		$attack_data = array(
+			'reason'       => $reason,
 			'activated_at' => time(),
-			'duration' => $duration,
+			'duration'     => $duration,
 			'activated_by' => 'system',
-		];
-		
+		);
+
 		\set_transient( $attack_key, $attack_data, $duration );
-		
+
 		SecurityHelper::log_security_event(
 			'UNDER_ATTACK_ACTIVATED',
 			"Under Attack mode activated: {$reason}",
-			[
-				'reason' => $reason,
+			array(
+				'reason'   => $reason,
 				'duration' => $duration,
-			]
+			)
 		);
 	}
 
@@ -123,11 +123,11 @@ class UnderAttackMode {
 	public function deactivate_under_attack_mode(): void {
 		$attack_key = 'under_attack_mode';
 		\delete_transient( $attack_key );
-		
+
 		SecurityHelper::log_security_event(
 			'UNDER_ATTACK_DEACTIVATED',
 			'Under Attack mode manually deactivated',
-			[]
+			array()
 		);
 	}
 
@@ -145,22 +145,22 @@ class UnderAttackMode {
 		if ( ! $this->is_under_attack() ) {
 			return true;
 		}
-		
+
 		// Under attack - require CAPTCHA validation
 		$captcha_answer = $form_data['silver_captcha_answer'] ?? '';
-		$captcha_token = $form_data['silver_captcha_token'] ?? '';
-		
+		$captcha_token  = $form_data['silver_captcha_token'] ?? '';
+
 		if ( empty( $captcha_answer ) || empty( $captcha_token ) ) {
 			SecurityHelper::log_security_event(
 				'CAPTCHA_MISSING',
 				'Form submission blocked - missing CAPTCHA',
-				[
+				array(
 					'ip' => SecurityHelper::get_client_ip(),
-				]
+				)
 			);
 			return false;
 		}
-		
+
 		return $this->validate_captcha( $captcha_answer, $captcha_token );
 	}
 
@@ -175,16 +175,16 @@ class UnderAttackMode {
 		if ( empty( $difficulty ) ) {
 			$difficulty = DefaultConfig::get_option( 'silver_assist_captcha_difficulty' );
 		}
-		
+
 		$captcha_data = $this->create_math_captcha( $difficulty );
-		$token = $this->generate_captcha_token( $captcha_data['answer'] );
-		
-		return [
-			'question' => $captcha_data['question'],
-			'answer' => $captcha_data['answer'],
-			'token' => $token,
+		$token        = $this->generate_captcha_token( $captcha_data['answer'] );
+
+		return array(
+			'question'   => $captcha_data['question'],
+			'answer'     => $captcha_data['answer'],
+			'token'      => $token,
 			'difficulty' => $difficulty,
-		];
+		);
 	}
 
 	/**
@@ -197,43 +197,43 @@ class UnderAttackMode {
 	 */
 	public function validate_captcha( string $user_answer, string $token ): bool {
 		$stored_answer = $this->get_captcha_answer_from_token( $token );
-		
+
 		if ( $stored_answer === false ) {
 			SecurityHelper::log_security_event(
 				'CAPTCHA_INVALID_TOKEN',
 				'CAPTCHA validation failed - invalid token',
-				[
-					'ip' => SecurityHelper::get_client_ip(),
+				array(
+					'ip'    => SecurityHelper::get_client_ip(),
 					'token' => substr( $token, 0, 8 ) . '...',
-				]
+				)
 			);
 			return false;
 		}
-		
+
 		$is_valid = ( trim( $user_answer ) === trim( $stored_answer ) );
-		
+
 		if ( $is_valid ) {
 			// Clean up used token
 			$this->cleanup_captcha_token( $token );
-			
+
 			SecurityHelper::log_security_event(
 				'CAPTCHA_VALIDATED',
 				'CAPTCHA validation successful',
-				[
+				array(
 					'ip' => SecurityHelper::get_client_ip(),
-				]
+				)
 			);
 		} else {
 			SecurityHelper::log_security_event(
 				'CAPTCHA_FAILED',
 				'CAPTCHA validation failed - wrong answer',
-				[
-					'ip' => SecurityHelper::get_client_ip(),
+				array(
+					'ip'          => SecurityHelper::get_client_ip(),
 					'user_answer' => $user_answer,
-				]
+				)
 			);
 		}
-		
+
 		return $is_valid;
 	}
 
@@ -257,15 +257,15 @@ class UnderAttackMode {
 	public function get_attack_statistics(): array {
 		$current_attacks = $this->get_current_attack_count();
 		$is_under_attack = $this->is_under_attack();
-		$attack_data = \get_transient( 'under_attack_mode' );
-		
-		return [
-			'is_under_attack' => $is_under_attack,
-			'current_attacks' => $current_attacks,
-			'total_attacks' => $current_attacks, // Simplified for now
+		$attack_data     = \get_transient( 'under_attack_mode' );
+
+		return array(
+			'is_under_attack'  => $is_under_attack,
+			'current_attacks'  => $current_attacks,
+			'total_attacks'    => $current_attacks, // Simplified for now
 			'attack_threshold' => (int) DefaultConfig::get_option( 'silver_assist_under_attack_threshold' ),
-			'mode_data' => $attack_data ?: null,
-		];
+			'mode_data'        => $attack_data ?: null,
+		);
 	}
 
 	/**
@@ -278,33 +278,33 @@ class UnderAttackMode {
 	private function create_math_captcha( string $difficulty ): array {
 		switch ( $difficulty ) {
 			case 'easy':
-				$num1 = \wp_rand( 1, 10 );
-				$num2 = \wp_rand( 1, 10 );
+				$num1      = \wp_rand( 1, 10 );
+				$num2      = \wp_rand( 1, 10 );
 				$operation = '+';
-				$answer = $num1 + $num2;
+				$answer    = $num1 + $num2;
 				break;
-				
+
 			case 'hard':
-				$num1 = \wp_rand( 10, 50 );
-				$num2 = \wp_rand( 2, 12 );
+				$num1      = \wp_rand( 10, 50 );
+				$num2      = \wp_rand( 2, 12 );
 				$operation = \wp_rand( 0, 1 ) ? '*' : '+';
-				$answer = ( $operation === '*' ) ? $num1 * $num2 : $num1 + $num2;
+				$answer    = ( $operation === '*' ) ? $num1 * $num2 : $num1 + $num2;
 				break;
-				
+
 			case 'medium':
 			default:
-				$num1 = \wp_rand( 5, 20 );
-				$num2 = \wp_rand( 1, 15 );
-				$operations = [ '+', '-' ];
-				$operation = $operations[ \wp_rand( 0, 1 ) ];
-				$answer = ( $operation === '+' ) ? $num1 + $num2 : $num1 - $num2;
+				$num1       = \wp_rand( 5, 20 );
+				$num2       = \wp_rand( 1, 15 );
+				$operations = array( '+', '-' );
+				$operation  = $operations[ \wp_rand( 0, 1 ) ];
+				$answer     = ( $operation === '+' ) ? $num1 + $num2 : $num1 - $num2;
 				break;
 		}
-		
-		return [
+
+		return array(
 			'question' => "What is {$num1} {$operation} {$num2}?",
-			'answer' => (string) $answer,
-		];
+			'answer'   => (string) $answer,
+		);
 	}
 
 	/**
@@ -315,12 +315,12 @@ class UnderAttackMode {
 	 * @return string Secure token
 	 */
 	private function generate_captcha_token( string $answer ): string {
-		$token = \wp_generate_password( 32, false );
+		$token       = \wp_generate_password( 32, false );
 		$captcha_key = "captcha_token_{$token}";
-		
+
 		// Store answer with token for 10 minutes
 		\set_transient( $captcha_key, $answer, 600 );
-		
+
 		return $token;
 	}
 

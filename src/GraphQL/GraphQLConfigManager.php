@@ -52,7 +52,7 @@ class GraphQLConfigManager {
 	 *
 	 * @var array
 	 */
-	private const DEFAULT_CONFIG = [
+	private const DEFAULT_CONFIG = array(
 		'query_depth_limit'      => 8,
 		'query_complexity_limit' => 100,
 		'query_timeout'          => 5,
@@ -61,7 +61,7 @@ class GraphQLConfigManager {
 		'endpoint_access'        => 'public',
 		'batch_enabled'          => true,
 		'batch_limit'            => 10,
-	];
+	);
 
 	/**
 	 * Private constructor to enforce singleton pattern
@@ -131,14 +131,14 @@ class GraphQLConfigManager {
 		$php_timeout     = $this->get_php_execution_timeout();
 		$current_timeout = (int) DefaultConfig::get_option( 'silver_assist_graphql_query_timeout' );
 
-		return [
+		return array(
 			'php_timeout'          => $php_timeout,
 			'current_timeout'      => $current_timeout,
 			'is_unlimited_php'     => $php_timeout === 0,
 			'is_using_php_default' => ! DefaultConfig::get_option( 'silver_assist_graphql_query_timeout' ),
 			'recommended_min'      => 5,
 			'recommended_max'      => $php_timeout > 0 ? min( $php_timeout, 60 ) : 60,
-		];
+		);
 	}
 
 	/**
@@ -167,7 +167,7 @@ class GraphQLConfigManager {
 		if ( $this->config_cache === null ) {
 			$this->load_configuration();
 		}
-		return $this->config_cache ?? [];
+		return $this->config_cache ?? array();
 	}
 
 	/**
@@ -249,27 +249,27 @@ class GraphQLConfigManager {
 	 */
 	public function get_security_recommendations(): array {
 		$config          = $this->get_configuration();
-		$recommendations = [];
+		$recommendations = array();
 
 		if ( $config['introspection_enabled'] ) {
-			$recommendations[] = [
+			$recommendations[] = array(
 				'level'   => 'warning',
 				'message' => \__( 'Public introspection enabled (security risk)', 'silver-assist-security' ),
-			];
+			);
 		}
 
 		if ( $config['debug_mode'] ) {
-			$recommendations[] = [
+			$recommendations[] = array(
 				'level'   => 'warning',
 				'message' => \__( 'Debug mode enabled (not recommended for production)', 'silver-assist-security' ),
-			];
+			);
 		}
 
 		if ( $config['endpoint_access'] === 'public' ) {
-			$recommendations[] = [
+			$recommendations[] = array(
 				'level'   => 'info',
 				'message' => \__( 'GraphQL endpoint is publicly accessible', 'silver-assist-security' ),
-			];
+			);
 		}
 
 		return $recommendations;
@@ -287,7 +287,7 @@ class GraphQLConfigManager {
 		}
 
 		$config   = $this->get_configuration();
-		$settings = [];
+		$settings = array();
 
 		// Endpoint Access (most important for security)
 		$auth_status = $config['endpoint_access'] === 'restricted' ?
@@ -405,11 +405,11 @@ class GraphQLConfigManager {
 			$adjusted_limit = $base_limit;
 		}
 
-		return [
+		return array(
 			'requests_per_minute' => $adjusted_limit,
 			'burst_limit'         => (int) ( $adjusted_limit * 1.5 ), // Allow 50% burst
 			'timeout_seconds'     => $config['query_timeout'],
-		];
+		);
 	}
 
 	/**
@@ -432,13 +432,13 @@ class GraphQLConfigManager {
 	public function get_integration_status(): array {
 		$config = $this->get_configuration();
 
-		return [
+		return array(
 			'wpgraphql_available' => $this->is_wpgraphql_available(),
 			'headless_mode'       => $this->is_headless_mode(),
 			'current_config'      => $config,
 			'security_level'      => $this->calculate_security_level( $config ),
 			'recommendations'     => $this->get_security_recommendations(),
-		];
+		);
 	}
 
 	/**

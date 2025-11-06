@@ -48,15 +48,10 @@
         }
     },
     "scripts": {
-        "test": "phpunit",
-        "phpcs": "phpcs src --standard=WordPress",
-        "phpcbf": "phpcbf src --standard=WordPress",
-        "phpstan": "PHPSTAN_RUNNING=1 vendor/bin/phpstan analyse --memory-limit=1G",
-        "check": [
-            "@phpcs",
-            "@phpstan",
-            "@test"
-        ]
+        "phpcs": "phpcs --standard=phpcs.xml",
+        "phpcbf": "phpcbf --standard=phpcs.xml",
+        "phpstan": "php -d memory_limit=1G vendor/bin/phpstan analyse src/ --no-progress",
+        "test": "bash scripts/run-quality-checks.sh"
     },
     "config": {
         "sort-packages": true,

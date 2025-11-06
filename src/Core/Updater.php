@@ -38,7 +38,7 @@ class Updater extends GitHubUpdater {
 		$config = new UpdaterConfig(
 			$plugin_file,
 			$github_repo,
-			[
+			array(
 				'plugin_name'        => 'Silver Assist Security Essentials',
 				'plugin_description' => 'WordPress plugin for advanced security: brute force protection, bot blocking, GraphQL security, HTTPOnly cookies, and auto-updates.',
 				'plugin_author'      => 'Silver Assist',
@@ -49,7 +49,7 @@ class Updater extends GitHubUpdater {
 				'cache_duration'     => 12 * 3600,
 				'ajax_action'        => 'silver_assist_security_check_version',
 				'ajax_nonce'         => 'silver_assist_security_ajax',
-			]
+			)
 		);
 		parent::__construct( $config );
 	}

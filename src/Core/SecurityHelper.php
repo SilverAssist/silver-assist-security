@@ -88,7 +88,7 @@ class SecurityHelper {
 		* @return string Client IP address
 		*/
 	public static function get_client_ip(): string {
-		$ip_keys = [
+		$ip_keys = array(
 			'HTTP_CF_CONNECTING_IP',     // CloudFlare
 			'HTTP_CLIENT_IP',            // Proxy
 			'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
@@ -96,7 +96,7 @@ class SecurityHelper {
 			'HTTP_FORWARDED_FOR',        // Proxy
 			'HTTP_FORWARDED',            // Proxy
 			'REMOTE_ADDR',                // Standard
-		];
+		);
 
 		foreach ( $ip_keys as $key ) {
 			if ( array_key_exists( $key, $_SERVER ) === true ) {
@@ -212,8 +212,8 @@ class SecurityHelper {
 	 * @param array  $context Additional context data (optional)
 	 * @return void
 	 */
-	public static function log_security_event( string $event_type, string $message, array $context = [] ): void {
-		$log_data = [
+	public static function log_security_event( string $event_type, string $message, array $context = array() ): void {
+		$log_data = array(
 			'event_type'  => $event_type,
 			'message'     => $message,
 			'timestamp'   => \current_time( 'mysql' ),
@@ -221,7 +221,7 @@ class SecurityHelper {
 			'user_agent'  => isset( $_SERVER['HTTP_USER_AGENT'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : 'Unknown',
 			'request_uri' => isset( $_SERVER['REQUEST_URI'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '',
 			'context'     => $context,
-		];
+		);
 
 		// Log as structured JSON for better parsing.
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional security logging.
@@ -287,10 +287,10 @@ class SecurityHelper {
 			self::log_security_event(
 				'NONCE_VALIDATION_FAILED',
 				"Invalid nonce for action: {$action}",
-				[
+				array(
 					'action' => $action,
 					'nonce'  => $nonce,
-				]
+				)
 			);
 
 			if ( $die_on_failure ) {
@@ -322,11 +322,11 @@ class SecurityHelper {
 			self::log_security_event(
 				'CAPABILITY_CHECK_FAILED',
 				"User lacks required capability: {$capability}",
-				[
+				array(
 					'required_capability' => $capability,
 					'user_id'             => $user_id,
 					'user_login'          => $user ? $user->user_login : 'anonymous',
-				]
+				)
 			);
 
 			if ( $die_on_failure ) {
@@ -401,7 +401,7 @@ class SecurityHelper {
 		}
 
 		// Known bot/crawler patterns
-		$bot_patterns = [
+		$bot_patterns = array(
 			'bot',
 			'crawler',
 			'spider',
@@ -424,7 +424,7 @@ class SecurityHelper {
 			'wpscan',
 			'nuclei',
 			'httpx',
-		];
+		);
 
 		foreach ( $bot_patterns as $pattern ) {
 			if ( stripos( $user_agent, $pattern ) !== false ) {
@@ -472,10 +472,10 @@ class SecurityHelper {
 			self::log_security_event(
 				'AJAX_INVALID_METHOD',
 				'Invalid HTTP method for AJAX request',
-				[
+				array(
 					'expected' => $allowed_method,
 					'actual'   => $actual_method,
-				]
+				)
 			);
 			return false;
 		}

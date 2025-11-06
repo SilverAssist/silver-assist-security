@@ -122,13 +122,13 @@ class GraphQLSecurity {
 			return;
 		}
 
-		\add_action( 'init', [ $this, 'init_graphql_security' ] );
-		\add_filter( 'graphql_request_results', [ $this, 'log_graphql_requests' ], 10, 5 );
-		\add_action( 'graphql_init', [ $this, 'disable_introspection_in_production' ] );
-		\add_action( 'graphql_init', [ $this, 'add_security_validations' ] );
-		\add_filter( 'graphql_request_data', [ $this, 'validate_query_before_execution' ], 1, 5 );
-		\add_action( 'graphql_init', [ $this, 'set_execution_timeout' ] );
-		\add_action( 'send_headers', [ $this, 'add_graphql_security_headers' ] );
+		\add_action( 'init', array( $this, 'init_graphql_security' ) );
+		\add_filter( 'graphql_request_results', array( $this, 'log_graphql_requests' ), 10, 5 );
+		\add_action( 'graphql_init', array( $this, 'disable_introspection_in_production' ) );
+		\add_action( 'graphql_init', array( $this, 'add_security_validations' ) );
+		\add_filter( 'graphql_request_data', array( $this, 'validate_query_before_execution' ), 1, 5 );
+		\add_action( 'graphql_init', array( $this, 'set_execution_timeout' ) );
+		\add_action( 'send_headers', array( $this, 'add_graphql_security_headers' ) );
 	}
 
 	/**
@@ -170,7 +170,7 @@ class GraphQLSecurity {
 			\add_action(
 				'graphql_register_types',
 				function () {
-					\remove_action( 'graphql_register_types', [ 'WPGraphQL\\Type\\Introspection', 'register_introspection_fields' ] );
+					\remove_action( 'graphql_register_types', array( 'WPGraphQL\\Type\\Introspection', 'register_introspection_fields' ) );
 				},
 				1
 			);
@@ -185,7 +185,7 @@ class GraphQLSecurity {
 	 */
 	public function add_security_validations(): void {
 		// Add our custom validation rules
-		\add_filter( 'graphql_validation_rules', [ $this, 'add_custom_validation_rules' ] );
+		\add_filter( 'graphql_validation_rules', array( $this, 'add_custom_validation_rules' ) );
 
 		// Integrate with WPGraphQL's native depth validation
 		$this->integrate_with_wpgraphql_depth_validation();
@@ -216,7 +216,7 @@ class GraphQLSecurity {
 							'Coordinating with WPGraphQL depth validation (max: %d)',
 							$wpgraphql_max_depth
 						),
-						[ 'wpgraphql_max_depth' => $wpgraphql_max_depth ]
+						array( 'wpgraphql_max_depth' => $wpgraphql_max_depth )
 					);
 				}
 
@@ -236,10 +236,10 @@ class GraphQLSecurity {
 	 */
 	private function enhance_wpgraphql_connection_limits(): void {
 		// Filter WPGraphQL's max query amount for complexity estimation
-		\add_filter( 'graphql_connection_max_query_amount', [ $this, 'filter_connection_max_query_amount' ], 10, 5 );
+		\add_filter( 'graphql_connection_max_query_amount', array( $this, 'filter_connection_max_query_amount' ), 10, 5 );
 
 		// Add complexity hints to connection resolvers
-		\add_filter( 'graphql_connection_query_args', [ $this, 'add_complexity_hints_to_connections' ], 10, 5 );
+		\add_filter( 'graphql_connection_query_args', array( $this, 'add_complexity_hints_to_connections' ), 10, 5 );
 	}
 
 	/**
@@ -253,7 +253,7 @@ class GraphQLSecurity {
 	 * @param mixed $info The ResolveInfo object (optional)
 	 * @return int
 	 */
-	public function filter_connection_max_query_amount( int $max_query_amount, $source = null, array $args = [], $context = null, $info = null ): int {
+	public function filter_connection_max_query_amount( int $max_query_amount, $source = null, array $args = array(), $context = null, $info = null ): int {
 		// Use our complexity configuration to adjust connection limits
 		$complexity_ratio = $this->max_query_complexity / 100; // Base ratio
 
@@ -275,14 +275,14 @@ class GraphQLSecurity {
 	 * @param mixed $info The ResolveInfo object (optional)
 	 * @return array
 	 */
-	public function add_complexity_hints_to_connections( array $query_args, $source = null, array $args = [], $context = null, $info = null ): array {
+	public function add_complexity_hints_to_connections( array $query_args, $source = null, array $args = array(), $context = null, $info = null ): array {
 		// Add complexity metadata for monitoring
-		$query_args['_silver_assist_complexity_hint'] = [
+		$query_args['_silver_assist_complexity_hint'] = array(
 			'max_complexity'  => $this->max_query_complexity,
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- WPGraphQL uses camelCase for properties
 			'connection_type' => $info->fieldName ?? 'unknown',
 			'estimated_cost'  => $this->estimate_connection_complexity( $args ),
-		];
+		);
 
 		return $query_args;
 	}
@@ -339,7 +339,7 @@ class GraphQLSecurity {
 			 * @return array
 			 */
 			public function getVisitor( $context ): array {
-				return [
+				return array(
 					'DocumentNode' => function ( $node ) use ( $context ) {
 						// Use our enhanced complexity validation with WPGraphQL integration
 						$estimated_complexity = $this->estimate_query_complexity( $node );
@@ -360,7 +360,7 @@ class GraphQLSecurity {
 							);
 						}
 					},
-				];
+				);
 			}
 
 			/**
@@ -370,7 +370,7 @@ class GraphQLSecurity {
 			 * @return array
 			 */
 			public function getSDLVisitor( $context ): array {
-				return [];
+				return array();
 			}
 
 			/**
@@ -387,12 +387,12 @@ class GraphQLSecurity {
 				$base_complexity = 1;
 
 				// Field count estimation (each field adds complexity)
-				$field_matches = [];
+				$field_matches = array();
 				preg_match_all( '/\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*[{\(]/', $query_string, $field_matches );
 				$field_complexity = ! empty( $field_matches[1] ) ? count( $field_matches[1] ) : 0;
 
 				// Connection complexity (connections with arguments)
-				$connection_matches = [];
+				$connection_matches = array();
 				preg_match_all( '/\(\s*first:\s*(\d+)/', $query_string, $connection_matches );
 				$connection_complexity = 0;
 				if ( ! empty( $connection_matches[1] ) ) {
@@ -569,7 +569,7 @@ class GraphQLSecurity {
 	 */
 	public function set_execution_timeout(): void {
 		// Add GraphQL-specific timeout filter
-		\add_filter( 'graphql_request_results', [ $this, 'enforce_query_timeout' ], 1, 5 );
+		\add_filter( 'graphql_request_results', array( $this, 'enforce_query_timeout' ), 1, 5 );
 
 		// Get timeout configuration with PHP awareness
 		$timeout_config = $this->config_manager->get_timeout_config();
@@ -588,12 +588,12 @@ class GraphQLSecurity {
 					$timeout_config['php_timeout'],
 					$timeout_config['current_timeout']
 				),
-				[
+				array(
 					'php_timeout'     => $timeout_config['php_timeout'],
 					'graphql_timeout' => $timeout_config['current_timeout'],
 					'applied_timeout' => $timeout_config['php_timeout'] === 0 ? $timeout_config['current_timeout'] :
 						min( $timeout_config['php_timeout'], $timeout_config['current_timeout'] ),
-				]
+				)
 			);
 		}
 	}
@@ -624,11 +624,11 @@ class GraphQLSecurity {
 					$this->query_timeout,
 					$query_preview
 				),
-				[
+				array(
 					'execution_time' => $execution_time,
 					'timeout_limit'  => $this->query_timeout,
 					'query_preview'  => $query_preview,
-				]
+				)
 			);
 
 			// Handle both ExecutionResult object and array response formats
@@ -638,44 +638,44 @@ class GraphQLSecurity {
 
 				// Add timeout error to response
 				if ( ! isset( $response_array['errors'] ) ) {
-					$response_array['errors'] = [];
+					$response_array['errors'] = array();
 				}
 
-				$response_array['errors'][] = [
+				$response_array['errors'][] = array(
 					'message'    => sprintf(
 						/* translators: %d: timeout limit in seconds */
 						\__( 'Query execution timeout exceeded (%ds limit)', 'silver-assist-security' ),
 						$this->query_timeout
 					),
-					'extensions' => [
+					'extensions' => array(
 						'code'           => 'QUERY_TIMEOUT',
 						'execution_time' => $execution_time,
-					],
-				];
+					),
+				);
 
 				// Create new ExecutionResult with timeout error
 				return new ExecutionResult(
 					$response_array['data'] ?? null,
-					$response_array['errors'] ?? [],
-					$response_array['extensions'] ?? []
+					$response_array['errors'] ?? array(),
+					$response_array['extensions'] ?? array()
 				);
 			} elseif ( is_array( $response ) ) {
 				// Handle array response format
 				if ( ! isset( $response['errors'] ) ) {
-					$response['errors'] = [];
+					$response['errors'] = array();
 				}
 
-				$response['errors'][] = [
+				$response['errors'][] = array(
 					'message'    => sprintf(
 						/* translators: %d: timeout limit in seconds */
 						\__( 'Query execution timeout exceeded (%ds limit)', 'silver-assist-security' ),
 						$this->query_timeout
 					),
-					'extensions' => [
+					'extensions' => array(
 						'code'           => 'QUERY_TIMEOUT',
 						'execution_time' => $execution_time,
-					],
-				];
+					),
+				);
 			}
 		}
 
@@ -689,7 +689,7 @@ class GraphQLSecurity {
 	 * @return void
 	 */
 	private function setup_graphql_rate_limiting(): void {
-		\add_action( 'graphql_request', [ $this, 'check_rate_limit' ] );
+		\add_action( 'graphql_request', array( $this, 'check_rate_limit' ) );
 	}
 
 	/**
@@ -744,7 +744,7 @@ class GraphQLSecurity {
 	 * @return string
 	 */
 	private function get_client_ip(): string {
-		$ip_keys = [
+		$ip_keys = array(
 			'HTTP_CF_CONNECTING_IP',
 			'HTTP_CLIENT_IP',
 			'HTTP_X_FORWARDED_FOR',
@@ -752,7 +752,7 @@ class GraphQLSecurity {
 			'HTTP_FORWARDED_FOR',
 			'HTTP_FORWARDED',
 			'REMOTE_ADDR',
-		];
+		);
 
 		foreach ( $ip_keys as $key ) {
 			if ( array_key_exists( $key, $_SERVER ) === true ) {
@@ -784,12 +784,12 @@ class GraphQLSecurity {
 		// Convert ExecutionResult to array for analysis if needed
 		$response_array = is_object( $response ) && method_exists( $response, 'toArray' ) ?
 			$response->toArray() :
-			( is_array( $response ) ? $response : [] );
+			( is_array( $response ) ? $response : array() );
 
 		$request_time = isset( $_SERVER['REQUEST_TIME_FLOAT'] ) ? floatval( \wp_unslash( $_SERVER['REQUEST_TIME_FLOAT'] ) ) : microtime( true );
 		$user_agent   = isset( $_SERVER['HTTP_USER_AGENT'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
 
-		$log_data = [
+		$log_data = array(
 			'timestamp'      => \current_time( 'mysql' ),
 			'ip'             => $this->get_client_ip(),
 			'operation'      => $operation,
@@ -797,7 +797,7 @@ class GraphQLSecurity {
 			'has_errors'     => ! empty( $response_array['errors'] ),
 			'execution_time' => microtime( true ) - $request_time,
 			'user_agent'     => $user_agent,
-		];
+		);
 
 		// Log suspicious patterns (only if query is not null)
 		if ( $query && $this->is_suspicious_query( $query ) ) {
@@ -835,13 +835,13 @@ class GraphQLSecurity {
 		$directive_threshold       = max( 3, intval( $this->max_directives / 2 ) );
 		$field_duplicate_threshold = max( 10, $this->max_field_duplicates * 5 );
 
-		$suspicious_patterns = [
+		$suspicious_patterns = array(
 			'/(__schema|__type).*\{.*\{.*\{/', // Deep introspection
 			'/(\w+:\s*\w+.*){' . $alias_threshold . ',}/', // Many aliases
 			'/(@\w+.*){' . $directive_threshold . ',}/', // Many directives
 			'/.{' . $max_query_length . ',}/', // Very long query
 			'/\{[^}]*(\w+[^}]*){' . $field_duplicate_threshold . ',}\}/', // Many field duplicates
-		];
+		);
 
 		foreach ( $suspicious_patterns as $pattern ) {
 			if ( preg_match( $pattern, $query ) ) {
@@ -881,7 +881,7 @@ class GraphQLSecurity {
 	 * @return array
 	 */
 	public function validate_query_depth( $context ): array {
-		return [];
+		return array();
 	}
 
 	/**
@@ -904,7 +904,7 @@ class GraphQLSecurity {
 		// - Connection limits: Handled by WPGraphQL's AbstractConnectionResolver
 		// - Rate limiting: Our implementation with WPGraphQL integration
 		// - Complexity estimation: Our enhanced proxy validation
-		return [];
+		return array();
 	}
 
 	/**
@@ -915,7 +915,7 @@ class GraphQLSecurity {
 	 * @return array
 	 */
 	public function validate_aliases( $context ): array {
-		return [];
+		return array();
 	}
 
 	/**
@@ -926,7 +926,7 @@ class GraphQLSecurity {
 	 * @return array
 	 */
 	public function validate_directives( $context ): array {
-		return [];
+		return array();
 	}
 
 	/**
@@ -937,7 +937,7 @@ class GraphQLSecurity {
 	 * @return array
 	 */
 	public function validate_field_duplicates( $context ): array {
-		return [];
+		return array();
 	}
 
 	/**
@@ -1021,35 +1021,35 @@ class GraphQLSecurity {
 	 * @return array
 	 */
 	public function get_headless_recommendations(): array {
-		$recommendations = [
+		$recommendations = array(
 			'max_query_depth'       => 20,
 			'max_query_complexity'  => 1000,
 			'query_timeout'         => 30,
 			'rate_limit_per_minute' => 300,
-			'recommended_settings'  => [
+			'recommended_settings'  => array(
 				'Enable headless mode for relaxed limits',
 				'Consider using query whitelisting for production',
 				'Monitor query performance with logging',
 				'Use query complexity analysis tools',
-			],
-		];
+			),
+		);
 
 		// Add WPGraphQL-specific recommendations if available
 		if ( \class_exists( 'WPGraphQL' ) && \function_exists( 'get_graphql_setting' ) ) {
-			$recommendations['wpgraphql_integration'] = [
+			$recommendations['wpgraphql_integration'] = array(
 				'current_introspection' => get_graphql_setting( 'public_introspection_enabled', 'off' ),
 				'current_batch_enabled' => get_graphql_setting( 'batch_queries_enabled', 'on' ),
 				'current_batch_limit'   => get_graphql_setting( 'batch_limit', 10 ),
 				'current_depth_enabled' => get_graphql_setting( 'query_depth_enabled', 'off' ),
 				'current_max_depth'     => get_graphql_setting( 'query_depth_max_depth', 10 ),
-				'recommendations'       => [
+				'recommendations'       => array(
 					'For headless CMS: Enable query depth limiting with max depth 15-20',
 					'For headless CMS: Keep batch queries enabled with limit 10-20',
 					'For production: Disable public introspection',
 					'For production: Disable debug mode',
 					'Consider authentication restriction based on your use case',
-				],
-			];
+				),
+			);
 		}
 
 		return $recommendations;
@@ -1063,18 +1063,18 @@ class GraphQLSecurity {
 	 */
 	public function get_wpgraphql_status(): array {
 		if ( ! $this->config_manager->is_wpgraphql_available() ) {
-			return [
+			return array(
 				'available' => false,
 				'message'   => 'WPGraphQL plugin not detected',
-			];
+			);
 		}
 
 		$config             = $this->config_manager->get_configuration();
 		$integration_status = $this->config_manager->get_integration_status();
 
-		return [
+		return array(
 			'available'       => true,
-			'settings'        => [
+			'settings'        => array(
 				'introspection_enabled' => $config['introspection_enabled'],
 				'debug_mode'            => $config['debug_mode'],
 				'batch_queries_enabled' => $config['batch_enabled'],
@@ -1082,9 +1082,9 @@ class GraphQLSecurity {
 				'query_depth_enabled'   => $config['query_depth_limit'] > 0,
 				'query_depth_limit'     => $config['query_depth_limit'],
 				'auth_required'         => $config['endpoint_access'] === 'restricted',
-			],
+			),
 			'security_status' => $integration_status['security_level'],
 			'recommendations' => $integration_status['recommendations'],
-		];
+		);
 	}
 }

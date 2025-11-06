@@ -97,18 +97,18 @@ class Plugin {
 		SecurityHelper::init();
 
 		// Initialize security components early (before setup_theme).
-		\add_action( 'plugins_loaded', [ $this, 'init_security_components' ], 1 );
+		\add_action( 'plugins_loaded', array( $this, 'init_security_components' ), 1 );
 
 		// Load text domain for translations (safe to call here since we're in init hook).
-		\add_action( 'init', [ $this, 'load_textdomain' ] );
+		\add_action( 'init', array( $this, 'load_textdomain' ) );
 
 		// Initialize components.
-		\add_action( 'init', [ $this, 'init_admin_panel' ] );
-		\add_action( 'init', [ $this, 'init_graphql_security' ] );
-		\add_action( 'init', [ $this, 'init_updater' ] );
+		\add_action( 'init', array( $this, 'init_admin_panel' ) );
+		\add_action( 'init', array( $this, 'init_graphql_security' ) );
+		\add_action( 'init', array( $this, 'init_updater' ) );
 
 		// Add plugin action links.
-		\add_filter( 'plugin_action_links_' . SILVER_ASSIST_SECURITY_BASENAME, [ $this, 'add_action_links' ] );
+		\add_filter( 'plugin_action_links_' . SILVER_ASSIST_SECURITY_BASENAME, array( $this, 'add_action_links' ) );
 	}
 
 	/**

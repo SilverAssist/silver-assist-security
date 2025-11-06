@@ -16,10 +16,6 @@
 
 	<!-- Use WordPress-Core ruleset as base -->
 	<rule ref="WordPress-Core">
-		<!-- EXCLUDED: Modern PHP 8+ short array syntax [] -->
-		<exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
-		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
-		
 		<!-- EXCLUDED: We use PSR-4 naming (AdminPanel.php not class-adminpanel.php) -->
 		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
 		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>

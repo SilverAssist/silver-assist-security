@@ -65,27 +65,27 @@ class IPBlacklist {
 	 * @return void
 	 */
 	public function add_to_blacklist( string $ip, string $reason, int $duration ): void {
-		$blacklist_key = "ip_blacklist_" . md5( $ip );
-		$blacklist_data = [
-			'ip' => $ip,
-			'reason' => $reason,
-			'timestamp' => time(),
-			'duration' => $duration,
-			'auto' => false,
+		$blacklist_key  = 'ip_blacklist_' . md5( $ip );
+		$blacklist_data = array(
+			'ip'         => $ip,
+			'reason'     => $reason,
+			'timestamp'  => time(),
+			'duration'   => $duration,
+			'auto'       => false,
 			'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
-		];
+		);
 
 		\set_transient( $blacklist_key, $blacklist_data, $duration );
 
 		SecurityHelper::log_security_event(
 			'IP_BLACKLISTED',
 			"IP added to blacklist: {$reason}",
-			[
-				'ip' => $ip,
-				'reason' => $reason,
+			array(
+				'ip'       => $ip,
+				'reason'   => $reason,
 				'duration' => $duration,
-				'auto' => false,
-			]
+				'auto'     => false,
+			)
 		);
 	}
 
@@ -97,7 +97,7 @@ class IPBlacklist {
 	 * @return bool True if blacklisted, false otherwise
 	 */
 	public function is_blacklisted( string $ip ): bool {
-		$blacklist_key = "ip_blacklist_" . md5( $ip );
+		$blacklist_key = 'ip_blacklist_' . md5( $ip );
 		return \get_transient( $blacklist_key ) !== false;
 	}
 
@@ -112,31 +112,31 @@ class IPBlacklist {
 	 * @return void
 	 */
 	public function record_violation( string $ip, string $type ): void {
-		$violations_key = "ip_violations_" . md5( $ip );
+		$violations_key    = 'ip_violations_' . md5( $ip );
 		$stored_violations = \get_transient( $violations_key );
-		$violations = ( $stored_violations !== false && is_array( $stored_violations ) ) ? $stored_violations : [];
-		
-		$violation_window = (int) DefaultConfig::get_option( 'silver_assist_ip_violation_window' );
-		$threshold = (int) DefaultConfig::get_option( 'silver_assist_ip_blacklist_threshold' );
+		$violations        = ( $stored_violations !== false && is_array( $stored_violations ) ) ? $stored_violations : array();
 
-		$violations[] = [
-			'type' => $type,
-			'timestamp' => time(),
-			'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
+		$violation_window = (int) DefaultConfig::get_option( 'silver_assist_ip_violation_window' );
+		$threshold        = (int) DefaultConfig::get_option( 'silver_assist_ip_blacklist_threshold' );
+
+		$violations[] = array(
+			'type'        => $type,
+			'timestamp'   => time(),
+			'user_agent'  => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
 			'request_uri' => $_SERVER['REQUEST_URI'] ?? '',
-		];
+		);
 
 		\set_transient( $violations_key, $violations, $violation_window );
 
 		SecurityHelper::log_security_event(
 			'SECURITY_VIOLATION_RECORDED',
 			"Security violation recorded: {$type}",
-			[
-				'ip' => $ip,
-				'violation_type' => $type,
+			array(
+				'ip'               => $ip,
+				'violation_type'   => $type,
 				'total_violations' => count( $violations ),
-				'threshold' => $threshold,
-			]
+				'threshold'        => $threshold,
+			)
 		);
 
 		// Auto-blacklist if threshold reached
@@ -155,36 +155,36 @@ class IPBlacklist {
 	 */
 	private function auto_blacklist_ip( string $ip, array $violations ): void {
 		$violation_types = array_unique( array_column( $violations, 'type' ) );
-		$duration = (int) DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' );
-		
+		$duration        = (int) DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' );
+
 		$reason = sprintf(
 			'Auto-blacklist: %d violations (%s)',
 			count( $violations ),
 			implode( ', ', $violation_types )
 		);
 
-		$blacklist_key = "ip_blacklist_" . md5( $ip );
-		$blacklist_data = [
-			'ip' => $ip,
-			'reason' => $reason,
-			'timestamp' => time(),
-			'duration' => $duration,
-			'auto' => true,
+		$blacklist_key  = 'ip_blacklist_' . md5( $ip );
+		$blacklist_data = array(
+			'ip'         => $ip,
+			'reason'     => $reason,
+			'timestamp'  => time(),
+			'duration'   => $duration,
+			'auto'       => true,
 			'violations' => $violations,
-		];
+		);
 
 		\set_transient( $blacklist_key, $blacklist_data, $duration );
 
 		SecurityHelper::log_security_event(
 			'IP_AUTO_BLACKLISTED',
 			$reason,
-			[
-				'ip' => $ip,
+			array(
+				'ip'              => $ip,
 				'violation_count' => count( $violations ),
 				'violation_types' => $violation_types,
-				'duration' => $duration,
-				'auto' => true,
-			]
+				'duration'        => $duration,
+				'auto'            => true,
+			)
 		);
 	}
 
@@ -196,7 +196,7 @@ class IPBlacklist {
 	 * @return array|false Blacklist details or false if not blacklisted
 	 */
 	public function get_blacklist_details( string $ip ) {
-		$blacklist_key = "ip_blacklist_" . md5( $ip );
+		$blacklist_key = 'ip_blacklist_' . md5( $ip );
 		return \get_transient( $blacklist_key );
 	}
 
@@ -208,7 +208,7 @@ class IPBlacklist {
 	 * @return bool True if removed, false if not found
 	 */
 	public function remove_from_blacklist( string $ip ): bool {
-		$blacklist_key = "ip_blacklist_" . md5( $ip );
+		$blacklist_key   = 'ip_blacklist_' . md5( $ip );
 		$was_blacklisted = \get_transient( $blacklist_key ) !== false;
 
 		if ( $was_blacklisted ) {
@@ -217,7 +217,7 @@ class IPBlacklist {
 			SecurityHelper::log_security_event(
 				'IP_REMOVED_FROM_BLACKLIST',
 				'IP manually removed from blacklist',
-				[ 'ip' => $ip ]
+				array( 'ip' => $ip )
 			);
 		}
 
@@ -232,9 +232,9 @@ class IPBlacklist {
 	 * @return int Number of violations
 	 */
 	public function get_violation_count( string $ip ): int {
-		$violations_key = "ip_violations_" . md5( $ip );
+		$violations_key    = 'ip_violations_' . md5( $ip );
 		$stored_violations = \get_transient( $violations_key );
-		$violations = ( $stored_violations !== false && is_array( $stored_violations ) ) ? $stored_violations : [];
+		$violations        = ( $stored_violations !== false && is_array( $stored_violations ) ) ? $stored_violations : array();
 		return count( $violations );
 	}
 
@@ -252,8 +252,8 @@ class IPBlacklist {
 
 		// Query all transients that match our blacklist pattern
 		// This is simplified - in production you'd want a more efficient approach
-		$blacklisted_ips = [];
-		
+		$blacklisted_ips = array();
+
 		// Get transients from database that match our pattern
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
@@ -296,16 +296,19 @@ class IPBlacklist {
 	 * @return array Statistics about blacklisted IPs
 	 */
 	public function get_blacklist_stats(): array {
-		$all_blacklisted = $this->get_all_blacklisted_ips();
-		$auto_blacklisted = array_filter( $all_blacklisted, function( $item ) {
-			return isset( $item['auto'] ) && $item['auto'] === true;
-		});
+		$all_blacklisted  = $this->get_all_blacklisted_ips();
+		$auto_blacklisted = array_filter(
+			$all_blacklisted,
+			function ( $item ) {
+				return isset( $item['auto'] ) && $item['auto'] === true;
+			}
+		);
 
-		return [
-			'total_blacklisted' => count( $all_blacklisted ),
-			'auto_blacklisted' => count( $auto_blacklisted ),
+		return array(
+			'total_blacklisted'  => count( $all_blacklisted ),
+			'auto_blacklisted'   => count( $auto_blacklisted ),
 			'manual_blacklisted' => count( $all_blacklisted ) - count( $auto_blacklisted ),
-		];
+		);
 	}
 
 	/**
@@ -316,20 +319,20 @@ class IPBlacklist {
 	 */
 	public function get_cf7_blocked_ips(): array {
 		$all_blacklisted = $this->get_all_blacklisted_ips();
-		$cf7_blocked = [];
+		$cf7_blocked     = array();
 
 		foreach ( $all_blacklisted as $ip => $data ) {
 			// Check if this is CF7 related (by type or reason keywords)
 			$reason = $data['reason'] ?? '';
-			$type = $data['type'] ?? '';
-			
+			$type   = $data['type'] ?? '';
+
 			if ( strpos( $type, 'cf7' ) !== false || $this->is_cf7_related_block( $reason ) ) {
-				$cf7_blocked[ $ip ] = [
+				$cf7_blocked[ $ip ] = array(
 					'blocked_at' => $data['timestamp'] ?? time(),
-					'reason' => $reason,
+					'reason'     => $reason,
 					'violations' => $this->get_cf7_violation_count( $ip ),
 					'user_agent' => $data['user_agent'] ?? 'Unknown',
-				];
+				);
 			}
 		}
 
@@ -354,20 +357,20 @@ class IPBlacklist {
 	 * @return int Number of IPs cleared
 	 */
 	public function clear_cf7_blacklist(): int {
-		$cf7_blocked = $this->get_cf7_blocked_ips();
+		$cf7_blocked   = $this->get_cf7_blocked_ips();
 		$cleared_count = 0;
 
 		foreach ( $cf7_blocked as $ip => $data ) {
 			$success = $this->remove_from_blacklist( $ip );
 			if ( $success ) {
-				$cleared_count++;
+				++$cleared_count;
 			}
 		}
 
 		SecurityHelper::log_security_event(
 			'CF7_BLACKLIST_CLEARED',
 			"Cleared {$cleared_count} CF7 blocked IPs",
-			[ 'count' => $cleared_count ]
+			array( 'count' => $cleared_count )
 		);
 
 		return $cleared_count;
@@ -384,17 +387,17 @@ class IPBlacklist {
 	 */
 	public function add_to_cf7_blacklist( string $ip, string $reason, string $type = 'cf7_manual' ): bool {
 		$duration = DefaultConfig::get_option( 'silver_assist_cf7_ip_block_duration' ) ?: 3600; // 1 hour default
-		
-		$blacklist_key = "ip_blacklist_" . md5( $ip );
-		$blacklist_data = [
-			'ip' => $ip,
-			'reason' => $reason,
-			'timestamp' => time(),
-			'duration' => $duration,
-			'auto' => ( $type === 'cf7_auto' ),
-			'type' => $type,
+
+		$blacklist_key  = 'ip_blacklist_' . md5( $ip );
+		$blacklist_data = array(
+			'ip'         => $ip,
+			'reason'     => $reason,
+			'timestamp'  => time(),
+			'duration'   => $duration,
+			'auto'       => ( $type === 'cf7_auto' ),
+			'type'       => $type,
 			'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
-		];
+		);
 
 		$success = \set_transient( $blacklist_key, $blacklist_data, $duration );
 
@@ -405,13 +408,13 @@ class IPBlacklist {
 			SecurityHelper::log_security_event(
 				'CF7_IP_BLACKLISTED',
 				"CF7 IP added to blacklist: {$reason}",
-				[
-					'ip' => $ip,
-					'reason' => $reason,
+				array(
+					'ip'       => $ip,
+					'reason'   => $reason,
 					'duration' => $duration,
-					'type' => $type,
-					'auto' => $blacklist_data['auto'],
-				]
+					'type'     => $type,
+					'auto'     => $blacklist_data['auto'],
+				)
 			);
 		}
 
@@ -426,15 +429,15 @@ class IPBlacklist {
 	 * @return bool True if CF7 related
 	 */
 	private function is_cf7_related_block( string $reason ): bool {
-		$cf7_keywords = [ 'cf7', 'contact form', 'form', 'spam', 'obsolete browser', 'sql injection' ];
+		$cf7_keywords = array( 'cf7', 'contact form', 'form', 'spam', 'obsolete browser', 'sql injection' );
 		$reason_lower = strtolower( $reason );
-		
+
 		foreach ( $cf7_keywords as $keyword ) {
 			if ( strpos( $reason_lower, $keyword ) !== false ) {
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -446,17 +449,20 @@ class IPBlacklist {
 	 * @return int Violation count
 	 */
 	private function get_cf7_violation_count( string $ip ): int {
-		$violations_key = "ip_violations_" . md5( $ip );
-		$violations = \get_transient( $violations_key );
-		
+		$violations_key = 'ip_violations_' . md5( $ip );
+		$violations     = \get_transient( $violations_key );
+
 		if ( ! is_array( $violations ) ) {
 			return 1;
 		}
-		
-		$cf7_violations = array_filter( $violations, function( $violation ) {
-			return isset( $violation['type'] ) && strpos( $violation['type'], 'cf7' ) !== false;
-		});
-		
+
+		$cf7_violations = array_filter(
+			$violations,
+			function ( $violation ) {
+				return isset( $violation['type'] ) && strpos( $violation['type'], 'cf7' ) !== false;
+			}
+		);
+
 		return count( $cf7_violations );
 	}
 
@@ -468,7 +474,7 @@ class IPBlacklist {
 	 */
 	private function increment_cf7_attack_count(): void {
 		$cf7_attacks_key = 'cf7_total_attacks';
-		$current_count = (int) \get_transient( $cf7_attacks_key );
+		$current_count   = (int) \get_transient( $cf7_attacks_key );
 		\set_transient( $cf7_attacks_key, $current_count + 1, DAY_IN_SECONDS );
 	}
 }
