@@ -878,7 +878,7 @@
    TAB NAVIGATION SYSTEM
    ============================================================================= */
 
-/* Tab Navigation */
+/* Hub-level Tab Navigation (for Settings Hub compatibility) */
 .nav-tab-wrapper {
     border-block-end: var(--silver-border-width-thin) solid var(--silver-border-primary);
     margin-block-end: var(--silver-spacing-xl);
@@ -921,13 +921,66 @@
     margin-inline-end: var(--silver-spacing-xs);
 }
 
-/* Tab Content */
+/* Internal Plugin Tab Navigation (Security-specific) */
+.silver-nav-tab-wrapper {
+    border-block-end: var(--silver-border-width-thin) solid var(--silver-border-primary);
+    margin-block-end: var(--silver-spacing-xl);
+}
+
+.silver-nav-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--silver-spacing-sm);
+    padding: var(--silver-spacing-md) var(--silver-spacing-lg);
+    margin-inline-end: var(--silver-spacing-sm);
+    text-decoration: none;
+    border: var(--silver-border-width-thin) solid var(--silver-border-primary);
+    border-block-end: none;
+    background: var(--silver-bg-secondary);
+    color: var(--silver-text-secondary);
+    font-weight: var(--silver-font-weight-medium);
+    border-radius: var(--silver-radius-base) var(--silver-radius-base) 0 0;
+    transition: all var(--silver-transition-base) var(--silver-transition-ease);
+}
+
+.silver-nav-tab:hover {
+    background: var(--silver-bg-primary);
+    color: var(--silver-text-primary);
+    text-decoration: none;
+}
+
+.silver-nav-tab.silver-nav-tab-active {
+    background: var(--silver-bg-primary);
+    color: var(--silver-primary-blue);
+    border-block-end: var(--silver-border-width-base) solid var(--silver-bg-primary);
+    margin-block-end: calc(-1 * var(--silver-border-width-thin));
+    position: relative;
+    z-index: 2;
+}
+
+.silver-nav-tab .dashicons {
+    font-size: var(--silver-font-size-base);
+    line-height: 1;
+    margin-inline-end: var(--silver-spacing-xs);
+}
+
+/* Hub-level Tab Content (for Settings Hub compatibility) */
 .tab-content {
     display: none;
     animation: fadeIn var(--silver-transition-base) var(--silver-transition-ease);
 }
 
 .tab-content.active {
+    display: block;
+}
+
+/* Internal Plugin Tab Content (Security-specific) */
+.silver-tab-content {
+    display: none;
+    animation: fadeIn var(--silver-transition-base) var(--silver-transition-ease);
+}
+
+.silver-tab-content.active {
     display: block;
 }
 
@@ -943,7 +996,7 @@
     }
 }
 
-/* Responsive Tab Navigation */
+/* Responsive Tab Navigation - Hub Level */
 @container (max-width: 600px) {
     .nav-tab-wrapper {
         display: flex;
@@ -959,6 +1012,26 @@
     }
     
     .nav-tab .dashicons {
+        display: none;
+    }
+}
+
+/* Responsive Tab Navigation - Security Plugin Internal */
+@container (max-width: 600px) {
+    .silver-nav-tab-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--silver-spacing-xs);
+    }
+    
+    .silver-nav-tab {
+        flex: 1;
+        justify-content: center;
+        margin-inline-end: 0;
+        text-align: center;
+    }
+    
+    .silver-nav-tab .dashicons {
         display: none;
     }
 }

@@ -1329,17 +1329,18 @@
     // ========================================
 
     /**
-     * Initialize tab navigation system
+     * Initialize tab navigation system (Security Plugin Internal)
      * 
      * Handles tab switching, URL hash updates, and maintains state
      * across page loads. Supports deep linking via URL hash.
+     * Uses specific selectors to avoid conflicts with Settings Hub tabs.
      * 
      * @since 1.1.15
      * @returns {void}
      */
     const initTabNavigation = () => {
-        const $tabs = $(".nav-tab");
-        const $tabContents = $(".tab-content");
+        const $tabs = $(".silver-nav-tab");           // Security plugin internal tabs only
+        const $tabContents = $(".silver-tab-content"); // Security plugin internal content only
         
         if (!$tabs.length || !$tabContents.length) {
             return; // No tabs found
@@ -1348,7 +1349,7 @@
         /**
          * Switch to specific tab
          * 
-         * @param {string} tabId - Tab identifier (dashboard, monitoring, settings)
+         * @param {string} tabId - Tab identifier (dynamically determined from available tabs)
          * @returns {void}
          */
         const switchToTab = tabId => {
@@ -1360,9 +1361,9 @@
                 return;
             }
 
-            // Update tab navigation
-            $tabs.removeClass("nav-tab-active");
-            $targetTab.addClass("nav-tab-active");
+            // Update tab navigation (using security-specific classes)
+            $tabs.removeClass("silver-nav-tab-active");
+            $targetTab.addClass("silver-nav-tab-active");
 
             // Update tab content with fade effect
             $tabContents.removeClass("active").hide();
@@ -1374,8 +1375,8 @@
             }
 
             // Trigger refresh for active data in new tab
-            if (tabId === "monitoring") {
-                // Refresh monitoring data when tab becomes active
+            if (tabId === "ip-management") {
+                // Refresh IP management data when tab becomes active
                 loadBlockedIPs();
                 loadCF7BlockedIPs();
             } else if (tabId === "dashboard") {
@@ -1393,17 +1394,26 @@
             switchToTab(tabId);
         });
 
+        // Get valid tabs dynamically from DOM (handles conditional CF7 tab)
+        const getValidTabs = () => {
+            return $tabs.map(function() {
+                return $(this).attr("href").substring(1); // Remove # from href
+            }).get();
+        };
+
         // Handle browser back/forward with tab URLs
         $(window).on("hashchange", () => {
             const hash = window.location.hash.substring(1); // Remove #
-            if (hash && ["dashboard", "monitoring", "settings"].includes(hash)) {
+            const validTabs = getValidTabs();
+            if (hash && validTabs.includes(hash)) {
                 switchToTab(hash);
             }
         });
 
         // Initialize tab from URL hash or default to dashboard
         const initialHash = window.location.hash.substring(1);
-        const initialTab = initialHash && ["dashboard", "monitoring", "settings"].includes(initialHash) 
+        const validTabs = getValidTabs();
+        const initialTab = initialHash && validTabs.includes(initialHash) 
             ? initialHash 
             : "dashboard";
         

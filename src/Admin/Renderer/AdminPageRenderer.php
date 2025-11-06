@@ -83,27 +83,27 @@ class AdminPageRenderer {
 		<div class="wrap">
 			<h1><?php echo \esc_html( \__( 'Silver Assist Security Essentials', 'silver-assist-security' ) ); ?></h1>
 
-			<!-- Tab Navigation -->
-			<nav class="nav-tab-wrapper">
-				<a href="#dashboard" class="nav-tab nav-tab-active" id="dashboard-tab">
+			<!-- Tab Navigation - Internal Security Plugin Tabs -->
+			<nav class="silver-nav-tab-wrapper">
+				<a href="#dashboard" class="silver-nav-tab silver-nav-tab-active" id="dashboard-tab">
 					<span class="dashicons dashicons-dashboard"></span>
 					<?php \esc_html_e( 'Security Dashboard', 'silver-assist-security' ); ?>
 				</a>
-				<a href="#login-security" class="nav-tab" id="login-security-tab">
+				<a href="#login-security" class="silver-nav-tab" id="login-security-tab">
 					<span class="dashicons dashicons-lock"></span>
 					<?php \esc_html_e( 'Login Protection', 'silver-assist-security' ); ?>
 				</a>
-				<a href="#graphql-security" class="nav-tab" id="graphql-security-tab">
+				<a href="#graphql-security" class="silver-nav-tab" id="graphql-security-tab">
 					<span class="dashicons dashicons-database"></span>
 					<?php \esc_html_e( 'GraphQL Security', 'silver-assist-security' ); ?>
 				</a>
 				<?php if ( SecurityHelper::is_contact_form_7_active() ) : ?>
-				<a href="#cf7-security" class="nav-tab" id="cf7-security-tab">
+				<a href="#cf7-security" class="silver-nav-tab" id="cf7-security-tab">
 					<span class="dashicons dashicons-email-alt"></span>
 					<?php \esc_html_e( 'Form Protection', 'silver-assist-security' ); ?>
 				</a>
 				<?php endif; ?>
-				<a href="#ip-management" class="nav-tab" id="ip-management-tab">
+				<a href="#ip-management" class="silver-nav-tab" id="ip-management-tab">
 					<span class="dashicons dashicons-shield"></span>
 					<?php \esc_html_e( 'IP Management', 'silver-assist-security' ); ?>
 				</a>
@@ -121,10 +121,10 @@ class AdminPageRenderer {
 		$dashboard_renderer = new DashboardRenderer( $this->config_manager, $this->data_provider );
 		$settings_renderer  = new SettingsRenderer( $this->config_manager );
 
-		echo '<div class="tab-content-wrapper">';
+		echo '<div class="silver-tab-content-wrapper">';
 
 		// Dashboard Tab
-		echo '<div id="dashboard-content" class="tab-content active">';
+		echo '<div id="dashboard-content" class="silver-tab-content active">';
 		$dashboard_renderer->render();
 		echo '</div>';
 

@@ -65,7 +65,7 @@ class SettingsRenderer {
 		$config = $this->get_current_config();
 		?>
 		<!-- Login Security Tab -->
-		<div id="login-security-content" class="tab-content">
+		<div id="login-security-content" class="silver-tab-content">
 			<h2><?php \esc_html_e( 'Login Protection Settings', 'silver-assist-security' ); ?></h2>
 			
 			<form method="post" action="" id="security-settings-form">
@@ -206,7 +206,7 @@ class SettingsRenderer {
 		$config = $this->get_current_config();
 		?>
 		<!-- GraphQL Security Tab -->
-		<div id="graphql-security-content" class="tab-content">
+		<div id="graphql-security-content" class="silver-tab-content">
 			<h2><?php \esc_html_e( 'GraphQL Security Settings', 'silver-assist-security' ); ?></h2>
 			
 			<?php if ( \class_exists( 'WPGraphQL' ) ) : ?>
@@ -307,7 +307,7 @@ class SettingsRenderer {
 		$config = $this->get_current_config();
 		?>
 		<!-- CF7 Security Tab -->
-		<div id="cf7-security-content" class="tab-content">
+		<div id="cf7-security-content" class="silver-tab-content">
 			<h2><?php \esc_html_e( 'Contact Form 7 Protection', 'silver-assist-security' ); ?></h2>
 			
 			<form method="post" action="" id="cf7-settings-form">
@@ -389,7 +389,7 @@ class SettingsRenderer {
 		$config = $this->get_current_config();
 		?>
 		<!-- IP Management Tab -->
-		<div id="ip-management-content" class="tab-content">
+		<div id="ip-management-content" class="silver-tab-content">
 			<h2><?php \esc_html_e( 'IP Management & Attack Protection', 'silver-assist-security' ); ?></h2>
 			
 			<form method="post" action="" id="ip-management-form">
