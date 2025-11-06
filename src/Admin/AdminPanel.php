@@ -15,10 +15,8 @@
 namespace SilverAssist\Security\Admin;
 
 use Exception;
-use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\PathValidator;
 use SilverAssist\Security\Core\Plugin;
-use SilverAssist\Security\Security\IPBlacklist;
 use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 use SilverAssist\SettingsHub\SettingsHub;
@@ -274,18 +272,6 @@ class AdminPanel {
 	}
 
 	/**
-	 * Get asset URL with minification support
-	 *
-	 * Returns minified version when SCRIPT_DEBUG is not true, regular version otherwise.
-	 *
-	 * @since 1.1.10
-	 * @param string $asset_path The relative path to the asset (e.g., 'assets/css/admin.css')
-	 * @return string The full URL to the asset
-	 */
-
-
-
-	/**
 	 * Render admin page
 	 *
 	 * Includes capability check for security and direct method calls (e.g., in tests).
@@ -298,8 +284,6 @@ class AdminPanel {
 		// Delegate to AdminPageRenderer for cleaner separation of concerns
 		$this->page_renderer->render();
 	}
-
-
 
 	/**
 	 * Proxy method for settings save - delegates to SettingsHandler
@@ -414,7 +398,7 @@ class AdminPanel {
 						: \__( "You're up to date!", 'silver-assist-security' ),
 				]
 			);
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			SecurityHelper::log_security_event(
 				'UPDATE_CHECK_ERROR',
 				'Failed to check for updates: ' . $e->getMessage(),
@@ -429,10 +413,6 @@ class AdminPanel {
 		}
 	}
 
-
-
-
-
 	/**
 	 * Get list of forbidden admin path keywords
 	 *
@@ -442,8 +422,6 @@ class AdminPanel {
 	public function get_forbidden_admin_paths(): array {
 		return PathValidator::get_forbidden_paths();
 	}
-
-
 
 	/**
 	 * Asset management proxy method - delegates to AssetManager
