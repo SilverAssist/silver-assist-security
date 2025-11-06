@@ -85,6 +85,8 @@ setup_wordpress_test_suite() {
     # Install Contact Form 7 for integration tests
     if [[ -f "scripts/install-cf7-for-tests.sh" ]]; then
         echo "📦 Installing Contact Form 7 for integration tests..."
+        # Export WP_TESTS_DIR for CF7 installation script
+        export WP_TESTS_DIR="${WP_TESTS_DIR:-/tmp/wordpress-tests-lib}"
         bash scripts/install-cf7-for-tests.sh
     fi
     

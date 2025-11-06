@@ -42,7 +42,8 @@ print_error() {
 
 # Get WordPress test installation directory
 # WordPress core is installed in /tmp/wordpress, not inside the tests directory
-WP_CORE_DIR=$(dirname ${WP_TESTS_DIR})/wordpress
+WP_TESTS_DIR="${WP_TESTS_DIR:-/tmp/wordpress-tests-lib}"
+WP_CORE_DIR=$(dirname "${WP_TESTS_DIR}")/wordpress
 WP_PLUGINS_DIR="$WP_CORE_DIR/wp-content/plugins"
 
 print_header "Contact Form 7 Test Installation"
