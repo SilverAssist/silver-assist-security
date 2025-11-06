@@ -73,8 +73,14 @@ setup_wordpress_test_suite() {
     export FORCE_DB_RECREATE="$FORCE_DB_RECREATE"
     export FORCE_CF7_REINSTALL="$FORCE_CF7_REINSTALL"
     
-    # Install WordPress Test Suite
-    bash scripts/install-wp-tests.sh wordpress_test root '' localhost latest
+    # Install WordPress Test Suite - Check if in CI environment for credentials
+    if [[ "$CI" == "true" ]] || [[ "$GITHUB_ACTIONS" == "true" ]]; then
+        # CI environment - use root password and 127.0.0.1
+        bash scripts/install-wp-tests.sh wordpress_test root root 127.0.0.1 latest
+    else
+        # Local environment - use empty password and localhost
+        bash scripts/install-wp-tests.sh wordpress_test root '' localhost latest
+    fi
     
     # Install Contact Form 7 for integration tests
     if [[ -f "scripts/install-cf7-for-tests.sh" ]]; then
