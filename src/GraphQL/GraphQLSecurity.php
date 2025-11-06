@@ -874,14 +874,109 @@ class GraphQLSecurity {
 	}
 
 	/**
-	 * Validate query depth (placeholder for GraphQL validation rules)
+	 * Validate query depth against security limits
+	 *
+	 * Analyzes GraphQL query depth to prevent deeply nested queries that could
+	 * cause performance issues or be used in DoS attacks.
 	 *
 	 * @since 1.1.1
-	 * @param mixed $context GraphQL context
-	 * @return array
+	 * @param mixed $context GraphQL context containing query information
+	 * @return array Validation errors, empty if valid
 	 */
 	public function validate_query_depth( $context ): array {
-		return array();
+		if ( ! isset( $context['request_data']['query'] ) ) {
+			return array();
+		}
+
+		$query     = $context['request_data']['query'];
+		$max_depth = $this->get_max_query_depth();
+
+		try {
+			$current_depth = $this->calculate_query_depth( $query );
+
+			if ( $current_depth > $max_depth ) {
+				SecurityHelper::log_security_event(
+					'GRAPHQL_DEPTH_EXCEEDED',
+					"GraphQL query depth {$current_depth} exceeds limit {$max_depth}",
+					array(
+						'current_depth' => $current_depth,
+						'max_depth'     => $max_depth,
+						'query_preview' => substr( $query, 0, 200 ),
+					)
+				);
+
+				return array(
+					new \GraphQL\Error\UserError(
+						sprintf(
+							/* translators: 1: current depth, 2: maximum allowed depth */
+							\__( 'Query depth %1$d exceeds maximum allowed depth %2$d', 'silver-assist-security' ),
+							$current_depth,
+							$max_depth
+						)
+					),
+				);
+			}
+
+			return array();
+
+		} catch ( \Exception $e ) {
+			SecurityHelper::log_security_event(
+				'GRAPHQL_DEPTH_ERROR',
+				"Error calculating query depth: {$e->getMessage()}",
+				array( 'error' => $e->getMessage() )
+			);
+
+			// On error, allow the query but log the issue
+			return array();
+		}
+	}
+
+	/**
+	 * Calculate the maximum depth of a GraphQL query
+	 *
+	 * @param string $query GraphQL query string
+	 * @return int Maximum depth found
+	 * @since 1.1.1
+	 */
+	private function calculate_query_depth( string $query ): int {
+		// Remove comments and normalize whitespace
+		$query = preg_replace( '/\s*#[^\r\n]*/', '', $query );
+		$query = preg_replace( '/\s+/', ' ', trim( $query ) );
+
+		$max_depth     = 0;
+		$current_depth = 0;
+		$in_string     = false;
+		$string_char   = null;
+
+		for ( $i = 0; $i < strlen( $query ); $i++ ) {
+			$char = $query[ $i ];
+
+			// Handle string literals
+			if ( ( $char === '"' || $char === "'" ) && ( $i === 0 || $query[ $i - 1 ] !== '\\' ) ) {
+				if ( ! $in_string ) {
+					$in_string   = true;
+					$string_char = $char;
+				} elseif ( $char === $string_char ) {
+					$in_string   = false;
+					$string_char = null;
+				}
+				continue;
+			}
+
+			if ( $in_string ) {
+				continue;
+			}
+
+			// Count nesting levels
+			if ( $char === '{' ) {
+				++$current_depth;
+				$max_depth = max( $max_depth, $current_depth );
+			} elseif ( $char === '}' ) {
+				$current_depth = max( 0, $current_depth - 1 );
+			}
+		}
+
+		return $max_depth;
 	}
 
 	/**
@@ -908,36 +1003,247 @@ class GraphQLSecurity {
 	}
 
 	/**
-	 * Validate aliases (placeholder for GraphQL validation rules)
+	 * Validate GraphQL aliases to prevent alias abuse attacks
+	 *
+	 * Prevents attackers from using excessive aliases to bypass rate limiting
+	 * or cause resource exhaustion by multiplying the same expensive field.
 	 *
 	 * @since 1.1.1
-	 * @param mixed $context GraphQL context
-	 * @return array
+	 * @param mixed $context GraphQL context containing query information
+	 * @return array Validation errors, empty if valid
 	 */
 	public function validate_aliases( $context ): array {
-		return array();
+		if ( ! isset( $context['request_data']['query'] ) ) {
+			return array();
+		}
+
+		$query       = $context['request_data']['query'];
+		$max_aliases = $this->config_manager->get_limit( 'aliases' );
+
+		try {
+			$alias_count = $this->count_aliases( $query );
+
+			if ( $alias_count > $max_aliases ) {
+				SecurityHelper::log_security_event(
+					'GRAPHQL_ALIAS_ABUSE',
+					"GraphQL query contains {$alias_count} aliases, exceeding limit {$max_aliases}",
+					array(
+						'alias_count'   => $alias_count,
+						'max_aliases'   => $max_aliases,
+						'query_preview' => substr( $query, 0, 200 ),
+					)
+				);
+
+				return array(
+					new \GraphQL\Error\UserError(
+						sprintf(
+							/* translators: 1: current alias count, 2: maximum allowed aliases */
+							\__( 'Query contains %1$d aliases, maximum %2$d allowed', 'silver-assist-security' ),
+							$alias_count,
+							$max_aliases
+						)
+					),
+				);
+			}
+
+			return array();
+
+		} catch ( \Exception $e ) {
+			SecurityHelper::log_security_event(
+				'GRAPHQL_ALIAS_ERROR',
+				"Error counting aliases: {$e->getMessage()}",
+				array( 'error' => $e->getMessage() )
+			);
+
+			return array();
+		}
 	}
 
 	/**
-	 * Validate directives (placeholder for GraphQL validation rules)
+	 * Count the number of aliases in a GraphQL query
+	 *
+	 * @param string $query GraphQL query string
+	 * @return int Number of aliases found
+	 * @since 1.1.1
+	 */
+	private function count_aliases( string $query ): int {
+		// Remove comments and strings to avoid false positives
+		$cleaned_query = preg_replace( '/\s*#[^\r\n]*/', '', $query );
+		$cleaned_query = preg_replace( '/"[^"]*"/', '""', $cleaned_query );
+		$cleaned_query = preg_replace( "/'[^']*'/", "''", $cleaned_query );
+
+		// Pattern to match aliases: fieldAlias: actualField
+		// This matches word characters followed by colon and space/word
+		preg_match_all( '/\b[a-zA-Z_][a-zA-Z0-9_]*\s*:\s*[a-zA-Z_]/', $cleaned_query, $matches );
+
+		return count( $matches[0] );
+	}
+
+	/**
+	 * Validate GraphQL directives to prevent directive abuse
+	 *
+	 * Limits the number of directives in a query to prevent resource exhaustion
+	 * and potential security issues from excessive directive usage.
 	 *
 	 * @since 1.1.1
-	 * @param mixed $context GraphQL context
-	 * @return array
+	 * @param mixed $context GraphQL context containing query information
+	 * @return array Validation errors, empty if valid
 	 */
 	public function validate_directives( $context ): array {
-		return array();
+		if ( ! isset( $context['request_data']['query'] ) ) {
+			return array();
+		}
+
+		$query          = $context['request_data']['query'];
+		$max_directives = $this->config_manager->get_limit( 'directives' );
+
+		try {
+			$directive_count = $this->count_directives( $query );
+
+			if ( $directive_count > $max_directives ) {
+				SecurityHelper::log_security_event(
+					'GRAPHQL_DIRECTIVE_ABUSE',
+					"GraphQL query contains {$directive_count} directives, exceeding limit {$max_directives}",
+					array(
+						'directive_count' => $directive_count,
+						'max_directives'  => $max_directives,
+						'query_preview'   => substr( $query, 0, 200 ),
+					)
+				);
+
+				return array(
+					new \GraphQL\Error\UserError(
+						sprintf(
+							/* translators: 1: current directive count, 2: maximum allowed directives */
+							\__( 'Query contains %1$d directives, maximum %2$d allowed', 'silver-assist-security' ),
+							$directive_count,
+							$max_directives
+						)
+					),
+				);
+			}
+
+			return array();
+
+		} catch ( \Exception $e ) {
+			SecurityHelper::log_security_event(
+				'GRAPHQL_DIRECTIVE_ERROR',
+				"Error counting directives: {$e->getMessage()}",
+				array( 'error' => $e->getMessage() )
+			);
+
+			return array();
+		}
 	}
 
 	/**
-	 * Validate field duplicates (placeholder for GraphQL validation rules)
+	 * Count the number of directives in a GraphQL query
+	 *
+	 * @param string $query GraphQL query string
+	 * @return int Number of directives found
+	 * @since 1.1.1
+	 */
+	private function count_directives( string $query ): int {
+		// Remove comments and strings to avoid false positives
+		$cleaned_query = preg_replace( '/\s*#[^\r\n]*/', '', $query );
+		$cleaned_query = preg_replace( '/"[^"]*"/', '""', $cleaned_query );
+		$cleaned_query = preg_replace( "/'[^']*'/", "''", $cleaned_query );
+
+		// Pattern to match directives: @directiveName
+		preg_match_all( '/@[a-zA-Z_][a-zA-Z0-9_]*/', $cleaned_query, $matches );
+
+		return count( $matches[0] );
+	}
+
+	/**
+	 * Validate field duplicates to prevent field duplication attacks
+	 *
+	 * Prevents attackers from duplicating expensive fields multiple times
+	 * in the same query to cause resource exhaustion.
 	 *
 	 * @since 1.1.1
-	 * @param mixed $context GraphQL context
-	 * @return array
+	 * @param mixed $context GraphQL context containing query information
+	 * @return array Validation errors, empty if valid
 	 */
 	public function validate_field_duplicates( $context ): array {
-		return array();
+		if ( ! isset( $context['request_data']['query'] ) ) {
+			return array();
+		}
+
+		$query          = $context['request_data']['query'];
+		$max_duplicates = $this->config_manager->get_limit( 'field_duplicates' );
+
+		try {
+			$duplicate_count = $this->count_field_duplicates( $query );
+
+			if ( $duplicate_count > $max_duplicates ) {
+				SecurityHelper::log_security_event(
+					'GRAPHQL_FIELD_DUPLICATION',
+					"GraphQL query contains {$duplicate_count} field duplicates, exceeding limit {$max_duplicates}",
+					array(
+						'duplicate_count' => $duplicate_count,
+						'max_duplicates'  => $max_duplicates,
+						'query_preview'   => substr( $query, 0, 200 ),
+					)
+				);
+
+				return array(
+					new \GraphQL\Error\UserError(
+						sprintf(
+							/* translators: 1: current duplicate count, 2: maximum allowed duplicates */
+							\__( 'Query contains %1$d field duplicates, maximum %2$d allowed', 'silver-assist-security' ),
+							$duplicate_count,
+							$max_duplicates
+						)
+					),
+				);
+			}
+
+			return array();
+
+		} catch ( \Exception $e ) {
+			SecurityHelper::log_security_event(
+				'GRAPHQL_FIELD_DUPLICATE_ERROR',
+				"Error counting field duplicates: {$e->getMessage()}",
+				array( 'error' => $e->getMessage() )
+			);
+
+			return array();
+		}
+	}
+
+	/**
+	 * Count field duplicates in a GraphQL query
+	 *
+	 * @param string $query GraphQL query string
+	 * @return int Number of duplicate fields found
+	 * @since 1.1.1
+	 */
+	private function count_field_duplicates( string $query ): int {
+		// Remove comments and strings to avoid false positives
+		$cleaned_query = preg_replace( '/\s*#[^\r\n]*/', '', $query );
+		$cleaned_query = preg_replace( '/"[^"]*"/', '""', $cleaned_query );
+		$cleaned_query = preg_replace( "/'[^']*'/", "''", $cleaned_query );
+
+		// Extract all field names (simplified pattern)
+		preg_match_all( '/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*[({]/', $cleaned_query, $matches );
+
+		if ( empty( $matches[1] ) ) {
+			return 0;
+		}
+
+		$field_names  = $matches[1];
+		$field_counts = array_count_values( $field_names );
+
+		// Count how many fields appear more than once
+		$duplicate_count = 0;
+		foreach ( $field_counts as $field => $count ) {
+			if ( $count > 1 ) {
+				$duplicate_count += ( $count - 1 ); // Count excess occurrences
+			}
+		}
+
+		return $duplicate_count;
 	}
 
 	/**

@@ -20,6 +20,7 @@ use SilverAssist\Security\GraphQL\GraphQLSecurity;
 use SilverAssist\Security\Security\AdminHideSecurity;
 use SilverAssist\Security\Security\ContactForm7Integration;
 use SilverAssist\Security\Security\GeneralSecurity;
+use SilverAssist\Security\Security\IPBlacklist;
 use SilverAssist\Security\Security\LoginSecurity;
 
 /**
@@ -115,6 +116,7 @@ class Plugin {
 		\add_action( 'init', array( $this, 'init_graphql_security' ) );
 		\add_action( 'init', array( $this, 'init_cf7_integration' ) );
 		\add_action( 'init', array( $this, 'init_updater' ) );
+		\add_action( 'init', array( $this, 'init_ip_cleanup_cron' ) );
 
 		// Add plugin action links.
 		\add_filter( 'plugin_action_links_' . SILVER_ASSIST_SECURITY_BASENAME, array( $this, 'add_action_links' ) );
@@ -339,5 +341,25 @@ class Plugin {
 	 */
 	public function is_cf7_integration_active(): bool {
 		return $this->cf7_integration !== null && SecurityHelper::is_contact_form_7_active();
+	}
+
+	/**
+	 * Initialize IP cleanup cron job
+	 *
+	 * Sets up the scheduled cleanup of expired IP violations, lockouts,
+	 * and rate limits to prevent database bloat.
+	 *
+	 * @since 1.1.15
+	 * @return void
+	 */
+	public function init_ip_cleanup_cron(): void {
+		// Initialize the cron cleanup system
+		IPBlacklist::init_cron_cleanup();
+
+		SecurityHelper::log_security_event(
+			'IP_CLEANUP_INITIALIZED',
+			'IP violation cleanup cron system initialized',
+			array( 'next_cleanup' => \wp_next_scheduled( 'silver_assist_security_cleanup' ) )
+		);
 	}
 }

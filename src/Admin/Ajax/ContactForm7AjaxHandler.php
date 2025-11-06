@@ -45,11 +45,11 @@ class ContactForm7AjaxHandler {
 	private function init(): void {
 		// Only register CF7 AJAX handlers if CF7 is active
 		if ( SecurityHelper::is_contact_form_7_active() ) {
-			\add_action( 'wp_ajax_silver_assist_get_cf7_blocked_ips', [ $this, 'get_blocked_ips' ] );
-			\add_action( 'wp_ajax_silver_assist_block_cf7_ip', [ $this, 'block_ip' ] );
-			\add_action( 'wp_ajax_silver_assist_unblock_cf7_ip', [ $this, 'unblock_ip' ] );
-			\add_action( 'wp_ajax_silver_assist_clear_cf7_blocked_ips', [ $this, 'clear_blocked_ips' ] );
-			\add_action( 'wp_ajax_silver_assist_export_cf7_blocked_ips', [ $this, 'export_blocked_ips' ] );
+			\add_action( 'wp_ajax_silver_assist_get_cf7_blocked_ips', array( $this, 'get_blocked_ips' ) );
+			\add_action( 'wp_ajax_silver_assist_block_cf7_ip', array( $this, 'block_ip' ) );
+			\add_action( 'wp_ajax_silver_assist_unblock_cf7_ip', array( $this, 'unblock_ip' ) );
+			\add_action( 'wp_ajax_silver_assist_clear_cf7_blocked_ips', array( $this, 'clear_blocked_ips' ) );
+			\add_action( 'wp_ajax_silver_assist_export_cf7_blocked_ips', array( $this, 'export_blocked_ips' ) );
 		}
 	}
 
@@ -61,11 +61,11 @@ class ContactForm7AjaxHandler {
 	 */
 	public function get_blocked_ips(): void {
 		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
 		}
 
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
 		try {
@@ -109,16 +109,16 @@ class ContactForm7AjaxHandler {
 			}
 
 			\wp_send_json_success(
-				[
+				array(
 					'html'          => $html,
 					'count'         => \count( $blocked_ips ),
 					'total_attacks' => $total_attacks,
-				]
+				)
 			);
 
 		} catch ( Exception $e ) {
-			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 blocked IPs retrieval failed: {$e->getMessage()}", [ 'function' => __FUNCTION__ ] );
-			\wp_send_json_error( [ 'error' => \__( 'Failed to retrieve blocked IPs', 'silver-assist-security' ) ] );
+			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 blocked IPs retrieval failed: {$e->getMessage()}", array( 'function' => __FUNCTION__ ) );
+			\wp_send_json_error( array( 'error' => \__( 'Failed to retrieve blocked IPs', 'silver-assist-security' ) ) );
 		}
 	}
 
@@ -130,16 +130,16 @@ class ContactForm7AjaxHandler {
 	 */
 	public function block_ip(): void {
 		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
 		}
 
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
 		$ip = \sanitize_text_field( \wp_unslash( $_POST['ip'] ?? '' ) );
 		if ( empty( $ip ) || ! \filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Invalid IP address', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Invalid IP address', 'silver-assist-security' ) ) );
 		}
 
 		try {
@@ -151,22 +151,22 @@ class ContactForm7AjaxHandler {
 			);
 
 			if ( $success ) {
-				SecurityHelper::log_security_event( 'CF7_IP_BLOCKED', "IP {$ip} manually blocked via admin panel", [ 'ip' => $ip ] );
+				SecurityHelper::log_security_event( 'CF7_IP_BLOCKED', "IP {$ip} manually blocked via admin panel", array( 'ip' => $ip ) );
 				\wp_send_json_success(
-					[
+					array(
 						'message' => \sprintf(
 							/* translators: %s: IP address that was blocked */
 							\__( 'IP %s successfully blocked for CF7 forms', 'silver-assist-security' ),
 							$ip
 						),
-					]
+					)
 				);
 			} else {
-				\wp_send_json_error( [ 'error' => \__( 'Failed to block IP address', 'silver-assist-security' ) ] );
+				\wp_send_json_error( array( 'error' => \__( 'Failed to block IP address', 'silver-assist-security' ) ) );
 			}
 		} catch ( Exception $e ) {
-			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 IP blocking failed: {$e->getMessage()}", [ 'ip' => $ip ] );
-			\wp_send_json_error( [ 'error' => \__( 'Failed to block IP address', 'silver-assist-security' ) ] );
+			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 IP blocking failed: {$e->getMessage()}", array( 'ip' => $ip ) );
+			\wp_send_json_error( array( 'error' => \__( 'Failed to block IP address', 'silver-assist-security' ) ) );
 		}
 	}
 
@@ -178,16 +178,16 @@ class ContactForm7AjaxHandler {
 	 */
 	public function unblock_ip(): void {
 		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
 		}
 
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
 		$ip = \sanitize_text_field( \wp_unslash( $_POST['ip'] ?? '' ) );
 		if ( empty( $ip ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'IP address required', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'IP address required', 'silver-assist-security' ) ) );
 		}
 
 		try {
@@ -195,22 +195,22 @@ class ContactForm7AjaxHandler {
 			$success   = $blacklist->remove_from_blacklist( $ip );
 
 			if ( $success ) {
-				SecurityHelper::log_security_event( 'CF7_IP_UNBLOCKED', "IP {$ip} unblocked via admin panel", [ 'ip' => $ip ] );
+				SecurityHelper::log_security_event( 'CF7_IP_UNBLOCKED', "IP {$ip} unblocked via admin panel", array( 'ip' => $ip ) );
 				\wp_send_json_success(
-					[
+					array(
 						'message' => \sprintf(
 							/* translators: %s: IP address that was unblocked */
 							\__( 'IP %s successfully unblocked', 'silver-assist-security' ),
 							$ip
 						),
-					]
+					)
 				);
 			} else {
-				\wp_send_json_error( [ 'error' => \__( 'Failed to unblock IP address', 'silver-assist-security' ) ] );
+				\wp_send_json_error( array( 'error' => \__( 'Failed to unblock IP address', 'silver-assist-security' ) ) );
 			}
 		} catch ( Exception $e ) {
-			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 IP unblocking failed: {$e->getMessage()}", [ 'ip' => $ip ] );
-			\wp_send_json_error( [ 'error' => \__( 'Failed to unblock IP address', 'silver-assist-security' ) ] );
+			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 IP unblocking failed: {$e->getMessage()}", array( 'ip' => $ip ) );
+			\wp_send_json_error( array( 'error' => \__( 'Failed to unblock IP address', 'silver-assist-security' ) ) );
 		}
 	}
 
@@ -222,32 +222,32 @@ class ContactForm7AjaxHandler {
 	 */
 	public function clear_blocked_ips(): void {
 		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
 		}
 
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
 		try {
 			$blacklist     = IPBlacklist::getInstance();
 			$cleared_count = $blacklist->clear_cf7_blacklist();
 
-			SecurityHelper::log_security_event( 'CF7_BLACKLIST_CLEARED', 'All CF7 blocked IPs cleared via admin panel', [ 'count' => $cleared_count ] );
+			SecurityHelper::log_security_event( 'CF7_BLACKLIST_CLEARED', 'All CF7 blocked IPs cleared via admin panel', array( 'count' => $cleared_count ) );
 			\wp_send_json_success(
-				[
+				array(
 					'message' => \sprintf(
 						/* translators: %d: number of IP addresses that were cleared */
 						\__( 'Successfully cleared %d CF7 blocked IPs', 'silver-assist-security' ),
 						$cleared_count
 					),
 					'count'   => $cleared_count,
-				]
+				)
 			);
 
 		} catch ( Exception $e ) {
-			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 blacklist clearing failed: {$e->getMessage()}", [ 'function' => __FUNCTION__ ] );
-			\wp_send_json_error( [ 'error' => \__( 'Failed to clear blocked IPs', 'silver-assist-security' ) ] );
+			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 blacklist clearing failed: {$e->getMessage()}", array( 'function' => __FUNCTION__ ) );
+			\wp_send_json_error( array( 'error' => \__( 'Failed to clear blocked IPs', 'silver-assist-security' ) ) );
 		}
 	}
 
@@ -259,11 +259,11 @@ class ContactForm7AjaxHandler {
 	 */
 	public function export_blocked_ips(): void {
 		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
 		}
 
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
 		try {
@@ -288,16 +288,16 @@ class ContactForm7AjaxHandler {
 			$filename = 'cf7-blocked-ips-' . \gmdate( 'Y-m-d-H-i-s' ) . '.csv';
 
 			\wp_send_json_success(
-				[
+				array(
 					'csv_data' => $csv_data,
 					'filename' => $filename,
 					'count'    => \count( $blocked_ips ),
-				]
+				)
 			);
 
 		} catch ( Exception $e ) {
-			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 blocked IPs export failed: {$e->getMessage()}", [ 'function' => __FUNCTION__ ] );
-			\wp_send_json_error( [ 'error' => \__( 'Failed to export blocked IPs', 'silver-assist-security' ) ] );
+			SecurityHelper::log_security_event( 'AJAX_ERROR', "CF7 blocked IPs export failed: {$e->getMessage()}", array( 'function' => __FUNCTION__ ) );
+			\wp_send_json_error( array( 'error' => \__( 'Failed to export blocked IPs', 'silver-assist-security' ) ) );
 		}
 	}
 }

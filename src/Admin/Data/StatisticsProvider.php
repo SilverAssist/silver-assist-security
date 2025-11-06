@@ -48,16 +48,16 @@ class StatisticsProvider {
 	 */
 	public function get_login_statistics(): array {
 		// Get statistics for the last 24 hours, 7 days, and 30 days
-		$stats = [
+		$stats = array(
 			'24_hours' => $this->get_period_stats( DAY_IN_SECONDS ),
 			'7_days'   => $this->get_period_stats( WEEK_IN_SECONDS ),
 			'30_days'  => $this->get_period_stats( MONTH_IN_SECONDS ),
-		];
+		);
 
-		return [
+		return array(
 			'stats'        => $stats,
 			'last_updated' => \current_time( 'mysql' ),
-		];
+		);
 	}
 
 	/**
@@ -79,13 +79,13 @@ class StatisticsProvider {
 		// Count bot blocks
 		$bot_blocks = $this->count_bot_blocks_since( $cutoff_time );
 
-		return [
+		return array(
 			'period'        => SecurityHelper::format_time_duration( $period_seconds ),
 			'failed_logins' => $failed_logins,
 			'blocked_ips'   => $blocked_ips,
 			'bot_blocks'    => $bot_blocks,
 			'total_events'  => $failed_logins + $blocked_ips + $bot_blocks,
-		];
+		);
 	}
 
 	/**
@@ -142,9 +142,113 @@ class StatisticsProvider {
 	 * @since 1.1.15
 	 */
 	private function count_bot_blocks_since( int $since_timestamp ): int {
-		// TODO: Implement bot blocking statistics
-		// This would require tracking bot blocks in the database or logs
-		return 0;
+		try {
+			// First check transients for recent bot blocks (performance optimization)
+			$cache_key    = "bot_blocks_count_{$since_timestamp}";
+			$cached_count = \get_transient( $cache_key );
+
+			if ( false !== $cached_count ) {
+				return (int) $cached_count;
+			}
+
+			$count = 0;
+
+			// Method 1: Check for bot blocking transients (faster)
+			$count += $this->count_bot_block_transients( $since_timestamp );
+
+			// Method 2: Parse security logs for BOT_BLOCKED events (more comprehensive)
+			$count += $this->count_bot_blocks_from_logs( $since_timestamp );
+
+			// Cache result for 5 minutes to avoid repeated log parsing
+			\set_transient( $cache_key, $count, 300 );
+
+			return $count;
+
+		} catch ( \Exception $e ) {
+			SecurityHelper::log_security_event(
+				'BOT_COUNT_ERROR',
+				"Failed to count bot blocks: {$e->getMessage()}",
+				array(
+					'since_timestamp' => $since_timestamp,
+					'error'           => $e->getMessage(),
+				)
+			);
+
+			return 0;
+		}
+	}
+
+	/**
+	 * Count bot blocks from transient entries
+	 *
+	 * @param int $since_timestamp Timestamp to count from
+	 * @return int Number of bot blocks found in transients
+	 * @since 1.1.15
+	 */
+	private function count_bot_block_transients( int $since_timestamp ): int {
+		global $wpdb;
+
+		try {
+			// Look for bot-related transients created since timestamp
+			$count = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) 
+					 FROM {$wpdb->options} 
+					 WHERE option_name LIKE %s 
+					 AND option_name LIKE %s 
+					 AND UNIX_TIMESTAMP(STR_TO_DATE(SUBSTRING(option_name, LENGTH('_transient_timeout_') + 1), '%%Y-%%m-%%d %%H:%%i:%%s')) >= %d",
+					'_transient_timeout_%',
+					'%bot_block%',
+					$since_timestamp
+				)
+			);
+
+			return (int) $count;
+
+		} catch ( \Exception $e ) {
+			// Fallback to simpler query if complex one fails
+			$count = $wpdb->get_var(
+				"SELECT COUNT(*) 
+				 FROM {$wpdb->options} 
+				 WHERE option_name LIKE '_transient_%bot_block%'"
+			);
+
+			return (int) $count;
+		}
+	}
+
+	/**
+	 * Count bot blocks from security logs
+	 *
+	 * @param int $since_timestamp Timestamp to count from
+	 * @return int Number of BOT_BLOCKED events in logs
+	 * @since 1.1.15
+	 */
+	private function count_bot_blocks_from_logs( int $since_timestamp ): int {
+		$count = 0;
+
+		// Get security logs and filter for BOT_BLOCKED events
+		$provider  = new SecurityDataProvider();
+		$logs_data = $provider->get_security_logs( 1000 ); // Get more logs to count accurately
+
+		if ( empty( $logs_data['logs'] ) ) {
+			return 0;
+		}
+
+		foreach ( $logs_data['logs'] as $log_entry ) {
+			// Check if this is a bot blocking event
+			if ( $log_entry['event_type'] !== 'BOT_BLOCKED' ) {
+				continue;
+			}
+
+			// Check if event occurred after our timestamp
+			$log_timestamp = strtotime( $log_entry['timestamp'] );
+			if ( $log_timestamp && $log_timestamp >= $since_timestamp ) {
+				++$count;
+			}
+		}
+
+		return $count;
 	}
 
 	/**
@@ -212,7 +316,7 @@ class StatisticsProvider {
 	public function get_recent_security_logs(): array {
 		global $wpdb;
 
-		$logs = [];
+		$logs = array();
 
 		// Try to get from cache first
 		$cache_key          = 'silver_assist_attempt_transients';
@@ -236,13 +340,13 @@ class StatisticsProvider {
 			$ip_hash  = str_replace( '_transient_login_attempts_', '', $transient->option_name );
 			$attempts = (int) $transient->option_value;
 
-			$logs[] = [
+			$logs[] = array(
 				'type'      => 'failed_login',
 				'ip_hash'   => substr( $ip_hash, 0, 8 ) . '...',
 				'attempts'  => $attempts,
 				'timestamp' => \current_time( 'mysql' ),
 				'status'    => $attempts >= \SilverAssist\Security\Core\DefaultConfig::get_option( 'silver_assist_login_attempts' ) ? 'blocked' : 'monitoring',
-			];
+			);
 		}
 
 		// Try to get from cache first
@@ -267,13 +371,13 @@ class StatisticsProvider {
 		foreach ( $lockout_transients as $lockout ) {
 			$ip_hash = str_replace( '_transient_lockout_', '', $lockout->option_name );
 
-			$logs[] = [
+			$logs[] = array(
 				'type'      => 'ip_blocked',
 				'ip_hash'   => substr( $ip_hash, 0, 8 ) . '...',
 				'timestamp' => \current_time( 'mysql' ),
 				'status'    => 'active',
 				'action'    => 'IP blocked due to excessive failed login attempts',
-			];
+			);
 		}
 
 		// Sort by timestamp (most recent first)

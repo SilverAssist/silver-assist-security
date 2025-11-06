@@ -139,15 +139,15 @@ class AdminPanel {
 	 */
 	private function init(): void {
 		// Register with Settings Hub early (priority 4) to ensure hub processes it at priority 5
-		\add_action( 'admin_menu', [ $this, 'register_with_hub' ], 4 );
-		\add_action( 'admin_init', [ $this, 'register_settings' ] );
-		\add_action( 'admin_init', [ $this, 'save_security_settings' ] );
+		\add_action( 'admin_menu', array( $this, 'register_with_hub' ), 4 );
+		\add_action( 'admin_init', array( $this, 'register_settings' ) );
+		\add_action( 'admin_init', array( $this, 'save_security_settings' ) );
 
 		// Register asset management hook (delegated to AssetManager)
-		\add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
+		\add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
 		// Register only AdminPanel-specific AJAX handlers
-		\add_action( 'wp_ajax_silver_assist_check_updates', [ $this, 'ajax_check_updates' ] );
+		\add_action( 'wp_ajax_silver_assist_check_updates', array( $this, 'ajax_check_updates' ) );
 
 		// Security and CF7 AJAX handlers register themselves via their constructors
 	}
@@ -172,7 +172,7 @@ class AdminPanel {
 			SecurityHelper::log_security_event(
 				'SETTINGS_HUB_REGISTRATION',
 				'Settings Hub class found, proceeding with registration',
-				[ 'hub_available' => true ]
+				array( 'hub_available' => true )
 			);
 		}
 
@@ -186,14 +186,14 @@ class AdminPanel {
 			$hub->register_plugin(
 				'silver-assist-security',
 				\__( 'Security', 'silver-assist-security' ),
-				[ $this, 'render_admin_page' ],
-				[
+				array( $this, 'render_admin_page' ),
+				array(
 					'description' => \__( 'Security configuration for WordPress', 'silver-assist-security' ),
 					'version'     => $this->plugin_version,
 					'tab_title'   => \__( 'Security', 'silver-assist-security' ),
 					'capability'  => 'manage_options',
 					'actions'     => $actions,
-				]
+				)
 			);
 
 		} catch ( Exception $e ) {
@@ -202,7 +202,7 @@ class AdminPanel {
 			SecurityHelper::log_security_event(
 				'SETTINGS_HUB_ERROR',
 				'Failed to register with Settings Hub: ' . $e->getMessage(),
-				[ 'exception' => $e->getMessage() ]
+				array( 'exception' => $e->getMessage() )
 			);
 			$this->add_admin_menu();
 		}
@@ -215,16 +215,16 @@ class AdminPanel {
 	 * @return array Array of action configurations
 	 */
 	private function get_hub_actions(): array {
-		$actions = [];
+		$actions = array();
 
 		// Add "Check Updates" button if updater is available
 		$plugin = Plugin::getInstance();
 		if ( $plugin->get_updater() ) {
-			$actions[] = [
+			$actions[] = array(
 				'label'    => \__( 'Check Updates', 'silver-assist-security' ),
-				'callback' => [ $this, 'render_update_check_script' ],
+				'callback' => array( $this, 'render_update_check_script' ),
 				'class'    => 'button button-primary',
-			];
+			);
 		}
 
 		return $actions;
@@ -242,7 +242,7 @@ class AdminPanel {
 			\__( 'Security Essentials', 'silver-assist-security' ),
 			'manage_options',
 			'silver-assist-security',
-			[ $this, 'render_admin_page' ]
+			array( $this, 'render_admin_page' )
 		);
 	}
 
@@ -318,7 +318,7 @@ class AdminPanel {
 		\wp_enqueue_script(
 			'silver-assist-update-check',
 			SecurityHelper::get_asset_url( 'assets/js/update-check.js' ),
-			[ 'jquery' ],
+			array( 'jquery' ),
 			$this->plugin_version,
 			true
 		);
@@ -327,17 +327,17 @@ class AdminPanel {
 		\wp_localize_script(
 			'silver-assist-update-check',
 			'silverAssistUpdateCheck',
-			[
+			array(
 				'ajaxurl'   => \admin_url( 'admin-ajax.php' ),
 				'nonce'     => \wp_create_nonce( 'silver_assist_security_updates_nonce' ),
 				'updateUrl' => \admin_url( 'update-core.php' ),
-				'strings'   => [
+				'strings'   => array(
 					'updateAvailable' => \__( 'Update available! Redirecting to Updates page...', 'silver-assist-security' ),
 					'upToDate'        => \__( "You're up to date!", 'silver-assist-security' ),
 					'checkError'      => \__( 'Error checking updates. Please try again.', 'silver-assist-security' ),
 					'connectError'    => \__( 'Error connecting to update server.', 'silver-assist-security' ),
-				],
-			]
+				),
+			)
 		);
 
 		// Echo JavaScript that will be injected by Settings Hub into the event listener
@@ -357,19 +357,19 @@ class AdminPanel {
 		// Validate nonce
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verification doesn't require sanitization
 		if ( ! isset( $_POST['nonce'] ) || ! \wp_verify_nonce( \wp_unslash( $_POST['nonce'] ), 'silver_assist_security_updates_nonce' ) ) {
-			\wp_send_json_error( [ 'message' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'message' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
 		}
 
 		// Check user capability
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'message' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'message' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
 		$plugin  = Plugin::getInstance();
 		$updater = $plugin->get_updater();
 
 		if ( ! $updater ) {
-			\wp_send_json_error( [ 'message' => \__( 'Updater not available', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'message' => \__( 'Updater not available', 'silver-assist-security' ) ) );
 		}
 
 		try {
@@ -389,26 +389,26 @@ class AdminPanel {
 			$latest_version   = $updater->getLatestVersion();
 
 			\wp_send_json_success(
-				[
+				array(
 					'update_available' => $update_available,
 					'current_version'  => $current_version,
 					'latest_version'   => $latest_version,
 					'message'          => $update_available
 						? \__( 'Update available!', 'silver-assist-security' )
 						: \__( "You're up to date!", 'silver-assist-security' ),
-				]
+				)
 			);
 		} catch ( Exception $e ) {
 			SecurityHelper::log_security_event(
 				'UPDATE_CHECK_ERROR',
 				'Failed to check for updates: ' . $e->getMessage(),
-				[ 'exception' => $e->getMessage() ]
+				array( 'exception' => $e->getMessage() )
 			);
 
 			\wp_send_json_error(
-				[
+				array(
 					'message' => \__( 'Error checking for updates', 'silver-assist-security' ),
-				]
+				)
 			);
 		}
 	}

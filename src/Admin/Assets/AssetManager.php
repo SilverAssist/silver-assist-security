@@ -59,7 +59,7 @@ class AssetManager {
 	 * @return void
 	 */
 	public function init(): void {
-		\add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
+		\add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 	}
 
 	/**
@@ -73,11 +73,11 @@ class AssetManager {
 		// Allow loading on both standalone menu and Settings Hub submenu
 		// Settings Hub uses: "silver-assist_page_silver-assist-security"
 		// Standalone menu uses: "settings_page_silver-assist-security"
-		$allowed_hooks = [
+		$allowed_hooks = array(
 			'settings_page_silver-assist-security',        // Standalone fallback menu
 			'silver-assist_page_silver-assist-security',   // Settings Hub submenu
 			'toplevel_page_silver-assist-security',         // Direct top-level (if ever used)
-		];
+		);
 
 		if ( ! \in_array( $hook_suffix, $allowed_hooks, true ) ) {
 			return;
@@ -98,14 +98,14 @@ class AssetManager {
 		\wp_enqueue_style(
 			'silver-assist-variables',
 			SecurityHelper::get_asset_url( 'assets/css/variables.css' ),
-			[],
+			array(),
 			$this->plugin_version
 		);
 
 		\wp_enqueue_style(
 			'silver-assist-security-admin',
 			SecurityHelper::get_asset_url( 'assets/css/admin.css' ),
-			[ 'silver-assist-variables' ],
+			array( 'silver-assist-variables' ),
 			$this->plugin_version
 		);
 	}
@@ -120,7 +120,7 @@ class AssetManager {
 		\wp_enqueue_script(
 			'silver-assist-security-admin',
 			SecurityHelper::get_asset_url( 'assets/js/admin.js' ),
-			[ 'jquery' ],
+			array( 'jquery' ),
 			$this->plugin_version,
 			true
 		);
@@ -136,7 +136,7 @@ class AssetManager {
 		\wp_localize_script(
 			'silver-assist-security-admin',
 			'silverAssistSecurity',
-			[
+			array(
 				'ajaxurl'             => \admin_url( 'admin-ajax.php' ),
 				'admin_url'           => \admin_url( '' ),
 				'nonce'               => \wp_create_nonce( 'silver_assist_security_ajax' ),
@@ -144,7 +144,7 @@ class AssetManager {
 				'refreshInterval'     => 30000, // 30 seconds
 				'phpExecutionTimeout' => $this->config_manager->get_php_execution_timeout(),
 				'strings'             => $this->get_localized_strings(),
-			]
+			)
 		);
 	}
 
@@ -155,7 +155,7 @@ class AssetManager {
 	 * @return array Localized strings array
 	 */
 	private function get_localized_strings(): array {
-		return [
+		return array(
 			'loading'                => \__( 'Loading...', 'silver-assist-security' ),
 			'error'                  => \__( 'Error loading data', 'silver-assist-security' ),
 			'lastUpdated'            => \__( 'Last updated:', 'silver-assist-security' ),
@@ -216,6 +216,6 @@ class AssetManager {
 			'disabled'               => \__( 'Disabled', 'silver-assist-security' ),
 			'headlessCms'            => \__( 'Headless CMS', 'silver-assist-security' ),
 			'standard'               => \__( 'Standard', 'silver-assist-security' ),
-		];
+		);
 	}
 }
