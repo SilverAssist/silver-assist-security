@@ -75,7 +75,7 @@ class SecurityFeaturesIntegrationTest extends WP_UnitTestCase
         // Trigger failed login
         \do_action('wp_login_failed', 'nonexistent_user', $wp_error);
         
-        // Check that attempt was tracked
+        // Check that attempt was tracked (using SecurityHelper format)
         $attempt_key = "login_attempts_" . \md5($test_ip);
         $attempts = \get_transient($attempt_key);
         
@@ -90,8 +90,8 @@ class SecurityFeaturesIntegrationTest extends WP_UnitTestCase
             \do_action('wp_login_failed', 'nonexistent_user', $wp_error);
         }
         
-        // Check if IP is locked out
-        $lockout_key = "login_lockout_" . \md5($test_ip);
+        // Check if IP is locked out (using SecurityHelper format)
+        $lockout_key = "lockout_" . \md5($test_ip);
         $lockout_time = \get_transient($lockout_key);
         
         $this->assertNotFalse(
