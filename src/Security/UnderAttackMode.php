@@ -68,11 +68,11 @@ class UnderAttackMode {
 		SecurityHelper::log_security_event(
 			'ATTACK_RECORDED',
 			'Attack attempt recorded',
-			array(
+			[
 				'ip'           => $ip ? $ip : SecurityHelper::get_client_ip(),
 				'attack_count' => $new_count,
 				'threshold'    => $threshold,
-			)
+			]
 		);
 
 		// Activate Under Attack mode if threshold exceeded
@@ -95,22 +95,22 @@ class UnderAttackMode {
 		}
 
 		$attack_key  = 'under_attack_mode';
-		$attack_data = array(
+		$attack_data = [
 			'reason'       => $reason,
 			'activated_at' => time(),
 			'duration'     => $duration,
 			'activated_by' => 'system',
-		);
+		];
 
 		\set_transient( $attack_key, $attack_data, $duration );
 
 		SecurityHelper::log_security_event(
 			'UNDER_ATTACK_ACTIVATED',
 			"Under Attack mode activated: {$reason}",
-			array(
+			[
 				'reason'   => $reason,
 				'duration' => $duration,
-			)
+			]
 		);
 	}
 
@@ -127,7 +127,7 @@ class UnderAttackMode {
 		SecurityHelper::log_security_event(
 			'UNDER_ATTACK_DEACTIVATED',
 			'Under Attack mode manually deactivated',
-			array()
+			[]
 		);
 	}
 
@@ -154,9 +154,9 @@ class UnderAttackMode {
 			SecurityHelper::log_security_event(
 				'CAPTCHA_MISSING',
 				'Form submission blocked - missing CAPTCHA',
-				array(
+				[
 					'ip' => SecurityHelper::get_client_ip(),
-				)
+				]
 			);
 			return false;
 		}
@@ -179,12 +179,12 @@ class UnderAttackMode {
 		$captcha_data = $this->create_math_captcha( $difficulty );
 		$token        = $this->generate_captcha_token( $captcha_data['answer'] );
 
-		return array(
+		return [
 			'question'   => $captcha_data['question'],
 			'answer'     => $captcha_data['answer'],
 			'token'      => $token,
 			'difficulty' => $difficulty,
-		);
+		];
 	}
 
 	/**
@@ -202,10 +202,10 @@ class UnderAttackMode {
 			SecurityHelper::log_security_event(
 				'CAPTCHA_INVALID_TOKEN',
 				'CAPTCHA validation failed - invalid token',
-				array(
+				[
 					'ip'    => SecurityHelper::get_client_ip(),
 					'token' => substr( $token, 0, 8 ) . '...',
-				)
+				]
 			);
 			return false;
 		}
@@ -219,18 +219,18 @@ class UnderAttackMode {
 			SecurityHelper::log_security_event(
 				'CAPTCHA_VALIDATED',
 				'CAPTCHA validation successful',
-				array(
+				[
 					'ip' => SecurityHelper::get_client_ip(),
-				)
+				]
 			);
 		} else {
 			SecurityHelper::log_security_event(
 				'CAPTCHA_FAILED',
 				'CAPTCHA validation failed - wrong answer',
-				array(
+				[
 					'ip'          => SecurityHelper::get_client_ip(),
 					'user_answer' => $user_answer,
-				)
+				]
 			);
 		}
 
@@ -259,13 +259,13 @@ class UnderAttackMode {
 		$is_under_attack = $this->is_under_attack();
 		$attack_data     = \get_transient( 'under_attack_mode' );
 
-		return array(
+		return [
 			'is_under_attack'  => $is_under_attack,
 			'current_attacks'  => $current_attacks,
 			'total_attacks'    => $current_attacks, // Simplified for now
 			'attack_threshold' => (int) DefaultConfig::get_option( 'silver_assist_under_attack_threshold' ),
 			'mode_data'        => $attack_data ? $attack_data : null,
-		);
+		];
 	}
 
 	/**
@@ -295,16 +295,16 @@ class UnderAttackMode {
 			default:
 				$num1       = \wp_rand( 5, 20 );
 				$num2       = \wp_rand( 1, 15 );
-				$operations = array( '+', '-' );
+				$operations = [ '+', '-' ];
 				$operation  = $operations[ \wp_rand( 0, 1 ) ];
 				$answer     = ( $operation === '+' ) ? $num1 + $num2 : $num1 - $num2;
 				break;
 		}
 
-		return array(
+		return [
 			'question' => "What is {$num1} {$operation} {$num2}?",
 			'answer'   => (string) $answer,
-		);
+		];
 	}
 
 	/**

@@ -100,13 +100,13 @@ class AdminHideSecurity {
 		}
 
 		// Handle requests using setup_theme like professional plugin
-		\add_action( 'setup_theme', array( $this, 'handle_specific_page_requests' ) );
+		\add_action( 'setup_theme', [ $this, 'handle_specific_page_requests' ] );
 
 		// Filter generated URLs to include access tokens
-		\add_filter( 'site_url', array( $this, 'filter_generated_url' ), 100, 2 );
-		\add_filter( 'admin_url', array( $this, 'filter_admin_url' ), 100, 2 );
-		\add_filter( 'wp_redirect', array( $this, 'filter_redirect' ) );
-		\add_filter( 'logout_redirect', array( $this, 'handle_logout_redirect' ), 10, 3 );
+		\add_filter( 'site_url', [ $this, 'filter_generated_url' ], 100, 2 );
+		\add_filter( 'admin_url', [ $this, 'filter_admin_url' ], 100, 2 );
+		\add_filter( 'wp_redirect', [ $this, 'filter_redirect' ] );
+		\add_filter( 'logout_redirect', [ $this, 'handle_logout_redirect' ], 10, 3 );
 
 		// Remove WordPress default admin redirect behavior
 		\remove_action( 'template_redirect', 'wp_redirect_admin_locations', 1000 );
@@ -233,7 +233,7 @@ class AdminHideSecurity {
 		if ( $clean_request_path === $clean_custom_path ) {
 			$this->handle_custom_admin_access();
 		} elseif (
-			in_array( $clean_request_path, array( 'wp-login.php', 'wp-login' ), true ) ||
+			in_array( $clean_request_path, [ 'wp-login.php', 'wp-login' ], true ) ||
 			strpos( $clean_request_path, 'wp-login.php' ) !== false
 		) {
 			$this->handle_login_page_access();
@@ -301,7 +301,7 @@ class AdminHideSecurity {
 	 * @return array Clean query variables array with token
 	 */
 	private function build_query_with_token( $source_params, string $token ): array {
-		$query_vars = array();
+		$query_vars = [];
 
 		if ( is_array( $source_params ) ) {
 			// Source is $_GET array

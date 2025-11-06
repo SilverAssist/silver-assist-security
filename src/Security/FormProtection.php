@@ -53,11 +53,11 @@ class FormProtection {
 			SecurityHelper::log_security_event(
 				'FORM_SPAM_BLOCKED',
 				'Form submission rate limit exceeded',
-				array(
+				[
 					'ip'          => $ip,
 					'submissions' => $submissions,
 					'limit'       => $rate_limit,
-				)
+				]
 			);
 			return false;
 		}
@@ -84,7 +84,7 @@ class FormProtection {
 		}
 
 		// Patterns for obsolete browsers and suspicious agents
-		$obsolete_patterns = array(
+		$obsolete_patterns = [
 			'MSIE 6.0',
 			'MSIE 7.0',
 			'MSIE 8.0',
@@ -100,7 +100,7 @@ class FormProtection {
 			'Baidu',
 			'SogouWeb',
 			'compatible; MSIE', // General old IE pattern
-		);
+		];
 
 		foreach ( $obsolete_patterns as $pattern ) {
 			if ( stripos( $user_agent, $pattern ) !== false ) {
@@ -129,7 +129,7 @@ class FormProtection {
 		$full_data = urldecode( $full_data );
 
 		// Common SQL injection patterns
-		$sql_patterns = array(
+		$sql_patterns = [
 			'PG_SLEEP',
 			'SLEEP(',
 			'WAITFOR DELAY',
@@ -159,20 +159,20 @@ class FormProtection {
 			'--',
 			'/*',
 			'*/',
-		);
+		];
 
 		foreach ( $sql_patterns as $pattern ) {
 			if ( stripos( $full_data, $pattern ) !== false ) {
 				SecurityHelper::log_security_event(
 					'SQL_INJECTION_DETECTED',
 					'SQL injection pattern detected in request',
-					array(
+					[
 						'pattern'       => $pattern,
 						'ip'            => SecurityHelper::get_client_ip(),
 						'user_agent'    => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
 						'query_string'  => $query_string,
 						'has_post_data' => ! empty( $_POST ),
-					)
+					]
 				);
 				return true;
 			}

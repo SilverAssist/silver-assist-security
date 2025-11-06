@@ -83,17 +83,17 @@ class ContactForm7Integration {
 		}
 
 		// CF7 validation hook
-		\add_filter( 'wpcf7_validate', array( $this, 'validate_cf7_form' ), 10, 2 );
+		\add_filter( 'wpcf7_validate', [ $this, 'validate_cf7_form' ], 10, 2 );
 
 		// Before send mail hook
-		\add_action( 'wpcf7_before_send_mail', array( $this, 'process_cf7_submission' ), 10, 3 );
+		\add_action( 'wpcf7_before_send_mail', [ $this, 'process_cf7_submission' ], 10, 3 );
 
 		// Spam detection hook
-		\add_action( 'wpcf7_spam', array( $this, 'handle_cf7_spam' ), 10, 1 );
+		\add_action( 'wpcf7_spam', [ $this, 'handle_cf7_spam' ], 10, 1 );
 
 		// Honeypot field injection
 		if ( DefaultConfig::get_option( 'silver_assist_cf7_honeypot_enabled' ) ) {
-			\add_filter( 'wpcf7_form_elements', array( $this, 'inject_honeypot_field' ), 10, 1 );
+			\add_filter( 'wpcf7_form_elements', [ $this, 'inject_honeypot_field' ], 10, 1 );
 		}
 	}
 
@@ -146,10 +146,10 @@ class ContactForm7Integration {
 			SecurityHelper::log_security_event(
 				'CF7_BLOCKED_BLACKLISTED_IP',
 				"CF7 submission blocked from blacklisted IP: {$client_ip}",
-				array(
+				[
 					'ip'      => $client_ip,
 					'form_id' => $contact_form->id ?? 'unknown',
-				)
+				]
 			);
 			return false;
 		}
@@ -160,10 +160,10 @@ class ContactForm7Integration {
 				SecurityHelper::log_security_event(
 					'CF7_BLOCKED_UNDER_ATTACK',
 					"CF7 submission blocked in Under Attack mode: {$client_ip}",
-					array(
+					[
 						'ip'      => $client_ip,
 						'form_id' => $contact_form->id ?? 'unknown',
-					)
+					]
 				);
 				return false;
 			}
@@ -175,10 +175,10 @@ class ContactForm7Integration {
 				SecurityHelper::log_security_event(
 					'CF7_BLOCKED_HONEYPOT',
 					"CF7 submission blocked by honeypot: {$client_ip}",
-					array(
+					[
 						'ip'             => $client_ip,
 						'honeypot_value' => $submission_data['silver_honeypot_field'],
-					)
+					]
 				);
 				return false;
 			}
@@ -193,10 +193,10 @@ class ContactForm7Integration {
 				SecurityHelper::log_security_event(
 					'CF7_BLOCKED_TOO_FAST',
 					"CF7 submission too fast ({$submission_time}s): {$client_ip}",
-					array(
+					[
 						'ip'     => $client_ip,
 						'timing' => $submission_time,
-					)
+					]
 				);
 				return false;
 			}
@@ -207,10 +207,10 @@ class ContactForm7Integration {
 			SecurityHelper::log_security_event(
 				'CF7_BLOCKED_RATE_LIMIT',
 				"CF7 submission rate limited: {$client_ip}",
-				array(
+				[
 					'ip'      => $client_ip,
 					'form_id' => $contact_form->id ?? 'unknown',
-				)
+				]
 			);
 
 			// Record violation for potential blacklisting
@@ -232,10 +232,10 @@ class ContactForm7Integration {
 			SecurityHelper::log_security_event(
 				'CF7_BLOCKED_OBSOLETE_BROWSER',
 				"CF7 submission blocked from obsolete browser: {$client_ip}",
-				array(
+				[
 					'ip'         => $client_ip,
 					'user_agent' => $user_agent,
-				)
+				]
 			);
 
 			if ( $this->ip_blacklist ) {
@@ -255,10 +255,10 @@ class ContactForm7Integration {
 			SecurityHelper::log_security_event(
 				'CF7_BLOCKED_SQL_INJECTION',
 				"CF7 submission blocked SQL injection attempt: {$client_ip}",
-				array(
+				[
 					'ip'           => $client_ip,
 					'query_string' => $query_string,
-				)
+				]
 			);
 
 			if ( $this->ip_blacklist ) {
@@ -277,10 +277,10 @@ class ContactForm7Integration {
 			SecurityHelper::log_security_event(
 				'CF7_BLOCKED_SPAM_PATTERN',
 				"CF7 submission blocked spam patterns: {$client_ip}",
-				array(
+				[
 					'ip'                => $client_ip,
 					'patterns_detected' => true,
-				)
+				]
 			);
 
 			if ( $this->ip_blacklist ) {
@@ -313,10 +313,10 @@ class ContactForm7Integration {
 		SecurityHelper::log_security_event(
 			'CF7_SUBMISSION_SUCCESS',
 			"CF7 form submitted successfully from: {$client_ip}",
-			array(
+			[
 				'ip'      => $client_ip,
 				'form_id' => $contact_form->id ?? 'unknown',
-			)
+			]
 		);
 	}
 
@@ -342,10 +342,10 @@ class ContactForm7Integration {
 		SecurityHelper::log_security_event(
 			'CF7_SPAM_DETECTED',
 			"CF7 spam detected from: {$client_ip}",
-			array(
+			[
 				'ip'      => $client_ip,
 				'form_id' => $contact_form->id ?? 'unknown',
-			)
+			]
 		);
 	}
 
@@ -410,10 +410,10 @@ class ContactForm7Integration {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$form_id = isset( $_POST['_wpcf7'] ) ? (int) \sanitize_text_field( \wp_unslash( $_POST['_wpcf7'] ) ) : 0;
 
-		return (object) array(
+		return (object) [
 			'id'    => $form_id,
 			'title' => 'Contact Form',
-		);
+		];
 	}
 
 	/**
@@ -424,7 +424,7 @@ class ContactForm7Integration {
 	 * @return bool True if spam patterns detected
 	 */
 	private function contains_spam_patterns( array $submission_data ): bool {
-		$spam_patterns = array(
+		$spam_patterns = [
 			// Pharmaceutical spam - only obvious spam phrases
 			'cheap viagra',
 			'buy viagra',
@@ -458,13 +458,13 @@ class ContactForm7Integration {
 			'earn $',
 			'win $',
 			'cash prize',
-		);
+		];
 
 		// Combine message and name fields only (skip email field to avoid false positives)
-		$text_fields = array();
+		$text_fields = [];
 		foreach ( $submission_data as $key => $value ) {
 			// Skip email fields and honeypot fields
-			if ( ! in_array( $key, array( 'your-email', 'email', 'silver_honeypot_field', 'silver_captcha_answer', 'silver_captcha_token' ), true ) ) {
+			if ( ! in_array( $key, [ 'your-email', 'email', 'silver_honeypot_field', 'silver_captcha_answer', 'silver_captcha_token' ], true ) ) {
 				$text_fields[] = strtolower( (string) $value );
 			}
 		}
@@ -481,11 +481,11 @@ class ContactForm7Integration {
 				SecurityHelper::log_security_event(
 					'SPAM_PATTERN_DETECTED',
 					'Spam pattern detected in CF7 submission',
-					array(
+					[
 						'pattern'            => $pattern,
 						'ip'                 => SecurityHelper::get_client_ip(),
 						'submission_preview' => substr( $text_data, 0, 100 ),
-					)
+					]
 				);
 				return true;
 			}
@@ -505,10 +505,10 @@ class ContactForm7Integration {
 			SecurityHelper::log_security_event(
 				'EXCESSIVE_CAPS_DETECTED',
 				'Excessive capitalization detected in CF7 submission',
-				array(
+				[
 					'uppercase_ratio' => $uppercase_ratio,
 					'ip'              => SecurityHelper::get_client_ip(),
-				)
+				]
 			);
 			return true;
 		}
