@@ -289,6 +289,10 @@ class WordPressRealEnvironmentTest extends WP_UnitTestCase
      */
     public function test_plugin_activation_deactivation(): void
     {
+        // Manually trigger plugin activation to ensure options are set
+        $bootstrap = \SilverAssistSecurityBootstrap::getInstance();
+        $bootstrap->activate();
+        
         // Test that default options exist (should be set during plugin activation)
         $default_options = array(
             'silver_assist_login_attempts',
@@ -300,9 +304,14 @@ class WordPressRealEnvironmentTest extends WP_UnitTestCase
         
         foreach ($default_options as $option_name) {
             $option_value = \get_option($option_name);
-            $this->assertNotEmpty(
+            $this->assertNotFalse(
                 $option_value,
                 "Default option {$option_name} should exist after plugin activation"
+            );
+            $this->assertGreaterThan(
+                0,
+                $option_value,
+                "Default option {$option_name} should have a positive value: got {$option_value}"
             );
         }
     }
