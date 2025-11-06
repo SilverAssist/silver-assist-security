@@ -51,8 +51,36 @@ run_phpunit() {
     print_header "🧪 Running PHPUnit Tests"
     cd "$PROJECT_ROOT"
     export WP_TESTS_DIR="${WP_TESTS_DIR:-/tmp/wordpress-tests-lib}"
+    
+    # Run all tests with detailed output
     vendor/bin/phpunit --testdox
-    print_success "All tests passed"
+    
+    print_header "📊 Test Summary"
+    
+    # Check if Contact Form 7 tests ran successfully
+    # WordPress core is installed in /tmp/wordpress, not inside the tests directory
+    WP_CORE_DIR=$(dirname ${WP_TESTS_DIR})/wordpress
+    CF7_PLUGIN_FILE="$WP_CORE_DIR/wp-content/plugins/contact-form-7/wp-contact-form-7.php"
+    
+    if [ -f "$CF7_PLUGIN_FILE" ]; then
+        CF7_VERSION=$(grep "Version:" "$CF7_PLUGIN_FILE" | sed 's/.*Version: //' | sed 's/ .*//')
+        echo "✅ Contact Form 7 v$CF7_VERSION integration active"
+        echo "Plugin location: $CF7_PLUGIN_FILE"
+        
+        # Run CF7-specific tests for detailed reporting
+        echo ""
+        echo "Contact Form 7 Integration Test Results:"
+        CF7_RESULT=$(vendor/bin/phpunit tests/Integration/ContactForm7IntegrationTest.php --testdox 2>/dev/null | grep -c "✔" || echo "0")
+        echo "- CF7 Security Integration: $CF7_RESULT/10 tests"
+        
+        ADMIN_RESULT=$(vendor/bin/phpunit tests/Integration/CF7AdminPanelTest.php --testdox 2>/dev/null | grep -c "✔" || echo "0")
+        echo "- CF7 Admin Panel: $ADMIN_RESULT/6 tests"
+    else
+        echo "⚠️  Contact Form 7 not found at: $CF7_PLUGIN_FILE"
+        echo "Integration tests may be limited"
+    fi
+    
+    print_success "All tests completed"
 }
 
 # Parse arguments
@@ -89,6 +117,16 @@ if [[ " ${checks[*]} " =~ " phpunit " ]] || [[ " ${checks[*]} " =~ " all " ]]; t
         print_header "🐘 Setting up WordPress Test Suite"
         bash "$SCRIPT_DIR/install-wp-tests.sh" wordpress_test root '' localhost latest true
         print_success "WordPress Test Suite ready"
+        
+        print_header "📧 Installing Contact Form 7 for Integration Tests"
+        export WP_TESTS_DIR="${WP_TESTS_DIR:-/tmp/wordpress-tests-lib}"
+        if [ -f "$SCRIPT_DIR/install-cf7-for-tests.sh" ]; then
+            chmod +x "$SCRIPT_DIR/install-cf7-for-tests.sh"
+            bash "$SCRIPT_DIR/install-cf7-for-tests.sh"
+            print_success "Contact Form 7 integration ready"
+        else
+            print_error "CF7 installation script not found at: $SCRIPT_DIR/install-cf7-for-tests.sh"
+        fi
     fi
 fi
 

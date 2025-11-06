@@ -40,6 +40,12 @@
         <testsuite name="Security Tests">
             <directory>./tests/Security</directory>
         </testsuite>
+        <testsuite name="Integration Tests">
+            <directory>./tests/Integration</directory>
+        </testsuite>
+        <testsuite name="Functional Tests">
+            <directory>./tests/Functional</directory>
+        </testsuite>
     </testsuites>
 
     <php>

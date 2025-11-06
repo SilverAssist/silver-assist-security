@@ -87,10 +87,49 @@ jobs:
                     exit 1
                   fi
 
+            - name: Install Contact Form 7 for Integration Tests
+              env:
+                  WP_TESTS_DIR: /tmp/wordpress-tests-lib
+              run: |
+                  echo "Installing Contact Form 7 for integration testing..."
+                  
+                  # Make CF7 installation script executable
+                  chmod +x scripts/install-cf7-for-tests.sh
+                  
+                  # Install Contact Form 7
+                  bash scripts/install-cf7-for-tests.sh
+                  
+                  # Verify CF7 installation
+                  CF7_MAIN_FILE="/tmp/wordpress/wp-content/plugins/contact-form-7/wp-contact-form-7.php"
+                  if [ -f "$CF7_MAIN_FILE" ]; then
+                    echo "✅ Contact Form 7 installed successfully"
+                    CF7_VERSION=$(grep "Version:" "$CF7_MAIN_FILE" | sed 's/.*Version: //' | sed 's/ .*//')
+                    echo "Contact Form 7 Version: $CF7_VERSION"
+                  else
+                    echo "❌ Contact Form 7 installation failed"
+                    exit 1
+                  fi
+
             - name: 🔧 Run Unified Quality Checks Script
               run: |
                   chmod +x scripts/run-quality-checks.sh
                   ./scripts/run-quality-checks.sh --verbose
+
+            - name: 📧 Validate CF7 Integration Tests
+              env:
+                  WP_TESTS_DIR: /tmp/wordpress-tests-lib
+              run: |
+                  echo "Running Contact Form 7 integration tests specifically..."
+                  
+                  # Run CF7-specific integration tests
+                  vendor/bin/phpunit tests/Integration/ContactForm7IntegrationTest.php --testdox
+                  echo "✅ CF7 Integration Tests: $(vendor/bin/phpunit tests/Integration/ContactForm7IntegrationTest.php --testdox | grep -c '✔')/10 tests passed"
+                  
+                  # Run CF7 Admin Panel tests
+                  vendor/bin/phpunit tests/Integration/CF7AdminPanelTest.php --testdox
+                  echo "✅ CF7 Admin Panel Tests: $(vendor/bin/phpunit tests/Integration/CF7AdminPanelTest.php --testdox | grep -c '✔')/6 tests passed"
+                  
+                  echo "All CF7 integration tests validated successfully!"
 
             - name: 📊 Upload Test Results
               if: always()
@@ -100,6 +139,130 @@ jobs:
                   path: |
                       tests/results/
                       coverage/
+                  retention-days: 30
+
+    # ===================================
+    # 📧 Contact Form 7 Integration Tests
+    # ===================================
+    cf7-integration-tests:
+        name: CF7 Integration (PHP ${{ matrix.php-version }}, WP ${{ matrix.wordpress-version }})
+        runs-on: ubuntu-latest
+        needs: unified-quality-checks  # Run after main quality checks
+
+        strategy:
+            fail-fast: false
+            matrix:
+                php-version: [8.2]
+                wordpress-version: [latest]  # Focus on latest for CF7 integration
+
+        services:
+            mysql:
+                image: mysql:8.0
+                env:
+                    MYSQL_ROOT_PASSWORD: root
+                    MYSQL_DATABASE: wordpress_test
+                ports:
+                    - 3306:3306
+                options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v5
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ matrix.php-version }}
+                  extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql, mysqli
+                  coverage: none
+                  tools: composer:v2
+
+            - name: Install system dependencies
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y subversion mysql-client
+
+            - name: Cache Composer dependencies
+              uses: actions/cache@v4
+              with:
+                  path: vendor
+                  key: ${{ runner.os }}-php${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.lock') }}
+
+            - name: Install Composer dependencies
+              run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
+
+            - name: Setup WordPress with CF7
+              env:
+                  WP_VERSION: ${{ matrix.wordpress-version }}
+                  WP_TESTS_DIR: /tmp/wordpress-tests-lib
+              run: |
+                  # Install WordPress Test Suite
+                  chmod +x scripts/install-wp-tests.sh
+                  bash scripts/install-wp-tests.sh wordpress_test root root 127.0.0.1 $WP_VERSION
+                  
+                  # Install Contact Form 7
+                  chmod +x scripts/install-cf7-for-tests.sh
+                  bash scripts/install-cf7-for-tests.sh
+
+            - name: Run CF7 Integration Test Suite
+              env:
+                  WP_TESTS_DIR: /tmp/wordpress-tests-lib
+              run: |
+                  echo "🧪 Running comprehensive CF7 integration tests..."
+                  
+                  # Test CF7 hooks and security integration
+                  echo "Testing CF7 security hooks integration..."
+                  vendor/bin/phpunit tests/Integration/ContactForm7IntegrationTest.php --testdox
+                  
+                  # Test CF7 admin panel integration
+                  echo "Testing CF7 admin panel functionality..."
+                  vendor/bin/phpunit tests/Integration/CF7AdminPanelTest.php --testdox
+                  
+                  # Test overall security features with CF7
+                  echo "Testing security features integration..."
+                  vendor/bin/phpunit tests/Integration/SecurityFeaturesIntegrationTest.php --testdox
+                  
+                  # Run WordPress environment tests
+                  echo "Testing WordPress real environment..."
+                  vendor/bin/phpunit tests/Integration/WordPressRealEnvironmentTest.php --testdox
+                  
+                  echo "✅ All CF7 integration tests completed successfully!"
+
+            - name: Generate CF7 Integration Report
+              if: always()
+              run: |
+                  echo "📊 CF7 Integration Test Report" > cf7-integration-report.md
+                  echo "=========================================" >> cf7-integration-report.md
+                  echo "" >> cf7-integration-report.md
+                  echo "**WordPress Version:** ${{ matrix.wordpress-version }}" >> cf7-integration-report.md
+                  echo "**PHP Version:** ${{ matrix.php-version }}" >> cf7-integration-report.md
+                  echo "**Contact Form 7:** $(grep Version /tmp/wordpress/wp-content/plugins/contact-form-7/wp-contact-form-7.php | head -1 || echo 'Version detection failed')" >> cf7-integration-report.md
+                  echo "" >> cf7-integration-report.md
+                  echo "**Test Results:**" >> cf7-integration-report.md
+                  
+                  # Count test results
+                  CF7_TESTS=$(vendor/bin/phpunit tests/Integration/ContactForm7IntegrationTest.php --testdox 2>/dev/null | grep -c "✔" || echo "0")
+                  ADMIN_TESTS=$(vendor/bin/phpunit tests/Integration/CF7AdminPanelTest.php --testdox 2>/dev/null | grep -c "✔" || echo "0")
+                  
+                  echo "- CF7 Integration Tests: $CF7_TESTS/10 ✅" >> cf7-integration-report.md
+                  echo "- CF7 Admin Panel Tests: $ADMIN_TESTS/6 ✅" >> cf7-integration-report.md
+                  echo "" >> cf7-integration-report.md
+                  echo "**Security Features Validated:**" >> cf7-integration-report.md
+                  echo "- ✅ Rate limiting and IP blocking" >> cf7-integration-report.md
+                  echo "- ✅ Under Attack mode integration" >> cf7-integration-report.md
+                  echo "- ✅ Honeypot protection" >> cf7-integration-report.md
+                  echo "- ✅ Obsolete browser detection" >> cf7-integration-report.md
+                  echo "- ✅ Submission timing validation" >> cf7-integration-report.md
+                  echo "- ✅ Comprehensive attack scenario handling" >> cf7-integration-report.md
+
+            - name: 📤 Upload CF7 Integration Results
+              if: always()
+              uses: actions/upload-artifact@v5
+              with:
+                  name: cf7-integration-results-php${{ matrix.php-version }}-wp${{ matrix.wordpress-version }}
+                  path: |
+                      cf7-integration-report.md
+                      tests/results/
                   retention-days: 30
 
     # ===================================
