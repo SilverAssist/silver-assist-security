@@ -182,7 +182,8 @@ install_db() {
 	fi
 
 	# create database
-	if [ $(mysql --user="$DB_USER" --password="$DB_PASS"$EXTRA --execute="SHOW DATABASES LIKE '$DB_NAME';" | grep "$DB_NAME") ]
+	DB_EXISTS=$(mysql --user="$DB_USER" --password="$DB_PASS"$EXTRA --execute="SHOW DATABASES LIKE '$DB_NAME';" | grep "$DB_NAME" || echo "")
+	if [ -n "$DB_EXISTS" ]
 	then
 		echo "Reinstalling will delete the existing test database ($DB_NAME)"
 		
