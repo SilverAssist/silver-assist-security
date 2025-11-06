@@ -62,10 +62,13 @@ class DefaultConfig {
 
 			// Contact Form 7 Integration Settings
 			'silver_assist_cf7_protection_enabled'        => 1, // Enable CF7 protection by default
+			'silver_assist_cf7_rate_limit'                => 2, // Max CF7 submissions per minute per IP
+			'silver_assist_cf7_rate_window'               => 60, // CF7 rate limiting window in seconds
 			'silver_assist_cf7_spam_threshold'            => 3, // Spam attempts before IP blacklist consideration
 			'silver_assist_cf7_honeypot_enabled'          => 1, // Enable honeypot fields
 			'silver_assist_cf7_submission_delay'          => 2000, // Minimum submission time (milliseconds)
 			'silver_assist_cf7_auto_block_bots'           => 1, // Auto-block detected bots
+			'silver_assist_cf7_ip_block_duration'         => 3600, // CF7 IP block duration (1 hour)
 		);
 	}
 

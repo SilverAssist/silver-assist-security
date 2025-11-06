@@ -18,6 +18,7 @@ use SilverAssist\Security\Admin\AdminPanel;
 use SilverAssist\Security\Core\Updater;
 use SilverAssist\Security\GraphQL\GraphQLSecurity;
 use SilverAssist\Security\Security\AdminHideSecurity;
+use SilverAssist\Security\Security\ContactForm7Integration;
 use SilverAssist\Security\Security\GeneralSecurity;
 use SilverAssist\Security\Security\LoginSecurity;
 
@@ -74,6 +75,13 @@ class Plugin {
 	private ?Updater $updater = null;
 
 	/**
+	 * Contact Form 7 Integration instance
+	 *
+	 * @var ContactForm7Integration|null
+	 */
+	private ?ContactForm7Integration $cf7_integration = null;
+
+	/**
 	 * Get plugin instance (Singleton pattern)
 	 *
 	 * @since 1.1.1
@@ -105,6 +113,7 @@ class Plugin {
 		// Initialize components.
 		\add_action( 'init', array( $this, 'init_admin_panel' ) );
 		\add_action( 'init', array( $this, 'init_graphql_security' ) );
+		\add_action( 'init', array( $this, 'init_cf7_integration' ) );
 		\add_action( 'init', array( $this, 'init_updater' ) );
 
 		// Add plugin action links.
@@ -280,5 +289,55 @@ class Plugin {
 	 */
 	public function get_updater(): ?Updater {
 		return $this->updater;
+	}
+
+	/**
+	 * Initialize Contact Form 7 integration
+	 *
+	 * Only initializes CF7 integration if the plugin is active and
+	 * CF7 protection is enabled in settings.
+	 *
+	 * @since 1.1.15
+	 * @return void
+	 */
+	public function init_cf7_integration(): void {
+		// Only initialize if Contact Form 7 is active
+		if ( ! SecurityHelper::is_contact_form_7_active() ) {
+			return;
+		}
+
+		// Only initialize if CF7 protection is enabled
+		if ( ! DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) ) {
+			return;
+		}
+
+		$this->cf7_integration = new ContactForm7Integration();
+
+		// Log CF7 integration initialization
+		SecurityHelper::log_security_event(
+			'CF7_INTEGRATION_INITIALIZED',
+			'Contact Form 7 security integration activated',
+			SecurityHelper::get_contact_form_7_info()
+		);
+	}
+
+	/**
+	 * Get Contact Form 7 integration instance
+	 *
+	 * @since 1.1.15
+	 * @return ContactForm7Integration|null
+	 */
+	public function get_cf7_integration(): ?ContactForm7Integration {
+		return $this->cf7_integration;
+	}
+
+	/**
+	 * Check if Contact Form 7 integration is active
+	 *
+	 * @since 1.1.15
+	 * @return bool True if CF7 integration is active
+	 */
+	public function is_cf7_integration_active(): bool {
+		return $this->cf7_integration !== null && SecurityHelper::is_contact_form_7_active();
 	}
 }

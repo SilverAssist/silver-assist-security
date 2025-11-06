@@ -494,4 +494,72 @@ class SecurityHelper {
 
 		return true;
 	}
+
+	/**
+	 * Check if Contact Form 7 plugin is active and available
+	 *
+	 * Detects Contact Form 7 plugin activation by checking for the main class
+	 * and version compatibility.
+	 *
+	 * @since 1.1.15
+	 * @return bool True if CF7 is active and compatible, false otherwise
+	 */
+	public static function is_contact_form_7_active(): bool {
+		// Check if Contact Form 7 main class exists
+		if ( ! \class_exists( 'WPCF7' ) ) {
+			return false;
+		}
+
+		// Check if Contact Form 7 functions are available
+		if ( ! \function_exists( 'wpcf7_get_contact_form_by_id' ) ) {
+			return false;
+		}
+
+		// Check minimum version requirement (CF7 5.0+)
+		if ( \defined( 'WPCF7_VERSION' ) ) {
+			return \version_compare( WPCF7_VERSION, '5.0', '>=' );
+		}
+
+		// If version constant not defined but class exists, assume it's compatible
+		return true;
+	}
+
+	/**
+	 * Get Contact Form 7 plugin information
+	 *
+	 * Returns detailed information about the installed CF7 plugin
+	 * for admin display and logging purposes.
+	 *
+	 * @since 1.1.15
+	 * @return array CF7 plugin information
+	 */
+	public static function get_contact_form_7_info(): array {
+		if ( ! self::is_contact_form_7_active() ) {
+			return [
+				'active'  => false,
+				'version' => null,
+				'message' => \__( 'Contact Form 7 plugin is not active', 'silver-assist-security' ),
+			];
+		}
+
+		$version       = \defined( 'WPCF7_VERSION' ) ? WPCF7_VERSION : 'Unknown';
+		$is_compatible = \version_compare( $version, '5.0', '>=' );
+
+		return [
+			'active'     => true,
+			'version'    => $version,
+			'compatible' => $is_compatible,
+			'message'    => $is_compatible
+				? sprintf(
+					/* translators: %s: Contact Form 7 version */
+					\__( 'Contact Form 7 v%s is active and compatible', 'silver-assist-security' ),
+					$version
+				)
+				: sprintf(
+					/* translators: %s: Contact Form 7 version */
+					\__( 'Contact Form 7 v%s detected but requires v5.0 or higher', 'silver-assist-security' ),
+					$version
+				),
+		];
+	}
 }

@@ -79,12 +79,14 @@ class AdminPanel {
 		\add_action( 'wp_ajax_silver_assist_validate_admin_path', array( $this, 'ajax_validate_admin_path' ) );
 		\add_action( 'wp_ajax_silver_assist_check_updates', array( $this, 'ajax_check_updates' ) );
 
-		// CF7 blocked IP management AJAX handlers
-		\add_action( 'wp_ajax_silver_assist_get_cf7_blocked_ips', array( $this, 'ajax_get_cf7_blocked_ips' ) );
-		\add_action( 'wp_ajax_silver_assist_block_cf7_ip', array( $this, 'ajax_block_cf7_ip' ) );
-		\add_action( 'wp_ajax_silver_assist_unblock_cf7_ip', array( $this, 'ajax_unblock_cf7_ip' ) );
-		\add_action( 'wp_ajax_silver_assist_clear_cf7_blocked_ips', array( $this, 'ajax_clear_cf7_blocked_ips' ) );
-		\add_action( 'wp_ajax_silver_assist_export_cf7_blocked_ips', array( $this, 'ajax_export_cf7_blocked_ips' ) );
+		// CF7 blocked IP management AJAX handlers - only if CF7 is active
+		if ( SecurityHelper::is_contact_form_7_active() ) {
+			\add_action( 'wp_ajax_silver_assist_get_cf7_blocked_ips', array( $this, 'ajax_get_cf7_blocked_ips' ) );
+			\add_action( 'wp_ajax_silver_assist_block_cf7_ip', array( $this, 'ajax_block_cf7_ip' ) );
+			\add_action( 'wp_ajax_silver_assist_unblock_cf7_ip', array( $this, 'ajax_unblock_cf7_ip' ) );
+			\add_action( 'wp_ajax_silver_assist_clear_cf7_blocked_ips', array( $this, 'ajax_clear_cf7_blocked_ips' ) );
+			\add_action( 'wp_ajax_silver_assist_export_cf7_blocked_ips', array( $this, 'ajax_export_cf7_blocked_ips' ) );
+		}
 	}
 
 	/**
@@ -983,20 +985,22 @@ class AdminPanel {
 			\update_option( 'silver_assist_graphql_query_timeout', $graphql_timeout );
 		}
 
-		// Save Contact Form 7 Security Settings
-		\update_option( 'silver_assist_cf7_protection_enabled', (int) ( isset( $_POST['silver_assist_cf7_protection_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_protection_enabled'] ) ) : 0 ) );
+		// Save Contact Form 7 Security Settings - only if CF7 is active
+		if ( SecurityHelper::is_contact_form_7_active() ) {
+			\update_option( 'silver_assist_cf7_protection_enabled', (int) ( isset( $_POST['silver_assist_cf7_protection_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_protection_enabled'] ) ) : 0 ) );
 
-		// CF7 Rate Limiting
-		$cf7_rate_limit = intval( isset( $_POST['silver_assist_cf7_rate_limit'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_rate_limit'] ) ) : DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' ) );
-		if ( isset( $_POST['silver_assist_cf7_rate_limit'] ) ) {
-			$cf7_rate_limit = max( 1, min( 10, $cf7_rate_limit ) );
-			\update_option( 'silver_assist_cf7_rate_limit', $cf7_rate_limit );
-		}
+			// CF7 Rate Limiting
+			$cf7_rate_limit = intval( isset( $_POST['silver_assist_cf7_rate_limit'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_rate_limit'] ) ) : DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' ) );
+			if ( isset( $_POST['silver_assist_cf7_rate_limit'] ) ) {
+				$cf7_rate_limit = max( 1, min( 10, $cf7_rate_limit ) );
+				\update_option( 'silver_assist_cf7_rate_limit', $cf7_rate_limit );
+			}
 
-		$cf7_rate_window = intval( isset( $_POST['silver_assist_cf7_rate_window'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_rate_window'] ) ) : DefaultConfig::get_option( 'silver_assist_cf7_rate_window' ) );
-		if ( isset( $_POST['silver_assist_cf7_rate_window'] ) ) {
-			$cf7_rate_window = max( 30, min( 300, $cf7_rate_window ) );
-			\update_option( 'silver_assist_cf7_rate_window', $cf7_rate_window );
+			$cf7_rate_window = intval( isset( $_POST['silver_assist_cf7_rate_window'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_rate_window'] ) ) : DefaultConfig::get_option( 'silver_assist_cf7_rate_window' ) );
+			if ( isset( $_POST['silver_assist_cf7_rate_window'] ) ) {
+				$cf7_rate_window = max( 30, min( 300, $cf7_rate_window ) );
+				\update_option( 'silver_assist_cf7_rate_window', $cf7_rate_window );
+			}
 		}
 
 		// IP Blacklist Settings
@@ -1075,10 +1079,17 @@ class AdminPanel {
 		$graphql_headless_mode         = DefaultConfig::get_option( 'silver_assist_graphql_headless_mode' );
 		$graphql_query_timeout         = \get_option( 'silver_assist_graphql_query_timeout', $this->config_manager->get_php_execution_timeout() );
 
-		// Get Contact Form 7 Security Settings
-		$cf7_protection_enabled        = DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' );
-		$cf7_rate_limit                = DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' );
-		$cf7_rate_window               = DefaultConfig::get_option( 'silver_assist_cf7_rate_window' );
+		// Get Contact Form 7 Security Settings - only if CF7 is active
+		if ( SecurityHelper::is_contact_form_7_active() ) {
+			$cf7_protection_enabled = DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' );
+			$cf7_rate_limit         = DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' );
+			$cf7_rate_window        = DefaultConfig::get_option( 'silver_assist_cf7_rate_window' );
+		} else {
+			// Default values when CF7 is not active
+			$cf7_protection_enabled = 0;
+			$cf7_rate_limit         = DefaultConfig::get_default( 'silver_assist_cf7_rate_limit' ) ?? 2;
+			$cf7_rate_window        = DefaultConfig::get_default( 'silver_assist_cf7_rate_window' ) ?? 60;
+		}
 		$ip_blacklist_enabled          = DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' );
 		$ip_violation_threshold        = DefaultConfig::get_option( 'silver_assist_ip_violation_threshold' );
 		$ip_blacklist_duration         = DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' );
@@ -1682,8 +1693,25 @@ class AdminPanel {
 					<?php endif; ?>
 
 					<!-- Contact Form 7 Security Settings -->
-					<div class="card">
-						<h2><?php esc_html_e( 'Contact Form 7 Security', 'silver-assist-security' ); ?></h2>
+					<?php if ( SecurityHelper::is_contact_form_7_active() ) : ?>
+						<div class="card">
+							<h2><?php esc_html_e( 'Contact Form 7 Security', 'silver-assist-security' ); ?></h2>
+							<div class="cf7-status-info">
+								<?php
+								$cf7_info = SecurityHelper::get_contact_form_7_info();
+								if ( $cf7_info['compatible'] ) :
+								?>
+									<p class="cf7-active-notice">
+										<span class="dashicons dashicons-yes-alt" style="color: #46b450;"></span>
+										<?php echo esc_html( $cf7_info['message'] ); ?>
+									</p>
+								<?php else : ?>
+									<p class="cf7-warning-notice">
+										<span class="dashicons dashicons-warning" style="color: #ffb900;"></span>
+										<?php echo esc_html( $cf7_info['message'] ); ?>
+									</p>
+								<?php endif; ?>
+							</div>
 						<table class="form-table">
 							<tr>
 								<th scope="row">
@@ -1730,6 +1758,26 @@ class AdminPanel {
 							</tr>
 						</table>
 					</div>
+					<?php else : ?>
+						<div class="card">
+							<h2><?php esc_html_e( 'Contact Form 7 Security', 'silver-assist-security' ); ?></h2>
+							<div class="cf7-not-active-notice">
+								<p>
+									<span class="dashicons dashicons-info" style="color: #72aee6;"></span>
+									<?php
+									printf(
+										/* translators: %s: Contact Form 7 plugin name with link */
+										esc_html__( '%s plugin is not installed or activated. Install and activate Contact Form 7 to enable form security features.', 'silver-assist-security' ),
+										'<a href="' . esc_url( admin_url( 'plugin-install.php?s=contact+form+7&tab=search&type=term' ) ) . '" target="_blank">Contact Form 7</a>'
+									);
+									?>
+								</p>
+								<p class="description">
+									<?php esc_html_e( 'Silver Assist Security can protect Contact Form 7 forms against spam attacks, rate limiting, and malicious submissions when the plugin is active.', 'silver-assist-security' ); ?>
+								</p>
+							</div>
+						</div>
+					<?php endif; ?>
 
 					<!-- IP Blacklist Settings -->
 					<div class="card">
