@@ -19,10 +19,10 @@ jobs:
 
         steps:
             - name: Checkout code
-              uses: actions/checkout@v5
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
             - name: Setup PHP
-              uses: shivammathur/setup-php@v2
+              uses: shivammathur/setup-php@9e72090525849c5e82e596468b86eb55e9cc5401 # v2.32.0
               with:
                   php-version: "8.3"
                   extensions: mbstring, xml, ctype, json, tokenizer
@@ -303,7 +303,7 @@ jobs:
                   EOF
 
             - name: Create GitHub Release
-              uses: softprops/action-gh-release@v2
+              uses: softprops/action-gh-release@7b4da11513bf3f43f9999e90eabced41ab8bb048 # v2.2.0
               with:
                   tag_name: ${{ steps.version.outputs.tag }}
                   name: "Silver Assist Security Essentials v${{ steps.version.outputs.version }}"
@@ -316,7 +316,7 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Upload package as artifact
-              uses: actions/upload-artifact@v5
+              uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
               with:
                   name: silver-assist-security-v${{ steps.version.outputs.version }}
                   path: ${{ steps.package.outputs.zip_path }}
