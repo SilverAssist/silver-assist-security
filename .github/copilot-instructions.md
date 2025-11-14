@@ -2425,15 +2425,6 @@ composer check          # Run all quality checks
 
 **Prerequisites**: Ensure `gh` CLI is installed locally for GitHub Actions monitoring
 
-**🚨 CRITICAL: OAuth Workflow Permissions**
-- **Always use GitHub Desktop for commits that touch workflow files** (`.github/workflows/` files)
-- Git CLI will reject pushes to workflow files with error: "refusing to allow an OAuth App to create or update workflow without `workflow` scope"
-- **Workflow for Actions changes**:
-  1. Make changes to `.github/workflows/` files
-  2. Commit other files via git CLI if needed
-  3. Use GitHub Desktop to commit and push workflow file changes
-  4. Monitor CI execution using `gh` CLI tools
-
 **Common Monitoring Commands**:
 ```bash
 # Quick check of recent runs (most commonly used)
