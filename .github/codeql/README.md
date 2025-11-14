@@ -1,14 +1,15 @@
 # CodeQL Custom Queries for WordPress Security
 
-Este directorio contiene queries personalizadas de CodeQL específicas para validar las mejores prácticas de seguridad en WordPress.
+This directory contains custom CodeQL queries specifically designed to validate WordPress security best practices.
 
-## 📋 Queries Implementadas
+## 📋 Implemented Queries
 
 ### 1. **Missing Nonce Verification** (`missing-nonce.ql`)
-- **Severidad**: Error (8.0/10)
-- **Detecta**: Handlers AJAX de WordPress sin verificación de nonce
-- **Previene**: Ataques CSRF (Cross-Site Request Forgery)
-- **Ejemplo**:
+
+- **Severity**: Error (8.0/10)
+- **Detects**: WordPress AJAX handlers without nonce verification
+- **Prevents**: CSRF (Cross-Site Request Forgery) attacks
+- **Example**:
   ```php
   // ❌ INCORRECTO
   add_action('wp_ajax_my_action', 'my_ajax_handler');
@@ -25,10 +26,12 @@ Este directorio contiene queries personalizadas de CodeQL específicas para vali
   ```
 
 ### 2. **Unescaped Output** (`unescaped-output.ql`)
-- **Severidad**: Warning (7.0/10)
-- **Detecta**: Output sin escape en echo/print
-- **Previene**: Ataques XSS (Cross-Site Scripting)
-- **Ejemplo**:
+
+- **Severity**: Warning (7.0/10)
+- **Detects**: Output without escaping in echo/print statements
+- **Prevents**: XSS (Cross-Site Scripting) attacks
+- **Example**:
+
   ```php
   // ❌ INCORRECTO
   echo $user_input;
@@ -41,10 +44,12 @@ Este directorio contiene queries personalizadas de CodeQL específicas para vali
   ```
 
 ### 3. **Missing Capability Check** (`missing-capability-check.ql`)
-- **Severidad**: Error (8.5/10)
-- **Detecta**: Páginas de admin sin verificación de capacidades
-- **Previene**: Acceso no autorizado a funciones de administración
-- **Ejemplo**:
+
+- **Severity**: Error (8.5/10)
+- **Detects**: Admin pages without capability verification
+- **Prevents**: Unauthorized access to admin functions
+- **Example**:
+
   ```php
   // ❌ INCORRECTO
   add_menu_page('My Plugin', 'My Plugin', 'manage_options', 'my-plugin');
@@ -61,19 +66,21 @@ Este directorio contiene queries personalizadas de CodeQL específicas para vali
   }
   ```
 
-## 🔧 Configuración
+## 🔧 Configuration
 
-Las queries se ejecutan automáticamente en cada:
-- Push a `main` o `develop`
-- Pull Request a `main`
-- Análisis semanal programado (Lunes 2:30 AM UTC)
+The queries run automatically on every:
 
-### Configuración del Workflow
+- Push to `main` or `develop`
+- Pull Request to `main`
+- Weekly scheduled analysis (Mondays at 2:30 AM UTC)
 
-El archivo `.github/codeql/codeql-config.yml` configura:
-- Queries personalizadas de WordPress
-- Suite `security-extended` (queries adicionales de seguridad)
-- Suite `security-and-quality` (seguridad + calidad de código)
+### Workflow Configuration
+
+The `.github/codeql/codeql-config.yml` file configures:
+
+- Custom WordPress queries
+- `security-extended` suite (additional security queries)
+- `security-and-quality` suite (security + code quality)
 
 ## 📊 Niveles de Severidad
 
@@ -83,19 +90,21 @@ El archivo `.github/codeql/codeql-config.yml` configura:
 | Warning | 6.0-7.9 | ⚠️ Revisión recomendada |
 | Note | < 6.0 | ℹ️ Informativo |
 
-## 🚀 Queries Adicionales Planificadas
+## 🚀 Planned Additional Queries
 
-### Fase 2:
-- [ ] Detección de SQL injection en queries personalizadas
-- [ ] Validación de sanitización de inputs (`$_GET`, `$_POST`, `$_REQUEST`)
-- [ ] Detección de archivos subidos sin validación
-- [ ] Verificación de uso correcto de `wp_remote_get()` vs `file_get_contents()`
+### Phase 2
 
-### Fase 3:
-- [ ] Análisis de permisos de archivos
-- [ ] Detección de secrets hardcodeados (API keys, passwords)
-- [ ] Validación de transients y opciones de WordPress
-- [ ] Análisis de hooks y filters de WordPress
+- [ ] SQL injection detection in custom queries
+- [ ] Input sanitization validation (`$_GET`, `$_POST`, `$_REQUEST`)
+- [ ] File upload validation detection
+- [ ] Correct usage verification of `wp_remote_get()` vs `file_get_contents()`
+
+### Phase 3
+
+- [ ] File permissions analysis
+- [ ] Hardcoded secrets detection (API keys, passwords)
+- [ ] WordPress transients and options validation
+- [ ] WordPress hooks and filters analysis
 
 ## 📚 Referencias
 
@@ -104,34 +113,35 @@ El archivo `.github/codeql/codeql-config.yml` configura:
 - [WordPress Security Best Practices](https://developer.wordpress.org/apis/security/)
 - [CodeQL Query Writing](https://codeql.github.com/docs/writing-codeql-queries/)
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-Para agregar nuevas queries:
-1. Crear archivo `.ql` en `.github/codeql/custom-queries/`
-2. Seguir el formato de queries existentes
-3. Agregar documentación con `@name`, `@description`, `@security-severity`
-4. Actualizar `codeql-config.yml` si es necesario
-5. Probar localmente con CodeQL CLI
-6. Crear Pull Request
+To add new queries:
 
-## 🔍 Testing Local
+1. Create a `.ql` file in `.github/codeql/custom-queries/`
+2. Follow the format of existing queries
+3. Add documentation with `@name`, `@description`, `@security-severity`
+4. Update `codeql-config.yml` if necessary
+5. Test locally with CodeQL CLI
+6. Create a Pull Request
+
+## 🔍 Local Testing
 
 ```bash
-# Instalar CodeQL CLI
+# Install CodeQL CLI
 brew install codeql
 
-# Crear database
+# Create database
 codeql database create wordpress-db --language=php
 
-# Ejecutar query específica
+# Run specific query
 codeql query run .github/codeql/custom-queries/missing-nonce.ql \
   --database=wordpress-db
 
-# Ver resultados
+# View results
 codeql bqrs decode results.bqrs --format=sarif-latest
 ```
 
 ---
 
-**Mantenedor**: Silver Assist Security Team  
-**Última actualización**: Noviembre 2025
+**Maintainer**: Silver Assist Security Team  
+**Last Updated**: November 2025
