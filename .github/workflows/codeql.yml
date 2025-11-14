@@ -40,8 +40,6 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
-          # Use custom WordPress security queries for PHP
-          config-file: ${{ matrix.language == 'php' && './.github/codeql/codeql-config.yml' || '' }}
           # Include security-extended and security-and-quality query suites
           queries: security-extended,security-and-quality
 

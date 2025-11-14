@@ -1,8 +1,16 @@
 name: WordPress Security Analysis
 version: 1.0.0
-queries:
-  - uses: ./.github/codeql/custom-queries/missing-nonce.ql
-  - uses: ./.github/codeql/custom-queries/unescaped-output.ql
-  - uses: ./.github/codeql/custom-queries/missing-capability-check.ql
-  - uses: security-extended
-  - uses: security-and-quality
+
+# Disable default queries to use only custom queries
+disable-default-queries: false
+
+# Include additional query packs
+packs:
+  - codeql/php-queries:codeql-suites/php-security-extended.qls
+  - codeql/javascript-queries:codeql-suites/javascript-security-extended.qls
+
+# Custom queries will be added in future phases
+# queries:
+#   - uses: ./.github/codeql/custom-queries/missing-nonce.ql
+#   - uses: ./.github/codeql/custom-queries/unescaped-output.ql
+#   - uses: ./.github/codeql/custom-queries/missing-capability-check.ql
