@@ -11,6 +11,8 @@ jobs:
     unified-quality-checks:
         name: Quality Checks (PHP ${{ matrix.php-version }}, WP ${{ matrix.wordpress-version }})
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
         strategy:
             fail-fast: false
@@ -148,6 +150,8 @@ jobs:
         name: CF7 Integration (PHP ${{ matrix.php-version }}, WP ${{ matrix.wordpress-version }})
         runs-on: ubuntu-latest
         needs: unified-quality-checks  # Run after main quality checks
+        permissions:
+            contents: read
 
         strategy:
             fail-fast: false
@@ -270,6 +274,8 @@ jobs:
     # ===================================
     syntax-validation:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
         
         # Fast syntax validation without WordPress environment
         strategy:
@@ -326,6 +332,8 @@ jobs:
 
     security-check:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
         steps:
             - name: Checkout code
@@ -424,6 +432,8 @@ jobs:
 
     test-validation:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
         steps:
             - name: Checkout code
@@ -501,6 +511,8 @@ jobs:
 
     compatibility-check:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
         steps:
             - name: Checkout code
