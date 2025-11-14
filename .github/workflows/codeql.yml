@@ -27,6 +27,8 @@ jobs:
             build-mode: none
           - language: actions
             build-mode: none
+          - language: php
+            build-mode: none
 
     steps:
       - name: Checkout repository
