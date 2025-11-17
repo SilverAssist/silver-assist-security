@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- 🔧 **GitHub Workflow Permissions**: Added `contents: write` and `pull-requests: write` permissions to `.github/workflows/quality-checks.yml` for proper GitHub App operations
+- 📚 **Documentation Policy Reinforced**: Enhanced Copilot instructions with explicit examples to prevent creation of standalone `.md` files (e.g., `FIX_SUMMARY.md`, `GITHUB_APP_PERMISSIONS.md`)
+  - All documentation must be consolidated in README.md, CHANGELOG.md, or copilot-instructions.md
+  - No separate documentation files allowed under any circumstances
+  - Prevents documentation fragmentation and repository clutter
+
+### Removed
+- 🗑️ Deleted temporary documentation files that violated consolidation policy (`.github/FIX_SUMMARY.md`, `.github/GITHUB_APP_PERMISSIONS.md`)
+
 ## [1.1.15] - 2025-11-06
 
 ### 🎛️ Major Feature: Tab Navigation System & Contact Form 7 Integration

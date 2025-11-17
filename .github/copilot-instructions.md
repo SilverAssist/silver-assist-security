@@ -9,29 +9,41 @@
 2. **CHANGELOG.md** - Version history, changes, updates, release notes
 3. **.github/copilot-instructions.md** (this file) - Development guidelines, architecture, coding standards
 
-**FORBIDDEN:**
-- ❌ Creating files like `docs/FEATURE-GUIDE.md`
-- ❌ Creating `CONTRIBUTING.md`, `ARCHITECTURE.md`, `API.md`, etc.
-- ❌ Any separate documentation files in `docs/` directory
-- ❌ Splitting documentation across multiple files
+**FORBIDDEN - NEVER CREATE THESE FILES:**
+- ❌ `docs/FEATURE-GUIDE.md`, `docs/ARCHITECTURE.md`, or ANY file in `docs/` directory
+- ❌ `CONTRIBUTING.md`, `API.md`, `DEVELOPMENT.md`, `TESTING.md`
+- ❌ `.github/FIX_SUMMARY.md`, `.github/GITHUB_APP_PERMISSIONS.md`, or similar
+- ❌ `TROUBLESHOOTING.md`, `FAQ.md`, `SETUP.md`
+- ❌ ANY standalone `.md` file for documentation, guides, fixes, or summaries
+- ❌ Splitting documentation across multiple files under ANY circumstances
 
-**REQUIRED:**
+**REQUIRED - ALWAYS DO THIS INSTEAD:**
 - ✅ Add all new documentation to appropriate section in README.md
 - ✅ Document all changes in CHANGELOG.md under [Unreleased] section
-- ✅ Update copilot-instructions.md for development guidelines
+- ✅ Update copilot-instructions.md for development guidelines ONLY
 - ✅ Keep documentation consolidated in these three files ONLY
+- ✅ Update existing sections rather than creating new files
 
 **Why this rule exists:**
-- Prevents documentation fragmentation
-- Reduces maintenance overhead
+- Prevents documentation fragmentation and file proliferation
+- Reduces maintenance overhead significantly
 - Single source of truth for all information
 - Easier to find and update documentation
 - Consistent with project philosophy
+- Avoids clutter in repository structure
 
 **If you need to document something:**
-1. **User features/guides** → Add to README.md
-2. **Version changes/updates** → Add to CHANGELOG.md
-3. **Development patterns/architecture** → Add to copilot-instructions.md
+1. **User features/guides/fixes/troubleshooting** → Add to README.md (appropriate section)
+2. **Version changes/updates/bug fixes** → Add to CHANGELOG.md under [Unreleased]
+3. **Development patterns/architecture/coding standards** → Add to copilot-instructions.md
+
+**CRITICAL EXAMPLES:**
+- ❌ **WRONG**: Create `FIX_SUMMARY.md` to document a fix
+- ✅ **CORRECT**: Update CHANGELOG.md with fix details and README.md if user-facing
+- ❌ **WRONG**: Create `GITHUB_APP_PERMISSIONS.md` for permission setup
+- ✅ **CORRECT**: Add to README.md under "GitHub App Configuration" section
+- ❌ **WRONG**: Create `NEW_FEATURE_GUIDE.md` for feature documentation
+- ✅ **CORRECT**: Update README.md with feature details in appropriate section
 
 ---
 
