@@ -67,7 +67,7 @@ jobs:
       
       - name: Upload Composer outdated report
         if: steps.composer-outdated.outputs.outdated_count > 0
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: composer-outdated-report
           path: composer-outdated.json
@@ -135,7 +135,7 @@ jobs:
       
       - name: Upload npm outdated report
         if: steps.npm-outdated.outputs.has_outdated == 'true'
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: npm-outdated-report
           path: npm-outdated.json
@@ -192,7 +192,7 @@ jobs:
       
       - name: Upload security reports
         if: always()
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: security-audit-reports
           path: |
