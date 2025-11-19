@@ -1051,6 +1051,84 @@ vendor/bin/phpunit --coverage-html coverage/
 - ✅ **Auto-Cleanup**: Each test runs in isolation with automatic cleanup
 - ✅ **Comprehensive**: Test complete WordPress functionality, not just PHP logic
 
+#### **Test Script Environment Variables**
+
+**The `scripts/run-quality-checks.sh` script accepts the following environment variables for configuration:**
+
+```bash
+# WordPress Test Suite Configuration
+export WP_TESTS_DIR="/path/to/wordpress-tests-lib"  # WordPress test suite directory
+export WP_VERSION="latest"                          # WordPress version (latest, 6.5, 6.6, etc.)
+
+# Database Recreation Control
+export FORCE_DB_RECREATE="true"                      # Force database recreation without prompt
+
+# Contact Form 7 Installation
+export FORCE_CF7_REINSTALL="true"                    # Force CF7 reinstall without prompt
+
+# CI/CD Environment Detection
+export CI="true"                                      # Indicates running in CI environment (auto-sets non-interactive mode)
+```
+
+**Environment Variable Details:**
+
+- **WP_TESTS_DIR**: Path to WordPress Test Suite installation
+  - Default: `$TMPDIR/wordpress-tests-lib` or `/tmp/wordpress-tests-lib`
+  - Exported to child scripts (install-wp-tests.sh, install-cf7-for-tests.sh)
+  - Required for PHPUnit to locate WordPress test framework
+
+- **WP_VERSION**: WordPress version for testing
+  - Default: `latest`
+  - Values: `latest`, `6.5`, `6.6`, `trunk`, or any valid WordPress version
+  - Used by install-wp-tests.sh to download correct WordPress version
+
+- **FORCE_DB_RECREATE**: Skip database recreation prompt
+  - Default: Not set (prompts user)
+  - Set to `true` for non-interactive execution (CI/CD)
+  - Automatically recreates test database without confirmation
+
+- **FORCE_CF7_REINSTALL**: Skip Contact Form 7 reinstall prompt
+  - Default: Not set (prompts user)
+  - Set to `true` for non-interactive execution
+  - Automatically reinstalls CF7 plugin without confirmation
+
+- **CI**: Continuous Integration environment indicator
+  - Default: Not set (interactive mode)
+  - Automatically set by GitHub Actions and other CI systems
+  - Enables non-interactive mode for all prompts
+
+**Usage Examples:**
+
+```bash
+# Local development - interactive mode
+bash scripts/run-quality-checks.sh
+
+# Local development - non-interactive with database recreation
+FORCE_DB_RECREATE=true bash scripts/run-quality-checks.sh
+
+# CI/CD environment - full automation
+WP_VERSION=6.6 WP_TESTS_DIR=/tmp/wordpress-tests-lib FORCE_DB_RECREATE=true FORCE_CF7_REINSTALL=true CI=true bash scripts/run-quality-checks.sh
+
+# Test with specific WordPress version
+WP_VERSION=6.5 bash scripts/run-quality-checks.sh
+
+# Custom test suite location
+WP_TESTS_DIR=/var/tmp/wp-tests bash scripts/run-quality-checks.sh
+```
+
+**GitHub Actions Integration:**
+
+```yaml
+- name: Run Quality Checks
+  env:
+    WP_VERSION: ${{ matrix.wordpress }}
+    WP_TESTS_DIR: /tmp/wordpress-tests-lib
+    FORCE_DB_RECREATE: true
+    FORCE_CF7_REINSTALL: true
+    CI: true
+  run: bash scripts/run-quality-checks.sh --non-interactive
+```
+
 #### **Test Writing Pattern**
 
 ```php

@@ -66,13 +66,13 @@ class SecurityAjaxHandler {
 	 * @return void
 	 */
 	public function register_ajax_handlers(): void {
-		\add_action( 'wp_ajax_silver_assist_get_security_status', [ $this, 'get_security_status' ] );
-		\add_action( 'wp_ajax_silver_assist_get_login_stats', [ $this, 'get_login_stats' ] );
-		\add_action( 'wp_ajax_silver_assist_get_blocked_ips', [ $this, 'get_blocked_ips' ] );
-		\add_action( 'wp_ajax_silver_assist_get_security_logs', [ $this, 'get_security_logs' ] );
-		\add_action( 'wp_ajax_silver_assist_auto_save', [ $this, 'auto_save' ] );
-		\add_action( 'wp_ajax_silver_assist_validate_admin_path', [ $this, 'validate_admin_path' ] );
-		\add_action( 'wp_ajax_silver_assist_add_manual_ip', [ $this, 'add_manual_ip' ] );
+		\add_action( 'wp_ajax_silver_assist_get_security_status', array( $this, 'get_security_status' ) );
+		\add_action( 'wp_ajax_silver_assist_get_login_stats', array( $this, 'get_login_stats' ) );
+		\add_action( 'wp_ajax_silver_assist_get_blocked_ips', array( $this, 'get_blocked_ips' ) );
+		\add_action( 'wp_ajax_silver_assist_get_security_logs', array( $this, 'get_security_logs' ) );
+		\add_action( 'wp_ajax_silver_assist_auto_save', array( $this, 'auto_save' ) );
+		\add_action( 'wp_ajax_silver_assist_validate_admin_path', array( $this, 'validate_admin_path' ) );
+		\add_action( 'wp_ajax_silver_assist_add_manual_ip', array( $this, 'add_manual_ip' ) );
 	}
 
 	/**
@@ -83,11 +83,11 @@ class SecurityAjaxHandler {
 	 */
 	public function get_security_status(): void {
 		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
 		}
 
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
 		try {
@@ -97,9 +97,9 @@ class SecurityAjaxHandler {
 			SecurityHelper::log_security_event(
 				'AJAX_ERROR',
 				"Security status retrieval failed: {$e->getMessage()}",
-				[ 'function' => __FUNCTION__ ]
+				array( 'function' => __FUNCTION__ )
 			);
-			\wp_send_json_error( [ 'error' => \__( 'Failed to retrieve security status', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Failed to retrieve security status', 'silver-assist-security' ) ) );
 		}
 	}
 
@@ -111,11 +111,11 @@ class SecurityAjaxHandler {
 	 */
 	public function get_login_stats(): void {
 		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
 		}
 
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
 		try {
@@ -125,9 +125,9 @@ class SecurityAjaxHandler {
 			SecurityHelper::log_security_event(
 				'AJAX_ERROR',
 				"Login statistics retrieval failed: {$e->getMessage()}",
-				[ 'function' => __FUNCTION__ ]
+				array( 'function' => __FUNCTION__ )
 			);
-			\wp_send_json_error( [ 'error' => \__( 'Failed to retrieve login statistics', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Failed to retrieve login statistics', 'silver-assist-security' ) ) );
 		}
 	}
 
@@ -139,11 +139,11 @@ class SecurityAjaxHandler {
 	 */
 	public function get_blocked_ips(): void {
 		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
 		}
 
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
 		try {
@@ -153,9 +153,9 @@ class SecurityAjaxHandler {
 			SecurityHelper::log_security_event(
 				'AJAX_ERROR',
 				"Blocked IPs retrieval failed: {$e->getMessage()}",
-				[ 'function' => __FUNCTION__ ]
+				array( 'function' => __FUNCTION__ )
 			);
-			\wp_send_json_error( [ 'error' => \__( 'Failed to retrieve blocked IPs', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Failed to retrieve blocked IPs', 'silver-assist-security' ) ) );
 		}
 	}
 
@@ -167,11 +167,11 @@ class SecurityAjaxHandler {
 	 */
 	public function get_security_logs(): void {
 		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
 		}
 
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
 		try {
@@ -181,9 +181,9 @@ class SecurityAjaxHandler {
 			SecurityHelper::log_security_event(
 				'AJAX_ERROR',
 				"Security logs retrieval failed: {$e->getMessage()}",
-				[ 'function' => __FUNCTION__ ]
+				array( 'function' => __FUNCTION__ )
 			);
-			\wp_send_json_error( [ 'error' => \__( 'Failed to retrieve security logs', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Failed to retrieve security logs', 'silver-assist-security' ) ) );
 		}
 	}
 
@@ -195,15 +195,15 @@ class SecurityAjaxHandler {
 	 */
 	public function auto_save(): void {
 		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
 		}
 
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
 		try {
-			$saved_settings = [];
+			$saved_settings = array();
 
 			// Auto-save login security settings
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in validate_ajax_request above
@@ -253,14 +253,14 @@ class SecurityAjaxHandler {
 			}
 
 			// Auto-save toggle settings (checkboxes)
-			$toggle_settings = [
+			$toggle_settings = array(
 				'silver_assist_password_strength_enforcement',
 				'silver_assist_bot_protection',
 				'silver_assist_graphql_headless_mode',
 				'silver_assist_admin_hide_enabled',
 				'silver_assist_ip_blacklist_enabled',
 				'silver_assist_under_attack_mode',
-			];
+			);
 
 			foreach ( $toggle_settings as $setting ) {
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in validate_ajax_request above
@@ -275,15 +275,15 @@ class SecurityAjaxHandler {
 			SecurityHelper::log_security_event(
 				'SETTINGS_AUTO_SAVE',
 				'Security settings auto-saved successfully',
-				[
+				array(
 					'saved_count' => count( $saved_settings ),
 					'settings'    => array_keys( $saved_settings ),
 					'user_id'     => \get_current_user_id(),
-				]
+				)
 			);
 
 			\wp_send_json_success(
-				[
+				array(
 					'message'        => sprintf(
 						/* translators: %d: number of settings saved */
 						\__( '%d settings auto-saved successfully', 'silver-assist-security' ),
@@ -291,19 +291,19 @@ class SecurityAjaxHandler {
 					),
 					'saved_settings' => $saved_settings,
 					'timestamp'      => \current_time( 'mysql' ),
-				]
+				)
 			);
 
 		} catch ( \Exception $e ) {
 			SecurityHelper::log_security_event(
 				'SETTINGS_AUTO_SAVE_ERROR',
 				"Auto-save failed: {$e->getMessage()}",
-				[
+				array(
 					'function' => __FUNCTION__,
 					'error'    => $e->getMessage(),
-				]
+				)
 			);
-			\wp_send_json_error( [ 'error' => \__( 'Failed to save settings', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Failed to save settings', 'silver-assist-security' ) ) );
 		}
 	}
 
@@ -315,17 +315,16 @@ class SecurityAjaxHandler {
 	 */
 	public function validate_admin_path(): void {
 		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
 		}
 
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in validate_ajax_request above
 		if ( ! isset( $_POST['admin_path'] ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Admin path is required', 'silver-assist-security' ) ] );
-			return;
+			\wp_send_json_error( array( 'error' => \__( 'Admin path is required', 'silver-assist-security' ) ) );
 		}
 
 		try {
@@ -339,76 +338,52 @@ class SecurityAjaxHandler {
 				SecurityHelper::log_security_event(
 					'ADMIN_PATH_VALIDATION_FAILED',
 					'Invalid admin path validation attempt',
-					[
+					array(
 						'path'       => $admin_path,
 						'error_type' => $validation_result['error_type'],
 						'error'      => $validation_result['error_message'],
 						'user_id'    => \get_current_user_id(),
-					]
+					)
 				);
 
 				\wp_send_json_error(
-					[
+					array(
 						'error'      => $validation_result['error_message'],
 						'error_type' => $validation_result['error_type'],
 						'valid'      => false,
-					]
+					)
 				);
-				return;
-			}
-
-			// Check for conflicts with existing WordPress paths
-			$conflicts = PathValidator::check_path_conflicts( $validation_result['sanitized_path'] );
-			if ( ! empty( $conflicts ) ) {
-				SecurityHelper::log_security_event(
-					'ADMIN_PATH_CONFLICT',
-					'Admin path conflicts with existing WordPress paths',
-					[
-						'path'      => $admin_path,
-						'conflicts' => $conflicts,
-						'user_id'   => \get_current_user_id(),
-					]
-				);
-
-				\wp_send_json_error(
-					[
-						'error'     => \__( 'Path conflicts with existing WordPress paths', 'silver-assist-security' ),
-						'conflicts' => $conflicts,
-						'valid'     => false,
-					]
-				);
-				return;
 			}
 
 			SecurityHelper::log_security_event(
 				'ADMIN_PATH_VALIDATION_SUCCESS',
 				'Admin path validation successful',
-				[
+				array(
 					'path'           => $admin_path,
 					'sanitized_path' => $validation_result['sanitized_path'],
 					'user_id'        => \get_current_user_id(),
-				]
+				)
 			);
 
 			\wp_send_json_success(
-				[
+				array(
 					'valid'          => true,
 					'sanitized_path' => $validation_result['sanitized_path'],
 					'message'        => \__( 'Admin path is valid', 'silver-assist-security' ),
-				]
+				)
 			);
 
 		} catch ( \Exception $e ) {
 			SecurityHelper::log_security_event(
 				'ADMIN_PATH_VALIDATION_ERROR',
 				"Admin path validation failed: {$e->getMessage()}",
-				[
+				array(
 					'function' => __FUNCTION__,
 					'error'    => $e->getMessage(),
 					'user_id'  => \get_current_user_id(),
-				]
+				)
 			);
-			\wp_send_json_error( [ 'error' => \__( 'Failed to validate admin path', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Failed to validate admin path', 'silver-assist-security' ) ) );
 		}
 	}
 
@@ -420,11 +395,11 @@ class SecurityAjaxHandler {
 	 */
 	public function add_manual_ip(): void {
 		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
 		}
 
 		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( [ 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
 		try {
@@ -432,13 +407,13 @@ class SecurityAjaxHandler {
 			$ip_address = \sanitize_text_field( \wp_unslash( $_POST['ip_address'] ?? '' ) );
 
 			if ( empty( $ip_address ) ) {
-				\wp_send_json_error( [ 'error' => \__( 'IP address is required', 'silver-assist-security' ) ] );
+				\wp_send_json_error( array( 'error' => \__( 'IP address is required', 'silver-assist-security' ) ) );
 				return;
 			}
 
 			// Validate IP format
 			if ( ! filter_var( $ip_address, FILTER_VALIDATE_IP ) ) {
-				\wp_send_json_error( [ 'error' => \__( 'Invalid IP address format', 'silver-assist-security' ) ] );
+				\wp_send_json_error( array( 'error' => \__( 'Invalid IP address format', 'silver-assist-security' ) ) );
 				return;
 			}
 
@@ -450,45 +425,42 @@ class SecurityAjaxHandler {
 
 			// Add IP to blacklist
 			$ip_blacklist = new IPBlacklist();
-			$success      = $ip_blacklist->add_ip( $ip_address, $reason );
+			$duration     = 86400 * 30; // 30 days default
+			$ip_blacklist->add_to_blacklist( $ip_address, $reason, $duration );
 
-			if ( $success ) {
-				SecurityHelper::log_security_event(
-					'MANUAL_IP_BLOCKED',
-					"Administrator manually blocked IP: {$ip_address}",
-					[
-						'function' => __FUNCTION__,
-						'ip'       => $ip_address,
-						'reason'   => $reason,
-						'user_id'  => \get_current_user_id(),
-					]
-				);
+			SecurityHelper::log_security_event(
+				'MANUAL_IP_BLOCKED',
+				"Administrator manually blocked IP: {$ip_address}",
+				array(
+					'function' => __FUNCTION__,
+					'ip'       => $ip_address,
+					'reason'   => $reason,
+					'user_id'  => \get_current_user_id(),
+				)
+			);
 
-				\wp_send_json_success(
-					[
-						'message' => sprintf(
-							/* translators: %s: IP address */
-							\__( 'IP address %s has been successfully blocked', 'silver-assist-security' ),
-							$ip_address
-						),
-						'ip' => $ip_address,
-					]
-					);
-			} else {
-				\wp_send_json_error( [ 'error' => \__( 'Failed to block IP address', 'silver-assist-security' ) ] );
-			}
+			\wp_send_json_success(
+				array(
+					'message' => sprintf(
+						/* translators: %s: IP address */
+						\__( 'IP address %s has been successfully blocked', 'silver-assist-security' ),
+						$ip_address
+					),
+					'ip'      => $ip_address,
+				)
+			);
 
 		} catch ( \Exception $e ) {
 			SecurityHelper::log_security_event(
 				'MANUAL_IP_BLOCK_ERROR',
 				"Failed to manually block IP: {$e->getMessage()}",
-				[
+				array(
 					'function' => __FUNCTION__,
 					'error'    => $e->getMessage(),
 					'user_id'  => \get_current_user_id(),
-				]
+				)
 			);
-			\wp_send_json_error( [ 'error' => \__( 'Failed to block IP address', 'silver-assist-security' ) ] );
+			\wp_send_json_error( array( 'error' => \__( 'Failed to block IP address', 'silver-assist-security' ) ) );
 		}
 	}
 }

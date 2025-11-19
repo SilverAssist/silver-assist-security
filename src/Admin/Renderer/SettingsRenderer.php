@@ -113,7 +113,7 @@ class SettingsRenderer {
 										step="60" 
 										value="<?php echo \esc_attr( $config['lockout_duration'] ); ?>">
 								<span class="slider-value" id="lockout-duration-value">
-									<?php echo \esc_html( \round( $config['lockout_duration'] / 60 ) ); ?>
+									<?php echo \esc_html( (string) \round( $config['lockout_duration'] / 60 ) ); ?>
 								</span>
 								<p class="description">
 									<?php \esc_html_e( 'Duration to block IP after failed attempts (1-60 minutes)', 'silver-assist-security' ); ?>
@@ -213,7 +213,7 @@ class SettingsRenderer {
 				
 				<!-- Display current GraphQL configuration -->
 				<div class="graphql-config-display">
-					<?php echo $this->config_manager->get_configuration_html(); ?>
+					<?php echo $this->config_manager->get_settings_display(); ?>
 				</div>
 				
 				<form method="post" action="" id="graphql-settings-form">
@@ -498,7 +498,7 @@ class SettingsRenderer {
 	 * @return array Configuration values
 	 */
 	private function get_current_config(): array {
-		return [
+		return array(
 			'login_attempts'                => DefaultConfig::get_option( 'silver_assist_login_attempts' ),
 			'lockout_duration'              => DefaultConfig::get_option( 'silver_assist_lockout_duration' ),
 			'session_timeout'               => DefaultConfig::get_option( 'silver_assist_session_timeout' ),
@@ -514,6 +514,6 @@ class SettingsRenderer {
 			'ip_blacklist_duration'         => DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' ),
 			'under_attack_enabled'          => DefaultConfig::get_option( 'silver_assist_under_attack_enabled' ),
 			'attack_threshold'              => DefaultConfig::get_option( 'silver_assist_attack_threshold' ),
-		];
+		);
 	}
 }

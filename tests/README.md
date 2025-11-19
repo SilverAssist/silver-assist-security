@@ -30,6 +30,91 @@ vendor/bin/phpunit tests/Unit/DefaultConfigTest.php
 vendor/bin/phpunit --coverage-html coverage/
 ```
 
+## Environment Variables
+
+The `scripts/run-quality-checks.sh` script accepts environment variables for automated testing:
+
+### Available Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WP_TESTS_DIR` | `/tmp/wordpress-tests-lib` | WordPress Test Suite installation directory |
+| `WP_VERSION` | `latest` | WordPress version to test against (`latest`, `6.5`, `6.6`, `trunk`) |
+| `FORCE_DB_RECREATE` | Not set | Skip database recreation prompt (`true` for non-interactive) |
+| `FORCE_CF7_REINSTALL` | Not set | Skip Contact Form 7 reinstall prompt (`true` for non-interactive) |
+| `CI` | Not set | Continuous Integration indicator (enables non-interactive mode) |
+
+### Usage Examples
+
+```bash
+# Interactive mode (default)
+bash scripts/run-quality-checks.sh
+
+# Non-interactive with database recreation
+FORCE_DB_RECREATE=true bash scripts/run-quality-checks.sh
+
+# Test with specific WordPress version
+WP_VERSION=6.5 bash scripts/run-quality-checks.sh
+
+# Full CI/CD automation
+WP_VERSION=6.6 \
+WP_TESTS_DIR=/tmp/wordpress-tests-lib \
+FORCE_DB_RECREATE=true \
+FORCE_CF7_REINSTALL=true \
+CI=true \
+bash scripts/run-quality-checks.sh --non-interactive
+
+# Custom test suite location
+WP_TESTS_DIR=/var/tmp/wp-tests bash scripts/run-quality-checks.sh
+```
+
+### GitHub Actions Integration
+
+The environment variables are automatically configured in CI/CD:
+
+```yaml
+- name: Run Quality Checks
+  env:
+    WP_VERSION: ${{ matrix.wordpress }}  # From matrix strategy
+    WP_TESTS_DIR: /tmp/wordpress-tests-lib
+    FORCE_DB_RECREATE: true              # Non-interactive mode
+    FORCE_CF7_REINSTALL: true            # Auto-install CF7
+    CI: true                              # CI environment
+  run: bash scripts/run-quality-checks.sh --non-interactive
+```
+
+### Variable Details
+
+**WP_TESTS_DIR**:
+- Specifies WordPress Test Suite location
+- Exported to all child scripts (install-wp-tests.sh, install-cf7-for-tests.sh)
+- Required for PHPUnit to locate WordPress test framework
+- Default location works for most environments
+
+**WP_VERSION**:
+- Controls which WordPress version to install and test against
+- Values: `latest` (newest stable), `6.5`, `6.6`, `trunk` (development), or any valid version
+- Used by install-wp-tests.sh for WordPress core download
+- Enables testing across multiple WordPress versions in CI/CD matrix
+
+**FORCE_DB_RECREATE**:
+- Bypasses interactive "Are you sure?" prompt for database recreation
+- Essential for automated CI/CD pipelines
+- Set to `true` to enable non-interactive database setup
+- Ensures clean test database on every run
+
+**FORCE_CF7_REINSTALL**:
+- Bypasses interactive prompt for Contact Form 7 plugin reinstallation
+- Required for non-interactive CI/CD execution
+- Set to `true` to automatically reinstall CF7 without confirmation
+- Ensures correct CF7 version for integration tests
+
+**CI**:
+- Automatically set by GitHub Actions, GitLab CI, Travis CI, etc.
+- Enables non-interactive mode for all operations
+- Suppresses user prompts and interactive confirmations
+- Optimizes output for CI/CD log readability
+
 ## Test Structure
 
 ```

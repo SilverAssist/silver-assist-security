@@ -60,7 +60,7 @@ class AdminPageRenderer {
 			\wp_die(
 				\esc_html__( 'You do not have sufficient permissions to access this page.', 'silver-assist-security' ),
 				\esc_html__( 'Permission Denied', 'silver-assist-security' ),
-				[ 'response' => 403 ]
+				array( 'response' => 403 )
 			);
 		}
 
@@ -155,7 +155,7 @@ class AdminPageRenderer {
 	 * @return array Configuration values
 	 */
 	public function get_current_config(): array {
-		return [
+		return array(
 			'login_attempts'                => DefaultConfig::get_option( 'silver_assist_login_attempts' ),
 			'lockout_duration'              => DefaultConfig::get_option( 'silver_assist_lockout_duration' ),
 			'session_timeout'               => DefaultConfig::get_option( 'silver_assist_session_timeout' ),
@@ -171,6 +171,6 @@ class AdminPageRenderer {
 			'ip_blacklist_duration'         => DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' ),
 			'under_attack_enabled'          => DefaultConfig::get_option( 'silver_assist_under_attack_enabled' ),
 			'attack_threshold'              => DefaultConfig::get_option( 'silver_assist_attack_threshold' ),
-		];
+		);
 	}
 }

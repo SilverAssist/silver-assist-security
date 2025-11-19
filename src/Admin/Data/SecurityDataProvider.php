@@ -181,7 +181,7 @@ class SecurityDataProvider {
 				'blocked_at'    => \gmdate( 'Y-m-d H:i:s', $blocked_at ),
 				'expires_at'    => \gmdate( 'Y-m-d H:i:s', $expires ),
 				'time_left'     => max( 0, $expires - time() ),
-				'time_left_str' => SecurityHelper::format_time_duration( max( 0, $expires - time() ) ),
+				'time_left_str' => SecurityHelper::format_time_duration( (int) max( 0, $expires - time() ) ),
 			);
 		}
 
@@ -271,8 +271,8 @@ class SecurityDataProvider {
 	private function get_log_file_paths(): array {
 		$paths = array();
 
-		// WP_DEBUG_LOG file location
-		if ( defined( 'WP_DEBUG_LOG' ) && is_string( WP_DEBUG_LOG ) ) {
+		// WP_DEBUG_LOG file location - can be a string path or boolean true (default location)
+		if ( defined( 'WP_DEBUG_LOG' ) && \is_string( WP_DEBUG_LOG ) && WP_DEBUG_LOG !== '' ) {
 			$paths[] = WP_DEBUG_LOG;
 		}
 

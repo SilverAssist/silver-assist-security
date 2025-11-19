@@ -940,8 +940,8 @@ class GraphQLSecurity {
 	 */
 	private function calculate_query_depth( string $query ): int {
 		// Remove comments and normalize whitespace
-		$query = preg_replace( '/\s*#[^\r\n]*/', '', $query );
-		$query = preg_replace( '/\s+/', ' ', trim( $query ) );
+		$query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
+		$query = trim( (string) preg_replace( '/\s+/', ' ', $query ) );
 
 		$max_depth     = 0;
 		$current_depth = 0;
@@ -1018,7 +1018,7 @@ class GraphQLSecurity {
 		}
 
 		$query       = $context['request_data']['query'];
-		$max_aliases = $this->config_manager->get_limit( 'aliases' );
+		$max_aliases = $this->config_manager->get_safe_limit( 'aliases' );
 
 		try {
 			$alias_count = $this->count_aliases( $query );
@@ -1068,9 +1068,9 @@ class GraphQLSecurity {
 	 */
 	private function count_aliases( string $query ): int {
 		// Remove comments and strings to avoid false positives
-		$cleaned_query = preg_replace( '/\s*#[^\r\n]*/', '', $query );
-		$cleaned_query = preg_replace( '/"[^"]*"/', '""', $cleaned_query );
-		$cleaned_query = preg_replace( "/'[^']*'/", "''", $cleaned_query );
+		$cleaned_query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
+		$cleaned_query = (string) preg_replace( '/"[^"]*"/', '""', $cleaned_query );
+		$cleaned_query = (string) preg_replace( "/'[^']*'/", "''", $cleaned_query );
 
 		// Pattern to match aliases: fieldAlias: actualField
 		// This matches word characters followed by colon and space/word
@@ -1095,7 +1095,7 @@ class GraphQLSecurity {
 		}
 
 		$query          = $context['request_data']['query'];
-		$max_directives = $this->config_manager->get_limit( 'directives' );
+		$max_directives = $this->config_manager->get_safe_limit( 'directives' );
 
 		try {
 			$directive_count = $this->count_directives( $query );
@@ -1145,9 +1145,9 @@ class GraphQLSecurity {
 	 */
 	private function count_directives( string $query ): int {
 		// Remove comments and strings to avoid false positives
-		$cleaned_query = preg_replace( '/\s*#[^\r\n]*/', '', $query );
-		$cleaned_query = preg_replace( '/"[^"]*"/', '""', $cleaned_query );
-		$cleaned_query = preg_replace( "/'[^']*'/", "''", $cleaned_query );
+		$cleaned_query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
+		$cleaned_query = (string) preg_replace( '/"[^"]*"/', '""', $cleaned_query );
+		$cleaned_query = (string) preg_replace( "/'[^']*'/", "''", $cleaned_query );
 
 		// Pattern to match directives: @directiveName
 		preg_match_all( '/@[a-zA-Z_][a-zA-Z0-9_]*/', $cleaned_query, $matches );
@@ -1171,7 +1171,7 @@ class GraphQLSecurity {
 		}
 
 		$query          = $context['request_data']['query'];
-		$max_duplicates = $this->config_manager->get_limit( 'field_duplicates' );
+		$max_duplicates = $this->config_manager->get_safe_limit( 'field_duplicates' );
 
 		try {
 			$duplicate_count = $this->count_field_duplicates( $query );
@@ -1221,9 +1221,9 @@ class GraphQLSecurity {
 	 */
 	private function count_field_duplicates( string $query ): int {
 		// Remove comments and strings to avoid false positives
-		$cleaned_query = preg_replace( '/\s*#[^\r\n]*/', '', $query );
-		$cleaned_query = preg_replace( '/"[^"]*"/', '""', $cleaned_query );
-		$cleaned_query = preg_replace( "/'[^']*'/", "''", $cleaned_query );
+		$cleaned_query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
+		$cleaned_query = (string) preg_replace( '/"[^"]*"/', '""', $cleaned_query );
+		$cleaned_query = (string) preg_replace( "/'[^']*'/", "''", $cleaned_query );
 
 		// Extract all field names (simplified pattern)
 		preg_match_all( '/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*[({]/', $cleaned_query, $matches );

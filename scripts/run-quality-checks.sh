@@ -69,24 +69,30 @@ setup_wordpress_test_suite() {
     print_header "🚀 Setting Up WordPress Test Suite"
     cd "$PROJECT_ROOT"
     
+    # Set TMPDIR to match install-wp-tests.sh behavior
+    TMPDIR=${TMPDIR:-/tmp}
+    TMPDIR=$(echo $TMPDIR | sed -e "s/\/$//")
+    
     # Set environment variables for non-interactive installation
     export FORCE_DB_RECREATE="$FORCE_DB_RECREATE"
     export FORCE_CF7_REINSTALL="$FORCE_CF7_REINSTALL"
+    export WP_TESTS_DIR="${WP_TESTS_DIR:-$TMPDIR/wordpress-tests-lib}"
+    
+    # Determine WordPress version to install
+    WP_VERSION="${WP_VERSION:-latest}"
     
     # Install WordPress Test Suite - Check if in CI environment for credentials
     if [[ "$CI" == "true" ]] || [[ "$GITHUB_ACTIONS" == "true" ]]; then
         # CI environment - use root password and 127.0.0.1
-        bash scripts/install-wp-tests.sh wordpress_test root root 127.0.0.1 latest
+        bash scripts/install-wp-tests.sh wordpress_test root root 127.0.0.1 "$WP_VERSION"
     else
         # Local environment - use empty password and localhost
-        bash scripts/install-wp-tests.sh wordpress_test root '' localhost latest
+        bash scripts/install-wp-tests.sh wordpress_test root '' localhost "$WP_VERSION"
     fi
     
     # Install Contact Form 7 for integration tests
     if [[ -f "scripts/install-cf7-for-tests.sh" ]]; then
         echo "📦 Installing Contact Form 7 for integration tests..."
-        # Export WP_TESTS_DIR for CF7 installation script
-        export WP_TESTS_DIR="${WP_TESTS_DIR:-/tmp/wordpress-tests-lib}"
         bash scripts/install-cf7-for-tests.sh
     fi
     
@@ -96,10 +102,14 @@ setup_wordpress_test_suite() {
 run_phpunit() {
     print_header "🧪 Running PHPUnit Tests"
     cd "$PROJECT_ROOT"
-    export WP_TESTS_DIR="${WP_TESTS_DIR:-/tmp/wordpress-tests-lib}"
+    
+    # Set TMPDIR to match install-wp-tests.sh behavior
+    TMPDIR=${TMPDIR:-/tmp}
+    TMPDIR=$(echo $TMPDIR | sed -e "s/\/$//")
+    export WP_TESTS_DIR="${WP_TESTS_DIR:-$TMPDIR/wordpress-tests-lib}"
     
     # Ensure WordPress Test Suite is setup
-    if [[ ! -d "/tmp/wordpress-tests-lib" ]]; then
+    if [[ ! -d "$WP_TESTS_DIR" ]]; then
         setup_wordpress_test_suite
     fi
     

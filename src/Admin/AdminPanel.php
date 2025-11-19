@@ -55,6 +55,7 @@ class AdminPanel {
 	 * Security AJAX Handler instance
 	 *
 	 * @var SecurityAjaxHandler
+	 * @phpstan-ignore-next-line Property is instantiated but used via WordPress hooks
 	 */
 	private SecurityAjaxHandler $ajax_handler;
 
@@ -90,6 +91,7 @@ class AdminPanel {
 	 * Contact Form 7 AJAX Handler instance
 	 *
 	 * @var ContactForm7AjaxHandler
+	 * @phpstan-ignore-next-line Property is instantiated but used via WordPress hooks
 	 */
 	private ContactForm7AjaxHandler $cf7_ajax_handler;
 
