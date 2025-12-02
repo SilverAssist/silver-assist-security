@@ -1300,7 +1300,10 @@ git commit -m "✨ Add IP blocking with TDD validation"
 - Requires all checks to pass first
 - Comments alert for major version updates
 - Major versions require manual review
-- **Required Permissions**: `contents: write`, `pull-requests: write`, `workflows: write` (for workflow file updates)
+- **Required Permissions**: `contents: write`, `pull-requests: write`
+- **Limitation**: GitHub Actions prevents auto-merging PRs that modify workflow files (`.github/workflows/`) as a security measure
+  - PRs updating GitHub Actions dependencies (e.g., `dependabot/fetch-metadata`) require manual merge
+  - This is a GitHub platform restriction, not a workflow configuration issue
 
 #### Critical Packages Configuration
 

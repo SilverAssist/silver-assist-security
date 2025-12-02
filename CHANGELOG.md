@@ -8,11 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- 🐛 **Dependabot Auto-Merge Permission**: Fixed GitHub Actions workflow to allow auto-merging PRs that modify workflow files
-  - Added `workflows: write` permission to `auto-merge-dependabot` job in `dependency-updates.yml`
-  - Resolves "refusing to allow a GitHub App to create or update workflow" error
-  - Required when Dependabot updates GitHub Actions dependencies (e.g., `dependabot/fetch-metadata`)
-  - Workflow can now successfully auto-merge safe dependency updates to `.github/workflows/` files
+- 🐛 **Dependabot Auto-Merge Workflow Restriction**: Documented GitHub Actions limitation for auto-merging PRs that modify workflow files
+  - GitHub Actions prevents `GITHUB_TOKEN` from modifying workflow files as a security measure
+  - Error: "refusing to allow a GitHub App to create or update workflow" when merging PR #30
+  - **Solution**: PRs that modify `.github/workflows/` files require manual approval and merge
+  - **Repository Setting Required**: Enable "Allow GitHub Actions to create and approve pull requests" in Settings → Actions → General
+  - Dependabot can still create PRs for workflow updates, but auto-merge is disabled for security
+  - This is a GitHub platform limitation, not a workflow configuration issue
 
 ### Added
 - 📦 **Contact Form 7 Stubs**: Added `miguelcolmenares/cf7-stubs` ^6.1 for enhanced PHPStan static analysis
