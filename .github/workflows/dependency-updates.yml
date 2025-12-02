@@ -209,6 +209,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      workflows: write  # Required for auto-merging PRs that modify workflow files
     
     steps:
       - name: Dependabot metadata

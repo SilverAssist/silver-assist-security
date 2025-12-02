@@ -1300,6 +1300,7 @@ git commit -m "✨ Add IP blocking with TDD validation"
 - Requires all checks to pass first
 - Comments alert for major version updates
 - Major versions require manual review
+- **Required Permissions**: `contents: write`, `pull-requests: write`, `workflows: write` (for workflow file updates)
 
 #### Critical Packages Configuration
 

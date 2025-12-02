@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- 🐛 **Dependabot Auto-Merge Permission**: Fixed GitHub Actions workflow to allow auto-merging PRs that modify workflow files
+  - Added `workflows: write` permission to `auto-merge-dependabot` job in `dependency-updates.yml`
+  - Resolves "refusing to allow a GitHub App to create or update workflow" error
+  - Required when Dependabot updates GitHub Actions dependencies (e.g., `dependabot/fetch-metadata`)
+  - Workflow can now successfully auto-merge safe dependency updates to `.github/workflows/` files
+
 ### Added
 - 📦 **Contact Form 7 Stubs**: Added `miguelcolmenares/cf7-stubs` ^6.1 for enhanced PHPStan static analysis
   - Provides Contact Form 7 function and class declaration stubs
