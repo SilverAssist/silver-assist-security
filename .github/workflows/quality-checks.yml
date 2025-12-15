@@ -94,7 +94,7 @@ jobs:
 
             - name: 📊 Upload Test Results
               if: always()
-              uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
               with:
                   name: test-results-php${{ matrix.php-version }}-wp${{ matrix.wordpress-version }}
                   path: |
@@ -218,7 +218,7 @@ jobs:
 
             - name: 📤 Upload CF7 Integration Results
               if: always()
-              uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
               with:
                   name: cf7-integration-results-php${{ matrix.php-version }}-wp${{ matrix.wordpress-version }}
                   path: |
