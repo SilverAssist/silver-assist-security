@@ -278,6 +278,16 @@ class StatisticsProvider {
 				return 0;
 			}
 
+			// Bound the read to the last 1 MB of the file to avoid scanning huge logs.
+			$max_read_bytes = 1024 * 1024; // 1 MB
+			$file_size      = @filesize( $log_file );
+
+			if ( $file_size && $file_size > $max_read_bytes ) {
+				fseek( $handle, -$max_read_bytes, SEEK_END );
+				// Discard the (likely partial) first line after seeking.
+				fgets( $handle );
+			}
+
 			// Read file line by line to handle large files
 			while ( ( $line = fgets( $handle ) ) !== false ) {
 				if ( strpos( $line, 'SILVER_ASSIST_SECURITY:' ) === false ) {

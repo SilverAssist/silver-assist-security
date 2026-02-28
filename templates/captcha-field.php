@@ -33,7 +33,7 @@ defined( 'ABSPATH' ) || exit;
 				placeholder="<?php echo esc_attr__( 'Your answer', 'silver-assist-security' ); ?>"
 			/>
 			<?php if ( ! empty( $show_refresh ) ) : ?>
-				<button type="button" class="silver-assist-captcha-refresh" title="<?php echo esc_attr__( 'Get a new question', 'silver-assist-security' ); ?>">&#x21bb;</button>
+				<button type="button" class="silver-assist-captcha-refresh" title="<?php echo esc_attr__( 'Get a new question', 'silver-assist-security' ); ?>" aria-label="<?php echo esc_attr__( 'Get a new question', 'silver-assist-security' ); ?>">&#x21bb;</button>
 			<?php endif; ?>
 		</div>
 		<input type="hidden" name="silver_captcha_token" value="<?php echo esc_attr( $token ); ?>" />

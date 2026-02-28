@@ -488,7 +488,12 @@ class SecurityAjaxHandler {
 				return;
 			}
 
-			$ip_blacklist = new IPBlacklist();
+			if ( false === filter_var( $ip_address, FILTER_VALIDATE_IP ) ) {
+				\wp_send_json_error( array( 'error' => \__( 'Invalid IP address format', 'silver-assist-security' ) ) );
+				return;
+			}
+
+			$ip_blacklist = IPBlacklist::getInstance();
 			$removed      = $ip_blacklist->remove_from_blacklist( $ip_address );
 
 			if ( $removed ) {

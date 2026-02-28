@@ -49,18 +49,18 @@ class RenderHelper {
 	/**
 	 * Render a stat value with label
 	 *
-	 * @param int|string $value  The stat value to display.
-	 * @param string     $label  The translatable stat label.
-	 * @param string     $suffix Optional suffix appended to the value (e.g., 's' for seconds).
-	 * @param string     $id     Optional HTML id attribute for the stat-value element.
+	 * @param int    $value  The stat value to display.
+	 * @param string $label  The translatable stat label.
+	 * @param string $suffix Optional suffix appended to the value (e.g., 's' for seconds).
+	 * @param string $id     Optional HTML id attribute for the stat-value element.
 	 *
 	 * @since 1.1.15
 	 * @return void
 	 */
-	public static function render_stat( $value, string $label, string $suffix = '', string $id = '' ): void {
+	public static function render_stat( int $value, string $label, string $suffix = '', string $id = '' ): void {
 		?>
 		<div class="stat">
-			<span class="stat-value"<?php echo '' !== $id ? ' id="' . \esc_attr( $id ) . '"' : ''; ?>><?php echo (int) $value; ?><?php echo \esc_html( $suffix ); ?></span>
+			<span class="stat-value"<?php echo '' !== $id ? ' id="' . \esc_attr( $id ) . '"' : ''; ?>><?php echo $value; ?><?php echo \esc_html( $suffix ); ?></span>
 			<span class="stat-label"><?php echo \esc_html( $label ); ?></span>
 		</div>
 		<?php

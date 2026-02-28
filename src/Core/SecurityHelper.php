@@ -665,6 +665,11 @@ class SecurityHelper {
 	 * @return string Rendered HTML.
 	 */
 	public static function render_template( string $template, array $data = array() ): string {
+		// Prevent path traversal — only allow simple filenames.
+		if ( basename( $template ) !== $template || strpos( $template, '..' ) !== false ) {
+			return '';
+		}
+
 		$file = SILVER_ASSIST_SECURITY_PATH . 'templates/' . $template;
 
 		if ( ! file_exists( $file ) ) {

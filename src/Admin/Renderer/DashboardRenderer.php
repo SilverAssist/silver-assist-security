@@ -15,7 +15,6 @@ use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 use SilverAssist\Security\Admin\Data\SecurityDataProvider;
 use SilverAssist\Security\Admin\Data\StatisticsProvider;
-use SilverAssist\Security\Admin\Renderer\RenderHelper;
 
 /**
  * Dashboard Renderer class
@@ -178,7 +177,7 @@ class DashboardRenderer {
 				<div class="card-header">
 					<h3><?php \esc_html_e( 'Form Protection', 'silver-assist-security' ); ?></h3>
 					<span class="status-indicator <?php echo $security_status['form_protection']['enabled'] ? 'active' : 'inactive'; ?>">
-						<?php echo $security_status['form_protection']['enabled'] ? \esc_html__( 'active', 'silver-assist-security' ) : \esc_html__( 'inactive', 'silver-assist-security' ); ?>
+						<?php echo $security_status['form_protection']['enabled'] ? \esc_html__( 'Active', 'silver-assist-security' ) : \esc_html__( 'Inactive', 'silver-assist-security' ); ?>
 					</span>
 				</div>
 				<div class="card-content">

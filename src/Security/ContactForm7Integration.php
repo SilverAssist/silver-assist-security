@@ -583,12 +583,12 @@ class ContactForm7Integration {
 	 */
 	public function ajax_generate_captcha(): void {
 		// Verify nonce to prevent abuse.
-		if ( ! isset( $_POST['nonce'] ) || ! \wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'silver_assist_captcha_nonce' ) ) {
-			\wp_send_json_error( array( 'message' => 'Invalid nonce' ), 403 );
+		if ( ! isset( $_POST['nonce'] ) || ! \wp_verify_nonce( \sanitize_text_field( \wp_unslash( $_POST['nonce'] ) ), 'silver_assist_captcha_nonce' ) ) {
+			\wp_send_json_error( array( 'message' => \__( 'Invalid nonce', 'silver-assist-security' ) ), 403 );
 		}
 
 		if ( ! $this->under_attack->is_under_attack() ) {
-			\wp_send_json_error( array( 'message' => 'Not in Under Attack mode' ), 400 );
+			\wp_send_json_error( array( 'message' => \__( 'Not in Under Attack mode', 'silver-assist-security' ) ), 400 );
 		}
 
 		$captcha = $this->under_attack->generate_captcha();
@@ -616,21 +616,21 @@ class ContactForm7Integration {
 
 		\wp_enqueue_style(
 			'silver-assist-variables',
-			SILVER_ASSIST_SECURITY_URL . 'assets/css/variables.css',
+			SecurityHelper::get_asset_url( 'assets/css/variables.css' ),
 			array(),
 			SILVER_ASSIST_SECURITY_VERSION
 		);
 
 		\wp_enqueue_style(
 			'silver-assist-captcha',
-			SILVER_ASSIST_SECURITY_URL . 'assets/css/captcha.css',
+			SecurityHelper::get_asset_url( 'assets/css/captcha.css' ),
 			array( 'silver-assist-variables' ),
 			SILVER_ASSIST_SECURITY_VERSION
 		);
 
 		\wp_enqueue_script(
 			'silver-assist-captcha',
-			SILVER_ASSIST_SECURITY_URL . 'assets/js/captcha.js',
+			SecurityHelper::get_asset_url( 'assets/js/captcha.js' ),
 			array( 'jquery' ),
 			SILVER_ASSIST_SECURITY_VERSION,
 			true

@@ -100,7 +100,7 @@ class ContactForm7AjaxHandler {
 					$html .= \sprintf(
 						'<td><button type="button" class="unblock-cf7-ip button button-small unblock-ip-btn" data-ip="%s">%s</button></td>',
 						\esc_attr( $ip ),
-						\__( 'Unblock', 'silver-assist-security' )
+					\esc_html__( 'Unblock', 'silver-assist-security' )
 					);
 					$html .= '</tr>';
 				}
@@ -109,7 +109,7 @@ class ContactForm7AjaxHandler {
 			} else {
 				$html = \sprintf(
 					'<p class="no-threats">%s</p>',
-					\__( 'No CF7 blocked IPs found.', 'silver-assist-security' )
+					\esc_html__( 'No CF7 blocked IPs found.', 'silver-assist-security' )
 				);
 			}
 
