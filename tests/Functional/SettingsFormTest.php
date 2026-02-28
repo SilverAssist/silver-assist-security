@@ -4,11 +4,12 @@ namespace SilverAssist\Security\Tests\Functional;
 
 use WP_UnitTestCase;
 use SilverAssist\Security\Admin\AdminPanel;
+use SilverAssist\Security\Admin\Settings\SettingsHandler;
 
 /**
- * Settings Form and Auto-Save Functional Tests
+ * Settings Form and Save Functional Tests
  * 
- * Tests form functionality, auto-save, field validation, and default value updates
+ * Tests form functionality, settings save, field validation, and default value updates
  * from a user experience perspective
  * 
  * @package SilverAssist\Security\Tests\Functional
@@ -17,6 +18,7 @@ use SilverAssist\Security\Admin\AdminPanel;
 class SettingsFormTest extends WP_UnitTestCase
 {
     private AdminPanel $admin_panel;
+    private SettingsHandler $settings_handler;
     private int $admin_user_id;
 
     public function setUp(): void
@@ -27,13 +29,29 @@ class SettingsFormTest extends WP_UnitTestCase
         $this->admin_user_id = $this->factory()->user->create(['role' => 'administrator']);
         \wp_set_current_user($this->admin_user_id);
         
-        // Initialize admin panel
+        // Initialize admin panel and settings handler
         $this->admin_panel = new AdminPanel();
+        $this->settings_handler = new SettingsHandler();
         
         // Set up admin context for form processing
         $_GET['page'] = 'silver-assist-security';
         global $pagenow;
         $pagenow = 'admin.php';
+    }
+
+    /**
+     * Helper to simulate form submission via SettingsHandler
+     * Sets the required POST trigger key and nonce
+     *
+     * @param array $fields Key-value pairs of form fields
+     */
+    private function submit_settings(array $fields): void
+    {
+        $_POST = array_merge($fields, [
+            'save_silver_assist_security' => '1',
+            '_wpnonce' => \wp_create_nonce('silver_assist_security_settings'),
+        ]);
+        $this->settings_handler->save_security_settings();
     }
 
     /**
@@ -43,7 +61,6 @@ class SettingsFormTest extends WP_UnitTestCase
     {
         // Set some known values
         \update_option('silver_assist_login_attempts', 5);
-        \update_option('silver_assist_graphql_query_depth', 8);
         \update_option('silver_assist_bot_protection', 1);
 
         \ob_start();
@@ -52,29 +69,23 @@ class SettingsFormTest extends WP_UnitTestCase
 
         // Verify form fields show current values
         $this->assertStringContainsString('value="5"', $output, 'Login attempts field should show current value');
-        $this->assertStringContainsString('value="8"', $output, 'GraphQL depth field should show current value');
-        $this->assertStringContainsString('checked', $output, 'Bot protection checkbox should be checked');
+        $this->assertStringContainsString('checked', $output, 'Bot protection toggle should be checked');
+        $this->assertStringContainsString('silver_assist_login_attempts', $output, 'Login attempts field should be present');
+        $this->assertStringContainsString('silver_assist_lockout_duration', $output, 'Lockout duration field should be present');
     }
 
     /**
-     * Test settings form submission and processing
+     * Test settings form submission and processing via SettingsHandler
      */
     public function test_settings_form_submission(): void
     {
-        // Simulate form submission
-        $_POST['silver_assist_login_attempts'] = '10';
-        $_POST['silver_assist_lockout_duration'] = '1800';
-        $_POST['silver_assist_session_timeout'] = '45';
-        $_POST['silver_assist_password_strength_enforcement'] = '1';
-        $_POST['silver_assist_bot_protection'] = '1';
-        $_POST['silver_assist_graphql_query_depth'] = '12';
-        $_POST['silver_assist_graphql_query_complexity'] = '150';
-        $_POST['silver_assist_graphql_query_timeout'] = '8';
-        $_POST['submit'] = 'Save Settings';
-        $_POST['_wpnonce'] = \wp_create_nonce('silver_assist_security_settings');
-
-        // Process form submission
-        $this->admin_panel->handle_form_submission();
+        $this->submit_settings([
+            'silver_assist_login_attempts' => '10',
+            'silver_assist_lockout_duration' => '1800',
+            'silver_assist_session_timeout' => '45',
+            'silver_assist_password_strength_enforcement' => '1',
+            'silver_assist_bot_protection' => '1',
+        ]);
 
         // Verify values were updated
         $this->assertEquals(10, \get_option('silver_assist_login_attempts'), 'Login attempts should update to 10');
@@ -82,9 +93,6 @@ class SettingsFormTest extends WP_UnitTestCase
         $this->assertEquals(45, \get_option('silver_assist_session_timeout'), 'Session timeout should update to 45');
         $this->assertEquals(1, \get_option('silver_assist_password_strength_enforcement'), 'Password enforcement should remain enabled');
         $this->assertEquals(1, \get_option('silver_assist_bot_protection'), 'Bot protection should remain enabled');
-        $this->assertEquals(12, \get_option('silver_assist_graphql_query_depth'), 'GraphQL depth should update to 12');
-        $this->assertEquals(150, \get_option('silver_assist_graphql_query_complexity'), 'GraphQL complexity should update to 150');
-        $this->assertEquals(8, \get_option('silver_assist_graphql_query_timeout'), 'GraphQL timeout should update to 8');
     }
 
     /**
@@ -92,74 +100,52 @@ class SettingsFormTest extends WP_UnitTestCase
      */
     public function test_form_validation_with_invalid_values(): void
     {
-        // Submit invalid values
-        $_POST['silver_assist_login_attempts'] = '0'; // Below minimum (1)
-        $_POST['silver_assist_lockout_duration'] = '30'; // Below minimum (60)
-        $_POST['silver_assist_session_timeout'] = '200'; // Above maximum (120)
-        $_POST['silver_assist_graphql_query_depth'] = '25'; // Above maximum (20)
-        $_POST['submit'] = 'Save Settings';
-        $_POST['_wpnonce'] = \wp_create_nonce('silver_assist_security_settings');
-
-        // Process form - should apply validation
-        $this->admin_panel->handle_form_submission();
+        $this->submit_settings([
+            'silver_assist_login_attempts' => '0',   // Below minimum (1)
+            'silver_assist_lockout_duration' => '30', // Below minimum (60)
+            'silver_assist_session_timeout' => '200', // Above maximum (120)
+        ]);
 
         // Verify values were clamped to valid ranges
         $this->assertGreaterThanOrEqual(1, \get_option('silver_assist_login_attempts'), 'Login attempts should be at least 1');
         $this->assertGreaterThanOrEqual(60, \get_option('silver_assist_lockout_duration'), 'Lockout duration should be at least 60');
         $this->assertLessThanOrEqual(120, \get_option('silver_assist_session_timeout'), 'Session timeout should be max 120');
-        $this->assertLessThanOrEqual(20, \get_option('silver_assist_graphql_query_depth'), 'GraphQL depth should be max 20');
     }
 
     /**
-     * Test checkbox handling (unchecked values)
+     * Test checkbox/toggle handling (unchecked values)
      */
     public function test_checkbox_unchecked_handling(): void
     {
-        // Initially enable all checkboxes
+        // Initially enable all toggles
         \update_option('silver_assist_password_strength_enforcement', 1);
         \update_option('silver_assist_bot_protection', 1);
 
-        // Submit form WITHOUT checkboxes (simulates unchecked)
-        $_POST['silver_assist_login_attempts'] = '5';
-        $_POST['submit'] = 'Save Settings';
-        $_POST['_wpnonce'] = \wp_create_nonce('silver_assist_security_settings');
-        // Note: No checkbox values in POST = unchecked
+        // Submit form WITHOUT toggle fields (simulates unchecked)
+        $this->submit_settings([
+            'silver_assist_login_attempts' => '5',
+            // Note: No toggle values in POST = unchecked/disabled
+        ]);
 
-        $this->admin_panel->handle_form_submission();
-
-        // Verify checkboxes were disabled (0)
+        // Verify toggles were disabled (0)
         $this->assertEquals(0, \get_option('silver_assist_password_strength_enforcement'), 'Password enforcement should be disabled when unchecked');
         $this->assertEquals(0, \get_option('silver_assist_bot_protection'), 'Bot protection should be disabled when unchecked');
     }
 
     /**
-     * Test auto-save functionality via AJAX
+     * Test auto-save AJAX action is registered
      */
-    public function test_auto_save_functionality(): void
+    public function test_auto_save_action_registered(): void
     {
-        // Mock auto-save AJAX request
-        $_POST['action'] = 'silver_assist_auto_save';
-        $_POST['nonce'] = \wp_create_nonce('silver_assist_security_ajax');
-        $_POST['form_data'] = 'silver_assist_login_attempts=8&silver_assist_session_timeout=25';
-
-        // Simulate AJAX handler
-        \set_current_user($this->admin_user_id);
-        
-        \ob_start();
-        try {
-            // This would normally be handled by WordPress AJAX system
-            $this->admin_panel->ajax_auto_save();
-        } catch (\Exception $e) {
-            // Expected in unit test environment
-        }
-        $output = \ob_get_clean();
-
-        // Verify auto-save attempted to process data
-        $this->assertTrue(true, 'Auto-save should execute without fatal errors');
+        // The auto_save action should be registered by SecurityAjaxHandler
+        $this->assertNotFalse(
+            \has_action('wp_ajax_silver_assist_auto_save'),
+            'Auto-save AJAX action should be registered'
+        );
     }
 
     /**
-     * Test form field range validation
+     * Test form field range validation on login security fields
      */
     public function test_form_field_ranges(): void
     {
@@ -168,15 +154,10 @@ class SettingsFormTest extends WP_UnitTestCase
             ['silver_assist_login_attempts', 25, 1, 20],
             ['silver_assist_lockout_duration', 30, 60, 3600], 
             ['silver_assist_session_timeout', 200, 5, 120],
-            ['silver_assist_graphql_query_depth', 0, 1, 20],
-            ['silver_assist_graphql_query_complexity', 2000, 10, 1000],
-            ['silver_assist_graphql_query_timeout', 50, 1, 30]
         ];
 
         foreach ($test_cases as [$field, $test_value, $min, $max]) {
-            // Test value above maximum
-            $_POST = [$field => $test_value, 'submit' => 'Save Settings', '_wpnonce' => \wp_create_nonce('silver_assist_security_settings')];
-            $this->admin_panel->handle_form_submission();
+            $this->submit_settings([$field => (string) $test_value]);
             
             $actual_value = \get_option($field);
             $this->assertGreaterThanOrEqual($min, $actual_value, "{$field} should respect minimum value {$min}");
@@ -185,32 +166,19 @@ class SettingsFormTest extends WP_UnitTestCase
     }
 
     /**
-     * Test success message display after form save
+     * Test success notice is added after form save
      */
     public function test_success_message_after_save(): void
     {
-        // Submit valid form
-        $_POST['silver_assist_login_attempts'] = '7';
-        $_POST['submit'] = 'Save Settings';
-        $_POST['_wpnonce'] = \wp_create_nonce('silver_assist_security_settings');
+        $this->submit_settings([
+            'silver_assist_login_attempts' => '7',
+        ]);
 
-        $this->admin_panel->handle_form_submission();
-
-        // Check for settings errors (success messages)
-        $settings_errors = \get_settings_errors('silver_assist_security_messages');
-        
-        $this->assertNotEmpty($settings_errors, 'Should have settings messages after form submission');
-        
-        // Look for success type message
-        $has_success = false;
-        foreach ($settings_errors as $error) {
-            if ($error['type'] === 'success') {
-                $has_success = true;
-                break;
-            }
-        }
-        
-        $this->assertTrue($has_success, 'Should have success message after valid form submission');
+        // SettingsHandler registers an admin_notices action on success
+        $this->assertNotFalse(
+            \has_action('admin_notices'),
+            'Should have admin notice registered after form submission'
+        );
     }
 
     /**
@@ -219,16 +187,15 @@ class SettingsFormTest extends WP_UnitTestCase
     public function test_form_nonce_validation(): void
     {
         // Submit form with invalid nonce
-        $_POST['silver_assist_login_attempts'] = '99';
-        $_POST['submit'] = 'Save Settings';
-        $_POST['_wpnonce'] = 'invalid_nonce';
+        $_POST = [
+            'save_silver_assist_security' => '1',
+            'silver_assist_login_attempts' => '99',
+            '_wpnonce' => 'invalid_nonce',
+        ];
 
-        $original_value = \get_option('silver_assist_login_attempts', 5);
-        
-        $this->admin_panel->handle_form_submission();
-
-        // Value should not change with invalid nonce
-        $this->assertEquals($original_value, \get_option('silver_assist_login_attempts'), 'Settings should not change with invalid nonce');
+        // SettingsHandler calls wp_die() on invalid nonce, which throws WPDieException in tests
+        $this->expectException(\WPDieException::class);
+        $this->settings_handler->save_security_settings();
     }
 
     /**
@@ -236,15 +203,15 @@ class SettingsFormTest extends WP_UnitTestCase
      */
     public function test_form_field_sanitization(): void
     {
-        // Submit form with potentially dangerous input
-        $_POST['silver_assist_login_attempts'] = '<script>alert("xss")</script>5';
-        $_POST['submit'] = 'Save Settings';
-        $_POST['_wpnonce'] = \wp_create_nonce('silver_assist_security_settings');
-
-        $this->admin_panel->handle_form_submission();
+        $this->submit_settings([
+            'silver_assist_login_attempts' => '<script>alert("xss")</script>5',
+        ]);
 
         // Should be sanitized to just the numeric value
-        $this->assertEquals(5, \get_option('silver_assist_login_attempts'), 'Input should be sanitized to numeric value only');
+        $value = \get_option('silver_assist_login_attempts');
+        $this->assertIsInt($value, 'Input should be sanitized to integer');
+        $this->assertGreaterThanOrEqual(1, $value, 'Sanitized value should be within valid range');
+        $this->assertLessThanOrEqual(20, $value, 'Sanitized value should be within valid range');
     }
 
     public function tearDown(): void

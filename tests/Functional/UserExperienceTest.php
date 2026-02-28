@@ -105,9 +105,8 @@ class UserExperienceTest extends WP_UnitTestCase
         // Verify user sees expected interface elements
         $this->assertStringContainsString('Security Essentials', $output, 'User should see main heading');
         $this->assertStringContainsString('dashboard-tab', $output, 'User should see Dashboard tab');
-        $this->assertStringContainsString('monitoring-tab', $output, 'User should see Monitoring tab');
-        $this->assertStringContainsString('settings-tab', $output, 'User should see Settings tab');
-        $this->assertStringContainsString('cf7-tab', $output, 'User should see CF7 tab');
+        $this->assertStringContainsString('login-security-tab', $output, 'User should see Login Security tab');
+        $this->assertStringContainsString('ip-management-tab', $output, 'User should see IP Management tab');
     }
 
     /**
@@ -122,9 +121,8 @@ class UserExperienceTest extends WP_UnitTestCase
         $output = \ob_get_clean();
         
         // Verify dashboard shows security information
-        $this->assertStringContainsString('Security Status', $output, 'Dashboard should show security status');
-        $this->assertStringContainsString('compliance-indicators', $output, 'Dashboard should show compliance indicators');
-        $this->assertStringContainsString('Failed Login Protection', $output, 'Should show login protection status');
+        $this->assertStringContainsString('Login Security', $output, 'Dashboard should show login security status');
+        $this->assertStringContainsString('status-indicator', $output, 'Dashboard should show status indicators');
         $this->assertStringContainsString('HTTPOnly Cookies', $output, 'Should show cookie security status');
     }
 
@@ -182,7 +180,7 @@ class UserExperienceTest extends WP_UnitTestCase
     }
 
     /**
-     * Scenario 7: User sees real-time updates on monitoring tab
+     * Scenario 7: User sees real-time updates on dashboard
      */
     public function test_user_sees_monitoring_information(): void
     {
@@ -192,14 +190,14 @@ class UserExperienceTest extends WP_UnitTestCase
         $admin_panel->render_admin_page();
         $output = \ob_get_clean();
         
-        // Verify monitoring elements are present
-        $this->assertStringContainsString('Recent Security Events', $output, 'Should show security events section');
+        // Verify monitoring elements are present in dashboard
+        $this->assertStringContainsString('Recent Security Activity', $output, 'Should show security activity section');
         $this->assertStringContainsString('Failed Login Attempts', $output, 'Should show login statistics');
         $this->assertStringContainsString('Blocked IPs', $output, 'Should show blocked IPs section');
     }
 
     /**
-     * Scenario 8: User manages CF7 security settings
+     * Scenario 8: CF7 tab only appears when Contact Form 7 is active
      */
     public function test_user_manages_cf7_security(): void
     {
@@ -209,14 +207,16 @@ class UserExperienceTest extends WP_UnitTestCase
         $admin_panel->render_admin_page();
         $output = \ob_get_clean();
         
-        // Verify CF7 tab functionality
-        $this->assertStringContainsString('Contact Form 7 Security', $output, 'Should show CF7 security section');
-        $this->assertStringContainsString('cf7-blocked-ips-container', $output, 'Should show CF7 blocked IPs container');
-        $this->assertStringContainsString('Load Blocked IPs', $output, 'Should show load IPs button');
+        // CF7 tab and content should NOT be present when CF7 is not installed
+        $this->assertStringNotContainsString('cf7-security-tab', $output, 'CF7 tab should not appear without CF7 plugin');
+        $this->assertStringNotContainsString('Contact Form 7 Protection', $output, 'CF7 content should not appear without CF7 plugin');
+        
+        // But the IP management tab should always be present
+        $this->assertStringContainsString('ip-management-tab', $output, 'IP Management tab should always be accessible');
     }
 
     /**
-     * Scenario 9: User can access help and documentation
+     * Scenario 9: User finds descriptive labels and documentation
      */
     public function test_user_finds_help_information(): void
     {
@@ -226,9 +226,9 @@ class UserExperienceTest extends WP_UnitTestCase
         $admin_panel->render_admin_page();
         $output = \ob_get_clean();
         
-        // Verify help elements are available
-        $this->assertStringContainsString('tooltip', $output, 'Should have tooltips for user guidance');
-        $this->assertStringContainsString('help-text', $output, 'Should have help text elements');
+        // Verify descriptive help elements are available
+        $this->assertStringContainsString('description', $output, 'Should have description text for user guidance');
+        $this->assertStringContainsString('form-table', $output, 'Should have structured form tables');
     }
 
     /**
@@ -250,7 +250,6 @@ class UserExperienceTest extends WP_UnitTestCase
         
         // Step 3: User modifies several settings
         \update_option('silver_assist_login_attempts', 10);
-        \update_option('silver_assist_graphql_query_depth', 12);
         \update_option('silver_assist_bot_protection', 0);  // Disable bot protection
         
         // Step 4: User sees updated interface reflects changes  
@@ -258,12 +257,11 @@ class UserExperienceTest extends WP_UnitTestCase
         $admin_panel->render_admin_page();
         $updated_output = \ob_get_clean();
         
+        // Login attempts is rendered as a range input with value attribute
         $this->assertStringContainsString('value="10"', $updated_output, 'Interface should reflect login attempts change');
-        $this->assertStringContainsString('value="12"', $updated_output, 'Interface should reflect GraphQL depth change');
         
         // Step 5: Verify settings persist
         $this->assertEquals(10, \get_option('silver_assist_login_attempts'), 'Settings should persist');
-        $this->assertEquals(12, \get_option('silver_assist_graphql_query_depth'), 'Settings should persist');
         $this->assertEquals(0, \get_option('silver_assist_bot_protection'), 'Settings should persist');
     }
 

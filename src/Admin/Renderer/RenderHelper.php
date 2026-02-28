@@ -134,11 +134,12 @@ class RenderHelper {
 	 * @param string     $display_value   The displayed value (may differ from $value, e.g. minutes conversion).
 	 * @param string     $description     The description text below the slider.
 	 * @param int        $step            The step increment. Default 1.
+	 * @param int        $display_divisor Optional divisor for JS display conversion (e.g. 60 to convert seconds to minutes).
 	 *
 	 * @since 1.1.15
 	 * @return void
 	 */
-	public static function render_range_row( string $label, string $name, $value, int $min, int $max, string $slider_value_id, string $display_value, string $description, int $step = 1 ): void {
+	public static function render_range_row( string $label, string $name, $value, int $min, int $max, string $slider_value_id, string $display_value, string $description, int $step = 1, int $display_divisor = 0 ): void {
 		?>
 		<tr>
 			<th scope="row">
@@ -153,6 +154,7 @@ class RenderHelper {
 						min="<?php echo \esc_attr( (string) $min ); ?>"
 						max="<?php echo \esc_attr( (string) $max ); ?>"
 						<?php echo 1 !== $step ? 'step="' . \esc_attr( (string) $step ) . '"' : ''; ?>
+						<?php echo 0 !== $display_divisor ? 'data-display-divisor="' . \esc_attr( (string) $display_divisor ) . '"' : ''; ?>
 						value="<?php echo \esc_attr( (string) $value ); ?>">
 				<span class="slider-value" id="<?php echo \esc_attr( $slider_value_id ); ?>"><?php echo \esc_html( $display_value ); ?></span>
 				<p class="description">

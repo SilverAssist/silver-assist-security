@@ -29,12 +29,74 @@
      */
     const TIMING = {
         AUTO_SAVE_DELAY: 2000,          // Auto-save delay after input changes (ms)
+        AUTO_SAVE_FALLBACK: 15000,      // Safety timeout to re-enable buttons if autosave hangs (ms)
         VALIDATION_DEBOUNCE: 500,       // Real-time validation debounce (ms)
         ERROR_DISPLAY: 5000,            // Error message display duration (ms)
         SUCCESS_DISPLAY: 2000,          // Success message display duration (ms)
         LONG_ERROR_DISPLAY: 3000,       // Long error message display duration (ms)
         DASHBOARD_REFRESH: 2000,        // Dashboard refresh button delay (ms)
         DATABASE_UPDATE_DELAY: 500      // Small delay for database update completion (ms)
+    };
+
+    // ========================================
+    // SAVE STATE MANAGEMENT
+    // ========================================
+
+    /**
+     * Shared save state to coordinate autosave and manual submit.
+     *
+     * Prevents race conditions where a manual submit fires while an
+     * autosave request is still in-flight, or vice-versa.
+     *
+     * @since 1.1.15
+     */
+    let isSaving = false;
+    let autoSaveTimeout = null;
+    let autoSaveFallbackTimeout = null;
+
+    /**
+     * Disable all submit buttons and show a saving indicator on them.
+     *
+     * Each button's original label is stored in a data attribute so it
+     * can be restored later regardless of success or failure.
+     *
+     * @since 1.1.15
+     * @returns {void}
+     */
+    const disableSubmitButtons = () => {
+        const { strings = {} } = silverAssistSecurity || {};
+        const savingLabel = strings.saving || "Saving...";
+
+        $("form input[type='submit']").each(function () {
+            const $btn = $(this);
+            if (!$btn.data("original-value")) {
+                $btn.data("original-value", $btn.val());
+            }
+            $btn.val(savingLabel).prop("disabled", true).addClass("is-saving");
+        });
+    };
+
+    /**
+     * Re-enable all submit buttons and restore their original labels.
+     *
+     * Called after autosave completes (success or error) and as a
+     * safety fallback if the AJAX request never resolves.
+     *
+     * @since 1.1.15
+     * @returns {void}
+     */
+    const enableSubmitButtons = () => {
+        $("form input[type='submit']").each(function () {
+            const $btn = $(this);
+            const original = $btn.data("original-value");
+            if (original) {
+                $btn.val(original);
+            }
+            $btn.prop("disabled", false).removeClass("is-saving");
+        });
+
+        isSaving = false;
+        clearTimeout(autoSaveFallbackTimeout);
     };
 
     /**
@@ -71,8 +133,8 @@
         // Auto-save feature
         initAutoSave();
 
-        // Initialize GraphQL timeout slider
-        initGraphQLTimeoutSlider();
+        // Initialize all range sliders
+        initRangeSliders();
 
         // Initialize admin path validation
         initAdminPathValidation();
@@ -105,6 +167,15 @@
         } = VALIDATION_LIMITS;
 
         $("form").on("submit", e => {
+            // If an autosave is in-flight, cancel the manual submit
+            if (isSaving) {
+                e.preventDefault();
+                return;
+            }
+
+            // Cancel any pending autosave timer so it doesn't fire after manual submit
+            clearTimeout(autoSaveTimeout);
+
             let isValid = true;
             const errors = [];
 
@@ -264,17 +335,16 @@
         // Destructure timing constants for cleaner code
         const { AUTO_SAVE_DELAY } = TIMING;
 
-        let saveTimeout;
         const $form = $("form");
 
         $form.find("input, select, textarea").on("change", () => {
-            clearTimeout(saveTimeout);
+            clearTimeout(autoSaveTimeout);
 
             // Show saving indicator
             showSavingIndicator();
 
             // Auto-save after configured delay using destructured constant
-            saveTimeout = setTimeout(() => {
+            autoSaveTimeout = setTimeout(() => {
                 autoSaveSettings();
             }, AUTO_SAVE_DELAY);
         });
@@ -309,7 +379,17 @@
      */
     const autoSaveSettings = () => {
         // Destructure timing constants for cleaner code
-        const { SUCCESS_DISPLAY, LONG_ERROR_DISPLAY, DATABASE_UPDATE_DELAY } = TIMING;
+        const { SUCCESS_DISPLAY, LONG_ERROR_DISPLAY, DATABASE_UPDATE_DELAY, AUTO_SAVE_FALLBACK } = TIMING;
+
+        // Mark as saving and lock submit buttons
+        isSaving = true;
+        disableSubmitButtons();
+
+        // Safety fallback: if AJAX never resolves, re-enable buttons after timeout
+        clearTimeout(autoSaveFallbackTimeout);
+        autoSaveFallbackTimeout = setTimeout(() => {
+            enableSubmitButtons();
+        }, AUTO_SAVE_FALLBACK);
 
         const $form = $("form");
         const formData = {};
@@ -363,6 +443,9 @@
                         .delay(LONG_ERROR_DISPLAY)
                         .fadeOut();
                 }
+
+                // Re-enable submit buttons regardless of success/failure
+                enableSubmitButtons();
             },
             error: () => {
                 $(".saving-indicator")
@@ -370,6 +453,9 @@
                     .addClass("error")
                     .delay(LONG_ERROR_DISPLAY)
                     .fadeOut();
+
+                // Re-enable submit buttons on connection failure
+                enableSubmitButtons();
             }
         });
     };
@@ -988,39 +1074,47 @@
     };
 
     /**
-     * Initialize GraphQL timeout slider functionality
-     * 
-     * Sets up the range slider for GraphQL query timeout configuration
-     * with real-time value display and PHP limit awareness.
-     * 
-     * @since 1.1.0
+     * Initialize all range slider inputs
+     *
+     * Automatically discovers all range inputs and pairs each with its
+     * adjacent .slider-value sibling. Reads an optional data-display-divisor
+     * attribute for value conversion (e.g. seconds → minutes).
+     *
+     * @since 1.1.15
      * @returns {void}
      */
-    const initGraphQLTimeoutSlider = () => {
-        const $timeoutSlider = $("#silver_assist_graphql_query_timeout");
-        const $timeoutDisplay = $("#graphql-timeout-value");
+    const initRangeSliders = () => {
+        $('input[type="range"]').each(function () {
+            const $slider = $(this);
+            const $display = $slider.siblings(".slider-value");
 
-        if ($timeoutSlider.length && $timeoutDisplay.length) {
-            // Update display value when slider changes
-            $timeoutSlider.on("input", function () {
-                $timeoutDisplay.text($(this).val());
+            if (!$display.length) {
+                return;
+            }
+
+            const divisor = parseInt($slider.data("display-divisor")) || 0;
+
+            const getDisplayValue = (val) => {
+                const v = parseInt(val);
+                return divisor ? Math.round(v / divisor) : v;
+            };
+
+            // Update display value in real-time while dragging
+            $slider.on("input", function () {
+                $display.text(getDisplayValue($(this).val()));
             });
 
-            // Update validation on change
-            $timeoutSlider.on("change", function () {
+            // Clamp to max on change
+            $slider.on("change", function () {
                 const value = parseInt($(this).val());
                 const maxValue = parseInt($(this).attr("max"));
 
                 if (value > maxValue) {
                     $(this).val(maxValue);
-                    $timeoutDisplay.text(maxValue);
-
-                    // Show warning
-                    const warningMessage = "GraphQL timeout cannot exceed PHP execution time limit (" + maxValue + "s)";
-                    showValidationErrors([warningMessage]);
+                    $display.text(getDisplayValue(maxValue));
                 }
             });
-        }
+        });
     };
 
     /**

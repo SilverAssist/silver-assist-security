@@ -65,7 +65,7 @@ class IPManagementTabTest extends WP_UnitTestCase {
 	public function test_manual_ip_form_has_inputs(): void {
 		// Should have an input for IP address and a button
 		$this->assertStringContainsString(
-			'ip_address',
+			'manual-ip-address',
 			$this->settings_html,
 			'Settings should contain an IP address input'
 		);

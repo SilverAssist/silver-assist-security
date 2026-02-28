@@ -12,6 +12,7 @@
 use SilverAssist\Security\Admin\AdminPanel;
 use SilverAssist\Security\Core\Plugin;
 use SilverAssist\SettingsHub\SettingsHub;
+use SilverAssist\Security\Tests\Helpers\AjaxTestHelper;
 
 /**
  * Settings Hub integration test class
@@ -20,6 +21,7 @@ use SilverAssist\SettingsHub\SettingsHub;
  */
 class SettingsHubTest extends WP_UnitTestCase
 {
+    use AjaxTestHelper;
     /**
      * Admin panel instance for testing
      *
@@ -52,6 +54,9 @@ class SettingsHubTest extends WP_UnitTestCase
         
         // Initialize admin panel
         $this->admin_panel = new AdminPanel();
+
+        // Set up AJAX testing environment
+        $this->setup_ajax_environment();
     }
 
     /**
@@ -61,6 +66,9 @@ class SettingsHubTest extends WP_UnitTestCase
      */
     public function tearDown(): void
     {
+        // Clean up AJAX environment
+        $this->teardown_ajax_environment();
+
         // Clean up
         wp_set_current_user(0);
 
@@ -172,19 +180,10 @@ class SettingsHubTest extends WP_UnitTestCase
         $_POST["action"] = "silver_assist_check_updates";
         unset($_POST["nonce"]);
 
-        try {
-            ob_start();
-            $this->admin_panel->ajax_check_updates();
-            $output = ob_get_clean();
+        $response = $this->call_ajax_handler($this->admin_panel, 'ajax_check_updates');
 
-            $response = json_decode($output, true);
-            if (is_array($response)) {
-                $this->assertFalse($response["success"] ?? true, "Request without nonce should fail");
-            }
-        } catch (Exception $e) {
-            // Expected exception for security failure
-            $this->assertNotNull($e, "Security validation should throw exception");
-        }
+        $this->assertIsArray($response, 'Response should be valid JSON');
+        $this->assertFalse($response["success"] ?? true, "Request without nonce should fail");
 
         // Clean up
         unset($_POST["action"]);
@@ -198,8 +197,10 @@ class SettingsHubTest extends WP_UnitTestCase
      */
     public function test_update_check_script_rendering(): void
     {
-        // Call render method - now returns string instead of echoing
-        $output = $this->admin_panel->render_update_check_script();
+        // render_update_check_script() echoes output (returns void), so capture with ob
+        ob_start();
+        $this->admin_panel->render_update_check_script();
+        $output = ob_get_clean();
 
         // Verify JavaScript handler is returned
         if (!empty($output)) {

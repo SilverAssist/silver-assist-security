@@ -1233,6 +1233,13 @@
     border-top: var(--silver-border-width-thin) solid var(--silver-border-lighter);
 }
 
+/* Submit button saving state — visual feedback during autosave */
+.silver-assist-security-admin input[type="submit"].is-saving {
+    opacity: 0.65;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 /* Add IP Form */
 .add-ip-form .add-ip-row {
     display: flex;

@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `render_feature_status()` — Renders feature enabled/disabled rows with optional custom labels
   - `render_stat()` — Renders numeric stat values with label, optional suffix and HTML id
   - `render_async_stat()` — Renders AJAX-loaded stat cards with loading spinner
+- 🔒 **Autosave / Submit Race-Condition Guard**: Prevent a manual form submit from firing while an autosave AJAX request is in-flight (and vice-versa)
+  - Submit buttons are disabled and show a "Saving..." label during autosave
+  - Manual submit cancels any pending autosave timer
+  - If the autosave request hangs or the connection drops, a 15 s fallback timeout re-enables the buttons
+  - New CSS `.is-saving` class provides visual feedback (reduced opacity, `cursor: not-allowed`)
 
 ### Changed (Refactor)
 

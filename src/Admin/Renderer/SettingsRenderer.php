@@ -106,6 +106,7 @@ class SettingsRenderer
 									'lockout-duration-value',
 									(string) \round($config['lockout_duration'] / 60),
 									\__('Duration to block IP after failed attempts (1-60 minutes)', 'silver-assist-security'),
+									60,
 									60
 								);
 								RenderHelper::render_range_row(

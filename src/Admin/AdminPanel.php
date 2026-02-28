@@ -226,7 +226,7 @@ class AdminPanel {
 			$actions[] = array(
 				'label'    => \__( 'Check Updates', 'silver-assist-security' ),
 				'callback' => array( $this, 'render_update_check_script' ),
-				'class'    => 'button button-primary',
+				'class'    => 'button',
 			);
 		}
 

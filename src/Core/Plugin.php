@@ -355,11 +355,5 @@ class Plugin {
 	public function init_ip_cleanup_cron(): void {
 		// Initialize the cron cleanup system
 		IPBlacklist::init_cron_cleanup();
-
-		SecurityHelper::log_security_event(
-			'IP_CLEANUP_INITIALIZED',
-			'IP violation cleanup cron system initialized',
-			array( 'next_cleanup' => \wp_next_scheduled( 'silver_assist_security_cleanup' ) )
-		);
 	}
 }
