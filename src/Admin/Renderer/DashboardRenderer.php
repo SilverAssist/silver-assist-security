@@ -10,7 +10,6 @@
 
 namespace SilverAssist\Security\Admin\Renderer;
 
-use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 use SilverAssist\Security\Admin\Data\SecurityDataProvider;
