@@ -140,26 +140,6 @@
     $(() => {
         // Add security admin class to wrap
         $(".wrap").addClass("silver-assist-security-admin");
-
-        // Initialize form validation
-        initFormValidation();
-
-        // Initialize toggle switches
-        initToggleSwitches();
-
-        // Initialize tooltips
-        initTooltips();
-
-        // Auto-save feature
-        initAutoSave();
-
-        // Initialize all range sliders
-        initRangeSliders();
-
-        // Initialize admin path validation
-        initAdminPathValidation();
-
-        // Initialize dashboard components - refreshDashboard is available globally
     });
 
     /**
@@ -1233,17 +1213,17 @@
                 data: {
                     action: "silver_assist_validate_admin_path",
                     nonce: silverAssistSecurity.nonce,
-                    path: path
+                    admin_path: path
                 },
                 success: response => {
                     if (response.success) {
                         updateValidationIndicator("valid", silverAssistSecurity.strings.pathValid || "✓ Path is valid");
                         updatePathPreview(response.data.sanitized_path);
                     } else {
-                        let errorMessage = response.data.message || "Invalid path";
+                        let errorMessage = response.data.error || "Invalid path";
 
                         // Use localized error messages based on error type
-                        switch (response.data.type) {
+                        switch (response.data.error_type) {
                             case "empty":
                                 errorMessage = silverAssistSecurity.strings.pathEmpty || errorMessage;
                                 break;
@@ -1640,7 +1620,7 @@
 
             // Update tab content with fade effect
             $tabContents.removeClass("active").hide();
-            $targetContent.addClass("active").fadeIn(TIMING.VALIDATION_DEBOUNCE);
+            $targetContent.addClass("active").show();
 
             // Update URL hash without triggering scroll
             if (window.history && window.history.pushState) {
@@ -1823,7 +1803,10 @@
         initTabNavigation();   // Initialize tab system first
         initDashboard();       // Initialize dashboard data loading and activity tabs
         initFormValidation();
+        initToggleSwitches();
+        initTooltips();
         initAutoSave();
+        initRangeSliders();
         initAdminPathValidation();
         initCF7BlockedIPs(); // Initialize CF7 panel
         initManualIPManagement(); // Initialize manual IP management

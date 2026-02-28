@@ -121,6 +121,7 @@ class DashboardRenderer {
 				</div>
 			</div>
 
+			<?php if ( $this->config_manager->is_wpgraphql_available() ) : ?>
 			<!-- GraphQL Security Status -->
 			<div class="status-card graphql-security">
 				<div class="card-header">
@@ -130,23 +131,20 @@ class DashboardRenderer {
 					</span>
 				</div>
 				<div class="card-content">
-					<?php if ( $security_status['graphql_security']['enabled'] ) : ?>
-						<?php
-						RenderHelper::render_stat( $security_status['graphql_security']['query_depth_limit'], \__( 'Max Depth', 'silver-assist-security' ) );
-						RenderHelper::render_stat( $security_status['graphql_security']['query_complexity_limit'], \__( 'Max Complexity', 'silver-assist-security' ) );
-						RenderHelper::render_stat( $security_status['graphql_security']['query_timeout'], \__( 'Timeout', 'silver-assist-security' ), 's' );
-						RenderHelper::render_feature_status(
-							\__( 'Introspection', 'silver-assist-security' ),
-							(bool) $security_status['graphql_security']['introspection_disabled'],
-							\__( 'Disabled', 'silver-assist-security' ),
-							\__( 'Public', 'silver-assist-security' )
-						);
-						?>
-					<?php else : ?>
-						<p class="description"><?php \esc_html_e( 'WPGraphQL not installed', 'silver-assist-security' ); ?></p>
-					<?php endif; ?>
+					<?php
+					RenderHelper::render_stat( $security_status['graphql_security']['query_depth_limit'], \__( 'Max Depth', 'silver-assist-security' ) );
+					RenderHelper::render_stat( $security_status['graphql_security']['query_complexity_limit'], \__( 'Max Complexity', 'silver-assist-security' ) );
+					RenderHelper::render_stat( $security_status['graphql_security']['query_timeout'], \__( 'Timeout', 'silver-assist-security' ), 's' );
+					RenderHelper::render_feature_status(
+						\__( 'Introspection', 'silver-assist-security' ),
+						(bool) $security_status['graphql_security']['introspection_disabled'],
+						\__( 'Disabled', 'silver-assist-security' ),
+						\__( 'Public', 'silver-assist-security' )
+					);
+					?>
 				</div>
 			</div>
+			<?php endif; ?>
 
 			<!-- General Security Status -->
 			<div class="status-card general-security">
