@@ -73,6 +73,7 @@ class SecurityAjaxHandler {
 		\add_action( 'wp_ajax_silver_assist_auto_save', array( $this, 'auto_save' ) );
 		\add_action( 'wp_ajax_silver_assist_validate_admin_path', array( $this, 'validate_admin_path' ) );
 		\add_action( 'wp_ajax_silver_assist_add_manual_ip', array( $this, 'add_manual_ip' ) );
+		\add_action( 'wp_ajax_silver_assist_unblock_ip', array( $this, 'unblock_ip' ) );
 	}
 
 	/**
@@ -461,6 +462,69 @@ class SecurityAjaxHandler {
 				)
 			);
 			\wp_send_json_error( array( 'error' => \__( 'Failed to block IP address', 'silver-assist-security' ) ) );
+		}
+	}
+
+	/**
+	 * AJAX handler for removing IP from blacklist
+	 *
+	 * @since 1.1.15
+	 * @return void
+	 */
+	public function unblock_ip(): void {
+		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
+			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
+		}
+
+		if ( ! \current_user_can( 'manage_options' ) ) {
+			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
+		}
+
+		try {
+			$ip_address = \sanitize_text_field( \wp_unslash( $_POST['ip_address'] ?? '' ) );
+
+			if ( empty( $ip_address ) ) {
+				\wp_send_json_error( array( 'error' => \__( 'IP address is required', 'silver-assist-security' ) ) );
+				return;
+			}
+
+			$ip_blacklist = new IPBlacklist();
+			$removed      = $ip_blacklist->remove_from_blacklist( $ip_address );
+
+			if ( $removed ) {
+				SecurityHelper::log_security_event(
+					'MANUAL_IP_UNBLOCKED',
+					"Administrator manually unblocked IP: {$ip_address}",
+					array(
+						'function' => __FUNCTION__,
+						'ip'       => $ip_address,
+						'user_id'  => \get_current_user_id(),
+					)
+				);
+
+				\wp_send_json_success(
+					array(
+						'message' => sprintf(
+							/* translators: %s: IP address */
+							\__( 'IP address %s has been unblocked', 'silver-assist-security' ),
+							$ip_address
+						),
+					)
+				);
+			} else {
+				\wp_send_json_error( array( 'error' => \__( 'IP address was not found in the blacklist', 'silver-assist-security' ) ) );
+			}
+		} catch ( \Exception $e ) {
+			SecurityHelper::log_security_event(
+				'MANUAL_IP_UNBLOCK_ERROR',
+				"Failed to unblock IP: {$e->getMessage()}",
+				array(
+					'function' => __FUNCTION__,
+					'error'    => $e->getMessage(),
+					'user_id'  => \get_current_user_id(),
+				)
+			);
+			\wp_send_json_error( array( 'error' => \__( 'Failed to unblock IP address', 'silver-assist-security' ) ) );
 		}
 	}
 }

@@ -90,65 +90,81 @@ class DashboardRenderer {
 			<!-- Login Security Status -->
 			<div class="status-card login-security">
 				<div class="card-header">
-					<span class="dashicons dashicons-lock"></span>
-					<h3><?php \esc_html_e( 'Login Protection', 'silver-assist-security' ); ?></h3>
+					<h3><?php \esc_html_e( 'Login Security', 'silver-assist-security' ); ?></h3>
 					<span class="status-indicator <?php echo \esc_attr( $security_status['login_security']['status'] ); ?>">
-						<?php echo \esc_html( \ucfirst( $security_status['login_security']['status'] ) ); ?>
+						<?php echo \esc_html( $security_status['login_security']['status'] ); ?>
 					</span>
 				</div>
 				<div class="card-content">
-					<p>
-						<?php
-						printf(
-							/* translators: %d: maximum login attempts */
-							\esc_html__( 'Max attempts: %d', 'silver-assist-security' ),
-							(int) $security_status['login_security']['max_attempts']
-						);
-						?>
-					</p>
-					<p>
-						<?php
-						printf(
-							/* translators: %d: lockout duration in minutes */
-							\esc_html__( 'Lockout: %d minutes', 'silver-assist-security' ),
-							\round( $security_status['login_security']['lockout_duration'] / 60 )
-						);
-						?>
-					</p>
+					<div class="stat">
+						<span class="stat-value"><?php echo (int) $security_status['login_security']['max_attempts']; ?></span>
+						<span class="stat-label"><?php \esc_html_e( 'Max Attempts', 'silver-assist-security' ); ?></span>
+					</div>
+					<div class="stat">
+						<span class="stat-value" id="blocked-ips-card"><?php echo (int) $security_status['overall']['blocked_ips_count']; ?></span>
+						<span class="stat-label"><?php \esc_html_e( 'Blocked IPs', 'silver-assist-security' ); ?></span>
+					</div>
+					<div class="stat">
+						<span class="stat-value"><?php echo (int) \round( $security_status['login_security']['lockout_duration'] / 60 ); ?></span>
+						<span class="stat-label"><?php \esc_html_e( 'Lockout (min)', 'silver-assist-security' ); ?></span>
+					</div>
+				</div>
+			</div>
+
+			<!-- Admin Security Status -->
+			<div class="status-card admin-security">
+				<div class="card-header">
+					<h3><?php \esc_html_e( 'Admin Security', 'silver-assist-security' ); ?></h3>
+					<span class="status-indicator <?php echo \esc_attr( $security_status['admin_security']['status'] ); ?>">
+						<?php echo \esc_html( $security_status['admin_security']['status'] ); ?>
+					</span>
+				</div>
+				<div class="card-content">
+					<div class="feature-status">
+						<span class="feature-name"><?php \esc_html_e( 'Password Strength Enforcement', 'silver-assist-security' ); ?></span>
+						<span class="feature-value <?php echo $security_status['admin_security']['password_strength_enforcement'] ? 'enabled' : 'disabled'; ?>">
+							<?php echo $security_status['admin_security']['password_strength_enforcement'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
+						</span>
+					</div>
+					<div class="feature-status">
+						<span class="feature-name"><?php \esc_html_e( 'Bot Protection', 'silver-assist-security' ); ?></span>
+						<span class="feature-value <?php echo $security_status['admin_security']['bot_protection'] ? 'enabled' : 'disabled'; ?>">
+							<?php echo $security_status['admin_security']['bot_protection'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
+						</span>
+					</div>
 				</div>
 			</div>
 
 			<!-- GraphQL Security Status -->
 			<div class="status-card graphql-security">
 				<div class="card-header">
-					<span class="dashicons dashicons-database"></span>
 					<h3><?php \esc_html_e( 'GraphQL Security', 'silver-assist-security' ); ?></h3>
 					<span class="status-indicator <?php echo \esc_attr( $security_status['graphql_security']['status'] ); ?>">
-						<?php echo \esc_html( \ucfirst( $security_status['graphql_security']['status'] ) ); ?>
+						<?php echo \esc_html( $security_status['graphql_security']['status'] ); ?>
 					</span>
 				</div>
 				<div class="card-content">
 					<?php if ( $security_status['graphql_security']['enabled'] ) : ?>
-						<p>
-							<?php
-							printf(
-								/* translators: %d: query depth limit */
-								\esc_html__( 'Query depth limit: %d', 'silver-assist-security' ),
-								(int) $security_status['graphql_security']['query_depth_limit']
-							);
-							?>
-						</p>
-						<p>
-							<?php
-							printf(
-								/* translators: %d: query complexity limit */
-								\esc_html__( 'Complexity limit: %d', 'silver-assist-security' ),
-								(int) $security_status['graphql_security']['query_complexity_limit']
-							);
-							?>
-						</p>
+						<div class="stat">
+							<span class="stat-value"><?php echo (int) $security_status['graphql_security']['query_depth_limit']; ?></span>
+							<span class="stat-label"><?php \esc_html_e( 'Max Depth', 'silver-assist-security' ); ?></span>
+						</div>
+						<div class="stat">
+							<span class="stat-value"><?php echo (int) $security_status['graphql_security']['query_complexity_limit']; ?></span>
+							<span class="stat-label"><?php \esc_html_e( 'Max Complexity', 'silver-assist-security' ); ?></span>
+						</div>
+						<div class="stat">
+							<span class="stat-value"><?php echo (int) $security_status['graphql_security']['query_timeout']; ?>s</span>
+							<span class="stat-label"><?php \esc_html_e( 'Timeout', 'silver-assist-security' ); ?></span>
+						</div>
+						<div class="feature-status">
+							<span class="feature-name"><?php \esc_html_e( 'Introspection', 'silver-assist-security' ); ?></span>
+							<span class="feature-value <?php echo $security_status['graphql_security']['introspection_disabled'] ? 'enabled' : 'disabled'; ?>">
+								<?php echo $security_status['graphql_security']['introspection_disabled'] ? \esc_html__( 'Disabled', 'silver-assist-security' ) : \esc_html__( 'Public', 'silver-assist-security' ); ?>
+							</span>
+						</div>
 					<?php else : ?>
-						<p><?php \esc_html_e( 'WPGraphQL not installed', 'silver-assist-security' ); ?></p>
+						<p class="description"><?php \esc_html_e( 'WPGraphQL not installed', 'silver-assist-security' ); ?></p>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -156,23 +172,36 @@ class DashboardRenderer {
 			<!-- General Security Status -->
 			<div class="status-card general-security">
 				<div class="card-header">
-					<span class="dashicons dashicons-shield-alt"></span>
 					<h3><?php \esc_html_e( 'General Security', 'silver-assist-security' ); ?></h3>
 					<span class="status-indicator <?php echo \esc_attr( $security_status['general_security']['status'] ); ?>">
-						<?php echo \esc_html( \ucfirst( $security_status['general_security']['status'] ) ); ?>
+						<?php echo \esc_html( $security_status['general_security']['status'] ); ?>
 					</span>
 				</div>
 				<div class="card-content">
-					<p>
-						<span class="feature-status <?php echo $security_status['general_security']['httponly_cookies'] ? 'enabled' : 'disabled'; ?>">
-							<?php \esc_html_e( 'HTTPOnly Cookies', 'silver-assist-security' ); ?>
+					<div class="feature-status">
+						<span class="feature-name"><?php \esc_html_e( 'HTTPOnly Cookies', 'silver-assist-security' ); ?></span>
+						<span class="feature-value <?php echo $security_status['general_security']['httponly_cookies'] ? 'enabled' : 'disabled'; ?>">
+							<?php echo $security_status['general_security']['httponly_cookies'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
 						</span>
-					</p>
-					<p>
-						<span class="feature-status <?php echo $security_status['general_security']['ssl_enabled'] ? 'enabled' : 'disabled'; ?>">
-							<?php \esc_html_e( 'SSL/HTTPS', 'silver-assist-security' ); ?>
+					</div>
+					<div class="feature-status">
+						<span class="feature-name"><?php \esc_html_e( 'XML-RPC Protection', 'silver-assist-security' ); ?></span>
+						<span class="feature-value <?php echo $security_status['general_security']['xmlrpc_disabled'] ? 'enabled' : 'disabled'; ?>">
+							<?php echo $security_status['general_security']['xmlrpc_disabled'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
 						</span>
-					</p>
+					</div>
+					<div class="feature-status">
+						<span class="feature-name"><?php \esc_html_e( 'Version Hiding', 'silver-assist-security' ); ?></span>
+						<span class="feature-value <?php echo $security_status['general_security']['version_hiding'] ? 'enabled' : 'disabled'; ?>">
+							<?php echo $security_status['general_security']['version_hiding'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
+						</span>
+					</div>
+					<div class="feature-status">
+						<span class="feature-name"><?php \esc_html_e( 'SSL/HTTPS', 'silver-assist-security' ); ?></span>
+						<span class="feature-value <?php echo $security_status['general_security']['ssl_enabled'] ? 'enabled' : 'disabled'; ?>">
+							<?php echo $security_status['general_security']['ssl_enabled'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
+						</span>
+					</div>
 				</div>
 			</div>
 
@@ -180,14 +209,22 @@ class DashboardRenderer {
 			<!-- Contact Form 7 Security Status -->
 			<div class="status-card cf7-security">
 				<div class="card-header">
-					<span class="dashicons dashicons-email-alt"></span>
 					<h3><?php \esc_html_e( 'Form Protection', 'silver-assist-security' ); ?></h3>
-					<span class="status-indicator active">
-						<?php \esc_html_e( 'Active', 'silver-assist-security' ); ?>
+					<span class="status-indicator <?php echo $security_status['form_protection']['enabled'] ? 'active' : 'inactive'; ?>">
+						<?php echo $security_status['form_protection']['enabled'] ? \esc_html__( 'active', 'silver-assist-security' ) : \esc_html__( 'inactive', 'silver-assist-security' ); ?>
 					</span>
 				</div>
 				<div class="card-content">
-					<p><?php \esc_html_e( 'Contact Form 7 protection enabled', 'silver-assist-security' ); ?></p>
+					<div class="feature-status">
+						<span class="feature-name"><?php \esc_html_e( 'Form Protection', 'silver-assist-security' ); ?></span>
+						<span class="feature-value <?php echo $security_status['form_protection']['enabled'] ? 'enabled' : 'disabled'; ?>">
+							<?php echo $security_status['form_protection']['enabled'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
+						</span>
+					</div>
+					<div class="stat">
+						<span class="stat-value"><?php echo (int) $security_status['form_protection']['rate_limit']; ?></span>
+						<span class="stat-label"><?php \esc_html_e( 'Rate Limit (min)', 'silver-assist-security' ); ?></span>
+					</div>
 				</div>
 			</div>
 			<?php endif; ?>
@@ -208,24 +245,30 @@ class DashboardRenderer {
 			
 			<div class="silver-stats-grid" id="security-stats-container">
 				<div class="status-card">
-					<div class="stat-value" id="blocked-ips-count">
-						<span class="loading"></span>
+					<div class="stat">
+						<div class="stat-value" id="blocked-ips-count">
+							<span class="loading"></span>
+						</div>
+						<div class="stat-label"><?php \esc_html_e( 'Blocked IPs', 'silver-assist-security' ); ?></div>
 					</div>
-					<div class="stat-label"><?php \esc_html_e( 'Blocked IPs', 'silver-assist-security' ); ?></div>
 				</div>
 				
 				<div class="status-card">
-					<div class="stat-value" id="failed-attempts-count">
-						<span class="loading"></span>
+					<div class="stat">
+						<div class="stat-value" id="failed-attempts-count">
+							<span class="loading"></span>
+						</div>
+						<div class="stat-label"><?php \esc_html_e( 'Failed Login Attempts (24h)', 'silver-assist-security' ); ?></div>
 					</div>
-					<div class="stat-label"><?php \esc_html_e( 'Failed Login Attempts (24h)', 'silver-assist-security' ); ?></div>
 				</div>
 				
 				<div class="status-card">
-					<div class="stat-value" id="security-events-count">
-						<span class="loading"></span>
+					<div class="stat">
+						<div class="stat-value" id="security-events-count">
+							<span class="loading"></span>
+						</div>
+						<div class="stat-label"><?php \esc_html_e( 'Security Events (7d)', 'silver-assist-security' ); ?></div>
 					</div>
-					<div class="stat-label"><?php \esc_html_e( 'Security Events (7d)', 'silver-assist-security' ); ?></div>
 				</div>
 			</div>
 		</div>
@@ -240,29 +283,35 @@ class DashboardRenderer {
 	 */
 	private function render_recent_activity(): void {
 		?>
-		<div class="recent-activity-section">
-			<h2><?php \esc_html_e( 'Recent Security Activity', 'silver-assist-security' ); ?></h2>
-			
-			<div class="activity-tabs">
-				<button class="activity-tab active" data-tab="blocked-ips">
-					<?php \esc_html_e( 'Blocked IPs', 'silver-assist-security' ); ?>
-				</button>
-				<button class="activity-tab" data-tab="security-logs">
-					<?php \esc_html_e( 'Security Logs', 'silver-assist-security' ); ?>
-				</button>
+		<div class="status-card recent-activity-section">
+			<div class="card-header">
+				<span class="dashicons dashicons-shield"></span>
+				<h3><?php \esc_html_e( 'Recent Security Activity', 'silver-assist-security' ); ?></h3>
 			</div>
-			
-			<div id="blocked-ips-content" class="activity-content active">
-				<div id="blocked-ips-list">
-					<div class="loading-spinner"></div>
-					<p><?php \esc_html_e( 'Loading blocked IPs...', 'silver-assist-security' ); ?></p>
+			<div class="card-content">
+				<div class="activity-tabs">
+					<button class="activity-tab active" data-tab="blocked-ips">
+						<span class="dashicons dashicons-dismiss"></span>
+						<?php \esc_html_e( 'Blocked IPs', 'silver-assist-security' ); ?>
+					</button>
+					<button class="activity-tab" data-tab="security-logs">
+						<span class="dashicons dashicons-list-view"></span>
+						<?php \esc_html_e( 'Security Logs', 'silver-assist-security' ); ?>
+					</button>
 				</div>
-			</div>
-			
-			<div id="security-logs-content" class="activity-content">
-				<div id="security-logs-list">
-					<div class="loading-spinner"></div>
-					<p><?php \esc_html_e( 'Loading security logs...', 'silver-assist-security' ); ?></p>
+
+				<div id="blocked-ips-content" class="activity-content active">
+					<div id="blocked-ips-list">
+						<div class="loading-spinner"></div>
+						<p class="loading-text"><?php \esc_html_e( 'Loading blocked IPs...', 'silver-assist-security' ); ?></p>
+					</div>
+				</div>
+
+				<div id="security-logs-content" class="activity-content">
+					<div id="security-logs-list">
+						<div class="loading-spinner"></div>
+						<p class="loading-text"><?php \esc_html_e( 'Loading security logs...', 'silver-assist-security' ); ?></p>
+					</div>
 				</div>
 			</div>
 		</div>

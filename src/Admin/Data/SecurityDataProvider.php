@@ -64,29 +64,38 @@ class SecurityDataProvider {
 	private IPBlacklist $ip_blacklist;
 
 	/**
-	 * Initialize data provider with security components
-	 *
-	 * @since 1.1.15
-	 */
-	public function __construct() {
-		$this->login_security      = new LoginSecurity();
-		$this->general_security    = new GeneralSecurity();
-		$this->admin_hide_security = new AdminHideSecurity();
-		$this->ip_blacklist        = IPBlacklist::getInstance();
-	}
+ * Statistics Provider instance
+ *
+ * @var StatisticsProvider
+ * @since 1.1.15
+ */
+private StatisticsProvider $stats_provider;
 
-	/**
-	 * Get comprehensive security status
-	 *
-	 * @since 1.1.15
-	 * @return array Security status data
-	 */
-	public function get_security_status(): array {
-		$login_protection  = DefaultConfig::get_option( 'silver_assist_login_attempts' ) > 0;
-		$password_strength = DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' );
-		$bot_protection    = DefaultConfig::get_option( 'silver_assist_bot_protection' );
-		$cookie_security   = true; // Always enabled in GeneralSecurity
-		$admin_hide        = DefaultConfig::get_option( 'silver_assist_admin_path' ) !== 'wp-admin';
+/**
+ * Initialize data provider with security components
+ *
+ * @since 1.1.15
+ */
+public function __construct() {
+	$this->login_security      = new LoginSecurity();
+	$this->general_security    = new GeneralSecurity();
+	$this->admin_hide_security = new AdminHideSecurity();
+	$this->ip_blacklist        = IPBlacklist::getInstance();
+	$this->stats_provider      = new StatisticsProvider();
+}
+
+/**
+ * Get full security status for dashboard
+ *
+ * @since 1.1.15
+ * @return array Security status data
+ */
+public function get_security_status(): array {
+	$login_protection  = DefaultConfig::get_option( 'silver_assist_login_attempts' ) > 0;
+	$password_strength = DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' );
+	$bot_protection    = DefaultConfig::get_option( 'silver_assist_bot_protection' );
+	$cookie_security   = true; // Always enabled in GeneralSecurity
+	$admin_hide        = DefaultConfig::get_option( 'silver_assist_admin_path' ) !== 'wp-admin';
 
 		// GraphQL security status
 		$graphql_active = false;
@@ -137,9 +146,13 @@ class SecurityDataProvider {
 				'bot_protection'                => (bool) $bot_protection,
 			),
 			'graphql_security' => array(
-				'status'  => $graphql_active ? ( $graphql_secure ? 'active' : 'warning' ) : 'inactive',
-				'enabled' => $graphql_active,
-				'secure'  => $graphql_secure,
+				'status'                 => $graphql_active ? ( $graphql_secure ? 'active' : 'warning' ) : 'inactive',
+				'enabled'                => $graphql_active,
+				'secure'                 => $graphql_secure,
+				'query_depth_limit'      => $graphql_active ? (int) DefaultConfig::get_option( 'silver_assist_graphql_query_depth' ) : 0,
+				'query_complexity_limit' => $graphql_active ? (int) DefaultConfig::get_option( 'silver_assist_graphql_query_complexity' ) : 0,
+				'query_timeout'          => $graphql_active ? (int) DefaultConfig::get_option( 'silver_assist_graphql_timeout' ) : 0,
+				'introspection_disabled' => $graphql_active ? ( 'off' === \get_graphql_setting( 'public_introspection_enabled', 'off' ) ) : false,
 			),
 			'general_security' => array(
 				'status'           => $cookie_security ? 'active' : 'inactive',
@@ -147,15 +160,34 @@ class SecurityDataProvider {
 				'httponly_cookies' => true, // Always enabled
 				'secure_cookies'   => \is_ssl(),
 				'ssl_enabled'      => \is_ssl(),
+				'xmlrpc_disabled'  => true, // Always disabled via GeneralSecurity
+				'version_hiding'   => true, // Always enabled via GeneralSecurity
+			),
+			'form_protection'  => array(
+				'enabled'    => (bool) DefaultConfig::get_option( 'silver_assist_form_protection_enabled' ),
+				'rate_limit' => (int) DefaultConfig::get_option( 'silver_assist_form_rate_limit' ),
 			),
 			'overall'          => array(
-				'active_features'   => $active_features,
-				'total_features'    => $total_features,
-				'security_score'    => $security_score,
-				'blocked_ips_count' => $this->get_blocked_ips_count(),
-				'last_updated'      => \current_time( 'mysql' ),
+				'active_features'      => $active_features,
+				'total_features'       => $total_features,
+				'security_score'       => $security_score,
+				'blocked_ips_count'    => $this->get_blocked_ips_count(),
+				'failed_attempts_24h'  => $this->stats_provider->get_recent_failed_attempts(),
+				'security_events_7d'   => $this->get_security_events_7d_count(),
+				'last_updated'         => \current_time( 'mysql' ),
 			),
 		);
+	}
+
+	/**
+	 * Get security events count for last 7 days
+	 *
+	 * @since 1.1.15
+	 * @return int Number of security events
+	 */
+	private function get_security_events_7d_count(): int {
+		$stats = $this->stats_provider->get_login_statistics();
+		return isset( $stats['stats']['7_days']['total_events'] ) ? (int) $stats['stats']['7_days']['total_events'] : 0;
 	}
 
 	/**

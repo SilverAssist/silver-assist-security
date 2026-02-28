@@ -510,11 +510,6 @@ class SecurityHelper {
 			return false;
 		}
 
-		// Check if Contact Form 7 functions are available
-		if ( ! \function_exists( 'wpcf7_get_contact_form_by_id' ) ) {
-			return false;
-		}
-
 		// Check minimum version requirement (CF7 5.0+)
 		if ( \defined( 'WPCF7_VERSION' ) ) {
 			return \version_compare( WPCF7_VERSION, '5.0', '>=' );

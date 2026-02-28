@@ -103,7 +103,7 @@ class ContactForm7AjaxHandler {
 				$html .= '</div>';
 			} else {
 				$html = \sprintf(
-					'<p class="no-blocked-ips">%s</p>',
+					'<p class="no-threats">%s</p>',
 					\__( 'No CF7 blocked IPs found.', 'silver-assist-security' )
 				);
 			}

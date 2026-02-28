@@ -227,25 +227,78 @@ class StatisticsProvider {
 	private function count_bot_blocks_from_logs( int $since_timestamp ): int {
 		$count = 0;
 
-		// Get security logs and filter for BOT_BLOCKED events
-		$provider  = new SecurityDataProvider();
-		$logs_data = $provider->get_security_logs( 1000 ); // Get more logs to count accurately
+		// Get log file paths directly to avoid circular dependency with SecurityDataProvider
+		$log_files = $this->get_log_file_paths();
 
-		if ( empty( $logs_data['logs'] ) ) {
-			return 0;
-		}
-
-		foreach ( $logs_data['logs'] as $log_entry ) {
-			// Check if this is a bot blocking event
-			if ( $log_entry['event_type'] !== 'BOT_BLOCKED' ) {
+		foreach ( $log_files as $log_file ) {
+			if ( ! file_exists( $log_file ) || ! is_readable( $log_file ) ) {
 				continue;
 			}
 
-			// Check if event occurred after our timestamp
-			$log_timestamp = strtotime( $log_entry['timestamp'] );
-			if ( $log_timestamp && $log_timestamp >= $since_timestamp ) {
-				++$count;
+			$count += $this->count_bot_blocks_in_file( $log_file, $since_timestamp );
+		}
+
+		return $count;
+	}
+
+	/**
+	 * Get possible log file paths
+	 *
+	 * @since 1.1.15
+	 * @return array List of potential log file paths
+	 */
+	private function get_log_file_paths(): array {
+		$paths = array();
+
+		if ( defined( 'WP_DEBUG_LOG' ) && \is_string( WP_DEBUG_LOG ) && WP_DEBUG_LOG !== '' ) {
+			$paths[] = WP_DEBUG_LOG;
+		}
+
+		$paths[] = WP_CONTENT_DIR . '/debug.log';
+		$paths[] = ABSPATH . 'wp-content/debug.log';
+		$paths[] = ini_get( 'error_log' );
+
+		return array_filter( $paths );
+	}
+
+	/**
+	 * Count BOT_BLOCKED events in a specific log file
+	 *
+	 * @since 1.1.15
+	 * @param string $log_file Path to log file
+	 * @param int    $since_timestamp Only count events after this timestamp
+	 * @return int Count of BOT_BLOCKED events
+	 */
+	private function count_bot_blocks_in_file( string $log_file, int $since_timestamp ): int {
+		$count = 0;
+
+		try {
+			$handle = @fopen( $log_file, 'r' );
+			if ( ! $handle ) {
+				return 0;
 			}
+
+			// Read file line by line to handle large files
+			while ( ( $line = fgets( $handle ) ) !== false ) {
+				if ( strpos( $line, 'SILVER_ASSIST_SECURITY:' ) === false ) {
+					continue;
+				}
+				if ( strpos( $line, 'BOT_BLOCKED' ) === false ) {
+					continue;
+				}
+
+				// Extract timestamp from log line: [YYYY-MM-DD HH:MM:SS]
+				if ( preg_match( '/\[([^\]]+)\]/', $line, $matches ) ) {
+					$log_timestamp = strtotime( $matches[1] );
+					if ( $log_timestamp && $log_timestamp >= $since_timestamp ) {
+						++$count;
+					}
+				}
+			}
+
+			fclose( $handle );
+		} catch ( \Exception $e ) {
+			// Silently fail - don't break statistics for log read errors
 		}
 
 		return $count;
