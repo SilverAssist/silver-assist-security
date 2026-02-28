@@ -66,8 +66,7 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
     /**
      * Test WPGraphQL availability detection
      *
-     * In test environment, WPGraphQL function is not available (realistic scenario)
-     * GraphQLConfigManager should gracefully handle this
+     * Detection should return a boolean reflecting actual WPGraphQL availability
      *
      * @since 1.1.12
      * @return void
@@ -76,8 +75,14 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
     {
         $is_available = $this->config_manager->is_wpgraphql_available();
         
-        // In test environment, WPGraphQL is not available (function_exists returns false)
-        $this->assertFalse($is_available);
+        $this->assertIsBool($is_available);
+
+        // Result should match whether the WPGraphQL class is actually loaded
+        if (\class_exists('WPGraphQL')) {
+            $this->assertTrue($is_available, 'Should detect WPGraphQL when class exists');
+        } else {
+            $this->assertFalse($is_available, 'Should not detect WPGraphQL when class does not exist');
+        }
     }
 
     /**
@@ -180,7 +185,13 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
         $html = $this->config_manager->get_settings_display();
         
         $this->assertIsString($html);
-        $this->assertStringContainsString("graphql", strtolower($html));
+        // When WPGraphQL is available, settings include security details; otherwise a "not active" message
+        if (\class_exists('WPGraphQL')) {
+            $this->assertStringContainsString('<ul>', $html, 'Settings display should contain a list when WPGraphQL is active');
+            $this->assertStringContainsString('endpoint', strtolower($html), 'Settings should mention endpoint access');
+        } else {
+            $this->assertStringContainsString('graphql', strtolower($html), 'Settings should mention GraphQL when not active');
+        }
     }
 
     /**

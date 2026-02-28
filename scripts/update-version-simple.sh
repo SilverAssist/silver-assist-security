@@ -6,7 +6,7 @@
 #
 # A more robust version updater that handles macOS sed quirks better
 #
-# Usage: ./scripts/update-version-simple.sh <new-version> [--no-confirm]
+# Usage: ./scripts/update-version-simple.sh <new-version> [--no-confirm] [--force]
 # Example: ./scripts/update-version-simple.sh 1.0.4
 #
 # @package SilverAssist\Security
@@ -45,9 +45,9 @@ print_error() {
 # Validate input
 if [ $# -eq 0 ]; then
     print_error "No version specified"
-    echo "Usage: $0 <new-version> [--no-confirm]"
+    echo "Usage: $0 <new-version> [--no-confirm] [--force]"
     echo "Example: $0 1.0.3"
-    echo "Example: $0 1.0.3 --no-confirm"
+    echo "Example: $0 1.0.3 --no-confirm --force"
     exit 1
 fi
 
@@ -55,15 +55,16 @@ fi
 if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "Silver Assist Security Essentials - Version Update Script"
     echo ""
-    echo "Usage: $0 <new-version> [--no-confirm]"
+    echo "Usage: $0 <new-version> [--no-confirm] [--force]"
     echo ""
     echo "Arguments:"
     echo "  <new-version>    New version in semantic versioning format (e.g., 1.0.3)"
     echo "  --no-confirm     Skip confirmation prompts (useful for CI/CD)"
+    echo "  --force          Force update even if version already matches"
     echo ""
     echo "Examples:"
     echo "  $0 1.0.3"
-    echo "  $0 1.0.3 --no-confirm"
+    echo "  $0 1.0.3 --no-confirm --force"
     echo ""
     echo "This script updates version numbers across all plugin files including:"
     echo "  • Main plugin file header and constants"
@@ -77,15 +78,19 @@ fi
 
 NEW_VERSION="$1"
 NO_CONFIRM=false
+FORCE=false
 
 # Parse arguments
-if [ $# -eq 2 ] && [ "$2" = "--no-confirm" ]; then
-    NO_CONFIRM=true
-elif [ $# -gt 1 ] && [ "$2" != "--no-confirm" ]; then
-    print_error "Invalid argument: $2"
-    echo "Usage: $0 <new-version> [--no-confirm]"
-    exit 1
-fi
+shift
+for arg in "$@"; do
+    case "$arg" in
+        --no-confirm) NO_CONFIRM=true ;;
+        --force) FORCE=true ;;
+        *) print_error "Invalid argument: $arg"
+           echo "Usage: $0 <new-version> [--no-confirm] [--force]"
+           exit 1 ;;
+    esac
+done
 
 # Validate version format
 if ! [[ $NEW_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -118,8 +123,13 @@ print_status "New version: ${NEW_VERSION}"
 
 # Check if versions are the same
 if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
-    print_warning "Current version and new version are the same (${NEW_VERSION})"
-    if [ "$NO_CONFIRM" = false ]; then
+    if [ "$FORCE" = true ]; then
+        print_status "Same version detected - forcing update across all files"
+    elif [ "$NO_CONFIRM" = true ]; then
+        print_status "Same version detected in CI mode - exiting successfully (no changes needed)"
+        exit 0
+    else
+        print_warning "Current version and new version are the same (${NEW_VERSION})"
         echo ""
         read -p "$(echo -e ${YELLOW}[CONFIRM]${NC} Continue anyway? [y/N]: )" -n 1 -r
         echo ""
@@ -127,13 +137,10 @@ if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
             print_warning "Version update cancelled"
             exit 0
         fi
-    else
-        print_status "Same version detected in CI mode - exiting successfully (no changes needed)"
-        exit 0
     fi
 else
     # Confirm with user only if not in no-confirm mode
-    if [ "$NO_CONFIRM" = false ]; then
+    if [ "$NO_CONFIRM" = false ] && [ "$FORCE" = false ]; then
         echo ""
         read -p "$(echo -e ${YELLOW}[CONFIRM]${NC} Update version from ${CURRENT_VERSION} to ${NEW_VERSION}? [y/N]: )" -n 1 -r
         echo ""
@@ -143,7 +150,7 @@ else
             exit 0
         fi
     else
-        print_status "Running in non-interactive mode (--no-confirm)"
+        print_status "Running in non-interactive mode"
     fi
 fi
 
@@ -187,8 +194,8 @@ update_file() {
                 rm "$file.bak" 2>/dev/null || true
                 return 0
             else
-                print_warning "  No changes made to $description (pattern not found or already updated)"
-                mv "$file.bak" "$file" 2>/dev/null || true
+                print_success "  ✓ $description (already up to date)"
+                rm "$file.bak" 2>/dev/null || true
                 return 0  # Changed: return success instead of failure
             fi
         else
@@ -210,9 +217,9 @@ update_file "${PROJECT_ROOT}/silver-assist-security.php" \
     "s/Version: [0-9]+\\.[0-9]+\\.[0-9]+/Version: ${NEW_VERSION}/g" \
     "plugin header"
 
-# Update constant
+# Update constant (handles both single and double quotes)
 update_file "${PROJECT_ROOT}/silver-assist-security.php" \
-    "s/define\\(\"SILVER_ASSIST_SECURITY_VERSION\", \"[0-9]+\\.[0-9]+\\.[0-9]+\"\\)/define(\"SILVER_ASSIST_SECURITY_VERSION\", \"${NEW_VERSION}\")/g" \
+    "s/(SILVER_ASSIST_SECURITY_VERSION.{1,5},.{1,5})[0-9]+\\.[0-9]+\\.[0-9]+/\${1}${NEW_VERSION}/g" \
     "plugin constant"
 
 # Update @version tag
@@ -239,20 +246,20 @@ fi
 print_status "Updating PHP files..."
 
 # Get all PHP files with @version tags
-php_files=""
+php_files=()
 if [ -d "${PROJECT_ROOT}/src" ]; then
-    # Use a more robust approach to find PHP files
-    for php_file in $(find "${PROJECT_ROOT}/src" -name "*.php" 2>/dev/null); do
-        if [ -f "$php_file" ] && grep -q "@version" "$php_file"; then
-            php_files="$php_files $php_file"
+    # Use a more robust approach to find PHP files (handles spaces in paths)
+    while IFS= read -r -d '' php_file; do
+        if grep -q "@version" "$php_file"; then
+            php_files+=("$php_file")
         fi
-    done
+    done < <(find "${PROJECT_ROOT}/src" -name "*.php" -print0 2>/dev/null)
 fi
 
 # Update each PHP file
-if [ -n "$php_files" ]; then
+if [ ${#php_files[@]} -gt 0 ]; then
     php_update_count=0
-    for php_file in $php_files; do
+    for php_file in "${php_files[@]}"; do
         file_name=$(basename "$php_file")
         
         update_file "$php_file" \
@@ -272,20 +279,20 @@ fi
 print_status "Updating CSS files..."
 
 # Get all CSS files with @version tags
-css_files=""
+css_files=()
 if [ -d "${PROJECT_ROOT}/assets/css" ]; then
-    # Use a more robust approach to find CSS files
+    # Use arrays to handle spaces in paths
     for css_file in "${PROJECT_ROOT}/assets/css"/*.css; do
         if [ -f "$css_file" ] && grep -q "@version" "$css_file"; then
-            css_files="$css_files $css_file"
+            css_files+=("$css_file")
         fi
     done
 fi
 
 # Update each CSS file
-if [ -n "$css_files" ]; then
+if [ ${#css_files[@]} -gt 0 ]; then
     css_update_count=0
-    for css_file in $css_files; do
+    for css_file in "${css_files[@]}"; do
         file_name=$(basename "$css_file")
         
         update_file "$css_file" \
@@ -308,20 +315,20 @@ fi
 print_status "Updating JavaScript files..."
 
 # Get all JavaScript files with @version tags
-js_files=""
+js_files=()
 if [ -d "${PROJECT_ROOT}/assets/js" ]; then
-    # Use a more robust approach to find JavaScript files
+    # Use arrays to handle spaces in paths
     for js_file in "${PROJECT_ROOT}/assets/js"/*.js; do
         if [ -f "$js_file" ] && grep -q "@version" "$js_file"; then
-            js_files="$js_files $js_file"
+            js_files+=("$js_file")
         fi
     done
 fi
 
 # Update each JavaScript file
-if [ -n "$js_files" ]; then
+if [ ${#js_files[@]} -gt 0 ]; then
     js_update_count=0
-    for js_file in $js_files; do
+    for js_file in "${js_files[@]}"; do
         file_name=$(basename "$js_file")
         
         update_file "$js_file" \
@@ -375,20 +382,20 @@ fi
 print_status "Updating version scripts..."
 
 # Get all script files with @version tags
-script_files=""
+script_files=()
 if [ -d "${PROJECT_ROOT}/scripts" ]; then
-    # Use a more robust approach to find script files
+    # Use arrays to handle spaces in paths
     for script_file in "${PROJECT_ROOT}/scripts"/*.sh; do
         if [ -f "$script_file" ] && grep -q "@version" "$script_file"; then
-            script_files="$script_files $script_file"
+            script_files+=("$script_file")
         fi
     done
 fi
 
 # Update each script file
-if [ -n "$script_files" ]; then
+if [ ${#script_files[@]} -gt 0 ]; then
     script_update_count=0
-    for script_file in $script_files; do
+    for script_file in "${script_files[@]}"; do
         script_name=$(basename "$script_file")
         
         update_file "$script_file" \

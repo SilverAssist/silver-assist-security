@@ -304,7 +304,7 @@ class SecurityDataProvider {
 		$paths = array();
 
 		// WP_DEBUG_LOG file location - can be a string path or boolean true (default location)
-		if ( defined( 'WP_DEBUG_LOG' ) && \is_string( WP_DEBUG_LOG ) && WP_DEBUG_LOG !== '' ) {
+		if ( defined( 'WP_DEBUG_LOG' ) && ! \is_bool( WP_DEBUG_LOG ) && \is_string( WP_DEBUG_LOG ) && WP_DEBUG_LOG !== '' ) {
 			$paths[] = WP_DEBUG_LOG;
 		}
 

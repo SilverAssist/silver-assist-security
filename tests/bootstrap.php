@@ -68,9 +68,14 @@ if (!file_exists("{$_tests_dir}/includes/functions.php")) {
 require_once "{$_tests_dir}/includes/functions.php";
 
 /**
- * Manually load the plugin being tested
+ * Manually load the plugin being tested and its dependencies
  */
 function _manually_load_plugin() {
+    // Load WPGraphQL if available in the test environment
+    if ( defined( 'WP_PLUGIN_DIR' ) && file_exists( WP_PLUGIN_DIR . '/wp-graphql/wp-graphql.php' ) ) {
+        require_once WP_PLUGIN_DIR . '/wp-graphql/wp-graphql.php';
+    }
+
     require dirname(__DIR__) . "/silver-assist-security.php";
 }
 

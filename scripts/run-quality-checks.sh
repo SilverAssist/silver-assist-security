@@ -9,6 +9,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 SKIP_WP_SETUP="${SKIP_WP_SETUP:-false}"
 FORCE_DB_RECREATE="${FORCE_DB_RECREATE:-false}"
 FORCE_CF7_REINSTALL="${FORCE_CF7_REINSTALL:-false}"
+FORCE_GRAPHQL_REINSTALL="${FORCE_GRAPHQL_REINSTALL:-false}"
 NON_INTERACTIVE="${NON_INTERACTIVE:-false}"
 
 # Auto-detect CI environment and set non-interactive mode
@@ -16,6 +17,7 @@ if [[ "$CI" == "true" ]] || [[ "$GITHUB_ACTIONS" == "true" ]] || [[ "$CONTINUOUS
     NON_INTERACTIVE="true"
     FORCE_DB_RECREATE="true"
     FORCE_CF7_REINSTALL="true"
+    FORCE_GRAPHQL_REINSTALL="true"
     echo "🤖 CI environment detected - running in non-interactive mode"
 fi
 
@@ -76,6 +78,7 @@ setup_wordpress_test_suite() {
     # Set environment variables for non-interactive installation
     export FORCE_DB_RECREATE="$FORCE_DB_RECREATE"
     export FORCE_CF7_REINSTALL="$FORCE_CF7_REINSTALL"
+    export FORCE_GRAPHQL_REINSTALL="$FORCE_GRAPHQL_REINSTALL"
     export WP_TESTS_DIR="${WP_TESTS_DIR:-$TMPDIR/wordpress-tests-lib}"
     
     # Determine WordPress version to install
@@ -94,6 +97,12 @@ setup_wordpress_test_suite() {
     if [[ -f "scripts/install-cf7-for-tests.sh" ]]; then
         echo "📦 Installing Contact Form 7 for integration tests..."
         bash scripts/install-cf7-for-tests.sh
+    fi
+    
+    # Install WPGraphQL for integration tests
+    if [[ -f "scripts/install-wpgraphql-for-tests.sh" ]]; then
+        echo "📦 Installing WPGraphQL for integration tests..."
+        bash scripts/install-wpgraphql-for-tests.sh
     fi
     
     print_success "WordPress Test Suite ready"
@@ -141,6 +150,19 @@ run_phpunit() {
         echo "Integration tests may be limited"
     fi
     
+    # Check WPGraphQL integration
+    GRAPHQL_PLUGIN_FILE="$WP_CORE_DIR/wp-content/plugins/wp-graphql/wp-graphql.php"
+    if [ -f "$GRAPHQL_PLUGIN_FILE" ]; then
+        GRAPHQL_VERSION=$(grep "Version:" "$GRAPHQL_PLUGIN_FILE" | sed 's/.*Version: //' | sed 's/ .*//')
+        echo "✅ WPGraphQL v$GRAPHQL_VERSION integration active"
+        
+        GRAPHQL_RESULT=$(vendor/bin/phpunit --filter="GraphQL" --testdox 2>/dev/null | grep -c "✔" || echo "0")
+        echo "- GraphQL Security Integration: $GRAPHQL_RESULT tests"
+    else
+        echo "⚠️  WPGraphQL not found at: $GRAPHQL_PLUGIN_FILE"
+        echo "GraphQL integration tests will be skipped"
+    fi
+    
     print_success "All tests completed"
 }
 
@@ -163,6 +185,7 @@ show_help() {
     echo "  --non-interactive       Run in non-interactive mode (auto-yes to prompts)"
     echo "  --force-db-recreate     Force database recreation without prompting"
     echo "  --force-cf7-reinstall   Force Contact Form 7 reinstallation"
+    echo "  --force-graphql-reinstall Force WPGraphQL reinstallation"
     echo "  --verbose, -v           Enable verbose output"
     echo ""
     echo "Environment Variables:"
@@ -170,6 +193,7 @@ show_help() {
     echo "  NON_INTERACTIVE=true    Enable non-interactive mode"
     echo "  FORCE_DB_RECREATE=true  Force database recreation"
     echo "  FORCE_CF7_REINSTALL=true Force CF7 reinstallation"
+    echo "  FORCE_GRAPHQL_REINSTALL=true Force WPGraphQL reinstallation"
     echo "  CI=true                 Auto-enables non-interactive mode"
     echo ""
     echo "Examples:"
@@ -205,6 +229,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --force-cf7-reinstall)
             FORCE_CF7_REINSTALL="true"
+            shift
+            ;;
+        --force-graphql-reinstall)
+            FORCE_GRAPHQL_REINSTALL="true"
             shift
             ;;
         --verbose|-v)

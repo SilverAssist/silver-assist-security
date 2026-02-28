@@ -7,142 +7,125 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [1.1.15] - 2026-02-28
 
-- 🧩 **RenderHelper Utility Class**: New `RenderHelper` class (`src/Admin/Renderer/RenderHelper.php`) with static methods for consistent UI component rendering
-  - `render_feature_status()` — Renders feature enabled/disabled rows with optional custom labels
-  - `render_stat()` — Renders numeric stat values with label, optional suffix and HTML id
-  - `render_async_stat()` — Renders AJAX-loaded stat cards with loading spinner
-- 🔒 **Autosave / Submit Race-Condition Guard**: Prevent a manual form submit from firing while an autosave AJAX request is in-flight (and vice-versa)
-  - Submit buttons are disabled and show a "Saving..." label during autosave
-  - Manual submit cancels any pending autosave timer
-  - If the autosave request hangs or the connection drops, a 15 s fallback timeout re-enables the buttons
-  - New CSS `.is-saving` class provides visual feedback (reduced opacity, `cursor: not-allowed`)
+### 🎨 Dashboard UI Overhaul
 
-### Changed (Refactor)
+- **Card-Based Layout**: Complete redesign of the security dashboard with status cards
+  - Login Security, Admin Security, GraphQL Security, General Security, and Form Protection cards
+  - `stat-value`/`stat-label` components for consistent data display
+  - Feature-status rows with enabled/disabled indicators and `::before` icons
+  - Security Statistics section: Blocked IPs, Failed Attempts (24h), Security Events (7d)
+- **Activity Tabs**: New tabbed interface (Blocked IPs / Security Logs) in Recent Activity section
+  - Loading spinners and loading-text placeholders for async content
+  - Interactive tab switching with smooth transitions
+- **Settings Tabs Card Migration**: All 4 settings tabs now use `.status-card` with `.card-header`/`.card-content`
+  - Login Protection, GraphQL Security, Contact Form 7, and IP Management sections wrapped in styled cards
+  - Consistent card structure with header icons across all tabs
+- **Status Indicator Semantics**: Renamed `.disabled` to `.inactive` for clarity
+- **Toggle Switch Refactor**: Native `:checked` selector with `.toggle-slider` class instead of JS class toggling
 
-- ♻️ **DashboardRenderer Refactored**: Replaced all repetitive HTML blocks with `RenderHelper` calls
-  - 8 `feature-status` blocks replaced by `RenderHelper::render_feature_status()`
-  - 7 inline `stat` blocks replaced by `RenderHelper::render_stat()`
-  - 3 async `stat` blocks replaced by `RenderHelper::render_async_stat()`
-  - Guarantees consistent HTML structure and CSS classes across all dashboard cards
+### 🛡️ Admin Hide Security Restored
 
-### Added
+- Toggle switch to enable/disable admin URL hiding
+- Custom admin path input with real-time validation and preview
+- Security warning notice with recovery instructions
+- Path validation fallback for undefined error messages
 
-- 🎨 **Dashboard UI Overhaul**: Complete redesign of security dashboard with card-based layout
-  - Status cards with `stat-value`/`stat-label` components for Login Security, Admin Security, GraphQL, General Security, and Form Protection
-  - Activity tabs (Blocked IPs / Security Logs) with interactive tab switching
-  - Loading spinners and loading-text for async content loading
-  - Feature-status display with enabled/disabled indicators and `::before` icons
-  - Security Statistics section with Blocked IPs, Failed Attempts (24h), and Security Events (7d)
-- 🛡️ **Admin Hide Security**: Restored Admin Hide section in Login Security settings tab
-  - Toggle switch to enable/disable admin URL hiding
-  - Custom admin path input with real-time validation
-  - Security warning notice with recovery instructions
-- 📊 **Security Logs Panel**: New security logs viewer in dashboard Recent Activity
-  - `loadSecurityLogs()` JS function with AJAX data loading
-  - Table display with timestamp, event type, and details columns
-  - Integration with existing log parsing infrastructure
-- 🔓 **IP Unblock Functionality**: Added ability to unblock IPs from IP Management tab
+### 📊 Security Logs & IP Management
+
+- **Security Logs Panel**: New logs viewer in dashboard Recent Activity
+  - AJAX-loaded table with timestamp, event type, and details columns
+  - Secure DOM construction using jQuery `.text()` to prevent XSS
+- **IP Unblock Functionality**: Unblock IPs directly from IP Management tab
   - `unblock_ip` AJAX endpoint in `SecurityAjaxHandler`
-  - Full table view in IP Management with per-IP unblock buttons
-  - Compact summary view (last 3 IPs) with "View all" link in dashboard
-- 📝 **Dashboard Styles Documentation**: Created `.github/skills/dashboard-styles/SKILL.md`
-  - Comprehensive guide for CSS classes, HTML patterns, and component usage
-  - Status indicators, status cards, feature displays, statistics, and activity tabs
-  - Do's and Don'ts section for consistent UI development
+  - Full table view with per-IP unblock buttons
+  - Compact dashboard summary (last 3 IPs) with "View all" link
+- **Blocked IPs Display**: Split into compact dashboard summary and full IP Management table
+
+### 🔒 Security Hardening
+
+- **DOM XSS Prevention**: Added `escapeHtml()` helper to admin.js for all user-data DOM insertion
+  - Blocked IPs table: IP addresses, reasons, timestamps all escaped
+  - Security logs: Rebuilt with jQuery DOM construction (`.text()`) instead of template literals
+  - CF7 blocked IPs: Table headers use `esc_html__()`, cell values use `esc_html()`
+- **AJAX Scope Fix**: Resolved `ReferenceError` — `ajaxurl`/`nonce` now destructured in correct scope for unblock button handlers
+- **Smart Logging System**: Severity-based security event logging
+  - 58 event types classified as error (13), warning (33), or info (12)
+  - `WP_DEBUG` gate — no log output when debugging is disabled
+  - Test environment filtering — only errors logged during tests
+  - `[ERROR]`/`[WARNING]`/`[INFO]` severity prefixes in log format
+  - Eliminated ~70 noisy log lines from test output
+
+### 🧩 New Components
+
+- **RenderHelper Utility Class** (`src/Admin/Renderer/RenderHelper.php`): Shared static methods for UI rendering
+  - `render_feature_status()` — Feature enabled/disabled rows
+  - `render_stat()` — Numeric stat values with label and optional suffix
+  - `render_async_stat()` — AJAX-loaded stat cards with loading spinner
+- **SecurityDataProvider Expanded**: Added `form_protection`, GraphQL detail fields (`query_depth_limit`, `query_complexity_limit`, `query_timeout`, `introspection_disabled`), `xmlrpc_disabled`, `version_hiding`, and overall statistics
+- **StatisticsProvider**: Cross-component stats with inlined log file reading to avoid circular dependency
+- **DashboardRenderer Refactored**: All repetitive HTML blocks replaced with `RenderHelper` calls (8 feature-status, 7 stat, 3 async-stat)
+
+### 🔒 Autosave / Submit Race-Condition Guard
+
+- Submit buttons disabled with "Saving..." label during autosave
+- Manual submit cancels pending autosave timer
+- 15s fallback timeout re-enables buttons if autosave hangs
+- CSS `.is-saving` class for visual feedback
+
+### 🐛 Bug Fixes
+
+- **CF7 Detection (CF7 v6.x)**: Removed deprecated `function_exists('wpcf7_get_contact_form_by_id')` check — this function was removed in CF7 v6.x, causing the CF7 tab to not appear
+- **CF7 Blocked IPs Loading**: `loadCF7BlockedIPs()` now targets both `#cf7-blocked-ips-content` and `#cf7-blocked-ips-container`
+- **CF7 Tab Data Loading**: Added `cf7-security` case to `switchToTab` for CF7 tab activation
+- **CF7 Empty State Styling**: Changed to `.no-threats` class for consistent green styling
+- **Admin Path Validation**: Added fallback `"Invalid path"` for undefined error messages; removed static div (JS creates it dynamically)
+- **Toggle Switch Initialization**: Skip checkboxes already inside `.toggle-switch` labels to prevent double-wrapping
+- **Blocked IPs Data Extraction**: Handle both array and object response formats
+- **GraphQL Timeout Option Key**: Fixed `silver_assist_graphql_timeout` → `silver_assist_graphql_query_timeout` to show correct dashboard value
+- **PHP Function Prefixes**: Added `\` to `wp_json_encode()`, removed unnecessary `\` from `round()` (PHP built-in)
+- **SecurityDataProvider PHPDoc**: Fixed mis-indented docblock for `$stats_provider` property
+- **Noisy Log Removed**: Removed `IP_CLEANUP_INITIALIZED` log from Plugin.php
+
+### 🧪 Test Suite
+
+- **AjaxTestHelper Trait**: Reusable AJAX testing infrastructure
+  - `AjaxTestDieError extends \Error` bypasses WordPress die handlers in tests
+  - `setup_ajax_environment()`, `call_ajax_handler()`, `teardown_ajax_environment()` methods
+- **36 Pre-Existing Test Failures Fixed** across 5 categories:
+  - UI structure mismatches — updated tab IDs, CSS classes, text labels
+  - Removed/refactored methods — rewired tests to `SettingsHandler::save_security_settings()`
+  - Hook registration issues — fixed test isolation and explicit component creation
+  - Singleton/void/input ID — `getInstance()`, `ob_start()` buffering, correct field IDs
+- **283 Tests Passing**: Unit (122), Functional (42), Security (62), Integration (57+)
+
+### 🎨 Code Quality
+
+- **PHPCS Compliance**: Auto-fixed 223 violations via PHPCBF (0 errors, 3 pre-existing warnings remaining)
+  - `SettingsRenderer.php`: 200 fixes (spacing, brace placement, indentation)
+  - `SecurityDataProvider.php`: 23 fixes
+- **PHPStan Level 8**: Resolved all 37 static analysis errors (100% compliance)
+
+### 📚 Documentation & AI Config
+
+- **Copilot Instructions Updated**: Documentation rule now distinguishes between project docs and Copilot config files
+  - `.github/skills/` — Copilot Skills (domain knowledge)
+  - `.github/prompts/` — Copilot Prompt Files (reusable workflows)
+  - `.github/instructions/` — Copilot Instruction Files (scoped context)
+- **Dashboard Styles Skill**: `.github/skills/dashboard-styles/SKILL.md` — CSS classes, HTML patterns, component usage guide
+- **Dependabot Auto-Merge**: Documented GitHub Actions limitation for workflow file modifications
 
 ### Changed
 
-- 🎨 **Settings Tabs Card Structure Migration**: All 4 settings tabs now use `.status-card` with `.card-header`/`.card-content`
-  - Login Protection wrapped in `.status-card.login-security` with lock icon
-  - GraphQL Security wrapped in `.status-card.graphql-security` with rest-api icon
-  - Contact Form 7 wrapped in `.status-card.cf7-security` with email icon
-  - IP Management wrapped in `.status-card.admin-security` with shield icon
-  - CF7 Blocked IPs section upgraded from bare div to `.status-card`
-  - Manual IP Management section wrapped in `.status-card`
-- 🎨 **Status Indicator Semantics**: Renamed `.disabled` to `.inactive` for status indicators
-- 🎨 **Toggle Switch Refactor**: Use `.toggle-slider` class and native `:checked` selector instead of JS class toggling
-- 🎨 **Blocked IPs Display**: Split into compact dashboard summary and full IP Management table
-- 📊 **SecurityDataProvider Expanded**: Added `form_protection`, GraphQL detail fields (`query_depth_limit`, `query_complexity_limit`, `query_timeout`, `introspection_disabled`), `xmlrpc_disabled`, `version_hiding`, and overall statistics (`failed_attempts_24h`, `security_events_7d`)
-- 🔧 **StatisticsProvider**: Added to SecurityDataProvider for cross-component stats; fixed circular dependency by inlining log file reading instead of calling SecurityDataProvider
-- 🔧 **Dashboard Initialization**: `initDashboard()` now called on document ready; activity tab switching initialized in dashboard init
-- ❌ **Removed**: Hover transform on status cards for cleaner UX; unnecessary dashboard refresh case from tab switching
-
-### Fixed
-
-- 🐛 **CF7 Detection (CF7 v6.x)**: Removed deprecated `function_exists('wpcf7_get_contact_form_by_id')` check from `SecurityHelper::is_contact_form_7_active()` — this function was removed in CF7 v6.x, causing the CF7 tab to not appear
-- 🐛 **CF7 Blocked IPs Loading**: JS `loadCF7BlockedIPs()` now targets both `#cf7-blocked-ips-content` and `#cf7-blocked-ips-container` selectors to populate both the CF7 tab and IP Management tab
-- 🐛 **CF7 Tab Data Loading**: Added `cf7-security` case to `switchToTab` so CF7 blocked IPs load when switching to the CF7 tab
-- 🐛 **CF7 Empty State Styling**: Changed `<p class="no-blocked-ips">` to `<p class="no-threats">` for consistent green styling on empty blocked IP lists
-- 🐛 **Admin Path Validation**: Added fallback `"Invalid path"` for undefined error messages; removed static `<div id="admin-path-validation">` (JS creates it dynamically)
-- 🐛 **Toggle Switch Initialization**: Skip checkboxes already inside `.toggle-switch` labels to prevent double-wrapping
-- 🐛 **Blocked IPs Data Extraction**: Handle both array and object response formats from `get_blocked_ips` AJAX endpoint
-
-### Fixed
-
-- 🐛 **Dependabot Auto-Merge Workflow Restriction**: Documented GitHub Actions limitation for auto-merging PRs that modify workflow files
-  - GitHub Actions prevents `GITHUB_TOKEN` from modifying workflow files as a security measure
-  - Error: "refusing to allow a GitHub App to create or update workflow" when merging PR #30
-  - **Solution**: PRs that modify `.github/workflows/` files require manual approval and merge
-  - **Repository Setting Required**: Enable "Allow GitHub Actions to create and approve pull requests" in Settings → Actions → General
-  - Dependabot can still create PRs for workflow updates, but auto-merge is disabled for security
-  - This is a GitHub platform limitation, not a workflow configuration issue
-
-### Added
-
-- 📦 **Contact Form 7 Stubs**: Added `miguelcolmenares/cf7-stubs` ^6.1 for enhanced PHPStan static analysis
-  - Provides Contact Form 7 function and class declaration stubs
-  - Improves code intelligence and type checking for CF7 integration
-  - Better IDE autocomplete and error detection
-  - PHPStan configuration updated to load CF7 stubs automatically
-- 📚 **Test Script Environment Variables Documentation**: Comprehensive documentation for test script configuration
-  - Added environment variables section to `.github/copilot-instructions.md`
-  - Added environment variables section to `tests/README.md`
-  - Documents `WP_TESTS_DIR`, `WP_VERSION`, `FORCE_DB_RECREATE`, `FORCE_CF7_REINSTALL`, `CI` variables
-  - Includes usage examples for local development and CI/CD integration
-  - Provides detailed variable descriptions and default values
-
-### Changed
-
-- 🔧 **GitHub Workflow Permissions**: Added `contents: write` and `pull-requests: write` permissions to `.github/workflows/quality-checks.yml` for proper GitHub App operations
-- 📚 **Documentation Policy Reinforced**: Enhanced Copilot instructions with explicit examples to prevent creation of standalone `.md` files (e.g., `FIX_SUMMARY.md`, `GITHUB_APP_PERMISSIONS.md`)
-  - All documentation must be consolidated in README.md, CHANGELOG.md, or copilot-instructions.md
-  - No separate documentation files allowed under any circumstances
-  - Prevents documentation fragmentation and repository clutter
-- 🚀 **Quality Checks Script Enhanced**: Improved non-interactive mode and CI/CD integration
-  - `WP_TESTS_DIR` now exported as environment variable for all child scripts
-  - WordPress version respects `WP_VERSION` environment variable in CI/CD
-  - Automatic database recreation with `FORCE_DB_RECREATE=true`
-  - Cleaner integration with GitHub Actions workflow
-- ⚙️ **GitHub Actions Workflow Optimized**: Simplified quality checks workflow
-  - Removed duplicate WordPress and CF7 installation steps
-  - Now uses unified `run-quality-checks.sh` script for all operations
-  - Passes `WP_VERSION`, `WP_TESTS_DIR`, and CI flags as environment variables
-  - Reduced workflow complexity and execution time
-
-### Fixed
-
-- 🐛 **PHPStan Static Analysis Errors**: Resolved all 37 PHPStan level 8 errors
-  - **SecurityAjaxHandler.php**: Removed unreachable code after `wp_send_json_error()` calls (7 errors)
-  - **SecurityAjaxHandler.php**: Removed non-existent `PathValidator::check_path_conflicts()` method call
-  - **SecurityAjaxHandler.php**: Fixed `IPBlacklist::add_ip()` to `add_to_blacklist()` with correct parameters
-  - **GraphQLSecurity.php**: Changed undefined `get_limit()` to `get_safe_limit()` in 3 locations
-  - **GraphQLSecurity.php**: Added type casting for `preg_replace()` string|null returns (9 errors)
-  - **SettingsRenderer.php**: Fixed undefined method `get_configuration_html()` to `get_settings_display()`
-  - **SettingsRenderer.php**: Added type casting for `round()` float to string conversion
-  - **SecurityDataProvider.php**: Added type casting for `format_time_duration()` float|int parameter
-  - **SecurityDataProvider.php**: Improved `WP_DEBUG_LOG` type check for bool|string constant
-  - **phpstan.neon**: Added ignore patterns for WordPress-specific code patterns:
-    - Properties used via WordPress hooks (side effects not detected by static analysis)
-    - Unreachable statements after `wp_send_json_*` functions (they exit execution)
-    - Always-true conditions for intentional code clarity
-    - WP_DEBUG_LOG type checking (WordPress constant can be bool or string)
-  - **Result**: Zero PHPStan errors (100% static analysis compliance at level 8)
+- 📦 **Contact Form 7 Stubs**: Added `miguelcolmenares/cf7-stubs` ^6.1 for PHPStan static analysis
+- 🔧 **GitHub Workflow Permissions**: Added `contents: write` and `pull-requests: write` to quality-checks workflow
+- 🚀 **Quality Checks Script**: Improved non-interactive mode, CI/CD integration, WP_VERSION environment variable support
+- ⚙️ **GitHub Actions Workflow**: Simplified to use unified `run-quality-checks.sh` script
 
 ### Removed
 
-- 🗑️ Deleted temporary documentation files that violated consolidation policy (`.github/FIX_SUMMARY.md`, `.github/GITHUB_APP_PERMISSIONS.md`)
+- 🗑️ Deleted temporary documentation files (`.github/FIX_SUMMARY.md`, `.github/GITHUB_APP_PERMISSIONS.md`)
 
 ## [1.1.15] - 2025-11-06
 

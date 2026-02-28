@@ -250,7 +250,7 @@ class StatisticsProvider {
 	private function get_log_file_paths(): array {
 		$paths = array();
 
-		if ( defined( 'WP_DEBUG_LOG' ) && \is_string( WP_DEBUG_LOG ) && WP_DEBUG_LOG !== '' ) {
+		if ( defined( 'WP_DEBUG_LOG' ) && ! \is_bool( WP_DEBUG_LOG ) && \is_string( WP_DEBUG_LOG ) && WP_DEBUG_LOG !== '' ) {
 			$paths[] = WP_DEBUG_LOG;
 		}
 

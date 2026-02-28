@@ -100,7 +100,7 @@ class DashboardRenderer {
 					<?php
 					RenderHelper::render_stat( $security_status['login_security']['max_attempts'], \__( 'Max Attempts', 'silver-assist-security' ) );
 					RenderHelper::render_stat( $security_status['overall']['blocked_ips_count'], \__( 'Blocked IPs', 'silver-assist-security' ), '', 'blocked-ips-card' );
-					RenderHelper::render_stat( round( $security_status['login_security']['lockout_duration'] / 60 ), \__( 'Lockout (min)', 'silver-assist-security' ) );
+					RenderHelper::render_stat( (int) round( $security_status['login_security']['lockout_duration'] / 60 ), \__( 'Lockout (min)', 'silver-assist-security' ) );
 					?>
 				</div>
 			</div>

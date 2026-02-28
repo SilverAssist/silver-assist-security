@@ -49,11 +49,15 @@ parameters:
         
         # Always-false condition for WP_DEBUG_LOG type check (WordPress constant can be bool or string)
         -
-            message: '#Call to function is_string\(\) with bool will always evaluate to false#'
-            path: src/Admin/Data/SecurityDataProvider.php
-        -
             message: '#Result of && is always false#'
-            path: src/Admin/Data/SecurityDataProvider.php
+            paths:
+                - src/Admin/Data/StatisticsProvider.php
+                - src/Admin/Data/SecurityDataProvider.php
+        -
+            message: '#Right side of && is always true#'
+            paths:
+                - src/Admin/Data/StatisticsProvider.php
+                - src/Admin/Data/SecurityDataProvider.php
         
         # GraphQL library specific - graphql-php classes not in development environment
         -
