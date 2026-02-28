@@ -69,33 +69,33 @@ class SecurityDataProvider {
  * @var StatisticsProvider
  * @since 1.1.15
  */
-private StatisticsProvider $stats_provider;
+	private StatisticsProvider $stats_provider;
 
-/**
- * Initialize data provider with security components
- *
- * @since 1.1.15
- */
-public function __construct() {
-	$this->login_security      = new LoginSecurity();
-	$this->general_security    = new GeneralSecurity();
-	$this->admin_hide_security = new AdminHideSecurity();
-	$this->ip_blacklist        = IPBlacklist::getInstance();
-	$this->stats_provider      = new StatisticsProvider();
-}
+	/**
+	 * Initialize data provider with security components
+	 *
+	 * @since 1.1.15
+	 */
+	public function __construct() {
+		$this->login_security      = new LoginSecurity();
+		$this->general_security    = new GeneralSecurity();
+		$this->admin_hide_security = new AdminHideSecurity();
+		$this->ip_blacklist        = IPBlacklist::getInstance();
+		$this->stats_provider      = new StatisticsProvider();
+	}
 
-/**
- * Get full security status for dashboard
- *
- * @since 1.1.15
- * @return array Security status data
- */
-public function get_security_status(): array {
-	$login_protection  = DefaultConfig::get_option( 'silver_assist_login_attempts' ) > 0;
-	$password_strength = DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' );
-	$bot_protection    = DefaultConfig::get_option( 'silver_assist_bot_protection' );
-	$cookie_security   = true; // Always enabled in GeneralSecurity
-	$admin_hide        = DefaultConfig::get_option( 'silver_assist_admin_path' ) !== 'wp-admin';
+	/**
+	 * Get full security status for dashboard
+	 *
+	 * @since 1.1.15
+	 * @return array Security status data
+	 */
+	public function get_security_status(): array {
+		$login_protection  = DefaultConfig::get_option( 'silver_assist_login_attempts' ) > 0;
+		$password_strength = DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' );
+		$bot_protection    = DefaultConfig::get_option( 'silver_assist_bot_protection' );
+		$cookie_security   = true; // Always enabled in GeneralSecurity
+		$admin_hide        = DefaultConfig::get_option( 'silver_assist_admin_path' ) !== 'wp-admin';
 
 		// GraphQL security status
 		$graphql_active = false;
@@ -168,13 +168,13 @@ public function get_security_status(): array {
 				'rate_limit' => (int) DefaultConfig::get_option( 'silver_assist_form_rate_limit' ),
 			),
 			'overall'          => array(
-				'active_features'      => $active_features,
-				'total_features'       => $total_features,
-				'security_score'       => $security_score,
-				'blocked_ips_count'    => $this->get_blocked_ips_count(),
-				'failed_attempts_24h'  => $this->stats_provider->get_recent_failed_attempts(),
-				'security_events_7d'   => $this->get_security_events_7d_count(),
-				'last_updated'         => \current_time( 'mysql' ),
+				'active_features'     => $active_features,
+				'total_features'      => $total_features,
+				'security_score'      => $security_score,
+				'blocked_ips_count'   => $this->get_blocked_ips_count(),
+				'failed_attempts_24h' => $this->stats_provider->get_recent_failed_attempts(),
+				'security_events_7d'  => $this->get_security_events_7d_count(),
+				'last_updated'        => \current_time( 'mysql' ),
 			),
 		);
 	}
