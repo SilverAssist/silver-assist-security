@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- 🎨 **Dashboard UI Overhaul**: Complete redesign of security dashboard with card-based layout
+  - Status cards with `stat-value`/`stat-label` components for Login Security, Admin Security, GraphQL, General Security, and Form Protection
+  - Activity tabs (Blocked IPs / Security Logs) with interactive tab switching
+  - Loading spinners and loading-text for async content loading
+  - Feature-status display with enabled/disabled indicators and `::before` icons
+  - Security Statistics section with Blocked IPs, Failed Attempts (24h), and Security Events (7d)
+- 🛡️ **Admin Hide Security**: Restored Admin Hide section in Login Security settings tab
+  - Toggle switch to enable/disable admin URL hiding
+  - Custom admin path input with real-time validation
+  - Security warning notice with recovery instructions
+- 📊 **Security Logs Panel**: New security logs viewer in dashboard Recent Activity
+  - `loadSecurityLogs()` JS function with AJAX data loading
+  - Table display with timestamp, event type, and details columns
+  - Integration with existing log parsing infrastructure
+- 🔓 **IP Unblock Functionality**: Added ability to unblock IPs from IP Management tab
+  - `unblock_ip` AJAX endpoint in `SecurityAjaxHandler`
+  - Full table view in IP Management with per-IP unblock buttons
+  - Compact summary view (last 3 IPs) with "View all" link in dashboard
+- 📝 **Dashboard Styles Documentation**: Created `.github/skills/dashboard-styles/SKILL.md`
+  - Comprehensive guide for CSS classes, HTML patterns, and component usage
+  - Status indicators, status cards, feature displays, statistics, and activity tabs
+  - Do's and Don'ts section for consistent UI development
+
+### Changed
+- 🎨 **Settings Tabs Card Structure Migration**: All 4 settings tabs now use `.status-card` with `.card-header`/`.card-content`
+  - Login Protection wrapped in `.status-card.login-security` with lock icon
+  - GraphQL Security wrapped in `.status-card.graphql-security` with rest-api icon
+  - Contact Form 7 wrapped in `.status-card.cf7-security` with email icon
+  - IP Management wrapped in `.status-card.admin-security` with shield icon
+  - CF7 Blocked IPs section upgraded from bare div to `.status-card`
+  - Manual IP Management section wrapped in `.status-card`
+- 🎨 **Status Indicator Semantics**: Renamed `.disabled` to `.inactive` for status indicators
+- 🎨 **Toggle Switch Refactor**: Use `.toggle-slider` class and native `:checked` selector instead of JS class toggling
+- 🎨 **Blocked IPs Display**: Split into compact dashboard summary and full IP Management table
+- 📊 **SecurityDataProvider Expanded**: Added `form_protection`, GraphQL detail fields (`query_depth_limit`, `query_complexity_limit`, `query_timeout`, `introspection_disabled`), `xmlrpc_disabled`, `version_hiding`, and overall statistics (`failed_attempts_24h`, `security_events_7d`)
+- 🔧 **StatisticsProvider**: Added to SecurityDataProvider for cross-component stats; fixed circular dependency by inlining log file reading instead of calling SecurityDataProvider
+- 🔧 **Dashboard Initialization**: `initDashboard()` now called on document ready; activity tab switching initialized in dashboard init
+- ❌ **Removed**: Hover transform on status cards for cleaner UX; unnecessary dashboard refresh case from tab switching
+
+### Fixed
+- 🐛 **CF7 Detection (CF7 v6.x)**: Removed deprecated `function_exists('wpcf7_get_contact_form_by_id')` check from `SecurityHelper::is_contact_form_7_active()` — this function was removed in CF7 v6.x, causing the CF7 tab to not appear
+- 🐛 **CF7 Blocked IPs Loading**: JS `loadCF7BlockedIPs()` now targets both `#cf7-blocked-ips-content` and `#cf7-blocked-ips-container` selectors to populate both the CF7 tab and IP Management tab
+- 🐛 **CF7 Tab Data Loading**: Added `cf7-security` case to `switchToTab` so CF7 blocked IPs load when switching to the CF7 tab
+- 🐛 **CF7 Empty State Styling**: Changed `<p class="no-blocked-ips">` to `<p class="no-threats">` for consistent green styling on empty blocked IP lists
+- 🐛 **Admin Path Validation**: Added fallback `"Invalid path"` for undefined error messages; removed static `<div id="admin-path-validation">` (JS creates it dynamically)
+- 🐛 **Toggle Switch Initialization**: Skip checkboxes already inside `.toggle-switch` labels to prevent double-wrapping
+- 🐛 **Blocked IPs Data Extraction**: Handle both array and object response formats from `get_blocked_ips` AJAX endpoint
+
 ### Fixed
 - 🐛 **Dependabot Auto-Merge Workflow Restriction**: Documented GitHub Actions limitation for auto-merging PRs that modify workflow files
   - GitHub Actions prevents `GITHUB_TOKEN` from modifying workflow files as a security measure
