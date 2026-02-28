@@ -38,6 +38,26 @@
         DATABASE_UPDATE_DELAY: 500      // Small delay for database update completion (ms)
     };
 
+    /**
+     * Escape a string for safe insertion into HTML.
+     *
+     * Replaces &, <, >, ", and ' with their HTML entity equivalents
+     * to prevent DOM-based XSS when building markup from untrusted data.
+     *
+     * @since 1.1.15
+     * @param {string} str - The string to escape
+     * @returns {string} HTML-safe string
+     */
+    const escapeHtml = str => {
+        if (typeof str !== "string") return "";
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
+
     // ========================================
     // SAVE STATE MANAGEMENT
     // ========================================
@@ -729,26 +749,46 @@
             const { success, data } = response || {};
 
             if (success && data && data.logs && data.logs.length > 0) {
-                let html = "<table class=\"wp-list-table widefat fixed striped\">";
-                html += `<thead><tr><th>${strings.time || "Time"}</th><th>${strings.event || "Event"}</th><th>${strings.details || "Details"}</th></tr></thead>`;
-                html += "<tbody>";
+                const $table = $("<table>", { "class": "wp-list-table widefat fixed striped" });
+                const $thead = $("<thead>");
+                const $headerRow = $("<tr>");
+
+                $("<th>").text(strings.time || "Time").appendTo($headerRow);
+                $("<th>").text(strings.event || "Event").appendTo($headerRow);
+                $("<th>").text(strings.details || "Details").appendTo($headerRow);
+
+                $thead.append($headerRow);
+
+                const $tbody = $("<tbody>");
 
                 data.logs.slice(0, 20).forEach(log => {
                     const eventClass = log.event_type === "BOT_BLOCKED" || log.event_type === "LOGIN_FAILED" ? "error" : "info";
-                    html += "<tr>";
-                    html += `<td>${log.timestamp || ""}</td>`;
-                    html += `<td><span class=\"log-event-type ${eventClass}\">${log.event_type || ""}</span></td>`;
-                    html += `<td>${log.message || ""}</td>`;
-                    html += "</tr>";
+                    const $row = $("<tr>");
+
+                    $("<td>").text(log.timestamp || "").appendTo($row);
+
+                    const $eventCell = $("<td>");
+                    $("<span>", { "class": `log-event-type ${eventClass}` })
+                        .text(log.event_type || "")
+                        .appendTo($eventCell);
+                    $eventCell.appendTo($row);
+
+                    $("<td>").text(log.message || "").appendTo($row);
+
+                    $tbody.append($row);
                 });
 
-                html += "</tbody></table>";
-                $container.html(html);
+                $table.append($thead, $tbody);
+                $container.empty().append($table);
             } else {
-                $container.html(`<p class=\"no-threats\">${strings.noLogs || "No recent security events"}</p>`);
+                const $noLogs = $("<p>", { "class": "no-threats" })
+                    .text(strings.noLogs || "No recent security events");
+                $container.empty().append($noLogs);
             }
         }).fail(() => {
-            $container.html(`<p class=\"error\">${strings.error || "Error loading data"}</p>`);
+            const $errorMsg = $("<p>", { "class": "error" })
+                .text(strings.error || "Error loading data");
+            $container.empty().append($errorMsg);
         });
     };
 
@@ -960,11 +1000,11 @@
         const recentIps = data.slice(0, 3);
         let dashHtml = '<ul class="blocked-ips-summary">';
         recentIps.forEach(ip => {
-            const { ip: ipAddress, time_left_str, reason } = ip;
+            const { ip: ipAddress, time_left_str } = ip;
             const shortIp = ipAddress ? ipAddress.substring(0, 12) + '...' : 'Unknown';
             dashHtml += '<li class="blocked-ip-item">';
-            dashHtml += `<span class="blocked-ip-hash">${shortIp}</span>`;
-            dashHtml += `<span class="blocked-ip-meta">${time_left_str || 'Expired'}</span>`;
+            dashHtml += `<span class="blocked-ip-hash">${escapeHtml(shortIp)}</span>`;
+            dashHtml += `<span class="blocked-ip-meta">${escapeHtml(time_left_str || 'Expired')}</span>`;
             dashHtml += '</li>';
         });
         dashHtml += '</ul>';
@@ -976,19 +1016,19 @@
         // --- IP Management: full functional table with actions ---
         let mgmtHtml = "<div class=\"blocked-ips-table\">";
         mgmtHtml += "<table class=\"wp-list-table widefat fixed striped\">";
-        mgmtHtml += `<thead><tr><th>${strings.ipHash || "IP"}</th><th>${strings.reason || "Reason"}</th><th>${strings.blockedTime || "Blocked"}</th><th>${strings.remaining || "Remaining"}</th><th>${strings.actions || "Actions"}</th></tr></thead>`;
+        mgmtHtml += `<thead><tr><th>${escapeHtml(strings.ipHash || "IP")}</th><th>${escapeHtml(strings.reason || "Reason")}</th><th>${escapeHtml(strings.blockedTime || "Blocked")}</th><th>${escapeHtml(strings.remaining || "Remaining")}</th><th>${escapeHtml(strings.actions || "Actions")}</th></tr></thead>`;
         mgmtHtml += "<tbody>";
 
         data.forEach(ip => {
-            const { ip: ipAddress, reason, violations, blocked_at, time_left_str } = ip;
+            const { ip: ipAddress, reason, blocked_at, time_left_str } = ip;
             const shortIp = ipAddress ? ipAddress.substring(0, 12) + '...' : 'Unknown';
 
             mgmtHtml += "<tr>";
-            mgmtHtml += `<td title="${ipAddress || ''}">${shortIp}</td>`;
-            mgmtHtml += `<td>${reason || 'Unknown'}</td>`;
-            mgmtHtml += `<td>${blocked_at || 'Unknown'}</td>`;
-            mgmtHtml += `<td>${time_left_str || 'Expired'}</td>`;
-            mgmtHtml += `<td><button type="button" class="button button-small unblock-ip-btn" data-ip="${ipAddress || ''}">${strings.unblock || "Unblock"}</button></td>`;
+            mgmtHtml += `<td title="${escapeHtml(ipAddress || '')}">${escapeHtml(shortIp)}</td>`;
+            mgmtHtml += `<td>${escapeHtml(reason || 'Unknown')}</td>`;
+            mgmtHtml += `<td>${escapeHtml(blocked_at || 'Unknown')}</td>`;
+            mgmtHtml += `<td>${escapeHtml(time_left_str || 'Expired')}</td>`;
+            mgmtHtml += `<td><button type="button" class="button button-small unblock-ip-btn" data-ip="${escapeHtml(ipAddress || '')}">${escapeHtml(strings.unblock || "Unblock")}</button></td>`;
             mgmtHtml += "</tr>";
         });
 
@@ -996,6 +1036,7 @@
         $ipMgmtContainer.html(mgmtHtml);
 
         // Bind unblock buttons
+        const { ajaxurl, nonce } = silverAssistSecurity || {};
         $ipMgmtContainer.find(".unblock-ip-btn").off("click").on("click", function () {
             const $btn = $(this);
             const ip = $btn.data("ip");

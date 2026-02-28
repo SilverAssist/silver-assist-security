@@ -79,17 +79,17 @@ class ContactForm7AjaxHandler {
 				$html .= '<table class="wp-list-table widefat fixed striped">';
 				$html .= \sprintf(
 					'<thead><tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr></thead>',
-					\__( 'IP', 'silver-assist-security' ),
-					\__( 'Reason', 'silver-assist-security' ),
-					\__( 'Blocked', 'silver-assist-security' ),
-					\__( 'Violations', 'silver-assist-security' ),
-					\__( 'Actions', 'silver-assist-security' )
+					\esc_html__( 'IP', 'silver-assist-security' ),
+					\esc_html__( 'Reason', 'silver-assist-security' ),
+					\esc_html__( 'Blocked', 'silver-assist-security' ),
+					\esc_html__( 'Violations', 'silver-assist-security' ),
+					\esc_html__( 'Actions', 'silver-assist-security' )
 				);
 				$html .= '<tbody>';
 
 				foreach ( $blocked_ips as $ip => $data ) {
-					$blocked_at = isset( $data['blocked_at'] ) ? \date_i18n( 'M j, Y H:i', $data['blocked_at'] ) : \__( 'Unknown', 'silver-assist-security' );
-					$reason     = isset( $data['reason'] ) ? \esc_html( $data['reason'] ) : \__( 'Form security violation', 'silver-assist-security' );
+					$blocked_at = isset( $data['blocked_at'] ) ? \esc_html( \date_i18n( 'M j, Y H:i', $data['blocked_at'] ) ) : \esc_html__( 'Unknown', 'silver-assist-security' );
+					$reason     = isset( $data['reason'] ) ? \esc_html( $data['reason'] ) : \esc_html__( 'Form security violation', 'silver-assist-security' );
 					$violations = isset( $data['violations'] ) ? (int) $data['violations'] : 1;
 
 					$html .= '<tr>';

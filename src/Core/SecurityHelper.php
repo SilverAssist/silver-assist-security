@@ -353,7 +353,7 @@ class SecurityHelper {
 				'SILVER_ASSIST_SECURITY: [%s] %s - %s',
 				strtoupper( $severity ),
 				$event_type,
-				wp_json_encode( $log_data, JSON_UNESCAPED_SLASHES )
+				\wp_json_encode( $log_data, JSON_UNESCAPED_SLASHES )
 			)
 		);
 	}

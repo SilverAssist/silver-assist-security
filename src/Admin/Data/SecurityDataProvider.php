@@ -64,11 +64,11 @@ class SecurityDataProvider {
 	private IPBlacklist $ip_blacklist;
 
 	/**
- * Statistics Provider instance
- *
- * @var StatisticsProvider
- * @since 1.1.15
- */
+	 * Statistics Provider instance
+	 *
+	 * @var StatisticsProvider
+	 * @since 1.1.15
+	 */
 	private StatisticsProvider $stats_provider;
 
 	/**
@@ -151,7 +151,7 @@ class SecurityDataProvider {
 				'secure'                 => $graphql_secure,
 				'query_depth_limit'      => $graphql_active ? (int) DefaultConfig::get_option( 'silver_assist_graphql_query_depth' ) : 0,
 				'query_complexity_limit' => $graphql_active ? (int) DefaultConfig::get_option( 'silver_assist_graphql_query_complexity' ) : 0,
-				'query_timeout'          => $graphql_active ? (int) DefaultConfig::get_option( 'silver_assist_graphql_timeout' ) : 0,
+				'query_timeout'          => $graphql_active ? (int) DefaultConfig::get_option( 'silver_assist_graphql_query_timeout' ) : 0,
 				'introspection_disabled' => $graphql_active ? ( 'off' === \get_graphql_setting( 'public_introspection_enabled', 'off' ) ) : false,
 			),
 			'general_security' => array(
