@@ -511,21 +511,6 @@
         font-weight: var(--silver-font-weight-semibold);
     }
 
-    .unblock-cf7-ip {
-        background: var(--silver-success-primary) !important;
-        color: var(--silver-bg-primary) !important;
-        border: none !important;
-        padding: var(--silver-spacing-xs) var(--silver-spacing-sm) !important;
-        border-radius: var(--silver-radius-base) !important;
-        font-size: var(--silver-font-size-xs) !important;
-        cursor: pointer;
-        transition: background-color var(--silver-transition-base) ease;
-    }
-
-    .unblock-cf7-ip:hover {
-        background: var(--silver-success-secondary) !important;
-    }
-
     /* Path Validation Styles */
     .validation-indicator {
         margin-top: var(--silver-spacing-sm);
@@ -1171,7 +1156,6 @@
 /* Hub-level Tab Content (for Settings Hub compatibility) */
 .tab-content {
     display: none;
-    animation: fadeIn var(--silver-transition-base) var(--silver-transition-ease);
 }
 
 .tab-content.active {
@@ -1239,10 +1223,13 @@
     vertical-align: middle;
 }
 
-/* Submit Button inside Cards */
-.status-card .submit {
-    margin-top: var(--silver-spacing-md);
-    padding-top: var(--silver-spacing-lg);
+/* Submit Button inside Cards — high specificity to override WP's
+   table.form-table+p.submit reset */
+.silver-assist-security-admin .status-card p.submit {
+    margin-top: var(--silver-spacing-lg);
+    margin-bottom: 0;
+    padding-top: var(--silver-spacing-3xl);
+    padding-bottom: 0;
     border-top: var(--silver-border-width-thin) solid var(--silver-border-lighter);
 }
 

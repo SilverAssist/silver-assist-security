@@ -15,6 +15,7 @@ use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 use SilverAssist\Security\Admin\Data\SecurityDataProvider;
 use SilverAssist\Security\Admin\Data\StatisticsProvider;
+use SilverAssist\Security\Admin\Renderer\RenderHelper;
 
 /**
  * Dashboard Renderer class
@@ -96,18 +97,11 @@ class DashboardRenderer {
 					</span>
 				</div>
 				<div class="card-content">
-					<div class="stat">
-						<span class="stat-value"><?php echo (int) $security_status['login_security']['max_attempts']; ?></span>
-						<span class="stat-label"><?php \esc_html_e( 'Max Attempts', 'silver-assist-security' ); ?></span>
-					</div>
-					<div class="stat">
-						<span class="stat-value" id="blocked-ips-card"><?php echo (int) $security_status['overall']['blocked_ips_count']; ?></span>
-						<span class="stat-label"><?php \esc_html_e( 'Blocked IPs', 'silver-assist-security' ); ?></span>
-					</div>
-					<div class="stat">
-						<span class="stat-value"><?php echo (int) \round( $security_status['login_security']['lockout_duration'] / 60 ); ?></span>
-						<span class="stat-label"><?php \esc_html_e( 'Lockout (min)', 'silver-assist-security' ); ?></span>
-					</div>
+					<?php
+					RenderHelper::render_stat( $security_status['login_security']['max_attempts'], \__( 'Max Attempts', 'silver-assist-security' ) );
+					RenderHelper::render_stat( $security_status['overall']['blocked_ips_count'], \__( 'Blocked IPs', 'silver-assist-security' ), '', 'blocked-ips-card' );
+					RenderHelper::render_stat( \round( $security_status['login_security']['lockout_duration'] / 60 ), \__( 'Lockout (min)', 'silver-assist-security' ) );
+					?>
 				</div>
 			</div>
 
@@ -120,18 +114,10 @@ class DashboardRenderer {
 					</span>
 				</div>
 				<div class="card-content">
-					<div class="feature-status">
-						<span class="feature-name"><?php \esc_html_e( 'Password Strength Enforcement', 'silver-assist-security' ); ?></span>
-						<span class="feature-value <?php echo $security_status['admin_security']['password_strength_enforcement'] ? 'enabled' : 'disabled'; ?>">
-							<?php echo $security_status['admin_security']['password_strength_enforcement'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
-						</span>
-					</div>
-					<div class="feature-status">
-						<span class="feature-name"><?php \esc_html_e( 'Bot Protection', 'silver-assist-security' ); ?></span>
-						<span class="feature-value <?php echo $security_status['admin_security']['bot_protection'] ? 'enabled' : 'disabled'; ?>">
-							<?php echo $security_status['admin_security']['bot_protection'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
-						</span>
-					</div>
+					<?php
+					RenderHelper::render_feature_status( \__( 'Password Strength Enforcement', 'silver-assist-security' ), (bool) $security_status['admin_security']['password_strength_enforcement'] );
+					RenderHelper::render_feature_status( \__( 'Bot Protection', 'silver-assist-security' ), (bool) $security_status['admin_security']['bot_protection'] );
+					?>
 				</div>
 			</div>
 
@@ -145,24 +131,17 @@ class DashboardRenderer {
 				</div>
 				<div class="card-content">
 					<?php if ( $security_status['graphql_security']['enabled'] ) : ?>
-						<div class="stat">
-							<span class="stat-value"><?php echo (int) $security_status['graphql_security']['query_depth_limit']; ?></span>
-							<span class="stat-label"><?php \esc_html_e( 'Max Depth', 'silver-assist-security' ); ?></span>
-						</div>
-						<div class="stat">
-							<span class="stat-value"><?php echo (int) $security_status['graphql_security']['query_complexity_limit']; ?></span>
-							<span class="stat-label"><?php \esc_html_e( 'Max Complexity', 'silver-assist-security' ); ?></span>
-						</div>
-						<div class="stat">
-							<span class="stat-value"><?php echo (int) $security_status['graphql_security']['query_timeout']; ?>s</span>
-							<span class="stat-label"><?php \esc_html_e( 'Timeout', 'silver-assist-security' ); ?></span>
-						</div>
-						<div class="feature-status">
-							<span class="feature-name"><?php \esc_html_e( 'Introspection', 'silver-assist-security' ); ?></span>
-							<span class="feature-value <?php echo $security_status['graphql_security']['introspection_disabled'] ? 'enabled' : 'disabled'; ?>">
-								<?php echo $security_status['graphql_security']['introspection_disabled'] ? \esc_html__( 'Disabled', 'silver-assist-security' ) : \esc_html__( 'Public', 'silver-assist-security' ); ?>
-							</span>
-						</div>
+						<?php
+						RenderHelper::render_stat( $security_status['graphql_security']['query_depth_limit'], \__( 'Max Depth', 'silver-assist-security' ) );
+						RenderHelper::render_stat( $security_status['graphql_security']['query_complexity_limit'], \__( 'Max Complexity', 'silver-assist-security' ) );
+						RenderHelper::render_stat( $security_status['graphql_security']['query_timeout'], \__( 'Timeout', 'silver-assist-security' ), 's' );
+						RenderHelper::render_feature_status(
+							\__( 'Introspection', 'silver-assist-security' ),
+							(bool) $security_status['graphql_security']['introspection_disabled'],
+							\__( 'Disabled', 'silver-assist-security' ),
+							\__( 'Public', 'silver-assist-security' )
+						);
+						?>
 					<?php else : ?>
 						<p class="description"><?php \esc_html_e( 'WPGraphQL not installed', 'silver-assist-security' ); ?></p>
 					<?php endif; ?>
@@ -178,30 +157,12 @@ class DashboardRenderer {
 					</span>
 				</div>
 				<div class="card-content">
-					<div class="feature-status">
-						<span class="feature-name"><?php \esc_html_e( 'HTTPOnly Cookies', 'silver-assist-security' ); ?></span>
-						<span class="feature-value <?php echo $security_status['general_security']['httponly_cookies'] ? 'enabled' : 'disabled'; ?>">
-							<?php echo $security_status['general_security']['httponly_cookies'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
-						</span>
-					</div>
-					<div class="feature-status">
-						<span class="feature-name"><?php \esc_html_e( 'XML-RPC Protection', 'silver-assist-security' ); ?></span>
-						<span class="feature-value <?php echo $security_status['general_security']['xmlrpc_disabled'] ? 'enabled' : 'disabled'; ?>">
-							<?php echo $security_status['general_security']['xmlrpc_disabled'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
-						</span>
-					</div>
-					<div class="feature-status">
-						<span class="feature-name"><?php \esc_html_e( 'Version Hiding', 'silver-assist-security' ); ?></span>
-						<span class="feature-value <?php echo $security_status['general_security']['version_hiding'] ? 'enabled' : 'disabled'; ?>">
-							<?php echo $security_status['general_security']['version_hiding'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
-						</span>
-					</div>
-					<div class="feature-status">
-						<span class="feature-name"><?php \esc_html_e( 'SSL/HTTPS', 'silver-assist-security' ); ?></span>
-						<span class="feature-value <?php echo $security_status['general_security']['ssl_enabled'] ? 'enabled' : 'disabled'; ?>">
-							<?php echo $security_status['general_security']['ssl_enabled'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
-						</span>
-					</div>
+					<?php
+					RenderHelper::render_feature_status( \__( 'HTTPOnly Cookies', 'silver-assist-security' ), (bool) $security_status['general_security']['httponly_cookies'] );
+					RenderHelper::render_feature_status( \__( 'XML-RPC Protection', 'silver-assist-security' ), (bool) $security_status['general_security']['xmlrpc_disabled'] );
+					RenderHelper::render_feature_status( \__( 'Version Hiding', 'silver-assist-security' ), (bool) $security_status['general_security']['version_hiding'] );
+					RenderHelper::render_feature_status( \__( 'SSL/HTTPS', 'silver-assist-security' ), (bool) $security_status['general_security']['ssl_enabled'] );
+					?>
 				</div>
 			</div>
 
@@ -215,16 +176,10 @@ class DashboardRenderer {
 					</span>
 				</div>
 				<div class="card-content">
-					<div class="feature-status">
-						<span class="feature-name"><?php \esc_html_e( 'Form Protection', 'silver-assist-security' ); ?></span>
-						<span class="feature-value <?php echo $security_status['form_protection']['enabled'] ? 'enabled' : 'disabled'; ?>">
-							<?php echo $security_status['form_protection']['enabled'] ? \esc_html__( 'Enabled', 'silver-assist-security' ) : \esc_html__( 'Disabled', 'silver-assist-security' ); ?>
-						</span>
-					</div>
-					<div class="stat">
-						<span class="stat-value"><?php echo (int) $security_status['form_protection']['rate_limit']; ?></span>
-						<span class="stat-label"><?php \esc_html_e( 'Rate Limit (min)', 'silver-assist-security' ); ?></span>
-					</div>
+					<?php
+					RenderHelper::render_feature_status( \__( 'Form Protection', 'silver-assist-security' ), (bool) $security_status['form_protection']['enabled'] );
+					RenderHelper::render_stat( $security_status['form_protection']['rate_limit'], \__( 'Rate Limit (min)', 'silver-assist-security' ) );
+					?>
 				</div>
 			</div>
 			<?php endif; ?>
@@ -244,32 +199,11 @@ class DashboardRenderer {
 			<h2><?php \esc_html_e( 'Security Statistics', 'silver-assist-security' ); ?></h2>
 			
 			<div class="silver-stats-grid" id="security-stats-container">
-				<div class="status-card">
-					<div class="stat">
-						<div class="stat-value" id="blocked-ips-count">
-							<span class="loading"></span>
-						</div>
-						<div class="stat-label"><?php \esc_html_e( 'Blocked IPs', 'silver-assist-security' ); ?></div>
-					</div>
-				</div>
-				
-				<div class="status-card">
-					<div class="stat">
-						<div class="stat-value" id="failed-attempts-count">
-							<span class="loading"></span>
-						</div>
-						<div class="stat-label"><?php \esc_html_e( 'Failed Login Attempts (24h)', 'silver-assist-security' ); ?></div>
-					</div>
-				</div>
-				
-				<div class="status-card">
-					<div class="stat">
-						<div class="stat-value" id="security-events-count">
-							<span class="loading"></span>
-						</div>
-						<div class="stat-label"><?php \esc_html_e( 'Security Events (7d)', 'silver-assist-security' ); ?></div>
-					</div>
-				</div>
+				<?php
+				RenderHelper::render_async_stat( 'blocked-ips-count', \__( 'Blocked IPs', 'silver-assist-security' ) );
+				RenderHelper::render_async_stat( 'failed-attempts-count', \__( 'Failed Login Attempts (24h)', 'silver-assist-security' ) );
+				RenderHelper::render_async_stat( 'security-events-count', \__( 'Security Events (7d)', 'silver-assist-security' ) );
+				?>
 			</div>
 		</div>
 		<?php
@@ -285,7 +219,6 @@ class DashboardRenderer {
 		?>
 		<div class="status-card recent-activity-section">
 			<div class="card-header">
-				<span class="dashicons dashicons-shield"></span>
 				<h3><?php \esc_html_e( 'Recent Security Activity', 'silver-assist-security' ); ?></h3>
 			</div>
 			<div class="card-content">

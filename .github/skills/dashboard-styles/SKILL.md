@@ -181,7 +181,6 @@ For content with multiple views (e.g., Blocked IPs / Security Logs), use `.activ
 ```html
 <div class="status-card recent-activity-section">
     <div class="card-header">
-        <span class="dashicons dashicons-shield"></span>
         <h3>Recent Security Activity</h3>
     </div>
     <div class="card-content">

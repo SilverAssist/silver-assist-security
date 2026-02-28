@@ -4,6 +4,7 @@ namespace SilverAssist\Security\Tests\Functional;
 
 use WP_UnitTestCase;
 use SilverAssist\Security\Admin\AdminPanel;
+use SilverAssist\Security\Tests\Helpers\AjaxTestHelper;
 
 /**
  * Admin Menu and Interface Functional Tests
@@ -16,19 +17,21 @@ use SilverAssist\Security\Admin\AdminPanel;
  */
 class AdminInterfaceTest extends WP_UnitTestCase
 {
+    use AjaxTestHelper;
+
     private AdminPanel $admin_panel;
 
     public function setUp(): void
     {
         parent::setUp();
-        
+
         // Create administrator user and set current user
         $admin_user = $this->factory()->user->create(['role' => 'administrator']);
         \wp_set_current_user($admin_user);
-        
+
         // Initialize admin panel
         $this->admin_panel = new AdminPanel();
-        
+
         // Set admin context
         \set_current_screen('admin');
         $_GET['page'] = 'silver-assist-security';
@@ -46,7 +49,7 @@ class AdminInterfaceTest extends WP_UnitTestCase
 
         // Test menu registration
         $this->admin_panel->register_with_hub();
-        
+
         // In integration, this would be registered under Settings Hub
         // For unit test, we verify the method executes without error
         $this->assertTrue(true, 'Admin menu registration should complete without errors');
@@ -84,7 +87,7 @@ class AdminInterfaceTest extends WP_UnitTestCase
     {
         // Simulate clicking Configure button (which loads admin page)
         $_GET['page'] = 'silver-assist-security';
-        
+
         \ob_start();
         $this->admin_panel->render_admin_page();
         $output = \ob_get_clean();
@@ -99,21 +102,30 @@ class AdminInterfaceTest extends WP_UnitTestCase
      */
     public function test_check_updates_button(): void
     {
+        // Set up AJAX environment so wp_send_json uses wp_die (not die)
+        $this->setup_ajax_environment();
+
         // Simulate Settings Hub action for update check
         $_POST['action'] = 'silver_assist_check_updates';
         $_POST['nonce'] = \wp_create_nonce('silver_assist_security_ajax');
 
         // Mock AJAX request for update check
         \add_action('wp_ajax_silver_assist_check_updates', [$this->admin_panel, 'ajax_check_updates']);
-        
-        // Capture output
-        \ob_start();
+
+        // Capture output using AjaxTestHelper
         try {
+            $this->_ajax_response = '';
+            $ob_level = ob_get_level();
+            ob_start();
             \do_action('wp_ajax_silver_assist_check_updates');
-        } catch (\Exception $e) {
-            // Expected for unit test environment
+            $this->_ajax_response = ob_get_clean();
+        } catch (\SilverAssist\Security\Tests\Helpers\AjaxTestDieError $e) {
+            while (ob_get_level() > $ob_level) {
+                ob_end_clean();
+            }
         }
-        $output = \ob_get_clean();
+
+        $this->teardown_ajax_environment();
 
         // Verify update check was triggered
         $this->assertTrue(true, 'Update check should execute without fatal errors');
@@ -183,7 +195,7 @@ class AdminInterfaceTest extends WP_UnitTestCase
         $this->assertStringContainsString('settings-tab', $output, 'Settings tab should be present');
         $this->assertStringContainsString('Login Security Settings', $output, 'Settings should show login security section');
         $this->assertStringContainsString('GraphQL Security Settings', $output, 'Settings should show GraphQL section');
-        
+
         // Check for form elements
         $this->assertStringContainsString('silver_assist_login_attempts', $output, 'Settings form should have login attempts field');
         $this->assertStringContainsString('silver_assist_graphql_query_depth', $output, 'Settings form should have GraphQL fields');
@@ -216,7 +228,7 @@ class AdminInterfaceTest extends WP_UnitTestCase
         // Check for JavaScript tab functionality
         $this->assertStringContainsString('tab-button', $output, 'Tabs should have navigation buttons');
         $this->assertStringContainsString('tab-content', $output, 'Tabs should have content containers');
-        
+
         // Check for admin.js enqueue
         global $wp_scripts;
         $this->assertTrue(
@@ -237,7 +249,7 @@ class AdminInterfaceTest extends WP_UnitTestCase
         // Check for responsive CSS classes
         $this->assertStringContainsString('admin-container', $output, 'Page should have responsive container');
         $this->assertStringContainsString('security-card', $output, 'Page should use card-based layout');
-        
+
         // Check CSS enqueue
         global $wp_styles;
         $this->assertTrue(
@@ -252,7 +264,7 @@ class AdminInterfaceTest extends WP_UnitTestCase
         unset($_GET['page']);
         unset($_POST['action']);
         unset($_POST['nonce']);
-        
+
         parent::tearDown();
     }
 }
