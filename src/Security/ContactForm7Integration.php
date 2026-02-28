@@ -380,7 +380,8 @@ class ContactForm7Integration {
 		$captcha_answer = $submission_data['silver_captcha_answer'] ?? '';
 		$captcha_token  = $submission_data['silver_captcha_token'] ?? '';
 
-		if ( empty( $captcha_answer ) || empty( $captcha_token ) ) {
+		// Use strict comparison instead of empty() since answer can be "0".
+		if ( '' === $captcha_answer || '' === $captcha_token ) {
 			return false; // CAPTCHA required but not provided
 		}
 

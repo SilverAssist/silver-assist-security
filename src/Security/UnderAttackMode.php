@@ -150,7 +150,8 @@ class UnderAttackMode {
 		$captcha_answer = $form_data['silver_captcha_answer'] ?? '';
 		$captcha_token  = $form_data['silver_captcha_token'] ?? '';
 
-		if ( empty( $captcha_answer ) || empty( $captcha_token ) ) {
+		// Use strict comparison instead of empty() since answer can be "0".
+		if ( '' === $captcha_answer || '' === $captcha_token ) {
 			SecurityHelper::log_security_event(
 				'CAPTCHA_MISSING',
 				'Form submission blocked - missing CAPTCHA',
