@@ -133,6 +133,9 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 			'your-message' => 'PG_SLEEP(15)', // SQL injection attempt
 		];
 		
+		// has_sql_injection_attempt() inspects $_POST, so populate it
+		$_POST = $submission_data;
+		
 		$mock_contact_form = $this->create_mock_cf7_form();
 		
 		// Test security validation
@@ -141,6 +144,9 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 			$submission_data,
 			$malicious_ip
 		);
+		
+		// Cleanup
+		$_POST = [];
 		
 		$this->assertFalse(
 			$is_valid,
