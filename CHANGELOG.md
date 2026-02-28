@@ -9,6 +9,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.15] - 2026-02-28
 
+### 🚨 Under Attack Mode & CAPTCHA Protection
+
+- **Login CAPTCHA**: Math-based CAPTCHA challenge on WordPress login page when Under Attack Mode is active
+  - Validates CAPTCHA answer server-side before authentication
+  - Accessible design with ARIA labels and screen reader support
+- **CF7 CAPTCHA**: CAPTCHA challenge injected into Contact Form 7 forms during Under Attack Mode
+  - Automatic injection via `wpcf7_form_elements` filter
+  - Server-side validation via `wpcf7_validate` hook
+- **Shared Template System**: `templates/captcha-field.php` renders consistent CAPTCHA across all entry points
+  - `SecurityHelper::render_template()` for output-buffered template rendering
+  - JavaScript-powered refresh without page reload
+  - Dedicated `captcha.css` and `captcha.js` assets with build pipeline integration
+- **Remember Me Removal**: "Remember Me" checkbox hidden via CSS on login page
+  - Session cookie lifetime enforced to match configured session timeout
+  - Prevents users from bypassing session timeout policies
+- **Singleton Pattern**: `UnderAttackMode` converted to singleton matching `IPBlacklist` pattern
+  - `getInstance()` used consistently across `LoginSecurity`, `ContactForm7Integration`, and `SecurityDataProvider`
+
+### 📊 Dashboard Card Enhancements
+
+- **Under Attack Mode Status**: Real-time Active/Inactive indicator in General Security dashboard card
+- **IP Blacklisting Status**: Enabled/Disabled indicator in General Security dashboard card
+- **Session Timeout Stat**: Displays configured timeout value (minutes) in Admin Security card
+- **Dashboard Auto-Refresh**: Switching to dashboard tab automatically refreshes security status and login stats
+- **Bot Protection Selector Fix**: Updated JS selector from `:last-child` to `:nth-child(2)` after Session Timeout stat addition
+
+### 🐛 Autosave Indicator Fix
+
+- **Persistent Indicator Bug**: Fixed `showSavingIndicator()` only showing visual feedback on first save
+  - Root cause: `.fadeOut()` left indicator in DOM with `display:none`, subsequent calls found existing div and did nothing
+  - Fix: `.stop(true, true).html(savingText).removeClass("error").show()` on existing indicator
+  - Changed `$("form").append()` to `$("form").first().append()` to prevent duplicates
+
+### 🌍 Translations Update
+
+- **POT Regenerated**: `wp i18n make-pot` — 791 → 1087 lines, all new translatable strings captured
+- **Spanish (es_ES)**: 82 new strings translated, 61 fuzzy flags resolved, 4 format errors fixed
+- **Binary Compiled**: `.mo` file regenerated with `msgfmt --check` validation (234 translated messages)
+
+### 📚 Documentation
+
+- **README.md**: Added Under Attack Mode, CAPTCHA, IP Blacklisting, Session Timeout, Remember Me removal sections
+- **Test Coverage**: Updated counts to reflect current test suite (350+ unit, 50+ integration)
+
 ### 🎨 Dashboard UI Overhaul
 
 - **Card-Based Layout**: Complete redesign of the security dashboard with status cards
