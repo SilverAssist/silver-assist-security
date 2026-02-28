@@ -16,6 +16,7 @@ use SilverAssist\Security\Security\LoginSecurity;
 use SilverAssist\Security\Security\GeneralSecurity;
 use SilverAssist\Security\Security\AdminHideSecurity;
 use SilverAssist\Security\Security\IPBlacklist;
+use SilverAssist\Security\Security\UnderAttackMode;
 use SilverAssist\Security\GraphQL\GraphQLSecurity;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 use SilverAssist\Security\Core\DefaultConfig;
@@ -144,6 +145,7 @@ class SecurityDataProvider {
 				'status'                        => $admin_hide ? 'active' : 'inactive',
 				'password_strength_enforcement' => (bool) $password_strength,
 				'bot_protection'                => (bool) $bot_protection,
+				'session_timeout'               => (int) DefaultConfig::get_option( 'silver_assist_session_timeout' ),
 			),
 			'graphql_security' => array(
 				'status'                 => $graphql_active ? ( $graphql_secure ? 'active' : 'warning' ) : 'inactive',
@@ -155,13 +157,15 @@ class SecurityDataProvider {
 				'introspection_disabled' => $graphql_active ? ( 'off' === \get_graphql_setting( 'public_introspection_enabled', 'off' ) ) : false,
 			),
 			'general_security' => array(
-				'status'           => $cookie_security ? 'active' : 'inactive',
-				'cookie_security'  => $cookie_security,
-				'httponly_cookies' => true, // Always enabled
-				'secure_cookies'   => \is_ssl(),
-				'ssl_enabled'      => \is_ssl(),
-				'xmlrpc_disabled'  => true, // Always disabled via GeneralSecurity
-				'version_hiding'   => true, // Always enabled via GeneralSecurity
+				'status'               => $cookie_security ? 'active' : 'inactive',
+				'cookie_security'      => $cookie_security,
+				'httponly_cookies'     => true, // Always enabled
+				'secure_cookies'       => \is_ssl(),
+				'ssl_enabled'          => \is_ssl(),
+				'xmlrpc_disabled'      => true, // Always disabled via GeneralSecurity
+				'version_hiding'       => true, // Always enabled via GeneralSecurity
+				'under_attack_active'  => UnderAttackMode::getInstance()->is_under_attack(),
+				'ip_blacklist_enabled' => (bool) DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' ),
 			),
 			'form_protection'  => array(
 				'enabled'    => (bool) DefaultConfig::get_option( 'silver_assist_form_protection_enabled' ),

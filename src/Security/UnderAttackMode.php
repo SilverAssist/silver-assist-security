@@ -26,6 +26,13 @@ use SilverAssist\Security\Core\SecurityHelper;
 class UnderAttackMode {
 
 	/**
+	 * Class instance
+	 *
+	 * @var ?UnderAttackMode
+	 */
+	private static ?UnderAttackMode $instance = null;
+
+	/**
 	 * Constructor
 	 *
 	 * @since 1.1.15
@@ -35,12 +42,29 @@ class UnderAttackMode {
 	}
 
 	/**
+	 * Get singleton instance
+	 *
+	 * @since 1.1.15
+	 * @return UnderAttackMode
+	 */
+	public static function getInstance(): UnderAttackMode {
+		if ( self::$instance === null ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
 	 * Check if site is currently under attack
 	 *
 	 * @since 1.1.15
 	 * @return bool True if Under Attack mode is active
 	 */
 	public function is_under_attack(): bool {
+		if ( ! DefaultConfig::get_option( 'silver_assist_under_attack_enabled' ) ) {
+			return false;
+		}
+
 		$attack_key = 'under_attack_mode';
 		return \get_transient( $attack_key ) !== false;
 	}
@@ -55,6 +79,10 @@ class UnderAttackMode {
 	 * @return void
 	 */
 	public function record_attack( string $ip = '' ): void {
+		if ( ! DefaultConfig::get_option( 'silver_assist_under_attack_enabled' ) ) {
+			return;
+		}
+
 		$window    = (int) DefaultConfig::get_option( 'silver_assist_under_attack_window' );
 		$threshold = (int) DefaultConfig::get_option( 'silver_assist_under_attack_threshold' );
 
@@ -303,7 +331,7 @@ class UnderAttackMode {
 		}
 
 		return array(
-			'question' => "What is {$num1} {$operation} {$num2}?",
+			'question' => "{$num1} {$operation} {$num2}",
 			'answer'   => (string) $answer,
 		);
 	}

@@ -1,0 +1,97 @@
+/**
+ * Silver Assist Security — CAPTCHA widget styles (frontend).
+ *
+ * Loaded only when Under Attack mode is active.
+ * Uses design tokens from variables.css for visual consistency.
+ *
+ * @since 1.1.15
+ */
+
+.silver-assist-captcha-wrap {
+	margin: var(--silver-spacing-xl) 0;
+	padding: var(--silver-spacing-xl);
+	border: var(--silver-border-width-thin) solid var(--silver-border-secondary);
+	border-radius: var(--silver-radius-md);
+	background: var(--silver-bg-tertiary);
+	max-width: 400px;
+	/* Ensure full-width row in flex/grid form layouts */
+	width: 100%;
+	flex-basis: 100%;
+	box-sizing: border-box;
+}
+
+.silver-assist-captcha-label {
+	display: block;
+	font-weight: var(--silver-font-weight-semibold);
+	margin-bottom: var(--silver-spacing-md);
+	font-size: var(--silver-font-size-sm);
+	color: var(--silver-text-light);
+}
+
+.silver-assist-captcha-question {
+	display: flex;
+	align-items: center;
+	gap: var(--silver-spacing-md);
+	margin-bottom: var(--silver-spacing-md);
+}
+
+.silver-assist-captcha-text {
+	font-size: var(--silver-font-size-lg);
+	font-weight: var(--silver-font-weight-medium);
+	color: var(--silver-text-primary);
+}
+
+.silver-assist-captcha-refresh {
+	background: none;
+	border: var(--silver-border-width-thin) solid var(--silver-border-primary);
+	border-radius: var(--silver-radius-base);
+	cursor: pointer;
+	font-size: var(--silver-font-size-xl);
+	line-height: 1;
+	padding: var(--silver-spacing-xs) var(--silver-spacing-sm);
+	color: var(--silver-text-secondary);
+	transition: color var(--silver-transition-fast) var(--silver-transition-ease),
+		border-color var(--silver-transition-fast) var(--silver-transition-ease);
+}
+
+.silver-assist-captcha-refresh:hover {
+	color: var(--silver-primary-blue);
+	border-color: var(--silver-primary-blue);
+}
+
+.silver-assist-captcha-refresh:disabled {
+	opacity: 0.5;
+	cursor: wait;
+}
+
+.silver-assist-captcha-loading {
+	animation: silver-assist-spin 0.8s linear infinite;
+}
+
+@keyframes silver-assist-spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+.silver-assist-captcha-answer {
+	width: 100%;
+	max-width: var(--silver-input-width-md);
+	padding: var(--silver-spacing-sm) var(--silver-spacing-md);
+	border: var(--silver-border-width-thin) solid var(--silver-border-primary);
+	border-radius: var(--silver-radius-base);
+	font-size: var(--silver-font-size-base);
+	font-family: var(--silver-font-family-primary);
+	box-sizing: border-box;
+}
+
+.silver-assist-captcha-answer:focus {
+	border-color: var(--silver-primary-blue);
+	outline: none;
+	box-shadow: 0 0 0 1px var(--silver-primary-blue);
+}
+
+/* Login page — give the question text a fixed width so the input fills the rest */
+.login .silver-assist-captcha-text {
+	flex-basis: 30%;
+	flex-shrink: 0;
+}

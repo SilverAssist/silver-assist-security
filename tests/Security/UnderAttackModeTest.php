@@ -31,6 +31,8 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	public function setUp(): void {
 		parent::setUp();
 		$this->clean_test_transients();
+		// Enable the Under Attack toggle so is_under_attack() and record_attack() are not gated.
+		\update_option( 'silver_assist_under_attack_enabled', 1 );
 	}
 
 	/**
@@ -72,7 +74,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_under_attack_mode_activation(): void {
-		$under_attack = new UnderAttackMode();
+		$under_attack = UnderAttackMode::getInstance();
 		
 		// Should start inactive
 		$this->assertFalse(
@@ -101,7 +103,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_under_attack_blocks_submissions_without_captcha(): void {
-		$under_attack = new UnderAttackMode();
+		$under_attack = UnderAttackMode::getInstance();
 		
 		// Activate Under Attack mode manually
 		$under_attack->activate_under_attack_mode('Test activation');
@@ -133,7 +135,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_captcha_generation_and_validation(): void {
-		$under_attack = new UnderAttackMode();
+		$under_attack = UnderAttackMode::getInstance();
 		
 		// Generate CAPTCHA
 		$captcha = $under_attack->generate_captcha();
@@ -169,7 +171,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_under_attack_mode_expiration(): void {
-		$under_attack = new UnderAttackMode();
+		$under_attack = UnderAttackMode::getInstance();
 		
 		// Activate with short duration for testing
 		$under_attack->activate_under_attack_mode('Test expiration', 1);
@@ -195,7 +197,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_manual_deactivation(): void {
-		$under_attack = new UnderAttackMode();
+		$under_attack = UnderAttackMode::getInstance();
 		
 		// Activate mode
 		$under_attack->activate_under_attack_mode('Test manual deactivation');
@@ -216,7 +218,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_attack_counter_window_reset(): void {
-		$under_attack = new UnderAttackMode();
+		$under_attack = UnderAttackMode::getInstance();
 		
 		// Record some attacks
 		$under_attack->record_attack();
@@ -246,7 +248,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_under_attack_statistics(): void {
-		$under_attack = new UnderAttackMode();
+		$under_attack = UnderAttackMode::getInstance();
 		
 		// Get initial stats
 		$initial_stats = $under_attack->get_attack_statistics();
@@ -277,7 +279,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_captcha_difficulty_levels(): void {
-		$under_attack = new UnderAttackMode();
+		$under_attack = UnderAttackMode::getInstance();
 		
 		// Test easy CAPTCHA
 		$easy_captcha = $under_attack->generate_captcha('easy');
@@ -303,7 +305,7 @@ class UnderAttackModeTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_coordinated_attack_response(): void {
-		$under_attack = new UnderAttackMode();
+		$under_attack = UnderAttackMode::getInstance();
 		
 		// Simulate coordinated attack from multiple sources
 		$attack_ips = ['45.148.8.70', '192.168.1.100', '10.0.0.1', '172.16.0.1'];

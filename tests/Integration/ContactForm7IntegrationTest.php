@@ -235,12 +235,13 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	 */
 	public function test_cf7_under_attack_mode(): void {
 		$cf7_integration = new ContactForm7Integration();
-		$under_attack = new UnderAttackMode();
+		$under_attack = UnderAttackMode::getInstance();
 		
 		// Set modern user agent to avoid obsolete browser detection
 		$_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15';
 		
-		// Activate Under Attack mode
+		// Enable the Under Attack toggle and activate mode.
+		\update_option( 'silver_assist_under_attack_enabled', 1 );
 		$under_attack->activate_under_attack_mode( 'CF7 Testing' );
 		
 		$mock_contact_form = $this->create_mock_cf7_form();
@@ -454,6 +455,9 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 		$cf7_integration = new ContactForm7Integration();
 		$attack_ip = '45.148.8.70';
 		
+		// Enable the Under Attack toggle so record_attack() counts toward threshold.
+		\update_option( 'silver_assist_under_attack_enabled', 1 );
+		
 		// Simulate the exact attack from user's report
 		$_SERVER['HTTP_USER_AGENT'] = 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; 360SE)';
 		$_SERVER['QUERY_STRING'] = 'location=1-1+OR+128%3D%28SELECT+128+FROM+PG_SLEEP%2815%29%29--';
@@ -503,7 +507,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 		);
 		
 		// Under Attack mode should be activated due to coordinated attack
-		$under_attack = new UnderAttackMode();
+		$under_attack = UnderAttackMode::getInstance();
 		$this->assertTrue(
 			$under_attack->is_under_attack(),
 			'Under Attack mode should be activated after coordinated attack from multiple IPs'
@@ -531,5 +535,58 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 				'recipient' => 'admin@example.com'
 			]
 		];
+	}
+
+	/**
+	 * Test CAPTCHA field injection into CF7 form HTML when Under Attack mode is active.
+	 *
+	 * @since 1.1.15
+	 * @return void
+	 */
+	public function test_captcha_field_injection_when_under_attack(): void {
+		$cf7_integration = new ContactForm7Integration();
+		$under_attack    = UnderAttackMode::getInstance();
+
+		// Enable the Under Attack toggle and activate mode.
+		\update_option( 'silver_assist_under_attack_enabled', 1 );
+		$under_attack->activate_under_attack_mode( 'Test injection' );
+
+		$form_html = '<p>Name: <input type="text" name="your-name" /></p>'
+			. '<p><input type="submit" value="Send" /></p>';
+
+		$result = $cf7_integration->inject_captcha_field( $form_html );
+
+		// CAPTCHA wrapper should be present.
+		$this->assertStringContainsString( 'silver-assist-captcha-wrap', $result );
+		// Hidden token field.
+		$this->assertStringContainsString( 'name="silver_captcha_token"', $result );
+		// Answer input.
+		$this->assertStringContainsString( 'name="silver_captcha_answer"', $result );
+		// Should appear before the submit button.
+		$captcha_pos = strpos( $result, 'silver-assist-captcha-wrap' );
+		$submit_pos  = strpos( $result, 'type="submit"' );
+		$this->assertLessThan( $submit_pos, $captcha_pos, 'CAPTCHA should be injected before the submit button' );
+
+		// Deactivate.
+		\delete_transient( 'under_attack_mode' );
+	}
+
+	/**
+	 * Test CAPTCHA field is NOT injected when Under Attack mode is inactive.
+	 *
+	 * @since 1.1.15
+	 * @return void
+	 */
+	public function test_captcha_field_not_injected_when_not_under_attack(): void {
+		$cf7_integration = new ContactForm7Integration();
+
+		// Make sure Under Attack mode is off.
+		\delete_transient( 'under_attack_mode' );
+
+		$form_html = '<p><input type="submit" value="Send" /></p>';
+		$result    = $cf7_integration->inject_captcha_field( $form_html );
+
+		$this->assertStringNotContainsString( 'silver-assist-captcha-wrap', $result );
+		$this->assertEquals( $form_html, $result, 'Form should be returned unchanged when not under attack' );
 	}
 }

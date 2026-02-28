@@ -44,6 +44,11 @@ module.exports = function (grunt) {
                 files: {
                     "assets/js/update-check.min.js": ["assets/js/update-check.js"]
                 }
+            },
+            captcha: {
+                files: {
+                    "assets/js/captcha.min.js": ["assets/js/captcha.js"]
+                }
             }
         }
     });

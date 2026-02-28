@@ -66,8 +66,8 @@ class ContactForm7Integration {
 	private function init_security_components(): void {
 		if ( DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) ) {
 			$this->form_protection = new FormProtection();
-			$this->ip_blacklist    = new IPBlacklist();
-			$this->under_attack    = new UnderAttackMode();
+			$this->ip_blacklist    = IPBlacklist::getInstance();
+			$this->under_attack    = UnderAttackMode::getInstance();
 		}
 	}
 
@@ -95,6 +95,16 @@ class ContactForm7Integration {
 		if ( DefaultConfig::get_option( 'silver_assist_cf7_honeypot_enabled' ) ) {
 			\add_filter( 'wpcf7_form_elements', array( $this, 'inject_honeypot_field' ), 10, 1 );
 		}
+
+		// Under Attack mode CAPTCHA injection into CF7 forms
+		\add_filter( 'wpcf7_form_elements', array( $this, 'inject_captcha_field' ), 20, 1 );
+
+		// AJAX endpoint for generating fresh CAPTCHAs (public — forms are on the frontend)
+		\add_action( 'wp_ajax_silver_assist_generate_captcha', array( $this, 'ajax_generate_captcha' ) );
+		\add_action( 'wp_ajax_nopriv_silver_assist_generate_captcha', array( $this, 'ajax_generate_captcha' ) );
+
+		// Enqueue frontend CAPTCHA script when Under Attack mode is active
+		\add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_captcha_assets' ) );
 	}
 
 	/**
@@ -359,8 +369,15 @@ class ContactForm7Integration {
 	public function inject_honeypot_field( string $form ): string {
 		$honeypot_field = '<input type="text" name="silver_honeypot_field" value="" style="display: none !important; position: absolute; left: -9999px;" tabindex="-1" autocomplete="off" />';
 
-		// Insert honeypot field before the submit button
-		$form = str_replace( '<input type="submit"', $honeypot_field . '<input type="submit"', $form );
+		// Insert honeypot field before the submit button.
+		// CF7 may place class/id attributes before type="submit", so use a regex.
+		$pattern = '/<input\b[^>]*type=["\']submit["\']/i';
+		if ( preg_match( $pattern, $form, $matches, PREG_OFFSET_CAPTURE ) ) {
+			$pos  = $matches[0][1];
+			$form = substr_replace( $form, $honeypot_field, $pos, 0 );
+		} else {
+			$form .= $honeypot_field;
+		}
 
 		return $form;
 	}
@@ -515,5 +532,117 @@ class ContactForm7Integration {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Inject CAPTCHA fields into CF7 forms when Under Attack mode is active.
+	 *
+	 * Uses the same wpcf7_form_elements filter pattern as inject_honeypot_field(),
+	 * but only adds the CAPTCHA markup when Under Attack mode is active.
+	 *
+	 * @since 1.1.15
+	 * @param string $form The CF7 form HTML.
+	 * @return string Modified form HTML with CAPTCHA widget injected.
+	 */
+	public function inject_captcha_field( string $form ): string {
+		if ( ! $this->under_attack->is_under_attack() ) {
+			return $form;
+		}
+
+		$captcha = $this->under_attack->generate_captcha();
+
+		$captcha_html = SecurityHelper::render_template( 'captcha-field.php', array(
+			'question'     => $captcha['question'],
+			'token'        => $captcha['token'],
+			'show_refresh' => true,
+			'input_class'  => '',
+		) );
+
+		// Insert CAPTCHA just before the submit button.
+		// CF7 may place class/id attributes before type="submit", so use a regex
+		// to match any <input …type="submit" variant.
+		$pattern = '/<input\b[^>]*type=["\']submit["\']/i';
+		if ( preg_match( $pattern, $form, $matches, PREG_OFFSET_CAPTURE ) ) {
+			$pos  = $matches[0][1];
+			$form = substr_replace( $form, $captcha_html, $pos, 0 );
+		} else {
+			$form .= $captcha_html;
+		}
+
+		return $form;
+	}
+
+	/**
+	 * AJAX handler: generate a fresh CAPTCHA question + token.
+	 *
+	 * Registered on both wp_ajax_ and wp_ajax_nopriv_ because CF7 forms are
+	 * rendered on the public frontend.
+	 *
+	 * @since 1.1.15
+	 * @return void
+	 */
+	public function ajax_generate_captcha(): void {
+		// Verify nonce to prevent abuse.
+		if ( ! isset( $_POST['nonce'] ) || ! \wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'silver_assist_captcha_nonce' ) ) {
+			\wp_send_json_error( array( 'message' => 'Invalid nonce' ), 403 );
+		}
+
+		if ( ! $this->under_attack->is_under_attack() ) {
+			\wp_send_json_error( array( 'message' => 'Not in Under Attack mode' ), 400 );
+		}
+
+		$captcha = $this->under_attack->generate_captcha();
+
+		\wp_send_json_success(
+			array(
+				'question' => $captcha['question'] . ' = ',
+				'token'    => $captcha['token'],
+			)
+		);
+	}
+
+	/**
+	 * Enqueue lightweight frontend assets for the CAPTCHA widget.
+	 *
+	 * Only loads when Under Attack mode is active.
+	 *
+	 * @since 1.1.15
+	 * @return void
+	 */
+	public function enqueue_captcha_assets(): void {
+		if ( ! $this->under_attack->is_under_attack() ) {
+			return;
+		}
+
+		\wp_enqueue_style(
+			'silver-assist-variables',
+			SILVER_ASSIST_SECURITY_URL . 'assets/css/variables.css',
+			array(),
+			SILVER_ASSIST_SECURITY_VERSION
+		);
+
+		\wp_enqueue_style(
+			'silver-assist-captcha',
+			SILVER_ASSIST_SECURITY_URL . 'assets/css/captcha.css',
+			array( 'silver-assist-variables' ),
+			SILVER_ASSIST_SECURITY_VERSION
+		);
+
+		\wp_enqueue_script(
+			'silver-assist-captcha',
+			SILVER_ASSIST_SECURITY_URL . 'assets/js/captcha.js',
+			array( 'jquery' ),
+			SILVER_ASSIST_SECURITY_VERSION,
+			true
+		);
+
+		\wp_localize_script(
+			'silver-assist-captcha',
+			'silverAssistCaptcha',
+			array(
+				'ajaxUrl' => \admin_url( 'admin-ajax.php' ),
+				'nonce'   => \wp_create_nonce( 'silver_assist_captcha_nonce' ),
+			)
+		);
 	}
 }

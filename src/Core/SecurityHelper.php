@@ -652,6 +652,33 @@ class SecurityHelper {
 	 * @since 1.1.15
 	 * @return array CF7 plugin information
 	 */
+	/**
+	 * Render a plugin template with the given variables.
+	 *
+	 * Loads a PHP template from the `templates/` directory, extracts the
+	 * supplied data array into local variables, and returns the rendered HTML.
+	 * Variables are scoped to the template — the caller's scope is not polluted.
+	 *
+	 * @since 1.1.15
+	 * @param string               $template Filename inside `templates/` (e.g. 'captcha-field.php').
+	 * @param array<string, mixed> $data     Key-value pairs available inside the template.
+	 * @return string Rendered HTML.
+	 */
+	public static function render_template( string $template, array $data = array() ): string {
+		$file = SILVER_ASSIST_SECURITY_PATH . 'templates/' . $template;
+
+		if ( ! file_exists( $file ) ) {
+			return '';
+		}
+
+		// phpcs:ignore WordPress.PHP.DontExtract.extract_extract -- Intentional: scoped variable extraction for template rendering.
+		extract( $data, EXTR_SKIP );
+
+		ob_start();
+		include $file;
+		return (string) ob_get_clean();
+	}
+
 	public static function get_contact_form_7_info(): array {
 		if ( ! self::is_contact_form_7_active() ) {
 			return array(

@@ -117,6 +117,7 @@ class DashboardRenderer {
 					<?php
 					RenderHelper::render_feature_status( \__( 'Password Strength Enforcement', 'silver-assist-security' ), (bool) $security_status['admin_security']['password_strength_enforcement'] );
 					RenderHelper::render_feature_status( \__( 'Bot Protection', 'silver-assist-security' ), (bool) $security_status['admin_security']['bot_protection'] );
+					RenderHelper::render_stat( $security_status['admin_security']['session_timeout'], \__( 'Session Timeout (min)', 'silver-assist-security' ) );
 					?>
 				</div>
 			</div>
@@ -160,6 +161,13 @@ class DashboardRenderer {
 					RenderHelper::render_feature_status( \__( 'XML-RPC Protection', 'silver-assist-security' ), (bool) $security_status['general_security']['xmlrpc_disabled'] );
 					RenderHelper::render_feature_status( \__( 'Version Hiding', 'silver-assist-security' ), (bool) $security_status['general_security']['version_hiding'] );
 					RenderHelper::render_feature_status( \__( 'SSL/HTTPS', 'silver-assist-security' ), (bool) $security_status['general_security']['ssl_enabled'] );
+					RenderHelper::render_feature_status(
+						\__( 'Under Attack Mode', 'silver-assist-security' ),
+						(bool) $security_status['general_security']['under_attack_active'],
+						\__( 'Active', 'silver-assist-security' ),
+						\__( 'Inactive', 'silver-assist-security' )
+					);
+					RenderHelper::render_feature_status( \__( 'IP Blacklisting', 'silver-assist-security' ), (bool) $security_status['general_security']['ip_blacklist_enabled'] );
 					?>
 				</div>
 			</div>

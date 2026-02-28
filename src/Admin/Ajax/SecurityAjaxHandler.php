@@ -260,7 +260,7 @@ class SecurityAjaxHandler {
 				'silver_assist_graphql_headless_mode',
 				'silver_assist_admin_hide_enabled',
 				'silver_assist_ip_blacklist_enabled',
-				'silver_assist_under_attack_mode',
+				'silver_assist_under_attack_enabled',
 			);
 
 			foreach ( $toggle_settings as $setting ) {

@@ -362,9 +362,14 @@
     const showSavingIndicator = () => {
         // Use destructuring for cleaner string access
         const { strings = {} } = silverAssistSecurity || {};
+        const savingText = strings.saving || "Saving...";
 
-        if (!$(".saving-indicator").length) {
-            $("form").append(`<div class="saving-indicator" style="position: fixed; top: 32px; right: 20px; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 9999;">${strings.saving || "Saving..."}</div>`);
+        const $indicator = $(".saving-indicator");
+        if ($indicator.length) {
+            // Reset existing indicator: stop animations, update text, and show
+            $indicator.stop(true, true).html(savingText).removeClass("error").show();
+        } else {
+            $("form").first().append(`<div class="saving-indicator" style="position: fixed; top: 32px; right: 20px; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 9999;">${savingText}</div>`);
         }
     };
 
@@ -843,7 +848,7 @@
         // Update Admin Security panel feature statuses
         if (data.admin_security) {
             // Use destructuring for nested data
-            const { password_strength_enforcement, bot_protection } = data.admin_security;
+            const { password_strength_enforcement, bot_protection, session_timeout } = data.admin_security;
 
             // Update Password Strength Enforcement status
             const $passwordElement = $(".admin-security .feature-status:first-child .feature-value");
@@ -857,7 +862,7 @@
             }
 
             // Update Bot Protection status
-            const $botElement = $(".admin-security .feature-status:last-child .feature-value");
+            const $botElement = $(".admin-security .feature-status:nth-child(2) .feature-value");
             if ($botElement.length) {
                 $botElement
                     .removeClass("enabled disabled")
@@ -865,6 +870,12 @@
                     .text(bot_protection ?
                         (strings.enabled || "Enabled") :
                         (strings.disabled || "Disabled"));
+            }
+
+            // Update Session Timeout value
+            const $sessionElement = $(".admin-security .stat .stat-value");
+            if ($sessionElement.length) {
+                $sessionElement.text(session_timeout);
             }
         }
 
@@ -908,10 +919,10 @@
             });
         }
 
-        // Update General Security panel SSL status
+        // Update General Security panel dynamic statuses
         if (data.general_security) {
             // Use destructuring for nested data
-            const { ssl_enabled } = data.general_security;
+            const { ssl_enabled, under_attack_active, ip_blacklist_enabled } = data.general_security;
 
             // Find the SSL/HTTPS feature status (4th feature-status div in general-security)
             const $sslElement = $(".general-security .feature-status:nth-child(4) .feature-value");
@@ -920,6 +931,28 @@
                     .removeClass("enabled disabled")
                     .addClass(ssl_enabled ? "enabled" : "disabled")
                     .text(ssl_enabled ?
+                        (strings.enabled || "Enabled") :
+                        (strings.disabled || "Disabled"));
+            }
+
+            // Update Under Attack Mode status (5th feature-status div)
+            const $underAttackElement = $(".general-security .feature-status:nth-child(5) .feature-value");
+            if ($underAttackElement.length) {
+                $underAttackElement
+                    .removeClass("enabled disabled")
+                    .addClass(under_attack_active ? "enabled" : "disabled")
+                    .text(under_attack_active ?
+                        (strings.active || "Active") :
+                        (strings.inactive || "Inactive"));
+            }
+
+            // Update IP Blacklisting status (6th feature-status div)
+            const $blacklistElement = $(".general-security .feature-status:nth-child(6) .feature-value");
+            if ($blacklistElement.length) {
+                $blacklistElement
+                    .removeClass("enabled disabled")
+                    .addClass(ip_blacklist_enabled ? "enabled" : "disabled")
+                    .text(ip_blacklist_enabled ?
                         (strings.enabled || "Enabled") :
                         (strings.disabled || "Disabled"));
             }
@@ -1628,7 +1661,11 @@
             }
 
             // Trigger refresh for active data in new tab
-            if (tabId === "ip-management") {
+            if (tabId === "dashboard") {
+                // Refresh dashboard data when tab becomes active
+                loadSecurityStatus();
+                loadLoginStats();
+            } else if (tabId === "ip-management") {
                 // Refresh IP management data when tab becomes active
                 loadBlockedIPs();
                 loadCF7BlockedIPs();
