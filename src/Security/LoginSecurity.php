@@ -16,6 +16,8 @@ namespace SilverAssist\Security\Security;
 
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\SecurityHelper;
+use WP_Error;
+use WP_User;
 
 /**
  * Login Security class
@@ -56,12 +58,21 @@ class LoginSecurity {
 	private string $plugin_version;
 
 	/**
+	 * Under Attack Mode instance
+	 *
+	 * @since 1.1.15
+	 * @var UnderAttackMode
+	 */
+	private UnderAttackMode $under_attack;
+
+	/**
 	 * Constructor
 	 *
 	 * @since 1.1.1
 	 */
 	public function __construct() {
 		$this->plugin_version = SILVER_ASSIST_SECURITY_VERSION;
+		$this->under_attack   = UnderAttackMode::getInstance();
 		$this->init_configuration();
 		$this->init();
 	}
@@ -89,6 +100,11 @@ class LoginSecurity {
 		\add_action( 'login_form', array( $this, 'add_login_form_security' ) );
 		\add_action( 'login_init', array( $this, 'setup_login_protection' ) );
 
+		// Under Attack mode — CAPTCHA on login form
+		\add_action( 'login_form', array( $this, 'render_login_captcha' ) );
+		\add_filter( 'authenticate', array( $this, 'validate_login_captcha' ), 25, 3 );
+		\add_action( 'login_enqueue_scripts', array( $this, 'enqueue_login_captcha_assets' ) );
+
 		// Bot and crawler protection
 		\add_action( 'login_init', array( $this, 'block_suspicious_bots' ), 5 );
 		\add_action( 'wp_login_failed', array( $this, 'track_bot_behavior' ) );
@@ -101,6 +117,10 @@ class LoginSecurity {
 		// Session management
 		\add_action( 'init', array( $this, 'setup_session_timeout' ) );
 		\add_action( 'wp_logout', array( $this, 'clear_login_attempts' ) );
+
+		// Enforce session cookie lifetime and hide "Remember Me" checkbox
+		\add_filter( 'auth_cookie_expiration', array( $this, 'enforce_session_cookie_lifetime' ), 10, 3 );
+		\add_action( 'login_enqueue_scripts', array( $this, 'hide_remember_me' ) );
 
 		// Clear login attempts after successful password changes
 		\add_action( 'password_reset', array( $this, 'clear_login_attempts_on_password_change' ), 10, 2 );
@@ -277,16 +297,19 @@ class LoginSecurity {
 			$lockout_key = SecurityHelper::generate_ip_transient_key( 'lockout', $ip );
 			\set_transient( $lockout_key, true, $this->lockout_duration );
 		}
+
+		// Record as attack for Under Attack mode auto-activation
+		$this->under_attack->record_attack( $ip );
 	}
 
 	/**
 	 * Check if user is locked out
 	 *
 	 * @since 1.1.1
-	 * @param \WP_User|\WP_Error|null $user User object or error
-	 * @param string                  $username Username
-	 * @param string                  $password Password
-	 * @return \WP_User|\WP_Error|null
+	 * @param WP_User|WP_Error|null $user User object or error
+	 * @param string                $username Username
+	 * @param string                $password Password
+	 * @return WP_User|WP_Error|null
 	 */
 	public function check_login_lockout( $user, string $username, string $password ) {
 		// Skip if no username/password provided
@@ -306,7 +329,7 @@ class LoginSecurity {
 			}
 			$remaining_time = $this->get_remaining_lockout_time( $lockout_key );
 
-			return new \WP_Error(
+			return new WP_Error(
 				'login_locked',
 				sprintf(
 					/* translators: %d: number of minutes remaining until unlock */
@@ -324,10 +347,10 @@ class LoginSecurity {
 	 *
 	 * @since 1.1.1
 	 * @param string   $user_login Username
-	 * @param \WP_User $user User object
+	 * @param WP_User $user User object
 	 * @return void
 	 */
-	public function handle_successful_login( string $user_login, \WP_User $user ): void {
+	public function handle_successful_login( string $user_login, WP_User $user ): void {
 		// Clear login attempts on successful login
 		$this->clear_login_attempts();
 
@@ -469,12 +492,12 @@ class LoginSecurity {
 	 * Clear login attempts after successful password reset
 	 *
 	 * @since 1.1.9
-	 * @param \WP_User $user User object
-	 * @param string   $new_pass New password
+	 * @param WP_User $user User object
+	 * @param string  $new_pass New password
 	 * @return void
 	 */
 	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress hook.
-	public function clear_login_attempts_on_password_change( \WP_User $user, string $new_pass ): void {
+	public function clear_login_attempts_on_password_change( WP_User $user, string $new_pass ): void {
 		// Clear any existing login attempts for the current IP
 		$this->clear_login_attempts();
 
@@ -490,10 +513,10 @@ class LoginSecurity {
 	 *
 	 * @since 1.1.9
 	 * @param int      $user_id User ID
-	 * @param \WP_User $old_user_data Old user data before update
+	 * @param WP_User $old_user_data Old user data before update
 	 * @return void
 	 */
-	public function clear_login_attempts_on_profile_update( int $user_id, \WP_User $old_user_data ): void {
+	public function clear_login_attempts_on_profile_update( int $user_id, WP_User $old_user_data ): void {
 		// Only clear if password was actually changed
 		$new_user = \get_userdata( $user_id );
 		if ( $new_user && $new_user->user_pass !== $old_user_data->user_pass ) {
@@ -512,13 +535,13 @@ class LoginSecurity {
 	 * Validate password strength
 	 *
 	 * @since 1.1.1
-	 * @param \WP_Error          $errors Errors object
-	 * @param bool               $update Whether this is a user update
-	 * @param \stdClass|\WP_User $user User object (stdClass for new users, WP_User for updates)
+	 * @param WP_Error          $errors Errors object
+	 * @param bool              $update Whether this is a user update
+	 * @param \stdClass|WP_User $user User object (stdClass for new users, WP_User for updates)
 	 * @return void
 	 */
 	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress hook.
-	public function validate_password_strength( \WP_Error $errors, bool $update, \stdClass|\WP_User $user ): void {
+	public function validate_password_strength( WP_Error $errors, bool $update, \stdClass|WP_User $user ): void {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress handles nonce verification for user profile updates.
 		if ( isset( $_POST['pass1'] ) && ! empty( $_POST['pass1'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- WordPress handles nonce verification for user profile updates.
@@ -537,12 +560,12 @@ class LoginSecurity {
 	 * Validate password strength on reset
 	 *
 	 * @since 1.1.1
-	 * @param \WP_Error          $errors Errors object
-	 * @param \stdClass|\WP_User $user User object (can be stdClass or WP_User depending on context)
+	 * @param WP_Error          $errors Errors object
+	 * @param \stdClass|WP_User $user User object (can be stdClass or WP_User depending on context)
 	 * @return void
 	 */
 	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress hook.
-	public function validate_password_strength_reset( \WP_Error $errors, \stdClass|\WP_User $user ): void {
+	public function validate_password_strength_reset( WP_Error $errors, \stdClass|WP_User $user ): void {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress handles nonce verification for password reset forms.
 		if ( isset( $_POST['pass1'] ) && ! empty( $_POST['pass1'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- WordPress handles nonce verification for password reset forms.
@@ -769,5 +792,137 @@ class LoginSecurity {
 
 		// Use centralized 404 response without WordPress template to avoid conflicts
 		SecurityHelper::send_404_response( false );
+	}
+
+	/**
+	 * Render CAPTCHA fields on the wp-login form when Under Attack mode is active.
+	 *
+	 * Hooked to `login_form` — outputs HTML directly after the password field.
+	 *
+	 * @since 1.1.15
+	 * @return void
+	 */
+	public function render_login_captcha(): void {
+		if ( ! $this->under_attack->is_under_attack() ) {
+			return;
+		}
+
+		$captcha = $this->under_attack->generate_captcha();
+
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template handles its own escaping.
+		echo SecurityHelper::render_template( 'captcha-field.php', array(
+			'question'     => $captcha['question'],
+			'token'        => $captcha['token'],
+			'show_refresh' => false,
+			'input_class'  => 'input',
+		) );
+	}
+
+	/**
+	 * Validate the login CAPTCHA before authentication proceeds.
+	 *
+	 * Priority 25 — runs before `check_login_lockout` (30) so CAPTCHA errors
+	 * are surfaced before lockout messages.
+	 *
+	 * @since 1.1.15
+	 * @param WP_User|WP_Error|null $user     User object, error, or null.
+	 * @param string                $username  Username.
+	 * @param string                $password  Password.
+	 * @return WP_User|WP_Error|null
+	 */
+	public function validate_login_captcha( $user, string $username, string $password ): WP_Error|WP_User|null {
+		// Only check on POST (actual login attempts).
+		if ( empty( $username ) || empty( $password ) ) {
+			return $user;
+		}
+
+		if ( ! $this->under_attack->is_under_attack() ) {
+			return $user;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- CAPTCHA validation, nonce handled separately
+		$captcha_answer = isset( $_POST['silver_captcha_answer'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_captcha_answer'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$captcha_token  = isset( $_POST['silver_captcha_token'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_captcha_token'] ) ) : '';
+
+		if ( '' === $captcha_answer || '' === $captcha_token ) {
+			return new WP_Error(
+				'captcha_missing',
+				\__( '<strong>Error:</strong> Please solve the security challenge.', 'silver-assist-security' )
+			);
+		}
+
+		if ( ! $this->under_attack->validate_captcha( $captcha_answer, $captcha_token ) ) {
+			SecurityHelper::log_security_event(
+				'LOGIN_CAPTCHA_FAILED',
+				'Failed CAPTCHA on login form during Under Attack mode',
+				array( 'ip' => SecurityHelper::get_client_ip() )
+			);
+
+			return new WP_Error(
+				'captcha_invalid',
+				\__( '<strong>Error:</strong> Incorrect answer to the security challenge. Please try again.', 'silver-assist-security' )
+			);
+		}
+
+		return $user;
+	}
+
+	/**
+	 * Enqueue CAPTCHA styles on the login page when Under Attack mode is active.
+	 *
+	 * Hooked to `login_enqueue_scripts`.
+	 *
+	 * @since 1.1.15
+	 * @return void
+	 */
+	public function enqueue_login_captcha_assets(): void {
+		if ( ! $this->under_attack->is_under_attack() ) {
+			return;
+		}
+
+		\wp_enqueue_style(
+			'silver-assist-variables',
+			$this->get_asset_url( 'assets/css/variables.css' ),
+			array(),
+			$this->plugin_version
+		);
+
+		\wp_enqueue_style(
+			'silver-assist-captcha',
+			$this->get_asset_url( 'assets/css/captcha.css' ),
+			array( 'silver-assist-variables' ),
+			$this->plugin_version
+		);
+	}
+
+	/**
+	 * Force the auth cookie expiration to match the configured session timeout.
+	 *
+	 * Overrides WordPress default of 2 days (or 14 days with "Remember Me")
+	 * so the cookie never outlives the plugin's session timeout setting.
+	 *
+	 * @since 1.1.15
+	 * @param int  $expiration Default expiration in seconds.
+	 * @param int  $user_id    User ID.
+	 * @param bool $remember   Whether "Remember Me" was checked.
+	 * @return int Session timeout in seconds.
+	 */
+	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress filter signature.
+	public function enforce_session_cookie_lifetime( int $expiration, int $user_id, bool $remember ): int {
+		return $this->session_timeout * 60;
+	}
+
+	/**
+	 * Hide the "Remember Me" checkbox on the login form.
+	 *
+	 * Since the plugin enforces a fixed session timeout, the checkbox
+	 * would be misleading. Hooked to `login_enqueue_scripts`.
+	 *
+	 * @since 1.1.15
+	 * @return void
+	 */
+	public function hide_remember_me(): void {
+		echo '<style>.forgetmenot { display: none !important; }</style>';
 	}
 }

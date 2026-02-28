@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace SilverAssist\Security\Tests\Integration;
 
 use SilverAssist\Security\Admin\AdminPanel;
+use SilverAssist\Security\Admin\Ajax\SecurityAjaxHandler;
+use SilverAssist\Security\Tests\Helpers\AjaxTestHelper;
 use WP_UnitTestCase;
 
 /**
@@ -24,6 +26,7 @@ use WP_UnitTestCase;
  */
 class AdminAccessTest extends WP_UnitTestCase
 {
+    use AjaxTestHelper;
     /**
      * AdminPanel instance
      *
@@ -100,7 +103,7 @@ class AdminAccessTest extends WP_UnitTestCase
             // Assert that page rendered successfully
             $this->assertNotEmpty($output);
             $this->assertStringContainsString("Silver Assist Security Essentials", $output);
-            $this->assertStringContainsString("Security Status Dashboard", $output);
+            $this->assertStringContainsString("Security Dashboard", $output);
         } catch (\Exception $e) {
             ob_end_clean();
             $this->fail("Administrator should be able to access admin page: " . $e->getMessage());
@@ -252,21 +255,24 @@ class AdminAccessTest extends WP_UnitTestCase
         // Set current user to subscriber
         \wp_set_current_user($this->subscriber_user_id);
 
+        // Set up AJAX environment
+        $this->setup_ajax_environment();
+
         // Set up AJAX request
         $_POST["nonce"] = \wp_create_nonce("silver_assist_security_ajax");
         $_POST["action"] = "silver_assist_get_security_status";
 
-        // Call AJAX handler directly
-        ob_start();
-        $this->admin_panel->ajax_get_security_status();
-        $output = ob_get_clean();
+        // Call AJAX handler via the registered hook
+        $response = $this->call_ajax_handler(new SecurityAjaxHandler(
+            new \SilverAssist\Security\Admin\Data\SecurityDataProvider(),
+            new \SilverAssist\Security\Admin\Data\StatisticsProvider()
+        ), 'get_security_status');
 
-        // Parse JSON response
-        $response = json_decode($output, true);
+        $this->teardown_ajax_environment();
 
         // Should return error due to permissions
-        $this->assertFalse($response["success"]);
-        $this->assertArrayHasKey("data", $response);
+        $this->assertNotNull($response, 'AJAX should return a response');
+        $this->assertFalse($response["success"], 'Subscriber should be denied access');
     }
 
     /**

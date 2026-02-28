@@ -98,7 +98,6 @@
         container-type: inline-size;
 
         &:hover {
-            transform: translateY(-2px);
             box-shadow: var(--silver-shadow-lg);
         }
     }
@@ -128,7 +127,7 @@
             border: var(--silver-border-width-thin) solid var(--silver-success-border-light);
         }
 
-        &.disabled {
+        &.inactive {
             background: var(--silver-error-bg-light);
             color: var(--silver-error-text);
             border: var(--silver-border-width-thin) solid var(--silver-error-border-light);
@@ -178,6 +177,98 @@
         &:last-child {
             border-block-end: none;
         }
+
+        /* Inline feature status indicators */
+        &.enabled {
+            color: var(--silver-success-text);
+
+            &::before {
+                content: '\2713';
+                margin-inline-end: var(--silver-spacing-sm);
+                color: var(--silver-success-primary);
+                font-weight: var(--silver-font-weight-bold);
+            }
+        }
+
+        &.disabled {
+            color: var(--silver-error-text);
+
+            &::before {
+                content: '\2717';
+                margin-inline-end: var(--silver-spacing-sm);
+                color: var(--silver-error-primary);
+                font-weight: var(--silver-font-weight-bold);
+            }
+        }
+    }
+
+    /* Recent Activity Section */
+    .recent-activity-section {
+        max-inline-size: 100%;
+    }
+
+    .activity-tabs {
+        display: flex;
+        gap: var(--silver-spacing-xs);
+        border-block-end: var(--silver-border-width-thin) solid var(--silver-border-light);
+        margin-block-end: var(--silver-spacing-lg);
+    }
+
+    .activity-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--silver-spacing-sm);
+        padding: var(--silver-spacing-md) var(--silver-spacing-lg);
+        background: transparent;
+        border: none;
+        border-block-end: var(--silver-border-width-base) solid transparent;
+        color: var(--silver-text-muted);
+        font-size: var(--silver-font-size-sm);
+        font-weight: var(--silver-font-weight-medium);
+        cursor: pointer;
+        transition: all var(--silver-transition-fast);
+
+        .dashicons {
+            font-size: var(--silver-font-size-base);
+            line-height: 1;
+        }
+
+        &:hover {
+            color: var(--silver-text-primary);
+            background: var(--silver-bg-secondary);
+        }
+
+        &.active {
+            color: var(--silver-primary-blue);
+            border-block-end-color: var(--silver-primary-blue);
+            font-weight: var(--silver-font-weight-semibold);
+        }
+    }
+
+    .activity-content {
+        display: none;
+        animation: fadeIn var(--silver-transition-base) var(--silver-transition-ease);
+
+        &.active {
+            display: block;
+        }
+    }
+
+    .loading-spinner {
+        inline-size: 24px;
+        block-size: 24px;
+        border: 3px solid var(--silver-border-light);
+        border-block-start-color: var(--silver-primary-blue);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: var(--silver-spacing-lg) auto;
+    }
+
+    .loading-text {
+        text-align: center;
+        color: var(--silver-text-muted);
+        font-size: var(--silver-font-size-sm);
+        font-style: italic;
     }
 
     .feature-name {
@@ -239,18 +330,18 @@
             width: 0;
             height: 0;
             margin: 0;
-        }
 
-        &.checked .slider {
-            background-color: var(--silver-primary-blue);
+            &:checked + .toggle-slider {
+                background-color: var(--silver-primary-blue);
 
-            &:before {
-                transform: translateX(var(--silver-toggle-thumb-translate));
+                &:before {
+                    transform: translateX(var(--silver-toggle-thumb-translate));
+                }
             }
         }
     }
 
-    .slider {
+    .toggle-slider {
         position: absolute;
         cursor: pointer;
         top: 0;
@@ -420,21 +511,6 @@
         font-weight: var(--silver-font-weight-semibold);
     }
 
-    .unblock-cf7-ip {
-        background: var(--silver-success-primary) !important;
-        color: var(--silver-bg-primary) !important;
-        border: none !important;
-        padding: var(--silver-spacing-xs) var(--silver-spacing-sm) !important;
-        border-radius: var(--silver-radius-base) !important;
-        font-size: var(--silver-font-size-xs) !important;
-        cursor: pointer;
-        transition: background-color var(--silver-transition-base) ease;
-    }
-
-    .unblock-cf7-ip:hover {
-        background: var(--silver-success-secondary) !important;
-    }
-
     /* Path Validation Styles */
     .validation-indicator {
         margin-top: var(--silver-spacing-sm);
@@ -462,6 +538,57 @@
             color: var(--silver-primary-blue);
             border: var(--silver-border-width-thin) solid var(--silver-border-primary);
             animation: validationPulse 1.5s ease-in-out infinite;
+        }
+    }
+
+    /* Toggle Label (inline text next to toggle switch) */
+    .toggle-label {
+        font-size: var(--silver-font-size-base);
+        color: var(--silver-text-primary);
+        vertical-align: middle;
+    }
+
+    /* Admin Hide Warning */
+    .admin-hide-warning {
+        background: var(--silver-warning-bg-light);
+        border-left: 4px solid var(--silver-warning-border);
+        border-radius: var(--silver-radius-md);
+        padding: var(--silver-spacing-lg);
+        margin: var(--silver-spacing-lg) 0;
+
+        h4 {
+            margin-top: 0;
+            margin-bottom: var(--silver-spacing-sm);
+            color: var(--silver-warning-text);
+            font-size: var(--silver-font-size-base);
+
+            .dashicons {
+                color: var(--silver-warning-border);
+                margin-right: var(--silver-spacing-xs);
+                vertical-align: middle;
+            }
+        }
+
+        ul {
+            color: var(--silver-warning-text);
+            margin-bottom: 0;
+            padding-left: var(--silver-spacing-xl);
+        }
+
+        li {
+            margin-bottom: var(--silver-spacing-sm);
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+
+        code {
+            background: var(--silver-bg-primary);
+            padding: 3px 6px;
+            border-radius: var(--silver-radius-sm);
+            font-family: monospace;
+            font-size: var(--silver-font-size-sm);
         }
     }
 
@@ -508,6 +635,68 @@
         font-weight: var(--silver-font-weight-semibold);
         padding: var(--silver-spacing-xl) 0;
         margin: 0 !important;
+    }
+
+    /* Blocked IPs Dashboard Summary */
+    .blocked-ips-summary {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .blocked-ip-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--silver-spacing-md);
+        border-bottom: var(--silver-border-width-thin) solid var(--silver-border-lighter);
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    .blocked-ip-hash {
+        font-family: monospace;
+        font-size: var(--silver-font-size-sm);
+        color: var(--silver-text-primary);
+    }
+
+    .blocked-ip-meta {
+        font-size: var(--silver-font-size-sm);
+        color: var(--silver-text-muted);
+    }
+
+    .view-all-link {
+        text-align: center;
+        margin-top: var(--silver-spacing-md);
+        margin-bottom: 0;
+
+        a {
+            color: var(--silver-primary-blue);
+            text-decoration: none;
+            font-size: var(--silver-font-size-sm);
+            font-weight: var(--silver-font-weight-semibold);
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+
+    /* Unblock Button */
+    .unblock-ip-btn {
+        color: var(--silver-error-secondary) !important;
+        border-color: var(--silver-error-secondary) !important;
+
+        &:hover {
+            background: var(--silver-error-bg-light) !important;
+        }
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
     }
 
     /* Utility classes */
@@ -619,7 +808,7 @@
 .silver-assist-security-admin {
 
     .status-indicator:focus,
-    .toggle-switch input[type="checkbox"]:focus+.slider {
+    .toggle-switch input[type="checkbox"]:focus+.toggle-slider {
         outline: var(--silver-border-width-base) solid var(--silver-primary-blue);
         outline-offset: 2px;
     }
@@ -967,7 +1156,6 @@
 /* Hub-level Tab Content (for Settings Hub compatibility) */
 .tab-content {
     display: none;
-    animation: fadeIn var(--silver-transition-base) var(--silver-transition-ease);
 }
 
 .tab-content.active {
@@ -994,6 +1182,94 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* IP Management Tab - Card Spacing */
+.silver-tab-content .status-card {
+    margin-block-end: var(--silver-spacing-xl);
+}
+
+/* Settings Forms inside Status Cards */
+.status-card .form-table {
+    margin-top: 0;
+}
+
+.status-card .form-table th {
+    vertical-align: top;
+    padding-top: var(--silver-spacing-lg);
+}
+
+/* Range Inputs */
+.status-card input[type="range"] {
+    width: 100%;
+    max-width: 300px;
+    accent-color: var(--silver-primary-blue);
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+/* Slider Value Badge */
+.slider-value {
+    display: inline-block;
+    min-width: 2em;
+    text-align: center;
+    font-weight: var(--silver-font-weight-bold);
+    color: var(--silver-primary-blue);
+    background: var(--silver-bg-secondary);
+    padding: var(--silver-spacing-xs) var(--silver-spacing-sm);
+    border-radius: var(--silver-radius-base);
+    font-size: var(--silver-font-size-base);
+    margin-left: var(--silver-spacing-sm);
+    vertical-align: middle;
+}
+
+/* Submit Button inside Cards — high specificity to override WP's
+   table.form-table+p.submit reset */
+.silver-assist-security-admin .status-card p.submit {
+    margin-top: var(--silver-spacing-lg);
+    margin-bottom: 0;
+    padding-top: var(--silver-spacing-3xl);
+    padding-bottom: 0;
+    border-top: var(--silver-border-width-thin) solid var(--silver-border-lighter);
+}
+
+/* Submit button saving state — visual feedback during autosave */
+.silver-assist-security-admin input[type="submit"].is-saving {
+    opacity: 0.65;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Add IP Form */
+.add-ip-form .add-ip-row {
+    display: flex;
+    gap: var(--silver-spacing-md);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.add-ip-form .add-ip-row input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+    padding: var(--silver-spacing-sm) var(--silver-spacing-md);
+    border: var(--silver-border-width-thin) solid var(--silver-border-secondary);
+    border-radius: var(--silver-radius-md);
+    font-size: var(--silver-font-size-base);
+}
+
+.add-ip-form .add-ip-row input[type="text"]:focus {
+    border-color: var(--silver-primary-blue);
+    box-shadow: 0 0 0 1px var(--silver-primary-blue);
+}
+
+.add-ip-form .description {
+    margin-top: var(--silver-spacing-md);
+}
+
+/* Blocked IPs Table in IP Management */
+.blocked-ips-table .wp-list-table {
+    border-collapse: collapse;
+    width: 100%;
 }
 
 /* Responsive Tab Navigation - Hub Level */

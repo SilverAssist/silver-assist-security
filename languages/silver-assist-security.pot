@@ -1,22 +1,22 @@
-# Copyright (C) 2025 Silver Assist
+# Copyright (C) 2026 Silver Assist
 # This file is distributed under the Polyform Noncommercial License 1.0.0.
 msgid ""
 msgstr ""
-"Project-Id-Version: Silver Assist Security Essentials 1.1.6\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/silver-assist-security\n"
+"Project-Id-Version: Silver Assist Security Essentials 1.1.15\n"
+"Report-Msgid-Bugs-To: https://developer.silverassist.com\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-08-20T03:47:45+00:00\n"
+"POT-Creation-Date: 2026-02-28T00:00:00+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: silver-assist-security\n"
 
 #. Plugin Name of the plugin
 #: silver-assist-security.php
-#: src/Admin/AdminPanel.php:857
+#: src/Admin/Renderer/AdminPageRenderer.php:84
 msgid "Silver Assist Security Essentials"
 msgstr ""
 
@@ -40,751 +40,1048 @@ msgstr ""
 msgid "http://silverassist.com/"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:97
+#: src/Admin/AdminPanel.php:191
+#: src/Admin/AdminPanel.php:196
+msgid "Security"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:194
+msgid "Security configuration for WordPress"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:227
+msgid "Check Updates"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:244
 msgid "Silver Assist Security"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:98
+#: src/Admin/AdminPanel.php:245
 msgid "Security Essentials"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:175
+#: src/Admin/AdminPanel.php:338
+msgid "Update available! Redirecting to Updates page..."
+msgstr ""
+
+#: src/Admin/AdminPanel.php:339
+#: src/Admin/AdminPanel.php:401
+msgid "You're up to date!"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:340
+msgid "Error checking updates. Please try again."
+msgstr ""
+
+#: src/Admin/AdminPanel.php:341
+msgid "Error connecting to update server."
+msgstr ""
+
+#: src/Admin/AdminPanel.php:363
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:64
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:138
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:186
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:230
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:267
+#: src/Admin/Ajax/SecurityAjaxHandler.php:87
+#: src/Admin/Ajax/SecurityAjaxHandler.php:115
+#: src/Admin/Ajax/SecurityAjaxHandler.php:143
+#: src/Admin/Ajax/SecurityAjaxHandler.php:171
+#: src/Admin/Ajax/SecurityAjaxHandler.php:199
+#: src/Admin/Ajax/SecurityAjaxHandler.php:319
+#: src/Admin/Ajax/SecurityAjaxHandler.php:399
+#: src/Admin/Ajax/SecurityAjaxHandler.php:476
+msgid "Security validation failed"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:368
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:68
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:142
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:190
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:234
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:271
+#: src/Admin/Ajax/SecurityAjaxHandler.php:91
+#: src/Admin/Ajax/SecurityAjaxHandler.php:119
+#: src/Admin/Ajax/SecurityAjaxHandler.php:147
+#: src/Admin/Ajax/SecurityAjaxHandler.php:175
+#: src/Admin/Ajax/SecurityAjaxHandler.php:203
+#: src/Admin/Ajax/SecurityAjaxHandler.php:323
+#: src/Admin/Ajax/SecurityAjaxHandler.php:403
+#: src/Admin/Ajax/SecurityAjaxHandler.php:480
+msgid "Insufficient permissions"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:375
+msgid "Updater not available"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:400
+msgid "Update available!"
+msgstr ""
+
+#: src/Admin/AdminPanel.php:413
+msgid "Error checking for updates"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:82
+msgid "IP"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:83
+msgid "Reason"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:84
+msgid "Blocked"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:85
+msgid "Violations"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:86
+msgid "Actions"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:91
+msgid "Unknown"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:92
+msgid "Form security violation"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:103
+msgid "Unblock"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:112
+msgid "No CF7 blocked IPs found."
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:126
+#: src/Admin/Ajax/SecurityAjaxHandler.php:159
+msgid "Failed to retrieve blocked IPs"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:147
+msgid "Invalid IP address"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:154
+msgid "Manually blocked via admin panel"
+msgstr ""
+
+#. translators: %s: IP address that was blocked
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:164
+#, php-format
+msgid "IP %s successfully blocked for CF7 forms"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:170
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:174
+#: src/Admin/Ajax/SecurityAjaxHandler.php:464
+msgid "Failed to block IP address"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:195
+msgid "IP address required"
+msgstr ""
+
+#. translators: %s: IP address that was unblocked
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:208
+#, php-format
+msgid "IP %s successfully unblocked"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:214
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:218
+#: src/Admin/Ajax/SecurityAjaxHandler.php:527
+msgid "Failed to unblock IP address"
+msgstr ""
+
+#. translators: %d: number of IP addresses that were cleared
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:246
+#, php-format
+msgid "Successfully cleared %d CF7 blocked IPs"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:255
+msgid "Failed to clear blocked IPs"
+msgstr ""
+
+#: src/Admin/Ajax/ContactForm7AjaxHandler.php:305
+msgid "Failed to export blocked IPs"
+msgstr ""
+
+#: src/Admin/Ajax/SecurityAjaxHandler.php:103
+msgid "Failed to retrieve security status"
+msgstr ""
+
+#: src/Admin/Ajax/SecurityAjaxHandler.php:131
+msgid "Failed to retrieve login statistics"
+msgstr ""
+
+#: src/Admin/Ajax/SecurityAjaxHandler.php:187
+msgid "Failed to retrieve security logs"
+msgstr ""
+
+#. translators: %d: number of settings saved
+#: src/Admin/Ajax/SecurityAjaxHandler.php:290
+#, php-format
+msgid "%d settings auto-saved successfully"
+msgstr ""
+
+#: src/Admin/Ajax/SecurityAjaxHandler.php:307
+msgid "Failed to save settings"
+msgstr ""
+
+#: src/Admin/Ajax/SecurityAjaxHandler.php:328
+msgid "Admin path is required"
+msgstr ""
+
+#: src/Admin/Ajax/SecurityAjaxHandler.php:373
+msgid "Admin path is valid"
+msgstr ""
+
+#: src/Admin/Ajax/SecurityAjaxHandler.php:387
+msgid "Failed to validate admin path"
+msgstr ""
+
+#: src/Admin/Ajax/SecurityAjaxHandler.php:411
+#: src/Admin/Ajax/SecurityAjaxHandler.php:487
+msgid "IP address is required"
+msgstr ""
+
+#: src/Admin/Ajax/SecurityAjaxHandler.php:417
+msgid "Invalid IP address format"
+msgstr ""
+
+#: src/Admin/Ajax/SecurityAjaxHandler.php:424
+msgid "Manually blocked by administrator"
+msgstr ""
+
+#. translators: %s: IP address
+#: src/Admin/Ajax/SecurityAjaxHandler.php:447
+#, php-format
+msgid "IP address %s has been successfully blocked"
+msgstr ""
+
+#. translators: %s: IP address
+#: src/Admin/Ajax/SecurityAjaxHandler.php:509
+#, php-format
+msgid "IP address %s has been unblocked"
+msgstr ""
+
+#: src/Admin/Ajax/SecurityAjaxHandler.php:515
+msgid "IP address was not found in the blacklist"
+msgstr ""
+
+#: src/Admin/Assets/AssetManager.php:159
 msgid "Loading..."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:176
+#: src/Admin/Assets/AssetManager.php:160
 msgid "Error loading data"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:177
-#: src/Admin/AdminPanel.php:865
+#: src/Admin/Assets/AssetManager.php:161
 msgid "Last updated:"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:178
+#: src/Admin/Assets/AssetManager.php:162
 msgid "No active threats detected"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:179
+#: src/Admin/Assets/AssetManager.php:163
 msgid "Refreshing..."
 msgstr ""
 
 #. translators: %s: new version number
-#: src/Admin/AdminPanel.php:184
+#: src/Admin/Assets/AssetManager.php:168
 #, php-format
 msgid "New version %s available."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:185
+#: src/Admin/Assets/AssetManager.php:169
 msgid "Update now"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:186
+#: src/Admin/Assets/AssetManager.php:170
 msgid "Checking..."
 msgstr ""
 
 #. translators: %1$s: new version number, %2$s: current version number
-#: src/Admin/AdminPanel.php:189
+#: src/Admin/Assets/AssetManager.php:173
 #, php-format
 msgid "New version available: %1$s\\nCurrent version: %2$s"
 msgstr ""
 
 #. translators: %s: current version number
-#: src/Admin/AdminPanel.php:192
+#: src/Admin/Assets/AssetManager.php:176
 #, php-format
 msgid "The plugin is up to date with the latest version (%s)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:193
+#: src/Admin/Assets/AssetManager.php:177
 msgid "Error checking for updates:"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:194
+#: src/Admin/Assets/AssetManager.php:178
 msgid "Unknown error"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:195
+#: src/Admin/Assets/AssetManager.php:179
 msgid "Connectivity error while checking for updates"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:197
+#: src/Admin/Assets/AssetManager.php:181
 msgid "Login attempts must be between 1 and 20"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:198
+#: src/Admin/Assets/AssetManager.php:182
 msgid "Lockout duration must be between 60 and 3600 seconds"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:199
+#: src/Admin/Assets/AssetManager.php:183
 msgid "Session timeout must be between 5 and 120 minutes"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:200
+#: src/Admin/Assets/AssetManager.php:184
 msgid "GraphQL query depth must be between 1 and 20"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:201
+#: src/Admin/Assets/AssetManager.php:185
 msgid "GraphQL query complexity must be between 10 and 1000"
 msgstr ""
 
 #. translators: %d: maximum timeout in seconds based on PHP limit
-#: src/Admin/AdminPanel.php:204
+#: src/Admin/Assets/AssetManager.php:188
 #, php-format
 msgid "GraphQL query timeout must be between 1 and %d seconds (PHP limit)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:207
+#: src/Admin/Assets/AssetManager.php:191
 msgid "Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:208
+#: src/Admin/Assets/AssetManager.php:192
 msgid "Use only lowercase letters, numbers, and hyphens (3-30 characters)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:210
+#: src/Admin/Assets/AssetManager.php:194
 msgid "Validating..."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:211
+#: src/Admin/Assets/AssetManager.php:195
 msgid "✓ Path is valid"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:212
-#: src/Core/PathValidator.php:76
+#: src/Admin/Assets/AssetManager.php:196
+#: src/Core/PathValidator.php:77
 msgid "Path must be at least 3 characters long"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:213
-#: src/Core/PathValidator.php:82
+#: src/Admin/Assets/AssetManager.php:197
+#: src/Core/PathValidator.php:83
 msgid "Path must be 50 characters or less"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:214
+#: src/Admin/Assets/AssetManager.php:198
 msgid "This path contains forbidden keywords"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:215
-#: src/Core/PathValidator.php:89
+#: src/Admin/Assets/AssetManager.php:199
+#: src/Core/PathValidator.php:90
 msgid "Path can only contain letters, numbers, hyphens, and underscores"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:216
-#: src/Core/PathValidator.php:69
+#: src/Admin/Assets/AssetManager.php:200
+#: src/Core/PathValidator.php:70
 msgid "Path cannot be empty"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:218
+#: src/Admin/Assets/AssetManager.php:202
 msgid "Saving..."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:219
+#: src/Admin/Assets/AssetManager.php:203
 msgid "Saved!"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:220
+#: src/Admin/Assets/AssetManager.php:204
 msgid "Save failed"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:222
+#: src/Admin/Assets/AssetManager.php:206
 msgid "Failed to check for Silver Assist updates"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:223
+#: src/Admin/Assets/AssetManager.php:207
 msgid "Failed to load security essentials"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:224
+#: src/Admin/Assets/AssetManager.php:208
 msgid "Failed to load login stats"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:226
+#: src/Admin/Assets/AssetManager.php:210
 msgid "IP Hash"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:227
+#: src/Admin/Assets/AssetManager.php:211
 msgid "Blocked Time"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:228
+#: src/Admin/Assets/AssetManager.php:212
 msgid "Remaining"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:229
+#: src/Admin/Assets/AssetManager.php:213
 msgid "min"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:231
-#: src/Admin/AdminPanel.php:912
-#: src/Admin/AdminPanel.php:920
-#: src/Admin/AdminPanel.php:964
-#: src/Admin/AdminPanel.php:996
-#: src/Admin/AdminPanel.php:1002
-#: src/Admin/AdminPanel.php:1008
-#: src/Admin/AdminPanel.php:1014
-#: src/GraphQL/GraphQLConfigManager.php:319
-#: src/GraphQL/GraphQLConfigManager.php:328
-#: src/GraphQL/GraphQLConfigManager.php:338
-#: src/GraphQL/GraphQLConfigManager.php:347
+#: src/Admin/Assets/AssetManager.php:215
+#: src/Admin/Renderer/RenderHelper.php:34
+#: src/GraphQL/GraphQLConfigManager.php:307
+#: src/GraphQL/GraphQLConfigManager.php:316
+#: src/GraphQL/GraphQLConfigManager.php:326
+#: src/GraphQL/GraphQLConfigManager.php:335
 msgid "Enabled"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:232
-#: src/Admin/AdminPanel.php:912
-#: src/Admin/AdminPanel.php:920
-#: src/Admin/AdminPanel.php:965
-#: src/Admin/AdminPanel.php:1014
-#: src/GraphQL/GraphQLConfigManager.php:319
-#: src/GraphQL/GraphQLConfigManager.php:328
-#: src/GraphQL/GraphQLConfigManager.php:339
-#: src/GraphQL/GraphQLConfigManager.php:348
+#: src/Admin/Assets/AssetManager.php:216
+#: src/Admin/Renderer/DashboardRenderer.php:142
+#: src/Admin/Renderer/RenderHelper.php:37
+#: src/GraphQL/GraphQLConfigManager.php:307
+#: src/GraphQL/GraphQLConfigManager.php:316
+#: src/GraphQL/GraphQLConfigManager.php:327
+#: src/GraphQL/GraphQLConfigManager.php:336
 msgid "Disabled"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:233
-#: src/Admin/AdminPanel.php:939
+#: src/Admin/Assets/AssetManager.php:217
 msgid "Headless CMS"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:234
-#: src/Admin/AdminPanel.php:940
+#: src/Admin/Assets/AssetManager.php:218
 msgid "Standard"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:407
-msgid "Settings saved automatically"
+#. translators: %d: number of security logs found
+#: src/Admin/Data/SecurityDataProvider.php:279
+#, php-format
+msgid "Found %d recent security events"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:413
-msgid "Error saving settings"
+#: src/Admin/Data/SecurityDataProvider.php:295
+msgid "Unable to retrieve security logs"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:460
-msgid "Error validating path"
+#: src/Admin/Renderer/AdminPageRenderer.php:61
+#: src/Core/SecurityHelper.php:457
+msgid "You do not have sufficient permissions to access this page."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:771
-#: src/Security/LoginSecurity.php:225
-msgid "Security check failed."
+#: src/Admin/Renderer/AdminPageRenderer.php:62
+msgid "Permission Denied"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:830
-msgid "Security settings have been saved successfully."
+#: src/Admin/Renderer/AdminPageRenderer.php:90
+msgid "Security Dashboard"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:862
-msgid "Security Status Dashboard"
+#: src/Admin/Renderer/AdminPageRenderer.php:94
+msgid "Login Protection"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:869
-msgid "Refresh Now"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:878
-msgid "Login Security"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:886
-msgid "Max Attempts"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:890
-msgid "Blocked IPs"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:895
-msgid "Lockout (min)"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:902
-msgid "Admin Security"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:909
-#: src/Admin/AdminPanel.php:1112
-msgid "Password Strength Enforcement"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:917
-#: src/Admin/AdminPanel.php:1090
-msgid "Bot Protection"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:928
+#: src/Admin/Renderer/AdminPageRenderer.php:99
+#: src/Admin/Renderer/DashboardRenderer.php:129
 msgid "GraphQL Security"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:935
-msgid "Mode:"
+#: src/Admin/Renderer/AdminPageRenderer.php:105
+#: src/Admin/Renderer/DashboardRenderer.php:179
+#: src/Admin/Renderer/DashboardRenderer.php:186
+#: src/Admin/Renderer/SettingsRenderer.php:346
+msgid "Form Protection"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:946
-#: src/GraphQL/GraphQLConfigManager.php:320
+#: src/Admin/Renderer/AdminPageRenderer.php:110
+msgid "IP Management"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:94
+msgid "Login Security"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:101
+msgid "Max Attempts"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:102
+#: src/Admin/Renderer/DashboardRenderer.php:209
+#: src/Admin/Renderer/DashboardRenderer.php:234
+msgid "Blocked IPs"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:103
+msgid "Lockout (min)"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:111
+msgid "Admin Security"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:118
+#: src/Admin/Renderer/SettingsRenderer.php:120
+msgid "Password Strength Enforcement"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:119
+#: src/Admin/Renderer/SettingsRenderer.php:126
+msgid "Bot Protection"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:120
+msgid "Session Timeout (min)"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:136
+#: src/GraphQL/GraphQLConfigManager.php:308
 msgid "Max Depth"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:951
+#: src/Admin/Renderer/DashboardRenderer.php:137
 msgid "Max Complexity"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:956
+#: src/Admin/Renderer/DashboardRenderer.php:138
 msgid "Timeout"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:960
+#: src/Admin/Renderer/DashboardRenderer.php:140
 msgid "Introspection"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:969
-msgid "Access"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:973
+#: src/Admin/Renderer/DashboardRenderer.php:143
 msgid "Public"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:974
-msgid "Restricted"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:979
-msgid "WPGraphQL plugin not detected"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:987
+#: src/Admin/Renderer/DashboardRenderer.php:153
 msgid "General Security"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:994
+#: src/Admin/Renderer/DashboardRenderer.php:160
 msgid "HTTPOnly Cookies"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1000
+#: src/Admin/Renderer/DashboardRenderer.php:161
 msgid "XML-RPC Protection"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1006
+#: src/Admin/Renderer/DashboardRenderer.php:162
 msgid "Version Hiding"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1011
+#: src/Admin/Renderer/DashboardRenderer.php:163
 msgid "SSL/HTTPS"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1024
-msgid "Active Threats & Blocked IPs"
+#: src/Admin/Renderer/DashboardRenderer.php:165
+#: src/Admin/Renderer/SettingsRenderer.php:422
+msgid "Under Attack Mode"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1028
+#: src/Admin/Renderer/DashboardRenderer.php:167
+msgid "Active"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:168
+msgid "Inactive"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:170
+msgid "IP Blacklisting"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:181
+msgid "active"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:181
+msgid "inactive"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:187
+msgid "Rate Limit (min)"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:205
+msgid "Security Statistics"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:210
+msgid "Failed Login Attempts (24h)"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:211
+msgid "Security Events (7d)"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:228
+msgid "Recent Security Activity"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:238
+msgid "Security Logs"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:245
+#: src/Admin/Renderer/SettingsRenderer.php:384
+#: src/Admin/Renderer/SettingsRenderer.php:450
 msgid "Loading blocked IPs..."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1035
-msgid "Security Configuration"
+#: src/Admin/Renderer/DashboardRenderer.php:252
+msgid "Loading security logs..."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1042
-msgid "Login Security Settings"
+#: src/Admin/Renderer/SettingsRenderer.php:78
+msgid "Login Protection Settings"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1047
-msgid "Maximum Login Attempts"
+#: src/Admin/Renderer/SettingsRenderer.php:88
+msgid "Failed Login Attempts"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1054
-msgid "Number of failed login attempts before lockout (1-20)"
+#: src/Admin/Renderer/SettingsRenderer.php:95
+msgid "Number of failed login attempts before IP lockout (1-20)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1061
-msgid "Lockout Duration (seconds)"
+#: src/Admin/Renderer/SettingsRenderer.php:98
+msgid "Lockout Duration (minutes)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1069
-msgid "How long to lock out users after failed attempts (60-3600 seconds)"
+#: src/Admin/Renderer/SettingsRenderer.php:105
+msgid "Duration to block IP after failed attempts (1-60 minutes)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1076
+#: src/Admin/Renderer/SettingsRenderer.php:110
 msgid "Session Timeout (minutes)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1084
-msgid "Session timeout duration in minutes (5-120)"
+#: src/Admin/Renderer/SettingsRenderer.php:117
+msgid "Automatic logout after inactivity (5-120 minutes)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1095
-msgid "Block automated bots and security scanners with 404 responses"
+#: src/Admin/Renderer/SettingsRenderer.php:123
+msgid "Require strong passwords (12+ chars, mixed case, numbers, symbols)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1098
-msgid "Detects and blocks common bots, crawlers, and security scanning tools."
+#: src/Admin/Renderer/SettingsRenderer.php:129
+msgid "Block known bots, crawlers, and security scanners"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1108
-msgid "Password Security Settings"
+#: src/Admin/Renderer/SettingsRenderer.php:140
+msgid "Save Login Settings"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1118
-msgid "Enforce strong password requirements"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1127
+#: src/Admin/Renderer/SettingsRenderer.php:149
 msgid "Admin Hide Security"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1129
+#: src/Admin/Renderer/SettingsRenderer.php:153
 msgid "Hide WordPress admin and login pages from unauthorized users by redirecting to custom URLs."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1135
+#: src/Admin/Renderer/SettingsRenderer.php:164
 msgid "Enable Admin Hiding"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1140
+#: src/Admin/Renderer/SettingsRenderer.php:176
 msgid "Hide /wp-admin and /wp-login.php from unauthorized users"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1143
+#: src/Admin/Renderer/SettingsRenderer.php:179
 msgid "When enabled, direct access to WordPress admin URLs will return 404 errors. Use the custom path below to access the admin area."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1150
+#: src/Admin/Renderer/SettingsRenderer.php:188
 msgid "Custom Admin Path"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1158
+#: src/Admin/Renderer/SettingsRenderer.php:201
 msgid "Custom path to access the admin area (e.g., 'my-secret-admin'). Avoid common words like 'admin', 'login', etc."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1161
-msgid "Current admin URL:"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1173
+#: src/Admin/Renderer/SettingsRenderer.php:211
 msgid "Important Security Notice"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1176
+#: src/Admin/Renderer/SettingsRenderer.php:214
 msgid "Save your custom admin URL in a secure location before enabling this feature."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1178
+#: src/Admin/Renderer/SettingsRenderer.php:216
 msgid "If you forget the custom path, you can disable this feature via FTP by adding this line to wp-config.php:"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1181
+#: src/Admin/Renderer/SettingsRenderer.php:219
 msgid "This feature adds an extra layer of security but should be used alongside strong passwords and other security measures."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1190
-msgid "GraphQL Security Enhancements"
+#: src/Admin/Renderer/SettingsRenderer.php:228
+msgid "Save Admin Hide Settings"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1193
-msgid "WPGraphQL Detected"
+#: src/Admin/Renderer/SettingsRenderer.php:253
+msgid "GraphQL Security Settings"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1194
-msgid "WPGraphQL has its own security settings. These enhancements work alongside WPGraphQL's native configuration."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1198
-msgid "Open WPGraphQL Settings"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1205
+#: src/Admin/Renderer/SettingsRenderer.php:269
 msgid "Headless CMS Mode"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1210
-msgid "Enable optimized rate limiting for headless CMS usage"
+#: src/Admin/Renderer/SettingsRenderer.php:272
+msgid "Enable higher limits for headless WordPress configurations"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1213
-msgid "Increases rate limits and timeout handling for better headless CMS performance. Use WPGraphQL's native settings for query depth and complexity."
+#: src/Admin/Renderer/SettingsRenderer.php:275
+msgid "Query Timeout (seconds)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1219
-msgid "GraphQL Query Timeout"
+#: src/Admin/Renderer/SettingsRenderer.php:282
+msgid "Maximum execution time for GraphQL queries (1-30 seconds)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1227
-#: src/Admin/AdminPanel.php:1231
-msgid "seconds"
+#: src/Admin/Renderer/SettingsRenderer.php:293
+msgid "Save GraphQL Settings"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1229
-msgid "PHP Limit:"
+#: src/Admin/Renderer/SettingsRenderer.php:304
+msgid "WPGraphQL Plugin Not Detected"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1233
-msgid "Maximum time allowed for GraphQL query execution. Cannot exceed PHP execution time limit."
+#: src/Admin/Renderer/SettingsRenderer.php:307
+msgid "GraphQL security features require the WPGraphQL plugin to be installed and activated."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1241
-msgid "Enhanced Rate Limiting"
+#: src/Admin/Renderer/SettingsRenderer.php:312
+msgid "Install WPGraphQL Plugin"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1245
-msgid "Current Rate Limits:"
+#: src/Admin/Renderer/SettingsRenderer.php:336
+msgid "Contact Form 7 Protection"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1247
-msgid "Standard requests: 300/minute"
+#: src/Admin/Renderer/SettingsRenderer.php:349
+msgid "Enable protection for Contact Form 7 submissions"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1249
-msgid "Build processes: 600/minute (auto-detected)"
+#: src/Admin/Renderer/SettingsRenderer.php:352
+msgid "Rate Limit (submissions/minute)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1251
-msgid "Query timeout: Extended for complex operations"
+#: src/Admin/Renderer/SettingsRenderer.php:359
+msgid "Maximum form submissions per minute per IP address"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1253
-msgid "Standard requests: 100/minute"
+#: src/Admin/Renderer/SettingsRenderer.php:370
+msgid "Save Form Settings"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1255
-msgid "Build processes: 300/minute (auto-detected)"
+#: src/Admin/Renderer/SettingsRenderer.php:379
+msgid "Blocked IPs Management"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1256
-msgid "Query timeout: Standard limits"
+#: src/Admin/Renderer/SettingsRenderer.php:406
+msgid "IP Management & Attack Protection"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1263
-msgid "WPGraphQL Recommendations"
+#: src/Admin/Renderer/SettingsRenderer.php:416
+msgid "IP Blacklist"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1267
-msgid "For Headless CMS Usage:"
+#: src/Admin/Renderer/SettingsRenderer.php:419
+msgid "Enable automatic IP blacklisting for repeat offenders"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1270
-msgid "✓ Enable Query Depth Limiting with Max Depth: 15-20"
+#: src/Admin/Renderer/SettingsRenderer.php:425
+msgid "Enable enhanced protection during active attacks"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1272
-msgid "✓ Keep Batch Queries enabled with limit: 10-20"
+#: src/Admin/Renderer/SettingsRenderer.php:436
+msgid "Save IP Settings"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1274
-msgid "✓ Disable Public Introspection in production"
+#: src/Admin/Renderer/SettingsRenderer.php:445
+msgid "Login Security - Blocked IPs"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1276
-msgid "✓ Disable GraphQL Debug Mode in production"
+#: src/Admin/Renderer/SettingsRenderer.php:459
+msgid "Form Protection - Blocked IPs"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1280
-msgid "Current WPGraphQL Settings:"
+#: src/Admin/Renderer/SettingsRenderer.php:464
+msgid "Loading CF7 blocked IPs..."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1292
-msgid "Headless CMS Mode Active"
+#: src/Admin/Renderer/SettingsRenderer.php:473
+msgid "Manual IP Management"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1294
-msgid "✓ Enhanced rate limiting for high-frequency requests"
+#: src/Admin/Renderer/SettingsRenderer.php:480
+msgid "Enter IP address (e.g., 192.168.1.100)"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1296
-msgid "✓ Build process detection (Next.js, Gatsby, etc.)"
+#: src/Admin/Renderer/SettingsRenderer.php:484
+msgid "Reason for blocking"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1298
-msgid "✓ Extended timeouts for complex queries"
+#: src/Admin/Renderer/SettingsRenderer.php:488
+msgid "Block IP"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1300
-msgid "✓ Optimized for static site generation (SSG/ISR)"
+#: src/Admin/Renderer/SettingsRenderer.php:492
+msgid "Manually block specific IP addresses. Blocked IPs will be denied access to login and forms."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1304
-msgid "Configure query depth and complexity limits in WPGraphQL settings for optimal performance."
+#: src/Admin/Settings/SettingsHandler.php:63
+#: src/Core/SecurityHelper.php:421
+#: src/Security/LoginSecurity.php:252
+msgid "Security check failed."
 msgstr ""
 
-#: src/Admin/AdminPanel.php:1311
-msgid "Save Security Settings"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1346
-msgid "Plugin Updates"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1349
-msgid "Current Version"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1353
-msgid "Latest Version"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1359
-msgid "Update Available!"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1363
-msgid "Up to date"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1368
-msgid "Repository"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1379
-msgid "Check for Updates"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:1383
-msgid "Go to Updates"
-msgstr ""
-
-#: src/Core/PathValidator.php:105
-msgid "Path is valid"
+#: src/Admin/Settings/SettingsHandler.php:259
+msgid "Security settings have been saved successfully."
 msgstr ""
 
 #. translators: %s: forbidden path keyword
-#: src/Core/PathValidator.php:127
-#: src/Core/PathValidator.php:139
-#: src/Core/PathValidator.php:155
-#: src/Core/PathValidator.php:168
+#: src/Core/PathValidator.php:126
+#: src/Core/PathValidator.php:138
+#: src/Core/PathValidator.php:154
+#: src/Core/PathValidator.php:167
 #, php-format
 msgid "Path cannot contain \"%s\" for security reasons"
 msgstr ""
 
-#: src/Core/Plugin.php:239
+#: src/Core/Plugin.php:238
 msgid "Settings"
 msgstr ""
 
-#: src/GraphQL/GraphQLConfigManager.php:268
+#. translators: %d: number of seconds
+#: src/Core/SecurityHelper.php:375
+#, php-format
+msgid "%d seconds"
+msgstr ""
+
+#. translators: %d: number of minutes
+#: src/Core/SecurityHelper.php:384
+#, php-format
+msgid "%d minutes"
+msgstr ""
+
+#. translators: %d: number of hours
+#: src/Core/SecurityHelper.php:392
+#, php-format
+msgid "%d hours"
+msgstr ""
+
+#: src/Core/SecurityHelper.php:687
+msgid "Contact Form 7 plugin is not active"
+msgstr ""
+
+#. translators: %s: Contact Form 7 version
+#: src/Core/SecurityHelper.php:701
+#, php-format
+msgid "Contact Form 7 v%s is active and compatible"
+msgstr ""
+
+#. translators: %s: Contact Form 7 version
+#: src/Core/SecurityHelper.php:706
+#, php-format
+msgid "Contact Form 7 v%s detected but requires v5.0 or higher"
+msgstr ""
+
+#: src/GraphQL/GraphQLConfigManager.php:257
 msgid "Public introspection enabled (security risk)"
 msgstr ""
 
-#: src/GraphQL/GraphQLConfigManager.php:275
+#: src/GraphQL/GraphQLConfigManager.php:264
 msgid "Debug mode enabled (not recommended for production)"
 msgstr ""
 
-#: src/GraphQL/GraphQLConfigManager.php:282
+#: src/GraphQL/GraphQLConfigManager.php:271
 msgid "GraphQL endpoint is publicly accessible"
 msgstr ""
 
-#: src/GraphQL/GraphQLConfigManager.php:298
+#: src/GraphQL/GraphQLConfigManager.php:286
 msgid "WPGraphQL not active"
 msgstr ""
 
-#: src/GraphQL/GraphQLConfigManager.php:306
+#: src/GraphQL/GraphQLConfigManager.php:294
 msgid "RESTRICTED"
 msgstr ""
 
-#: src/GraphQL/GraphQLConfigManager.php:307
+#: src/GraphQL/GraphQLConfigManager.php:295
 msgid "PUBLIC"
 msgstr ""
 
-#: src/GraphQL/GraphQLConfigManager.php:311
+#: src/GraphQL/GraphQLConfigManager.php:299
 msgid "Endpoint Access"
 msgstr ""
 
-#: src/GraphQL/GraphQLConfigManager.php:318
+#: src/GraphQL/GraphQLConfigManager.php:306
 msgid "Query Depth Limiting"
 msgstr ""
 
-#: src/GraphQL/GraphQLConfigManager.php:327
+#: src/GraphQL/GraphQLConfigManager.php:315
 msgid "Batch Queries"
 msgstr ""
 
-#: src/GraphQL/GraphQLConfigManager.php:329
+#: src/GraphQL/GraphQLConfigManager.php:317
 msgid "Limit"
 msgstr ""
 
-#: src/GraphQL/GraphQLConfigManager.php:336
+#: src/GraphQL/GraphQLConfigManager.php:324
 msgid "Public Introspection"
 msgstr ""
 
-#: src/GraphQL/GraphQLConfigManager.php:345
+#: src/GraphQL/GraphQLConfigManager.php:333
 msgid "Debug Mode"
 msgstr ""
 
-#: src/GraphQL/GraphQLConfigManager.php:362
+#: src/GraphQL/GraphQLConfigManager.php:356
 msgid "⚠️ Security Concerns:"
 msgstr ""
 
 #. translators: 1: estimated complexity, 2: maximum allowed complexity
-#: src/GraphQL/GraphQLSecurity.php:365
+#: src/GraphQL/GraphQLSecurity.php:355
 #, php-format
 msgid "Query complexity %1$d exceeds maximum allowed complexity %2$d"
 msgstr ""
 
-#: src/GraphQL/GraphQLSecurity.php:470
+#: src/GraphQL/GraphQLSecurity.php:461
 msgid "Introspection is disabled in production."
 msgstr ""
 
 #. translators: 1: number of aliases found, 2: maximum allowed
-#: src/GraphQL/GraphQLSecurity.php:508
+#: src/GraphQL/GraphQLSecurity.php:498
 #, php-format
 msgid "Query contains too many aliases (%1$d). Maximum allowed: %2$d"
 msgstr ""
 
 #. translators: 1: number of directives found, 2: maximum allowed
-#: src/GraphQL/GraphQLSecurity.php:521
+#: src/GraphQL/GraphQLSecurity.php:513
 #, php-format
 msgid "Query contains too many directives (%1$d). Maximum allowed: %2$d"
 msgstr ""
 
 #. translators: %d: maximum allowed field duplicates
-#: src/GraphQL/GraphQLSecurity.php:533
+#: src/GraphQL/GraphQLSecurity.php:527
 #, php-format
 msgid "Query contains excessive field duplication. Maximum allowed: %d"
 msgstr ""
 
 #. translators: %d: maximum query depth limit in levels
-#: src/GraphQL/GraphQLSecurity.php:545
+#: src/GraphQL/GraphQLSecurity.php:541
 #, php-format
 msgid "Query depth exceeds maximum limit of %d levels."
 msgstr ""
 
 #. translators: 1: current query length in characters, 2: maximum allowed characters
-#: src/GraphQL/GraphQLSecurity.php:557
+#: src/GraphQL/GraphQLSecurity.php:555
 #, php-format
 msgid "Query is too large (%1$d characters). Maximum allowed: %2$d characters."
 msgstr ""
 
 #. translators: %d: timeout limit in seconds
-#: src/GraphQL/GraphQLSecurity.php:634
-#: src/GraphQL/GraphQLSecurity.php:658
+#: src/GraphQL/GraphQLSecurity.php:647
+#: src/GraphQL/GraphQLSecurity.php:671
 #, php-format
 msgid "Query execution timeout exceeded (%ds limit)"
 msgstr ""
 
-#: src/GraphQL/GraphQLSecurity.php:712
+#: src/GraphQL/GraphQLSecurity.php:723
 msgid "Rate limit exceeded. Please try again later."
 msgstr ""
 
-#: src/Security/GeneralSecurity.php:261
+#. translators: 1: current depth, 2: maximum allowed depth
+#: src/GraphQL/GraphQLSecurity.php:912
+#, php-format
+msgid "Query depth %1$d exceeds maximum allowed depth %2$d"
+msgstr ""
+
+#. translators: 1: current alias count, 2: maximum allowed aliases
+#: src/GraphQL/GraphQLSecurity.php:1041
+#, php-format
+msgid "Query contains %1$d aliases, maximum %2$d allowed"
+msgstr ""
+
+#. translators: 1: current directive count, 2: maximum allowed directives
+#: src/GraphQL/GraphQLSecurity.php:1118
+#, php-format
+msgid "Query contains %1$d directives, maximum %2$d allowed"
+msgstr ""
+
+#. translators: 1: current duplicate count, 2: maximum allowed duplicates
+#: src/GraphQL/GraphQLSecurity.php:1194
+#, php-format
+msgid "Query contains %1$d field duplicates, maximum %2$d allowed"
+msgstr ""
+
+#: src/Security/ContactForm7Integration.php:129
+msgid "Security validation failed. Please try again."
+msgstr ""
+
+#: src/Security/GeneralSecurity.php:269
 msgid "Invalid login credentials."
 msgstr ""
 
 #. translators: %s: plugin name with HTML formatting
-#: src/Security/GeneralSecurity.php:312
+#: src/Security/GeneralSecurity.php:316
 #, php-format
 msgid "Secured by %s"
 msgstr ""
 
-#: src/Security/LoginSecurity.php:171
-#: src/Security/LoginSecurity.php:401
-#: src/Security/LoginSecurity.php:423
+#: src/Security/LoginSecurity.php:187
+#: src/Security/LoginSecurity.php:553
+#: src/Security/LoginSecurity.php:577
 msgid "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters."
 msgstr ""
 
-#: src/Security/LoginSecurity.php:172
+#: src/Security/LoginSecurity.php:188
 msgid "Password meets security requirements"
 msgstr ""
 
-#: src/Security/LoginSecurity.php:206
+#: src/Security/LoginSecurity.php:234
 msgid "Website URL (leave blank):"
 msgstr ""
 
 #. translators: %d: number of minutes remaining until unlock
-#: src/Security/LoginSecurity.php:296
+#: src/Security/LoginSecurity.php:336
 #, php-format
 msgid "Too many failed login attempts. Try again in %d minutes."
+msgstr ""
+
+#: src/Security/LoginSecurity.php:851
+msgid "<strong>Error:</strong> Please solve the security challenge."
+msgstr ""
+
+#: src/Security/LoginSecurity.php:864
+msgid "<strong>Error:</strong> Incorrect answer to the security challenge. Please try again."
+msgstr ""
+
+#: templates/captcha-field.php:23
+msgid "Security Check"
+msgstr ""
+
+#: templates/captcha-field.php:33
+msgid "Your answer"
+msgstr ""
+
+#: templates/captcha-field.php:36
+msgid "Get a new question"
 msgstr ""

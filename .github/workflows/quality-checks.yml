@@ -78,6 +78,7 @@ jobs:
                   WP_TESTS_DIR: /tmp/wordpress-tests-lib
                   FORCE_DB_RECREATE: true
                   FORCE_CF7_REINSTALL: true
+                  FORCE_GRAPHQL_REINSTALL: true
                   CI: true
               run: |
                   echo "Running unified quality checks with CI environment..."
@@ -88,8 +89,9 @@ jobs:
                   chmod +x scripts/run-quality-checks.sh
                   chmod +x scripts/install-wp-tests.sh
                   chmod +x scripts/install-cf7-for-tests.sh
+                  chmod +x scripts/install-wpgraphql-for-tests.sh
                   
-                  # Run quality checks (script handles WordPress + CF7 installation + all tests)
+                  # Run quality checks (script handles WordPress + CF7 + WPGraphQL installation + all tests)
                   bash scripts/run-quality-checks.sh --non-interactive
 
             - name: 📊 Upload Test Results

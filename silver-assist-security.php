@@ -42,7 +42,7 @@ if (version_compare( PHP_VERSION, '8.2.0', '<' )) {
 }
 
 // Define plugin constants
-define( 'SILVER_ASSIST_SECURITY_VERSION', '1.1.14' );
+define( 'SILVER_ASSIST_SECURITY_VERSION', '1.1.15' );
 define( 'SILVER_ASSIST_SECURITY_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SILVER_ASSIST_SECURITY_URL', plugin_dir_url( __FILE__ ) );
 define( 'SILVER_ASSIST_SECURITY_BASENAME', plugin_basename( __FILE__ ) );

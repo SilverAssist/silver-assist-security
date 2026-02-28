@@ -14,6 +14,7 @@
 namespace SilverAssist\Security\Tests\Unit;
 
 use SilverAssist\Security\Admin\Ajax\ContactForm7AjaxHandler;
+use SilverAssist\Security\Tests\Helpers\AjaxTestHelper;
 use WP_UnitTestCase;
 
 /**
@@ -25,6 +26,8 @@ use WP_UnitTestCase;
  * @since 1.1.15
  */
 class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
+
+	use AjaxTestHelper;
 
 	/**
 	 * ContactForm7AjaxHandler instance
@@ -60,7 +63,7 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 			class_alias( \stdClass::class, 'WPCF7' );
 		}
 		
-		if ( ! function_exists( 'wpcf7_get_contact_form_by_id' ) ) {
+		if ( ! function_exists( __NAMESPACE__ . '\\wpcf7_get_contact_form_by_id' ) ) {
 			function wpcf7_get_contact_form_by_id( $id ) {
 				return new \stdClass();
 			}
@@ -70,7 +73,7 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 		$this->handler = new ContactForm7AjaxHandler();
 
 		// Set up admin environment
-		\set_current_screen( 'dashboard' );
+		$this->setup_ajax_environment();
 		$_SERVER['REQUEST_METHOD'] = 'POST';
 		$_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (Test Browser)';
 		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
@@ -99,14 +102,8 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 		\wp_set_current_user( $this->admin_user_id );
 		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
 
-		// Capture output using output buffering
-		ob_start();
-		$this->handler->get_blocked_ips();
-		$output = ob_get_clean();
+		$response = $this->call_ajax_handler( $this->handler, 'get_blocked_ips' );
 
-		// Should produce valid JSON output
-		$this->assertNotEmpty( $output );
-		$response = json_decode( $output, true );
 		$this->assertNotNull( $response );
 		$this->assertTrue( $response['success'] ?? false );
 	}
@@ -118,13 +115,7 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 		\wp_set_current_user( $this->admin_user_id );
 		// No nonce set
 
-		// Capture output
-		ob_start();
-		$this->handler->get_blocked_ips();
-		$output = ob_get_clean();
-
-		// Should return error
-		$response = json_decode( $output, true );
+		$response = $this->call_ajax_handler( $this->handler, 'get_blocked_ips' );
 		$this->assertFalse( $response['success'] ?? true );
 		$this->assertArrayHasKey( 'data', $response );
 		$this->assertArrayHasKey( 'error', $response['data'] );
@@ -138,15 +129,9 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 		\wp_set_current_user( $subscriber_id );
 		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
 
-		// Capture output
-		ob_start();
-		$this->handler->get_blocked_ips();
-		$output = ob_get_clean();
-
-		// Should return error due to insufficient permissions
-		$response = json_decode( $output, true );
+		$response = $this->call_ajax_handler( $this->handler, 'get_blocked_ips' );
 		$this->assertFalse( $response['success'] ?? true );
-		$this->assertStringContainsString( 'permissions', $response['data']['error'] ?? '' );
+		$this->assertStringContainsString( 'Security validation failed', $response['data']['error'] ?? '' );
 	}
 
 	/**
@@ -158,14 +143,8 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 		$_POST['ip'] = '192.168.1.100';
 		$_POST['reason'] = 'Test block';
 
-		// Capture output
-		ob_start();
-		$this->handler->block_ip();
-		$output = ob_get_clean();
+		$response = $this->call_ajax_handler( $this->handler, 'block_ip' );
 
-		// Should produce valid JSON output
-		$this->assertNotEmpty( $output );
-		$response = json_decode( $output, true );
 		$this->assertNotNull( $response );
 		$this->assertTrue( $response['success'] ?? false );
 	}
@@ -175,17 +154,16 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 	 */
 	public function test_unblock_ip_with_admin_user(): void {
 		\wp_set_current_user( $this->admin_user_id );
+
+		// First block the IP so we can unblock it
+		$blacklist = \SilverAssist\Security\Security\IPBlacklist::getInstance();
+		$blacklist->add_to_blacklist( '192.168.1.100', 'Test block for unblock', 3600 );
+
 		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
 		$_POST['ip'] = '192.168.1.100';
 
-		// Capture output
-		ob_start();
-		$this->handler->unblock_ip();
-		$output = ob_get_clean();
+		$response = $this->call_ajax_handler( $this->handler, 'unblock_ip' );
 
-		// Should produce valid JSON output
-		$this->assertNotEmpty( $output );
-		$response = json_decode( $output, true );
 		$this->assertNotNull( $response );
 		$this->assertTrue( $response['success'] ?? false );
 	}
@@ -197,14 +175,8 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 		\wp_set_current_user( $this->admin_user_id );
 		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
 
-		// Capture output
-		ob_start();
-		$this->handler->clear_blocked_ips();
-		$output = ob_get_clean();
+		$response = $this->call_ajax_handler( $this->handler, 'clear_blocked_ips' );
 
-		// Should produce valid JSON output
-		$this->assertNotEmpty( $output );
-		$response = json_decode( $output, true );
 		$this->assertNotNull( $response );
 		$this->assertTrue( $response['success'] ?? false );
 	}
@@ -216,14 +188,8 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 		\wp_set_current_user( $this->admin_user_id );
 		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
 
-		// Capture output
-		ob_start();
-		$this->handler->export_blocked_ips();
-		$output = ob_get_clean();
+		$response = $this->call_ajax_handler( $this->handler, 'export_blocked_ips' );
 
-		// Should produce valid JSON output
-		$this->assertNotEmpty( $output );
-		$response = json_decode( $output, true );
 		$this->assertNotNull( $response );
 		$this->assertTrue( $response['success'] ?? false );
 	}
@@ -249,6 +215,69 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test get_blocked_ips returns no-threats class when empty
+	 */
+	public function test_get_blocked_ips_returns_no_threats_class_when_empty(): void {
+		\wp_set_current_user( $this->admin_user_id );
+		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
+
+		// Clean CF7 blacklist to ensure empty state
+		$blacklist = \SilverAssist\Security\Security\IPBlacklist::getInstance();
+		$blacklist->clear_cf7_blacklist();
+
+		$response = $this->call_ajax_handler( $this->handler, 'get_blocked_ips' );
+
+		$this->assertTrue( $response['success'] ?? false );
+
+		$html = $response['data']['html'] ?? '';
+		$this->assertStringContainsString(
+			'class="no-threats"',
+			$html,
+			'Empty CF7 blocked IPs should use no-threats class'
+		);
+	}
+
+	/**
+	 * Test get_blocked_ips does NOT use the deprecated no-blocked-ips class (regression test)
+	 */
+	public function test_get_blocked_ips_does_not_use_old_class(): void {
+		\wp_set_current_user( $this->admin_user_id );
+		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
+
+		$blacklist = \SilverAssist\Security\Security\IPBlacklist::getInstance();
+		$blacklist->clear_cf7_blacklist();
+
+		$response = $this->call_ajax_handler( $this->handler, 'get_blocked_ips' );
+
+		$html     = $response['data']['html'] ?? '';
+		$this->assertStringNotContainsString(
+			'class="no-blocked-ips"',
+			$html,
+			'Should NOT use deprecated no-blocked-ips class'
+		);
+	}
+
+	/**
+	 * Test export returns CSV with proper headers
+	 */
+	public function test_export_returns_csv_with_headers(): void {
+		\wp_set_current_user( $this->admin_user_id );
+		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
+
+		$response = $this->call_ajax_handler( $this->handler, 'export_blocked_ips' );
+		$this->assertTrue( $response['success'] ?? false );
+
+		$csv_data = $response['data']['csv_data'] ?? '';
+		$this->assertStringContainsString( 'IP Address', $csv_data, 'CSV should have IP Address header' );
+		$this->assertStringContainsString( 'Reason', $csv_data, 'CSV should have Reason header' );
+		$this->assertStringContainsString( 'Blocked At', $csv_data, 'CSV should have Blocked At header' );
+		$this->assertStringContainsString( 'Violations', $csv_data, 'CSV should have Violations header' );
+
+		$this->assertArrayHasKey( 'filename', $response['data'] );
+		$this->assertStringContainsString( '.csv', $response['data']['filename'] );
+	}
+
+	/**
 	 * Clean up after each test
 	 */
 	protected function tearDown(): void {
@@ -264,6 +293,7 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 			\wp_delete_user( $this->admin_user_id );
 		}
 
+		$this->teardown_ajax_environment();
 		parent::tearDown();
 	}
 }

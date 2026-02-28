@@ -75,36 +75,41 @@ class ContactForm7AjaxHandler {
 
 			$html = '';
 			if ( ! empty( $blocked_ips ) ) {
-				$html .= '<div class="blocked-ips">';
+				$html .= '<div class="blocked-ips-table">';
+				$html .= '<table class="wp-list-table widefat fixed striped">';
+				$html .= \sprintf(
+					'<thead><tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr></thead>',
+					\esc_html__( 'IP', 'silver-assist-security' ),
+					\esc_html__( 'Reason', 'silver-assist-security' ),
+					\esc_html__( 'Blocked', 'silver-assist-security' ),
+					\esc_html__( 'Violations', 'silver-assist-security' ),
+					\esc_html__( 'Actions', 'silver-assist-security' )
+				);
+				$html .= '<tbody>';
+
 				foreach ( $blocked_ips as $ip => $data ) {
-					$blocked_at = isset( $data['blocked_at'] ) ? \date_i18n( 'M j, Y H:i', $data['blocked_at'] ) : \__( 'Unknown', 'silver-assist-security' );
-					$reason     = isset( $data['reason'] ) ? \esc_html( $data['reason'] ) : \__( 'Form security violation', 'silver-assist-security' );
+					$blocked_at = isset( $data['blocked_at'] ) ? \esc_html( \date_i18n( 'M j, Y H:i', $data['blocked_at'] ) ) : \esc_html__( 'Unknown', 'silver-assist-security' );
+					$reason     = isset( $data['reason'] ) ? \esc_html( $data['reason'] ) : \esc_html__( 'Form security violation', 'silver-assist-security' );
 					$violations = isset( $data['violations'] ) ? (int) $data['violations'] : 1;
 
+					$html .= '<tr>';
+					$html .= \sprintf( '<td>%s</td>', \esc_html( $ip ) );
+					$html .= \sprintf( '<td>%s</td>', $reason );
+					$html .= \sprintf( '<td>%s</td>', $blocked_at );
+					$html .= \sprintf( '<td>%d</td>', $violations );
 					$html .= \sprintf(
-						'<div class="blocked-ip-item cf7-ip-item" data-ip="%s">',
-						\esc_attr( $ip )
-					);
-					$html .= \sprintf( '<span class="ip-address">%s</span>', \esc_html( $ip ) );
-					$html .= \sprintf( '<span class="block-reason">%s</span>', $reason );
-					$html .= \sprintf( '<span class="block-time">%s</span>', $blocked_at );
-					$html .= \sprintf(
-						'<span class="violation-count">%d %s</span>',
-						$violations,
-						\__( 'violations', 'silver-assist-security' )
-					);
-					$html .= \sprintf(
-						'<button type="button" class="unblock-cf7-ip button button-small" data-ip="%s">%s</button>',
+						'<td><button type="button" class="unblock-cf7-ip button button-small unblock-ip-btn" data-ip="%s">%s</button></td>',
 						\esc_attr( $ip ),
-						\__( 'Unblock', 'silver-assist-security' )
+					\esc_html__( 'Unblock', 'silver-assist-security' )
 					);
-					$html .= '</div>';
+					$html .= '</tr>';
 				}
-				$html .= '</div>';
+
+				$html .= '</tbody></table></div>';
 			} else {
 				$html = \sprintf(
-					'<p class="no-blocked-ips">%s</p>',
-					\__( 'No CF7 blocked IPs found.', 'silver-assist-security' )
+					'<p class="no-threats">%s</p>',
+					\esc_html__( 'No CF7 blocked IPs found.', 'silver-assist-security' )
 				);
 			}
 

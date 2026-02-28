@@ -40,15 +40,8 @@ class WordPressHooksIntegrationTest extends WP_UnitTestCase
     {
         parent::setUp();
         
-        // Initialize plugin instance
+        // Initialize plugin instance (singleton — hooks registered once on first call)
         $this->plugin = Plugin::getInstance();
-        
-        // Reset hooks to ensure clean state
-        \remove_all_actions('init');
-        \remove_all_actions('wp_login_failed');
-        \remove_all_actions('wp_login');
-        \remove_all_actions('admin_menu');
-        \remove_all_actions('wp_loaded');
     }
 
     /**
@@ -58,19 +51,15 @@ class WordPressHooksIntegrationTest extends WP_UnitTestCase
      */
     public function test_wordpress_init_hooks_registration(): void
     {
-        // Re-initialize plugin to register hooks
-        $this->plugin = Plugin::getInstance();
+        // Plugin singleton is already initialized — hooks should be registered
         
         // Check that init action is registered
         $this->assertTrue(
-            \has_action('init'),
+            \has_action('init') !== false,
             'WordPress init hook should be registered by plugin'
         );
         
-        // Execute init action and verify plugin components are loaded
-        \do_action('init');
-        
-        // Verify plugin is properly initialized after init hook
+        // Verify plugin is properly initialized
         $this->assertInstanceOf(
             Plugin::class,
             $this->plugin,
@@ -85,25 +74,23 @@ class WordPressHooksIntegrationTest extends WP_UnitTestCase
      */
     public function test_login_security_hooks_integration(): void
     {
-        // Initialize plugin and trigger WordPress loaded
-        $this->plugin = Plugin::getInstance();
-        \do_action('wp_loaded');
+        // LoginSecurity hooks should be registered by the plugin singleton
         
         // Test that login failed hook is registered
         $this->assertTrue(
-            \has_action('wp_login_failed'),
+            \has_action('wp_login_failed') !== false,
             'Login failed hook should be registered for security monitoring'
         );
         
         // Test that successful login hook is registered
         $this->assertTrue(
-            \has_action('wp_login'),
+            \has_action('wp_login') !== false,
             'Successful login hook should be registered for security tracking'
         );
         
         // Test that authenticate filter is registered
         $this->assertTrue(
-            \has_filter('authenticate'),
+            \has_filter('authenticate') !== false,
             'Authenticate filter should be registered for login protection'
         );
     }
@@ -116,35 +103,41 @@ class WordPressHooksIntegrationTest extends WP_UnitTestCase
     public function test_admin_hooks_integration(): void
     {
         // Set current user as admin
-        \wp_set_current_user(1);
+        $admin_id = $this->factory()->user->create( [ 'role' => 'administrator' ] );
+        \wp_set_current_user( $admin_id );
         \set_current_screen('dashboard');
         
-        // Initialize plugin
-        $this->plugin = Plugin::getInstance();
-        \do_action('wp_loaded');
+        // AdminPanel (and SecurityAjaxHandler) is only created when is_admin()
+        // The Plugin singleton may have been created before is_admin() was true.
+        // Ensure AdminPanel exists by creating one explicitly if needed.
+        if ( ! $this->plugin->get_admin_panel() ) {
+            new AdminPanel();
+        }
         
         // Test admin_menu hook registration
         $this->assertTrue(
-            \has_action('admin_menu'),
+            \has_action('admin_menu') !== false,
             'Admin menu hook should be registered for admin interface'
         );
         
         // Test admin_enqueue_scripts hook
         $this->assertTrue(
-            \has_action('admin_enqueue_scripts'),
+            \has_action('admin_enqueue_scripts') !== false,
             'Admin enqueue scripts hook should be registered'
         );
         
         // Test AJAX hooks registration
         $this->assertTrue(
-            \has_action('wp_ajax_silver_assist_get_security_status'),
+            \has_action('wp_ajax_silver_assist_get_security_status') !== false,
             'AJAX security status hook should be registered'
         );
         
         $this->assertTrue(
-            \has_action('wp_ajax_silver_assist_auto_save'),
+            \has_action('wp_ajax_silver_assist_auto_save') !== false,
             'AJAX auto-save hook should be registered'
         );
+
+        \wp_set_current_user( 0 );
     }
 
     /**
@@ -154,19 +147,17 @@ class WordPressHooksIntegrationTest extends WP_UnitTestCase
      */
     public function test_security_headers_hooks_integration(): void
     {
-        // Initialize plugin
-        $this->plugin = Plugin::getInstance();
-        \do_action('wp_loaded');
+        // Security hooks should already be registered by plugin singleton
         
         // Test that cookie modification hooks are registered
         $this->assertTrue(
-            \has_action('wp_loaded'),
+            \has_action('wp_loaded') !== false,
             'WP loaded hook should be registered for cookie security'
         );
         
         // Test that header hooks are registered for security
         $this->assertTrue(
-            \has_action('send_headers') || \has_action('wp_headers'),
+            \has_action('send_headers') !== false || \has_action('wp_headers') !== false,
             'Security header hooks should be registered'
         );
     }
@@ -178,8 +169,14 @@ class WordPressHooksIntegrationTest extends WP_UnitTestCase
      */
     public function test_plugin_lifecycle_hooks(): void
     {
-        // Test that activation creates default options
-        \do_action('activate_silver-assist-security/silver-assist-security.php');
+        // Delete options so activate() re-creates them
+        \delete_option('silver_assist_login_attempts');
+        \delete_option('silver_assist_lockout_duration');
+
+        // Call the bootstrap activate method directly to simulate activation
+        if (\class_exists('SilverAssistSecurityBootstrap')) {
+            \SilverAssistSecurityBootstrap::getInstance()->activate();
+        }
         
         // Verify default options are created
         $this->assertNotEmpty(
@@ -213,13 +210,9 @@ class WordPressHooksIntegrationTest extends WP_UnitTestCase
             $this->markTestSkipped('WPGraphQL not available for GraphQL hooks testing');
         }
         
-        // Initialize plugin
-        $this->plugin = Plugin::getInstance();
-        \do_action('wp_loaded');
-        
         // Test GraphQL specific hooks
         $this->assertTrue(
-            \has_filter('graphql_request_data') || \class_exists('WPGraphQL'),
+            \has_filter('graphql_request_data') !== false || \class_exists('WPGraphQL'),
             'GraphQL security hooks should be registered when WPGraphQL is active'
         );
     }
@@ -231,10 +224,6 @@ class WordPressHooksIntegrationTest extends WP_UnitTestCase
      */
     public function test_wordpress_cron_integration(): void
     {
-        // Initialize plugin
-        $this->plugin = Plugin::getInstance();
-        \do_action('wp_loaded');
-        
         // Check if plugin scheduled any cron events
         $cron_jobs = \_get_cron_array();
         

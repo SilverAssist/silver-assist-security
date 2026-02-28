@@ -29,12 +29,94 @@
      */
     const TIMING = {
         AUTO_SAVE_DELAY: 2000,          // Auto-save delay after input changes (ms)
+        AUTO_SAVE_FALLBACK: 15000,      // Safety timeout to re-enable buttons if autosave hangs (ms)
         VALIDATION_DEBOUNCE: 500,       // Real-time validation debounce (ms)
         ERROR_DISPLAY: 5000,            // Error message display duration (ms)
         SUCCESS_DISPLAY: 2000,          // Success message display duration (ms)
         LONG_ERROR_DISPLAY: 3000,       // Long error message display duration (ms)
         DASHBOARD_REFRESH: 2000,        // Dashboard refresh button delay (ms)
         DATABASE_UPDATE_DELAY: 500      // Small delay for database update completion (ms)
+    };
+
+    /**
+     * Escape a string for safe insertion into HTML.
+     *
+     * Replaces &, <, >, ", and ' with their HTML entity equivalents
+     * to prevent DOM-based XSS when building markup from untrusted data.
+     *
+     * @since 1.1.15
+     * @param {string} str - The string to escape
+     * @returns {string} HTML-safe string
+     */
+    const escapeHtml = str => {
+        if (typeof str !== "string") return "";
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
+
+    // ========================================
+    // SAVE STATE MANAGEMENT
+    // ========================================
+
+    /**
+     * Shared save state to coordinate autosave and manual submit.
+     *
+     * Prevents race conditions where a manual submit fires while an
+     * autosave request is still in-flight, or vice-versa.
+     *
+     * @since 1.1.15
+     */
+    let isSaving = false;
+    let autoSaveTimeout = null;
+    let autoSaveFallbackTimeout = null;
+
+    /**
+     * Disable all submit buttons and show a saving indicator on them.
+     *
+     * Each button's original label is stored in a data attribute so it
+     * can be restored later regardless of success or failure.
+     *
+     * @since 1.1.15
+     * @returns {void}
+     */
+    const disableSubmitButtons = () => {
+        const { strings = {} } = silverAssistSecurity || {};
+        const savingLabel = strings.saving || "Saving...";
+
+        $("form input[type='submit']").each(function () {
+            const $btn = $(this);
+            if (!$btn.data("original-value")) {
+                $btn.data("original-value", $btn.val());
+            }
+            $btn.val(savingLabel).prop("disabled", true).addClass("is-saving");
+        });
+    };
+
+    /**
+     * Re-enable all submit buttons and restore their original labels.
+     *
+     * Called after autosave completes (success or error) and as a
+     * safety fallback if the AJAX request never resolves.
+     *
+     * @since 1.1.15
+     * @returns {void}
+     */
+    const enableSubmitButtons = () => {
+        $("form input[type='submit']").each(function () {
+            const $btn = $(this);
+            const original = $btn.data("original-value");
+            if (original) {
+                $btn.val(original);
+            }
+            $btn.prop("disabled", false).removeClass("is-saving");
+        });
+
+        isSaving = false;
+        clearTimeout(autoSaveFallbackTimeout);
     };
 
     /**
@@ -58,26 +140,6 @@
     $(() => {
         // Add security admin class to wrap
         $(".wrap").addClass("silver-assist-security-admin");
-
-        // Initialize form validation
-        initFormValidation();
-
-        // Initialize toggle switches
-        initToggleSwitches();
-
-        // Initialize tooltips
-        initTooltips();
-
-        // Auto-save feature
-        initAutoSave();
-
-        // Initialize GraphQL timeout slider
-        initGraphQLTimeoutSlider();
-
-        // Initialize admin path validation
-        initAdminPathValidation();
-
-                // Initialize dashboard components - refreshDashboard is available globally
     });
 
     /**
@@ -105,6 +167,15 @@
         } = VALIDATION_LIMITS;
 
         $("form").on("submit", e => {
+            // If an autosave is in-flight, cancel the manual submit
+            if (isSaving) {
+                e.preventDefault();
+                return;
+            }
+
+            // Cancel any pending autosave timer so it doesn't fire after manual submit
+            clearTimeout(autoSaveTimeout);
+
             let isValid = true;
             const errors = [];
 
@@ -213,10 +284,15 @@
      * @returns {void}
      */
     const initToggleSwitches = () => {
-        // Convert checkboxes to toggle switches
+        // Convert checkboxes to toggle switches (skip ones already using .toggle-switch markup)
         $("input[type=\"checkbox\"]").each(function () {
             const $checkbox = $(this);
             const $label = $checkbox.closest("label");
+
+            // Skip checkboxes already inside a .toggle-switch label
+            if ($label.hasClass("toggle-switch")) {
+                return;
+            }
 
             if (!$label.hasClass("silver-assist-toggle")) {
                 $label.addClass("silver-assist-toggle");
@@ -259,17 +335,16 @@
         // Destructure timing constants for cleaner code
         const { AUTO_SAVE_DELAY } = TIMING;
 
-        let saveTimeout;
         const $form = $("form");
 
         $form.find("input, select, textarea").on("change", () => {
-            clearTimeout(saveTimeout);
+            clearTimeout(autoSaveTimeout);
 
             // Show saving indicator
             showSavingIndicator();
 
             // Auto-save after configured delay using destructured constant
-            saveTimeout = setTimeout(() => {
+            autoSaveTimeout = setTimeout(() => {
                 autoSaveSettings();
             }, AUTO_SAVE_DELAY);
         });
@@ -287,9 +362,14 @@
     const showSavingIndicator = () => {
         // Use destructuring for cleaner string access
         const { strings = {} } = silverAssistSecurity || {};
+        const savingText = strings.saving || "Saving...";
 
-        if (!$(".saving-indicator").length) {
-            $("form").append(`<div class="saving-indicator" style="position: fixed; top: 32px; right: 20px; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 9999;">${strings.saving || "Saving..."}</div>`);
+        const $indicator = $(".saving-indicator");
+        if ($indicator.length) {
+            // Reset existing indicator: stop animations, update text, and show
+            $indicator.stop(true, true).html(savingText).removeClass("error").show();
+        } else {
+            $("form").first().append(`<div class="saving-indicator" style="position: fixed; top: 32px; right: 20px; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 9999;">${savingText}</div>`);
         }
     };
 
@@ -304,7 +384,17 @@
      */
     const autoSaveSettings = () => {
         // Destructure timing constants for cleaner code
-        const { SUCCESS_DISPLAY, LONG_ERROR_DISPLAY, DATABASE_UPDATE_DELAY } = TIMING;
+        const { SUCCESS_DISPLAY, LONG_ERROR_DISPLAY, DATABASE_UPDATE_DELAY, AUTO_SAVE_FALLBACK } = TIMING;
+
+        // Mark as saving and lock submit buttons
+        isSaving = true;
+        disableSubmitButtons();
+
+        // Safety fallback: if AJAX never resolves, re-enable buttons after timeout
+        clearTimeout(autoSaveFallbackTimeout);
+        autoSaveFallbackTimeout = setTimeout(() => {
+            enableSubmitButtons();
+        }, AUTO_SAVE_FALLBACK);
 
         const $form = $("form");
         const formData = {};
@@ -358,6 +448,9 @@
                         .delay(LONG_ERROR_DISPLAY)
                         .fadeOut();
                 }
+
+                // Re-enable submit buttons regardless of success/failure
+                enableSubmitButtons();
             },
             error: () => {
                 $(".saving-indicator")
@@ -365,6 +458,9 @@
                     .addClass("error")
                     .delay(LONG_ERROR_DISPLAY)
                     .fadeOut();
+
+                // Re-enable submit buttons on connection failure
+                enableSubmitButtons();
             }
         });
     };
@@ -487,6 +583,7 @@
         loadSecurityStatus();
         loadLoginStats();
         loadBlockedIPs();
+        loadSecurityLogs();
 
         // Set up auto-refresh
         if (typeof silverAssistSecurity !== "undefined" && silverAssistSecurity.refreshInterval) {
@@ -494,6 +591,7 @@
                 loadSecurityStatus();
                 loadLoginStats();
                 loadBlockedIPs();
+                loadSecurityLogs();
             }, silverAssistSecurity.refreshInterval);
         }
 
@@ -501,6 +599,19 @@
         $("#refresh-dashboard").on("click", e => {
             e.preventDefault();
             refreshDashboard();
+        });
+
+        // Activity tab switching
+        $(".activity-tab").on("click", function () {
+            const tab = $(this).data("tab");
+
+            // Update tab buttons
+            $(".activity-tab").removeClass("active");
+            $(this).addClass("active");
+
+            // Update tab content panels
+            $(".activity-content").removeClass("active");
+            $("#" + tab + "-content").addClass("active");
         });
     };
 
@@ -590,13 +701,79 @@
             const { success, data } = response || {};
 
             if (success) {
-                // Ensure data is valid before passing to display function
-                updateBlockedIPsDisplay(data || []);
+                // Extract blocked_ips array from response object
+                const ips = Array.isArray(data) ? data : (data && data.blocked_ips ? data.blocked_ips : []);
+                updateBlockedIPsDisplay(ips);
             } else {
                 $blockedIpsListSelector.html(`<p class="no-threats">${strings.noThreats || "No active threats detected"}</p>`);
             }
         }).fail(() => {
             $blockedIpsListSelector.html(`<p class="error">${strings.error || "Error loading data"}</p>`);
+        });
+    };
+
+    /**
+     * Load and display security logs
+     *
+     * Fetches recent security event logs via AJAX and updates
+     * the security logs panel in the Recent Activity card.
+     *
+     * @since 1.1.15
+     * @returns {void}
+     */
+    const loadSecurityLogs = () => {
+        if (typeof silverAssistSecurity === "undefined") return;
+
+        const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
+        const $container = $("#security-logs-list");
+
+        $.post(ajaxurl, {
+            action: "silver_assist_get_security_logs",
+            nonce: nonce
+        }, response => {
+            const { success, data } = response || {};
+
+            if (success && data && data.logs && data.logs.length > 0) {
+                const $table = $("<table>", { "class": "wp-list-table widefat fixed striped" });
+                const $thead = $("<thead>");
+                const $headerRow = $("<tr>");
+
+                $("<th>").text(strings.time || "Time").appendTo($headerRow);
+                $("<th>").text(strings.event || "Event").appendTo($headerRow);
+                $("<th>").text(strings.details || "Details").appendTo($headerRow);
+
+                $thead.append($headerRow);
+
+                const $tbody = $("<tbody>");
+
+                data.logs.slice(0, 20).forEach(log => {
+                    const eventClass = log.event_type === "BOT_BLOCKED" || log.event_type === "LOGIN_FAILED" ? "error" : "info";
+                    const $row = $("<tr>");
+
+                    $("<td>").text(log.timestamp || "").appendTo($row);
+
+                    const $eventCell = $("<td>");
+                    $("<span>", { "class": `log-event-type ${eventClass}` })
+                        .text(log.event_type || "")
+                        .appendTo($eventCell);
+                    $eventCell.appendTo($row);
+
+                    $("<td>").text(log.message || "").appendTo($row);
+
+                    $tbody.append($row);
+                });
+
+                $table.append($thead, $tbody);
+                $container.empty().append($table);
+            } else {
+                const $noLogs = $("<p>", { "class": "no-threats" })
+                    .text(strings.noLogs || "No recent security events");
+                $container.empty().append($noLogs);
+            }
+        }).fail(() => {
+            const $errorMsg = $("<p>", { "class": "error" })
+                .text(strings.error || "Error loading data");
+            $container.empty().append($errorMsg);
         });
     };
 
@@ -621,6 +798,14 @@
 
         // Update dynamic values that can change with settings
         updateDynamicDashboardValues(data);
+
+        // Update Security Statistics section
+        if (data.overall) {
+            const { blocked_ips_count = 0, failed_attempts_24h = 0, security_events_7d = 0 } = data.overall;
+            $("#blocked-ips-count").text(blocked_ips_count);
+            $("#failed-attempts-count").text(failed_attempts_24h);
+            $("#security-events-count").text(security_events_7d);
+        }
 
         // Update last updated time
         updateLastUpdatedTime();
@@ -663,7 +848,7 @@
         // Update Admin Security panel feature statuses
         if (data.admin_security) {
             // Use destructuring for nested data
-            const { password_strength_enforcement, bot_protection } = data.admin_security;
+            const { password_strength_enforcement, bot_protection, session_timeout } = data.admin_security;
 
             // Update Password Strength Enforcement status
             const $passwordElement = $(".admin-security .feature-status:first-child .feature-value");
@@ -677,7 +862,7 @@
             }
 
             // Update Bot Protection status
-            const $botElement = $(".admin-security .feature-status:last-child .feature-value");
+            const $botElement = $(".admin-security .feature-status:nth-child(2) .feature-value");
             if ($botElement.length) {
                 $botElement
                     .removeClass("enabled disabled")
@@ -685,6 +870,12 @@
                     .text(bot_protection ?
                         (strings.enabled || "Enabled") :
                         (strings.disabled || "Disabled"));
+            }
+
+            // Update Session Timeout value
+            const $sessionElement = $(".admin-security .stat .stat-value");
+            if ($sessionElement.length) {
+                $sessionElement.text(session_timeout);
             }
         }
 
@@ -728,10 +919,10 @@
             });
         }
 
-        // Update General Security panel SSL status
+        // Update General Security panel dynamic statuses
         if (data.general_security) {
             // Use destructuring for nested data
-            const { ssl_enabled } = data.general_security;
+            const { ssl_enabled, under_attack_active, ip_blacklist_enabled } = data.general_security;
 
             // Find the SSL/HTTPS feature status (4th feature-status div in general-security)
             const $sslElement = $(".general-security .feature-status:nth-child(4) .feature-value");
@@ -740,6 +931,28 @@
                     .removeClass("enabled disabled")
                     .addClass(ssl_enabled ? "enabled" : "disabled")
                     .text(ssl_enabled ?
+                        (strings.enabled || "Enabled") :
+                        (strings.disabled || "Disabled"));
+            }
+
+            // Update Under Attack Mode status (5th feature-status div)
+            const $underAttackElement = $(".general-security .feature-status:nth-child(5) .feature-value");
+            if ($underAttackElement.length) {
+                $underAttackElement
+                    .removeClass("enabled disabled")
+                    .addClass(under_attack_active ? "enabled" : "disabled")
+                    .text(under_attack_active ?
+                        (strings.active || "Active") :
+                        (strings.inactive || "Inactive"));
+            }
+
+            // Update IP Blacklisting status (6th feature-status div)
+            const $blacklistElement = $(".general-security .feature-status:nth-child(6) .feature-value");
+            if ($blacklistElement.length) {
+                $blacklistElement
+                    .removeClass("enabled disabled")
+                    .addClass(ip_blacklist_enabled ? "enabled" : "disabled")
+                    .text(ip_blacklist_enabled ?
                         (strings.enabled || "Enabled") :
                         (strings.disabled || "Disabled"));
             }
@@ -757,10 +970,14 @@
      * @returns {void}
      */
     const updateLoginStatsDisplay = data => {
-        if (!data) return;
+        if (!data || !data.stats) return;
 
-        $("#recent-attempts").text(data.blocked_ips_count);
-        $("#threat-count").text(data.blocked_ips_count);
+        const stats24h = data.stats["24_hours"] || {};
+        const stats7d = data.stats["7_days"] || {};
+
+        // Update Security Statistics cards
+        $("#failed-attempts-count").text(stats24h.failed_logins || 0);
+        $("#security-events-count").text(stats7d.total_events || 0);
     };
 
     /**
@@ -774,42 +991,97 @@
      * @returns {void}
      */
     const updateBlockedIPsDisplay = data => {
-        const $container = $("#blocked-ips-list");
-        const $threatCountSelector = $("#threat-count");
+        const $dashboardContainer = $("#blocked-ips-list");
+        const $ipMgmtContainer = $("#ip-mgmt-blocked-ips-list");
 
         // Use destructuring for cleaner object access
         const { strings = {} } = silverAssistSecurity || {};
 
+        const count = Array.isArray(data) ? data.length : 0;
+
+        // Update the statistics card count
+        $("#blocked-ips-count").text(count);
+
         if (!data || data.length === 0) {
-            $container.html(`<p class="no-threats">${strings.noThreats || "No active threats detected"}</p>`);
-            $threatCountSelector.text("0");
+            const emptyHtml = `<p class="no-threats">${strings.noThreats || "No active threats detected"}</p>`;
+            $dashboardContainer.html(emptyHtml);
+            $ipMgmtContainer.html(emptyHtml);
             return;
         }
 
-        let html = "<div class=\"blocked-ips-table\">";
-        html += "<table class=\"wp-list-table widefat fixed striped\">";
-        html += `<thead><tr><th>${strings.ipHash}</th><th>${strings.blockedTime}</th><th>${strings.remaining}</th></tr></thead>`;
-        html += "<tbody>";
-
-        // Ensure data is an array before using forEach
-        if (Array.isArray(data)) {
-            data.forEach(ip => {
-                // Use destructuring for cleaner object access
-                const { ip: ipAddress, blocked_at, time_left_str } = ip;
-
-                html += "<tr>";
-                html += `<td>${ipAddress ? ipAddress.substring(0, 12) + '...' : 'Unknown'}</td>`;
-                html += `<td>${blocked_at || 'Unknown'}</td>`;
-                html += `<td>${time_left_str || 'Expired'}</td>`;
-                html += "</tr>";
-            });
-        } else {
-            html += "<tr><td colspan=\"3\">No blocked IPs data available</td></tr>";
+        // --- Dashboard: compact summary (last 3 IPs) ---
+        const recentIps = data.slice(0, 3);
+        let dashHtml = '<ul class="blocked-ips-summary">';
+        recentIps.forEach(ip => {
+            const { ip: ipAddress, time_left_str } = ip;
+            const shortIp = ipAddress ? ipAddress.substring(0, 12) + '...' : 'Unknown';
+            dashHtml += '<li class="blocked-ip-item">';
+            dashHtml += `<span class="blocked-ip-hash">${escapeHtml(shortIp)}</span>`;
+            dashHtml += `<span class="blocked-ip-meta">${escapeHtml(time_left_str || 'Expired')}</span>`;
+            dashHtml += '</li>';
+        });
+        dashHtml += '</ul>';
+        if (count > 3) {
+            dashHtml += `<p class="view-all-link"><a href="#ip-management">${strings.viewAll || "View all"} (${count})</a></p>`;
         }
+        $dashboardContainer.html(dashHtml);
 
-        html += "</tbody></table></div>";
-        $container.html(html);
-        $threatCountSelector.text(Array.isArray(data) ? data.length : 0);
+        // --- IP Management: full functional table with actions ---
+        let mgmtHtml = "<div class=\"blocked-ips-table\">";
+        mgmtHtml += "<table class=\"wp-list-table widefat fixed striped\">";
+        mgmtHtml += `<thead><tr><th>${escapeHtml(strings.ipHash || "IP")}</th><th>${escapeHtml(strings.reason || "Reason")}</th><th>${escapeHtml(strings.blockedTime || "Blocked")}</th><th>${escapeHtml(strings.remaining || "Remaining")}</th><th>${escapeHtml(strings.actions || "Actions")}</th></tr></thead>`;
+        mgmtHtml += "<tbody>";
+
+        data.forEach(ip => {
+            const { ip: ipAddress, reason, blocked_at, time_left_str } = ip;
+            const shortIp = ipAddress ? ipAddress.substring(0, 12) + '...' : 'Unknown';
+
+            mgmtHtml += "<tr>";
+            mgmtHtml += `<td title="${escapeHtml(ipAddress || '')}">${escapeHtml(shortIp)}</td>`;
+            mgmtHtml += `<td>${escapeHtml(reason || 'Unknown')}</td>`;
+            mgmtHtml += `<td>${escapeHtml(blocked_at || 'Unknown')}</td>`;
+            mgmtHtml += `<td>${escapeHtml(time_left_str || 'Expired')}</td>`;
+            mgmtHtml += `<td><button type="button" class="button button-small unblock-ip-btn" data-ip="${escapeHtml(ipAddress || '')}">${escapeHtml(strings.unblock || "Unblock")}</button></td>`;
+            mgmtHtml += "</tr>";
+        });
+
+        mgmtHtml += "</tbody></table></div>";
+        $ipMgmtContainer.html(mgmtHtml);
+
+        // Bind unblock buttons
+        const { ajaxurl, nonce } = silverAssistSecurity || {};
+        $ipMgmtContainer.find(".unblock-ip-btn").off("click").on("click", function () {
+            const $btn = $(this);
+            const ip = $btn.data("ip");
+
+            if (!ip) return;
+
+            $btn.prop("disabled", true).text(strings.unblocking || "Unblocking...");
+
+            $.ajax({
+                url: ajaxurl,
+                type: "POST",
+                data: {
+                    action: "silver_assist_unblock_ip",
+                    nonce: nonce,
+                    ip_address: ip
+                },
+                success: response => {
+                    const { success, data: respData = {} } = response || {};
+                    if (success) {
+                        showMessage(respData.message || "IP unblocked successfully", "success");
+                        loadBlockedIPs(); // Refresh both views
+                    } else {
+                        showMessage(respData.error || "Error unblocking IP", "error");
+                        $btn.prop("disabled", false).text(strings.unblock || "Unblock");
+                    }
+                },
+                error: () => {
+                    showMessage(strings.errorUnblocking || "Error unblocking IP", "error");
+                    $btn.prop("disabled", false).text(strings.unblock || "Unblock");
+                }
+            });
+        });
     };
 
     /**
@@ -833,6 +1105,7 @@
         loadSecurityStatus();
         loadLoginStats();
         loadBlockedIPs();
+        loadSecurityLogs();
 
         setTimeout(() => {
             $button.text(originalText).prop("disabled", false);
@@ -855,39 +1128,47 @@
     };
 
     /**
-     * Initialize GraphQL timeout slider functionality
-     * 
-     * Sets up the range slider for GraphQL query timeout configuration
-     * with real-time value display and PHP limit awareness.
-     * 
-     * @since 1.1.0
+     * Initialize all range slider inputs
+     *
+     * Automatically discovers all range inputs and pairs each with its
+     * adjacent .slider-value sibling. Reads an optional data-display-divisor
+     * attribute for value conversion (e.g. seconds → minutes).
+     *
+     * @since 1.1.15
      * @returns {void}
      */
-    const initGraphQLTimeoutSlider = () => {
-        const $timeoutSlider = $("#silver_assist_graphql_query_timeout");
-        const $timeoutDisplay = $("#graphql-timeout-value");
+    const initRangeSliders = () => {
+        $('input[type="range"]').each(function () {
+            const $slider = $(this);
+            const $display = $slider.siblings(".slider-value");
 
-        if ($timeoutSlider.length && $timeoutDisplay.length) {
-            // Update display value when slider changes
-            $timeoutSlider.on("input", function () {
-                $timeoutDisplay.text($(this).val());
+            if (!$display.length) {
+                return;
+            }
+
+            const divisor = parseInt($slider.data("display-divisor")) || 0;
+
+            const getDisplayValue = (val) => {
+                const v = parseInt(val);
+                return divisor ? Math.round(v / divisor) : v;
+            };
+
+            // Update display value in real-time while dragging
+            $slider.on("input", function () {
+                $display.text(getDisplayValue($(this).val()));
             });
 
-            // Update validation on change
-            $timeoutSlider.on("change", function () {
+            // Clamp to max on change
+            $slider.on("change", function () {
                 const value = parseInt($(this).val());
                 const maxValue = parseInt($(this).attr("max"));
 
                 if (value > maxValue) {
                     $(this).val(maxValue);
-                    $timeoutDisplay.text(maxValue);
-
-                    // Show warning
-                    const warningMessage = "GraphQL timeout cannot exceed PHP execution time limit (" + maxValue + "s)";
-                    showValidationErrors([warningMessage]);
+                    $display.text(getDisplayValue(maxValue));
                 }
             });
-        }
+        });
     };
 
     /**
@@ -965,17 +1246,17 @@
                 data: {
                     action: "silver_assist_validate_admin_path",
                     nonce: silverAssistSecurity.nonce,
-                    path: path
+                    admin_path: path
                 },
                 success: response => {
                     if (response.success) {
                         updateValidationIndicator("valid", silverAssistSecurity.strings.pathValid || "✓ Path is valid");
                         updatePathPreview(response.data.sanitized_path);
                     } else {
-                        let errorMessage = response.data.message;
+                        let errorMessage = response.data.error || "Invalid path";
 
                         // Use localized error messages based on error type
-                        switch (response.data.type) {
+                        switch (response.data.error_type) {
                             case "empty":
                                 errorMessage = silverAssistSecurity.strings.pathEmpty || errorMessage;
                                 break;
@@ -1041,11 +1322,11 @@
      * @returns {void}
      */
     const loadCF7BlockedIPs = () => {
-        const $cf7Panel = $("#cf7-blocked-ips-content");
+        const $cf7Panel = $("#cf7-blocked-ips-content, #cf7-blocked-ips-container");
         const $cf7Count = $("#cf7-threat-count");
-        
+
         if (!$cf7Panel.length) return;
-        
+
         $cf7Panel.html('<p class="loading">Loading CF7 blocked IPs...</p>');
 
         const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
@@ -1059,18 +1340,18 @@
             },
             success: response => {
                 const { success, data = {} } = response || {};
-                
+
                 if (success) {
-                    $cf7Panel.html(data.html || strings.noCF7BlockedIPs || "No CF7 blocked IPs found.");
+                    $cf7Panel.html(data.html || `<p class="no-threats">${strings.noCF7BlockedIPs || "No CF7 blocked IPs found."}</p>`);
                     $cf7Count.text(data.count || 0);
-                    
+
                     // Initialize unblock buttons after content load
-                    $cf7Panel.find(".unblock-cf7-ip").off("click").on("click", function() {
+                    $cf7Panel.find(".unblock-cf7-ip").off("click").on("click", function () {
                         const $btn = $(this);
                         const ip = $btn.data("ip");
-                        
+
                         if (!ip) return;
-                        
+
                         const originalText = $btn.text();
                         $btn.prop("disabled", true).text(strings.unblocking || "Unblocking...");
 
@@ -1084,7 +1365,7 @@
                             },
                             success: response => {
                                 const { success, data = {} } = response || {};
-                                
+
                                 if (success) {
                                     loadCF7BlockedIPs(); // Reload the list
                                 } else {
@@ -1149,11 +1430,11 @@
                 },
                 success: response => {
                     const { success, data = {} } = response || {};
-                    
+
                     if (success) {
                         showMessage(data.message || strings.cf7IPBlocked || "CF7 IP blocked successfully", "success");
                         $cf7NewIP.val("");
-                        
+
                         // Refresh the list after a short delay
                         clearTimeout(cf7RefreshTimeout);
                         cf7RefreshTimeout = setTimeout(loadCF7BlockedIPs, TIMING.DATABASE_UPDATE_DELAY);
@@ -1189,12 +1470,12 @@
                 },
                 success: response => {
                     const { success, data = {} } = response || {};
-                    
+
                     if (success) {
                         showMessage(data.message || strings.cf7IPUnblocked || "CF7 IP unblocked successfully", "success");
-                        
+
                         // Remove the IP item from display
-                        $btn.closest(".cf7-ip-item").fadeOut(300, function() {
+                        $btn.closest(".cf7-ip-item").fadeOut(300, function () {
                             $(this).remove();
                             // Update count
                             const newCount = parseInt($cf7Count.text()) - 1;
@@ -1217,7 +1498,7 @@
          */
         const clearAllCF7BlockedIPs = () => {
             const { strings = {} } = silverAssistSecurity || {};
-            
+
             if (!confirm(strings.confirmClearAllCF7IPs || "Are you sure you want to clear all CF7 blocked IPs? This action cannot be undone.")) {
                 return;
             }
@@ -1235,7 +1516,7 @@
                 },
                 success: response => {
                     const { success, data = {} } = response || {};
-                    
+
                     if (success) {
                         showMessage(data.message || strings.cf7IPsCleared || "All CF7 blocked IPs cleared successfully", "success");
                         $cf7Count.text("0");
@@ -1270,7 +1551,7 @@
                 },
                 success: response => {
                     const { success, data = {} } = response || {};
-                    
+
                     if (success && data.csv_data) {
                         // Create and download CSV file
                         const blob = new Blob([data.csv_data], { type: "text/csv" });
@@ -1282,7 +1563,7 @@
                         a.click();
                         document.body.removeChild(a);
                         URL.revokeObjectURL(url);
-                        
+
                         showMessage(strings.cf7IPsExported || `Exported ${data.count} CF7 blocked IPs`, "success");
                     } else {
                         showMessage(data.error || strings.errorExportingCF7IPs || "Error exporting CF7 blocked IPs", "error");
@@ -1305,14 +1586,14 @@
                 showMessage(strings.enterValidIP || "Please enter a valid IP address", "error");
                 return;
             }
-            
+
             // Basic IP validation
             if (!/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ip)) {
                 const { strings = {} } = silverAssistSecurity || {};
                 showMessage(strings.invalidIPFormat || "Invalid IP address format", "error");
                 return;
             }
-            
+
             blockCF7IP(ip);
         });
 
@@ -1346,7 +1627,7 @@
     const initTabNavigation = () => {
         const $tabs = $(".silver-nav-tab");           // Security plugin internal tabs only
         const $tabContents = $(".silver-tab-content"); // Security plugin internal content only
-        
+
         if (!$tabs.length || !$tabContents.length) {
             return; // No tabs found
         }
@@ -1361,7 +1642,7 @@
             // Validate tab exists
             const $targetTab = $(`#${tabId}-tab`);
             const $targetContent = $(`#${tabId}-content`);
-            
+
             if (!$targetTab.length || !$targetContent.length) {
                 return;
             }
@@ -1372,7 +1653,7 @@
 
             // Update tab content with fade effect
             $tabContents.removeClass("active").hide();
-            $targetContent.addClass("active").fadeIn(TIMING.VALIDATION_DEBOUNCE);
+            $targetContent.addClass("active").show();
 
             // Update URL hash without triggering scroll
             if (window.history && window.history.pushState) {
@@ -1380,28 +1661,31 @@
             }
 
             // Trigger refresh for active data in new tab
-            if (tabId === "ip-management") {
-                // Refresh IP management data when tab becomes active
-                loadBlockedIPs();
-                loadCF7BlockedIPs();
-            } else if (tabId === "dashboard") {
+            if (tabId === "dashboard") {
                 // Refresh dashboard data when tab becomes active
                 loadSecurityStatus();
                 loadLoginStats();
+            } else if (tabId === "ip-management") {
+                // Refresh IP management data when tab becomes active
+                loadBlockedIPs();
+                loadCF7BlockedIPs();
+            } else if (tabId === "cf7-security") {
+                // Refresh CF7 blocked IPs when CF7 tab becomes active
+                loadCF7BlockedIPs();
             }
         };
 
         // Handle tab clicks
-        $tabs.on("click", function(e) {
+        $tabs.on("click", function (e) {
             e.preventDefault();
-            
+
             const tabId = $(this).attr("href").substring(1); // Remove # from href
             switchToTab(tabId);
         });
 
         // Get valid tabs dynamically from DOM (handles conditional CF7 tab)
         const getValidTabs = () => {
-            return $tabs.map(function() {
+            return $tabs.map(function () {
                 return $(this).attr("href").substring(1); // Remove # from href
             }).get();
         };
@@ -1418,10 +1702,10 @@
         // Initialize tab from URL hash or default to dashboard
         const initialHash = window.location.hash.substring(1);
         const validTabs = getValidTabs();
-        const initialTab = initialHash && validTabs.includes(initialHash) 
-            ? initialHash 
+        const initialTab = initialHash && validTabs.includes(initialHash)
+            ? initialHash
             : "dashboard";
-        
+
         switchToTab(initialTab);
     };
 
@@ -1489,14 +1773,14 @@
                 },
                 success: response => {
                     const { success, data = {} } = response || {};
-                    
+
                     if (success) {
                         showMessage(data.message || strings.ipBlockedSuccessfully || "IP blocked successfully", "success");
-                        
+
                         // Clear form
                         $ipInput.val("");
                         $reasonInput.val("");
-                        
+
                         // Refresh blocked IPs lists
                         loadBlockedIPs();
                         if (typeof loadCF7BlockedIPs === "function") {
@@ -1530,10 +1814,10 @@
         });
 
         // Real-time IP validation
-        $ipInput.on("input", function() {
+        $ipInput.on("input", function () {
             const $this = $(this);
             const ip = $this.val().trim();
-            
+
             if (ip === "") {
                 $this.removeClass("validation-valid validation-invalid");
                 return;
@@ -1554,9 +1838,12 @@
     // Initialize all features when document is ready
     $(document).ready(() => {
         initTabNavigation();   // Initialize tab system first
+        initDashboard();       // Initialize dashboard data loading and activity tabs
         initFormValidation();
-        // Dashboard refresh is initialized in initFormValidation()
+        initToggleSwitches();
+        initTooltips();
         initAutoSave();
+        initRangeSliders();
         initAdminPathValidation();
         initCF7BlockedIPs(); // Initialize CF7 panel
         initManualIPManagement(); // Initialize manual IP management

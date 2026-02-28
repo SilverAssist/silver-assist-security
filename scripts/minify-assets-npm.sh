@@ -140,8 +140,10 @@ main() {
         "assets/css/admin.min.css"
         "assets/css/password-validation.min.css"
         "assets/css/variables.min.css"
+        "assets/css/captcha.min.css"
         "assets/js/admin.min.js"
         "assets/js/password-validation.min.js"
+        "assets/js/captcha.min.js"
     )
     
     local missing_files=0
@@ -168,7 +170,7 @@ main() {
     echo ""
     if [ $missing_files -eq 0 ]; then
         success "✨ Asset minification completed successfully!"
-        success "All 5 minified files created with PostCSS (CSS) + Grunt (JS)"
+        success "All 7 minified files created with PostCSS (CSS) + Grunt (JS)"
         echo ""
         info "📊 System Information:"
         info "  • CSS: PostCSS + cssnano (supports @layer, nesting, container queries)"

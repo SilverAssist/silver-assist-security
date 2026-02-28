@@ -4,7 +4,7 @@
 
 **⛔ NEVER CREATE SEPARATE .md DOCUMENTATION FILES ⛔**
 
-**MANDATORY: All documentation MUST be maintained ONLY in these three files:**
+**MANDATORY: All project documentation MUST be maintained ONLY in these three files:**
 1. **README.md** - User-facing documentation, features, installation, configuration
 2. **CHANGELOG.md** - Version history, changes, updates, release notes
 3. **.github/copilot-instructions.md** (this file) - Development guidelines, architecture, coding standards
@@ -14,10 +14,24 @@
 - ❌ `CONTRIBUTING.md`, `API.md`, `DEVELOPMENT.md`, `TESTING.md`
 - ❌ `.github/FIX_SUMMARY.md`, `.github/GITHUB_APP_PERMISSIONS.md`, or similar
 - ❌ `TROUBLESHOOTING.md`, `FAQ.md`, `SETUP.md`
-- ❌ ANY standalone `.md` file for documentation, guides, fixes, or summaries
-- ❌ Splitting documentation across multiple files under ANY circumstances
+- ❌ ANY standalone `.md` file for project documentation, guides, fixes, or summaries
+- ❌ Splitting project documentation across multiple files under ANY circumstances
 
-**REQUIRED - ALWAYS DO THIS INSTEAD:**
+### ✅ EXCEPTION: GitHub Copilot Configuration Files
+
+The following `.github/` subdirectories contain **Copilot AI configuration files**, NOT project documentation.
+These are machine-consumed files that provide context to Copilot agents and MUST be treated differently:
+
+- ✅ `.github/skills/` — **Copilot Skills**: Domain-specific knowledge files (`SKILL.md`) that give Copilot expertise on specific topics (e.g., dashboard CSS classes, security patterns). Each skill has its own folder with a `SKILL.md` file.
+- ✅ `.github/prompts/` — **Copilot Prompt Files**: Reusable prompt templates (`.prompt.md`) for common development tasks. These are invoked by users to guide Copilot through specific workflows.
+- ✅ `.github/instructions/` — **Copilot Instruction Files**: Scoped instruction files (`.instructions.md`) that apply automatically based on file path patterns. These provide context-specific coding guidelines.
+- ✅ `.github/copilot-instructions.md` — **Global Copilot Instructions**: This file. Applies to all Copilot interactions in the repository.
+
+**Key distinction:**
+- **Documentation** = human-readable guides, READMEs, changelogs → Consolidate in README.md, CHANGELOG.md, copilot-instructions.md
+- **Copilot config** = machine-consumed AI context files → Create freely in `.github/skills/`, `.github/prompts/`, `.github/instructions/`
+
+**REQUIRED - ALWAYS DO THIS INSTEAD (for documentation):**
 - ✅ Add all new documentation to appropriate section in README.md
 - ✅ Document all changes in CHANGELOG.md under [Unreleased] section
 - ✅ Update copilot-instructions.md for development guidelines ONLY
@@ -27,15 +41,19 @@
 **Why this rule exists:**
 - Prevents documentation fragmentation and file proliferation
 - Reduces maintenance overhead significantly
-- Single source of truth for all information
+- Single source of truth for all project information
 - Easier to find and update documentation
 - Consistent with project philosophy
 - Avoids clutter in repository structure
+- Copilot config files are excluded because they serve a different purpose (AI context, not human docs)
 
 **If you need to document something:**
 1. **User features/guides/fixes/troubleshooting** → Add to README.md (appropriate section)
 2. **Version changes/updates/bug fixes** → Add to CHANGELOG.md under [Unreleased]
 3. **Development patterns/architecture/coding standards** → Add to copilot-instructions.md
+4. **Copilot domain knowledge** → Create a skill in `.github/skills/<topic>/SKILL.md`
+5. **Reusable Copilot workflows** → Create a prompt in `.github/prompts/<task>.prompt.md`
+6. **Path-scoped Copilot context** → Create instructions in `.github/instructions/<scope>.instructions.md`
 
 **CRITICAL EXAMPLES:**
 - ❌ **WRONG**: Create `FIX_SUMMARY.md` to document a fix
@@ -44,6 +62,8 @@
 - ✅ **CORRECT**: Add to README.md under "GitHub App Configuration" section
 - ❌ **WRONG**: Create `NEW_FEATURE_GUIDE.md` for feature documentation
 - ✅ **CORRECT**: Update README.md with feature details in appropriate section
+- ✅ **CORRECT**: Create `.github/skills/graphql-security/SKILL.md` for Copilot GraphQL context
+- ✅ **CORRECT**: Create `.github/prompts/add-security-feature.prompt.md` for guided workflows
 
 ---
 

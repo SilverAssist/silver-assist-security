@@ -243,16 +243,40 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 			$this->markTestSkipped( 'WPGraphQL plugin not available' );
 		}
 
-		// Simulate production environment
-		if ( ! defined( 'WP_ENVIRONMENT_TYPE' ) ) {
-			define( 'WP_ENVIRONMENT_TYPE', 'production' );
+		// Enable introspection in WPGraphQL settings so the method doesn't early-return.
+		$settings                                  = \get_option( 'graphql_general_settings', array() );
+		$settings['public_introspection_enabled'] = 'on';
+		\update_option( 'graphql_general_settings', $settings );
+
+		// Clear singleton config cache so it picks up the new setting.
+		GraphQLConfigManager::getInstance()->clear_cache();
+
+		// If WP_ENVIRONMENT_TYPE is already defined as non-production, we can only verify
+		// the method doesn't add the filter. Constants cannot be redefined in PHP.
+		if ( defined( 'WP_ENVIRONMENT_TYPE' ) && WP_ENVIRONMENT_TYPE !== 'production' ) {
+			$security = new GraphQLSecurity();
+			$security->disable_introspection_in_production();
+			$this->assertFalse(
+				\has_filter( 'graphql_introspection_enabled' ) !== false,
+				'Introspection filter should not be registered in non-production environment'
+			);
+		} else {
+			// Define production environment if not already defined.
+			if ( ! defined( 'WP_ENVIRONMENT_TYPE' ) ) {
+				define( 'WP_ENVIRONMENT_TYPE', 'production' );
+			}
+
+			$security = new GraphQLSecurity();
+			$security->disable_introspection_in_production();
+
+			$this->assertTrue(
+				\has_filter( 'graphql_introspection_enabled' ) !== false,
+				'Introspection filter should be registered in production'
+			);
 		}
 
-		$security = new GraphQLSecurity();
-		$security->disable_introspection_in_production();
-
-		// Check if introspection filter is registered
-		$this->assertTrue( \has_filter( 'graphql_introspection_enabled' ) !== false, 'Introspection filter should be registered in production' );
+		// Cleanup.
+		\delete_option( 'graphql_general_settings' );
 	}
 
 	/**
@@ -403,7 +427,8 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 		$status         = $config_manager->get_integration_status();
 
 		$this->assertIsArray( $status, 'Integration status should be an array' );
-		$this->assertArrayHasKey( 'wpgraphql_version', $status );
+		$this->assertArrayHasKey( 'wpgraphql_available', $status, 'Status should include wpgraphql_available key' );
+		$this->assertTrue( $status['wpgraphql_available'], 'WPGraphQL should be detected as available' );
 	}
 
 	/**

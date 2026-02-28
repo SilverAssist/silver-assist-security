@@ -201,10 +201,121 @@ class SecurityHelper {
 	}
 
 	/**
+	 * Log severity levels
+	 *
+	 * @since 1.1.15
+	 */
+	public const LOG_ERROR   = 'error';
+	public const LOG_WARNING = 'warning';
+	public const LOG_INFO    = 'info';
+
+	/**
+	 * Event types classified as errors (always logged when WP_DEBUG is on)
+	 *
+	 * @since 1.1.15
+	 * @var array<string>
+	 */
+	private static array $error_events = array(
+		'AJAX_ERROR',
+		'UPDATE_CHECK_ERROR',
+		'MANUAL_IP_BLOCK_ERROR',
+		'MANUAL_IP_UNBLOCK_ERROR',
+		'BOT_COUNT_ERROR',
+		'SECURITY_LOGS_ERROR',
+		'LOG_PARSE_ERROR',
+		'IP_CLEANUP_ERROR',
+		'SETTINGS_AUTO_SAVE_ERROR',
+		'SETTINGS_HUB_ERROR',
+		'PLUGIN_INIT_ERROR',
+		'GRAPHQL_DEPTH_ERROR',
+		'GRAPHQL_ALIAS_ERROR',
+		'GRAPHQL_DIRECTIVE_ERROR',
+		'GRAPHQL_FIELD_DUPLICATE_ERROR',
+		'GRAPHQL_TIMEOUT_ERROR',
+		'ADMIN_PATH_VALIDATION_ERROR',
+	);
+
+	/**
+	 * Event types classified as warnings (security events: blocks, violations, failures)
+	 *
+	 * @since 1.1.15
+	 * @var array<string>
+	 */
+	private static array $warning_events = array(
+		'LOGIN_LOCKOUT',
+		'BOT_BLOCKED',
+		'IP_BLACKLISTED',
+		'IP_AUTO_BLACKLISTED',
+		'NONCE_VALIDATION_FAILED',
+		'NONCE_VERIFICATION_FAILED',
+		'CAPABILITY_CHECK_FAILED',
+		'AJAX_INVALID_METHOD',
+		'SECURITY_VIOLATION_RECORDED',
+		'ADMIN_PATH_VALIDATION_FAILED',
+		'FORM_SPAM_BLOCKED',
+		'SQL_INJECTION_DETECTED',
+		'SPAM_PATTERN_DETECTED',
+		'EXCESSIVE_CAPS_DETECTED',
+		'CF7_IP_BLACKLISTED',
+		'CF7_BLOCKED_BLACKLISTED_IP',
+		'CF7_BLOCKED_UNDER_ATTACK',
+		'CF7_BLOCKED_HONEYPOT',
+		'CF7_BLOCKED_TOO_FAST',
+		'CF7_BLOCKED_RATE_LIMIT',
+		'CF7_BLOCKED_OBSOLETE_BROWSER',
+		'CF7_BLOCKED_SQL_INJECTION',
+		'CF7_BLOCKED_SPAM_PATTERN',
+		'CF7_SPAM_DETECTED',
+		'CAPTCHA_MISSING',
+		'CAPTCHA_INVALID_TOKEN',
+		'CAPTCHA_FAILED',
+		'GRAPHQL_DEPTH_EXCEEDED',
+		'GRAPHQL_SUSPICIOUS_QUERY',
+		'GRAPHQL_ALIAS_ABUSE',
+		'GRAPHQL_DIRECTIVE_ABUSE',
+		'GRAPHQL_FIELD_DUPLICATION',
+		'GRAPHQL_QUERY_TIMEOUT',
+		'UNDER_ATTACK_ACTIVATED',
+		'ATTACK_RECORDED',
+	);
+
+	/**
+	 * Determine the severity level for a given event type
+	 *
+	 * @since 1.1.15
+	 * @param string $event_type The event type identifier.
+	 * @return string One of LOG_ERROR, LOG_WARNING, or LOG_INFO.
+	 */
+	private static function get_event_severity( string $event_type ): string {
+		if ( in_array( $event_type, self::$error_events, true ) ) {
+			return self::LOG_ERROR;
+		}
+		if ( in_array( $event_type, self::$warning_events, true ) ) {
+			return self::LOG_WARNING;
+		}
+		return self::LOG_INFO;
+	}
+
+	/**
+	 * Check if the current environment is a test environment
+	 *
+	 * @since 1.1.15
+	 * @return bool
+	 */
+	private static function is_test_environment(): bool {
+		return defined( 'WP_TESTS_DOMAIN' ) || defined( 'WP_RUN_CORE_TESTS' ) || ( defined( 'PHPUNIT_COMPOSER_INSTALL' ) );
+	}
+
+	/**
 	 * Log security event with structured format
 	 *
 	 * Creates standardized security log entries with timestamp, IP,
 	 * user agent, and context information for security monitoring.
+	 *
+	 * Logging behavior:
+	 * - Only logs when WP_DEBUG is enabled (production stays silent).
+	 * - In test environments, only error-level events are logged.
+	 * - In development, all severity levels are logged.
 	 *
 	 * @since 1.1.10
 	 * @param string $event_type Type of security event (e.g., 'LOGIN_FAILED', 'BOT_BLOCKED')
@@ -213,6 +324,18 @@ class SecurityHelper {
 	 * @return void
 	 */
 	public static function log_security_event( string $event_type, string $message, array $context = array() ): void {
+		// Only log when WP_DEBUG is enabled.
+		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+			return;
+		}
+
+		$severity = self::get_event_severity( $event_type );
+
+		// In test environments, only log errors to keep output clean.
+		if ( self::is_test_environment() && self::LOG_ERROR !== $severity ) {
+			return;
+		}
+
 		$log_data = array(
 			'event_type'  => $event_type,
 			'message'     => $message,
@@ -227,9 +350,10 @@ class SecurityHelper {
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional security logging.
 		error_log(
 			sprintf(
-				'SILVER_ASSIST_SECURITY: %s - %s',
+				'SILVER_ASSIST_SECURITY: [%s] %s - %s',
+				strtoupper( $severity ),
 				$event_type,
-				wp_json_encode( $log_data, JSON_UNESCAPED_SLASHES )
+				\wp_json_encode( $log_data, JSON_UNESCAPED_SLASHES )
 			)
 		);
 	}
@@ -510,11 +634,6 @@ class SecurityHelper {
 			return false;
 		}
 
-		// Check if Contact Form 7 functions are available
-		if ( ! \function_exists( 'wpcf7_get_contact_form_by_id' ) ) {
-			return false;
-		}
-
 		// Check minimum version requirement (CF7 5.0+)
 		if ( \defined( 'WPCF7_VERSION' ) ) {
 			return \version_compare( WPCF7_VERSION, '5.0', '>=' );
@@ -533,6 +652,38 @@ class SecurityHelper {
 	 * @since 1.1.15
 	 * @return array CF7 plugin information
 	 */
+	/**
+	 * Render a plugin template with the given variables.
+	 *
+	 * Loads a PHP template from the `templates/` directory, extracts the
+	 * supplied data array into local variables, and returns the rendered HTML.
+	 * Variables are scoped to the template — the caller's scope is not polluted.
+	 *
+	 * @since 1.1.15
+	 * @param string               $template Filename inside `templates/` (e.g. 'captcha-field.php').
+	 * @param array<string, mixed> $data     Key-value pairs available inside the template.
+	 * @return string Rendered HTML.
+	 */
+	public static function render_template( string $template, array $data = array() ): string {
+		// Prevent path traversal — only allow simple filenames.
+		if ( basename( $template ) !== $template || strpos( $template, '..' ) !== false ) {
+			return '';
+		}
+
+		$file = SILVER_ASSIST_SECURITY_PATH . 'templates/' . $template;
+
+		if ( ! file_exists( $file ) ) {
+			return '';
+		}
+
+		// phpcs:ignore WordPress.PHP.DontExtract.extract_extract -- Intentional: scoped variable extraction for template rendering.
+		extract( $data, EXTR_SKIP );
+
+		ob_start();
+		include $file;
+		return (string) ob_get_clean();
+	}
+
 	public static function get_contact_form_7_info(): array {
 		if ( ! self::is_contact_form_7_active() ) {
 			return array(

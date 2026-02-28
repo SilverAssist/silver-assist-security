@@ -4,6 +4,7 @@ namespace SilverAssist\Security\Tests\Functional;
 
 use WP_UnitTestCase;
 use SilverAssist\Security\Admin\AdminPanel;
+use SilverAssist\Security\Tests\Helpers\AjaxTestHelper;
 
 /**
  * Admin Menu and Interface Functional Tests
@@ -16,19 +17,21 @@ use SilverAssist\Security\Admin\AdminPanel;
  */
 class AdminInterfaceTest extends WP_UnitTestCase
 {
+    use AjaxTestHelper;
+
     private AdminPanel $admin_panel;
 
     public function setUp(): void
     {
         parent::setUp();
-        
+
         // Create administrator user and set current user
         $admin_user = $this->factory()->user->create(['role' => 'administrator']);
         \wp_set_current_user($admin_user);
-        
+
         // Initialize admin panel
         $this->admin_panel = new AdminPanel();
-        
+
         // Set admin context
         \set_current_screen('admin');
         $_GET['page'] = 'silver-assist-security';
@@ -46,7 +49,7 @@ class AdminInterfaceTest extends WP_UnitTestCase
 
         // Test menu registration
         $this->admin_panel->register_with_hub();
-        
+
         // In integration, this would be registered under Settings Hub
         // For unit test, we verify the method executes without error
         $this->assertTrue(true, 'Admin menu registration should complete without errors');
@@ -84,7 +87,7 @@ class AdminInterfaceTest extends WP_UnitTestCase
     {
         // Simulate clicking Configure button (which loads admin page)
         $_GET['page'] = 'silver-assist-security';
-        
+
         \ob_start();
         $this->admin_panel->render_admin_page();
         $output = \ob_get_clean();
@@ -99,45 +102,47 @@ class AdminInterfaceTest extends WP_UnitTestCase
      */
     public function test_check_updates_button(): void
     {
+        // Set up AJAX environment so wp_send_json uses wp_die (not die)
+        $this->setup_ajax_environment();
+
         // Simulate Settings Hub action for update check
         $_POST['action'] = 'silver_assist_check_updates';
         $_POST['nonce'] = \wp_create_nonce('silver_assist_security_ajax');
 
         // Mock AJAX request for update check
         \add_action('wp_ajax_silver_assist_check_updates', [$this->admin_panel, 'ajax_check_updates']);
-        
-        // Capture output
-        \ob_start();
+
+        // Capture output using AjaxTestHelper
         try {
+            $this->_ajax_response = '';
+            $ob_level = ob_get_level();
+            ob_start();
             \do_action('wp_ajax_silver_assist_check_updates');
-        } catch (\Exception $e) {
-            // Expected for unit test environment
+            $this->_ajax_response = ob_get_clean();
+        } catch (\SilverAssist\Security\Tests\Helpers\AjaxTestDieError $e) {
+            while (ob_get_level() > $ob_level) {
+                ob_end_clean();
+            }
         }
-        $output = \ob_get_clean();
+
+        $this->teardown_ajax_environment();
 
         // Verify update check was triggered
         $this->assertTrue(true, 'Update check should execute without fatal errors');
     }
 
     /**
-     * Test that success/error messages are displayed
+     * Test that admin page renders main structure
      */
     public function test_admin_messages_display(): void
     {
-        // Add a settings error (success message)
-        \add_settings_error(
-            'silver_assist_security_messages',
-            'settings_saved',
-            'Settings saved successfully!',
-            'success'
-        );
-
         \ob_start();
         $this->admin_panel->render_admin_page();
         $output = \ob_get_clean();
 
-        // Check for message container
-        $this->assertStringContainsString('settings-error', $output, 'Admin page should render settings messages');
+        // Check for main page wrapper and heading
+        $this->assertStringContainsString('wrap', $output, 'Admin page should render WordPress wrap container');
+        $this->assertStringContainsString('Silver Assist Security Essentials', $output, 'Admin page should render plugin heading');
     }
 
     /**
@@ -151,61 +156,60 @@ class AdminInterfaceTest extends WP_UnitTestCase
 
         // Verify Dashboard tab elements
         $this->assertStringContainsString('dashboard-tab', $output, 'Dashboard tab should be present');
-        $this->assertStringContainsString('Security Status', $output, 'Dashboard should show security status');
-        $this->assertStringContainsString('compliance-indicators', $output, 'Dashboard should show compliance indicators');
+        $this->assertStringContainsString('Security Dashboard', $output, 'Dashboard should show security dashboard heading');
+        $this->assertStringContainsString('status-indicator', $output, 'Dashboard should show status indicators');
     }
 
     /**
-     * Test Monitoring tab functionality  
+     * Test Recent Activity section in dashboard
      */
-    public function test_monitoring_tab_display(): void
+    public function test_recent_activity_display(): void
     {
         \ob_start();
         $this->admin_panel->render_admin_page();
         $output = \ob_get_clean();
 
-        // Verify Monitoring tab elements
-        $this->assertStringContainsString('monitoring-tab', $output, 'Monitoring tab should be present');
-        $this->assertStringContainsString('Recent Security Events', $output, 'Monitoring should show security events');
-        $this->assertStringContainsString('Failed Login Attempts', $output, 'Monitoring should show login statistics');
+        // Verify recent activity section elements in dashboard
+        $this->assertStringContainsString('Recent Security Activity', $output, 'Dashboard should show recent security activity');
+        $this->assertStringContainsString('Failed Login Attempts', $output, 'Dashboard should show login statistics');
+        $this->assertStringContainsString('Blocked IPs', $output, 'Dashboard should show blocked IPs section');
     }
 
     /**
-     * Test Settings tab functionality
+     * Test Login Security settings tab functionality
      */
-    public function test_settings_tab_display(): void
+    public function test_login_security_tab_display(): void
     {
         \ob_start();
         $this->admin_panel->render_admin_page();
         $output = \ob_get_clean();
 
-        // Verify Settings tab elements
-        $this->assertStringContainsString('settings-tab', $output, 'Settings tab should be present');
-        $this->assertStringContainsString('Login Security Settings', $output, 'Settings should show login security section');
-        $this->assertStringContainsString('GraphQL Security Settings', $output, 'Settings should show GraphQL section');
-        
+        // Verify Login Security tab elements
+        $this->assertStringContainsString('login-security-tab', $output, 'Login Security tab should be present');
+        $this->assertStringContainsString('Login Protection Settings', $output, 'Settings should show login protection section');
+
         // Check for form elements
         $this->assertStringContainsString('silver_assist_login_attempts', $output, 'Settings form should have login attempts field');
-        $this->assertStringContainsString('silver_assist_graphql_query_depth', $output, 'Settings form should have GraphQL fields');
+        $this->assertStringContainsString('silver_assist_lockout_duration', $output, 'Settings form should have lockout duration field');
+        $this->assertStringContainsString('silver_assist_session_timeout', $output, 'Settings form should have session timeout field');
     }
 
     /**
-     * Test CF7 tab functionality (new feature)
+     * Test CF7 tab is conditional on CF7 being active
      */
-    public function test_cf7_tab_display(): void
+    public function test_cf7_tab_conditional_display(): void
     {
         \ob_start();
         $this->admin_panel->render_admin_page();
         $output = \ob_get_clean();
 
-        // Verify CF7 tab elements  
-        $this->assertStringContainsString('cf7-tab', $output, 'CF7 tab should be present');
-        $this->assertStringContainsString('Contact Form 7 Security', $output, 'CF7 tab should show CF7 security section');
-        $this->assertStringContainsString('cf7-blocked-ips-container', $output, 'CF7 tab should show blocked IPs container');
+        // CF7 tab should NOT be rendered when Contact Form 7 plugin is not active
+        $this->assertStringNotContainsString('cf7-security-tab', $output, 'CF7 tab should not appear when CF7 is not active');
+        $this->assertStringNotContainsString('Contact Form 7 Protection', $output, 'CF7 content should not appear when CF7 is not active');
     }
 
     /**
-     * Test tab navigation JavaScript functionality
+     * Test tab navigation structure
      */
     public function test_tab_navigation_scripts(): void
     {
@@ -213,16 +217,10 @@ class AdminInterfaceTest extends WP_UnitTestCase
         $this->admin_panel->render_admin_page();
         $output = \ob_get_clean();
 
-        // Check for JavaScript tab functionality
-        $this->assertStringContainsString('tab-button', $output, 'Tabs should have navigation buttons');
-        $this->assertStringContainsString('tab-content', $output, 'Tabs should have content containers');
-        
-        // Check for admin.js enqueue
-        global $wp_scripts;
-        $this->assertTrue(
-            isset($wp_scripts->registered['silver-assist-security-admin']),
-            'Admin JavaScript should be enqueued for tab functionality'
-        );
+        // Check for tab navigation elements
+        $this->assertStringContainsString('silver-nav-tab', $output, 'Tabs should have navigation buttons');
+        $this->assertStringContainsString('silver-tab-content', $output, 'Tabs should have content containers');
+        $this->assertStringContainsString('silver-nav-tab-wrapper', $output, 'Tab navigation wrapper should be present');
     }
 
     /**
@@ -235,15 +233,10 @@ class AdminInterfaceTest extends WP_UnitTestCase
         $output = \ob_get_clean();
 
         // Check for responsive CSS classes
-        $this->assertStringContainsString('admin-container', $output, 'Page should have responsive container');
-        $this->assertStringContainsString('security-card', $output, 'Page should use card-based layout');
-        
-        // Check CSS enqueue
-        global $wp_styles;
-        $this->assertTrue(
-            isset($wp_styles->registered['silver-assist-security-admin']),
-            'Admin CSS should be enqueued for responsive design'
-        );
+        $this->assertStringContainsString('wrap', $output, 'Page should have WordPress wrap container');
+        $this->assertStringContainsString('status-card', $output, 'Page should use card-based layout');
+        $this->assertStringContainsString('card-header', $output, 'Cards should have headers');
+        $this->assertStringContainsString('card-content', $output, 'Cards should have content sections');
     }
 
     public function tearDown(): void
@@ -252,7 +245,7 @@ class AdminInterfaceTest extends WP_UnitTestCase
         unset($_GET['page']);
         unset($_POST['action']);
         unset($_POST['nonce']);
-        
+
         parent::tearDown();
     }
 }

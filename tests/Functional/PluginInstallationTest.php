@@ -38,7 +38,7 @@ class PluginInstallationTest extends WP_UnitTestCase
 
         // Simulate plugin activation by calling the bootstrap activation method
         if (\class_exists('SilverAssistSecurityBootstrap')) {
-            $bootstrap = new \SilverAssistSecurityBootstrap();
+            $bootstrap = \SilverAssistSecurityBootstrap::getInstance();
             $bootstrap->activate();
         } else {
             // Fallback: manually set default options as plugin would do
@@ -60,7 +60,9 @@ class PluginInstallationTest extends WP_UnitTestCase
         $this->assertEquals(1, \get_option('silver_assist_bot_protection'), 'Bot protection should be enabled');
         $this->assertEquals(8, \get_option('silver_assist_graphql_query_depth'), 'GraphQL query depth should default to 8');
         $this->assertEquals(100, \get_option('silver_assist_graphql_query_complexity'), 'GraphQL complexity should default to 100');
-        $this->assertEquals(5, \get_option('silver_assist_graphql_query_timeout'), 'GraphQL timeout should default to 5 seconds');
+        // GraphQL timeout default is dynamic based on PHP max_execution_time (capped at 30s)
+        $this->assertGreaterThanOrEqual(1, (int) \get_option('silver_assist_graphql_query_timeout'), 'GraphQL timeout should be at least 1 second');
+        $this->assertLessThanOrEqual(30, (int) \get_option('silver_assist_graphql_query_timeout'), 'GraphQL timeout should be at most 30 seconds');
     }
 
     /**
