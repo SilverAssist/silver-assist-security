@@ -221,6 +221,7 @@ while [[ $# -gt 0 ]]; do
             NON_INTERACTIVE="true"
             FORCE_DB_RECREATE="true"
             FORCE_CF7_REINSTALL="true"
+            FORCE_GRAPHQL_REINSTALL="true"
             shift
             ;;
         --force-db-recreate)
