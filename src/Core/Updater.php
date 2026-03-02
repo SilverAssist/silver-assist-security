@@ -49,6 +49,7 @@ class Updater extends GitHubUpdater {
 				'cache_duration'     => 12 * 3600,
 				'ajax_action'        => 'silver_assist_security_check_version',
 				'ajax_nonce'         => 'silver_assist_security_ajax',
+				'text_domain'        => 'silver-assist-security',
 			)
 		);
 		parent::__construct( $config );

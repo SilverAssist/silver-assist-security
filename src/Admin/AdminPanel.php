@@ -149,9 +149,6 @@ class AdminPanel {
 		// Register asset management hook (delegated to AssetManager)
 		\add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
-		// Register only AdminPanel-specific AJAX handlers
-		\add_action( 'wp_ajax_silver_assist_check_updates', array( $this, 'ajax_check_updates' ) );
-
 		// Security and CF7 AJAX handlers register themselves via their constructors
 	}
 
@@ -188,13 +185,14 @@ class AdminPanel {
 			// Register plugin with hub
 			$hub->register_plugin(
 				'silver-assist-security',
-				\__( 'Security', 'silver-assist-security' ),
+				\__( 'Security Essentials', 'silver-assist-security' ),
 				array( $this, 'render_admin_page' ),
 				array(
 					'description' => \__( 'Security configuration for WordPress', 'silver-assist-security' ),
 					'version'     => $this->plugin_version,
-					'tab_title'   => \__( 'Security', 'silver-assist-security' ),
+					'tab_title'   => \__( 'Security Essentials', 'silver-assist-security' ),
 					'capability'  => 'manage_options',
+					'plugin_file' => SILVER_ASSIST_SECURITY_PATH . 'silver-assist-security.php',
 					'actions'     => $actions,
 				)
 			);
@@ -301,11 +299,12 @@ class AdminPanel {
 	/**
 	 * Render update check script for Settings Hub action button
 	 *
-	 * Loads external JavaScript file and echoes onclick handler that calls
-	 * the global update check function. Settings Hub expects echo, not return.
+	 * Delegates to wp-github-updater's built-in enqueueCheckUpdatesScript() which
+	 * provides centralized JS, AJAX handling, admin notices, and auto-redirect.
 	 *
 	 * @since 1.1.13
-	 * @param string $plugin_slug Plugin slug passed by Settings Hub
+	 * @since 1.1.16 Simplified to use wp-github-updater v1.3.0 built-in script.
+	 * @param string $plugin_slug Plugin slug passed by Settings Hub.
 	 * @return void
 	 */
 	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Parameter required by Settings Hub callback signature
@@ -317,103 +316,8 @@ class AdminPanel {
 			return;
 		}
 
-		// Enqueue update check script
-		\wp_enqueue_script(
-			'silver-assist-update-check',
-			SecurityHelper::get_asset_url( 'assets/js/update-check.js' ),
-			array( 'jquery' ),
-			$this->plugin_version,
-			true
-		);
-
-		// Localize script with configuration data
-		\wp_localize_script(
-			'silver-assist-update-check',
-			'silverAssistUpdateCheck',
-			array(
-				'ajaxurl'   => \admin_url( 'admin-ajax.php' ),
-				'nonce'     => \wp_create_nonce( 'silver_assist_security_updates_nonce' ),
-				'updateUrl' => \admin_url( 'update-core.php' ),
-				'strings'   => array(
-					'updateAvailable' => \__( 'Update available! Redirecting to Updates page...', 'silver-assist-security' ),
-					'upToDate'        => \__( "You're up to date!", 'silver-assist-security' ),
-					'checkError'      => \__( 'Error checking updates. Please try again.', 'silver-assist-security' ),
-					'connectError'    => \__( 'Error connecting to update server.', 'silver-assist-security' ),
-				),
-			)
-		);
-
-		// Echo JavaScript that will be injected by Settings Hub into the event listener
-		echo 'silverAssistCheckUpdates(); return false;';
-	}
-
-	/**
-	 * AJAX handler for checking plugin updates
-	 *
-	 * Validates nonce, checks for updates using wp-github-updater,
-	 * and returns update status information.
-	 *
-	 * @since 1.1.13
-	 * @return void
-	 */
-	public function ajax_check_updates(): void {
-		// Validate nonce
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verification doesn't require sanitization
-		if ( ! isset( $_POST['nonce'] ) || ! \wp_verify_nonce( \wp_unslash( $_POST['nonce'] ), 'silver_assist_security_updates_nonce' ) ) {
-			\wp_send_json_error( array( 'message' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
-		}
-
-		// Check user capability
-		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( array( 'message' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
-		}
-
-		$plugin  = Plugin::getInstance();
-		$updater = $plugin->get_updater();
-
-		if ( ! $updater ) {
-			\wp_send_json_error( array( 'message' => \__( 'Updater not available', 'silver-assist-security' ) ) );
-		}
-
-		try {
-			// Clear cached version to force fresh check from GitHub
-			$transient_key = 'silver-assist-security_version_check';
-			\delete_transient( $transient_key );
-
-			// CRITICAL: Clear WordPress update cache to force refresh
-			// This is required for WordPress to detect the update on the Updates page
-			\delete_site_transient( 'update_plugins' );
-
-			// Force WordPress to check for updates immediately
-			\wp_update_plugins();
-
-			$update_available = $updater->isUpdateAvailable();
-			$current_version  = $updater->getCurrentVersion();
-			$latest_version   = $updater->getLatestVersion();
-
-			\wp_send_json_success(
-				array(
-					'update_available' => $update_available,
-					'current_version'  => $current_version,
-					'latest_version'   => $latest_version,
-					'message'          => $update_available
-						? \__( 'Update available!', 'silver-assist-security' )
-						: \__( "You're up to date!", 'silver-assist-security' ),
-				)
-			);
-		} catch ( Exception $e ) {
-			SecurityHelper::log_security_event(
-				'UPDATE_CHECK_ERROR',
-				'Failed to check for updates: ' . $e->getMessage(),
-				array( 'exception' => $e->getMessage() )
-			);
-
-			\wp_send_json_error(
-				array(
-					'message' => \__( 'Error checking for updates', 'silver-assist-security' ),
-				)
-			);
-		}
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inline JavaScript function call from wp-github-updater
+		echo $updater->enqueueCheckUpdatesScript();
 	}
 
 	/**

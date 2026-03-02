@@ -81,7 +81,6 @@ class AdminPageRenderer {
 
 		?>
 		<div class="wrap">
-			<h1><?php echo \esc_html( \__( 'Silver Assist Security Essentials', 'silver-assist-security' ) ); ?></h1>
 
 			<!-- Tab Navigation - Internal Security Plugin Tabs -->
 			<nav class="silver-nav-tab-wrapper">

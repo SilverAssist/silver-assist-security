@@ -24,6 +24,22 @@
 
 @layer components {
 
+    /* Version Badge */
+    .wrap > h1 .version-badge {
+        display: inline-block;
+        padding: var(--silver-spacing-xs) var(--silver-spacing-md);
+        border-radius: var(--silver-radius-pill);
+        font-size: var(--silver-font-size-xs);
+        font-weight: var(--silver-font-weight-semibold);
+        background: var(--silver-success-bg-light);
+        color: var(--silver-success-text);
+        border: var(--silver-border-width-thin) solid var(--silver-success-border-light);
+        text-transform: uppercase;
+        letter-spacing: var(--silver-letter-spacing-tight);
+        vertical-align: middle;
+        margin-inline-start: var(--silver-spacing-md);
+    }
+
     /* Dashboard Components - Safe to use in layers */
     .silver-assist-dashboard {
         background: var(--silver-bg-secondary);

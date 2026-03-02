@@ -40,11 +40,6 @@ module.exports = function (grunt) {
                     "assets/js/password-validation.min.js": ["assets/js/password-validation.js"]
                 }
             },
-            updateCheck: {
-                files: {
-                    "assets/js/update-check.min.js": ["assets/js/update-check.js"]
-                }
-            },
             captcha: {
                 files: {
                     "assets/js/captcha.min.js": ["assets/js/captcha.js"]
@@ -69,7 +64,6 @@ module.exports = function (grunt) {
         grunt.log.writeln("📦 Generated files:");
         grunt.log.writeln("   • assets/js/admin.min.js");
         grunt.log.writeln("   • assets/js/password-validation.min.js");
-        grunt.log.writeln("   • assets/js/update-check.min.js");
         grunt.log.writeln("");
         grunt.log.writeln("ℹ CSS minification: Run 'npm run minify:css' separately");
         grunt.log.writeln("🚀 Ready for production build!");
