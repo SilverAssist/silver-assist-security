@@ -2,21 +2,20 @@
 # This file is distributed under the Polyform Noncommercial License 1.0.0.
 msgid ""
 msgstr ""
-"Project-Id-Version: Silver Assist Security Essentials 1.1.15\n"
-"Report-Msgid-Bugs-To: https://developer.silverassist.com\n"
+"Project-Id-Version: Silver Assist Security Essentials 1.1.16\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/silver-assist-security\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-02-28T00:00:00+00:00\n"
+"POT-Creation-Date: 2026-03-02T19:44:58+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: silver-assist-security\n"
 
 #. Plugin Name of the plugin
 #: silver-assist-security.php
-#: src/Admin/Renderer/AdminPageRenderer.php:84
 msgid "Silver Assist Security Essentials"
 msgstr ""
 
@@ -40,45 +39,24 @@ msgstr ""
 msgid "http://silverassist.com/"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:191
-#: src/Admin/AdminPanel.php:196
-msgid "Security"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:194
-msgid "Security configuration for WordPress"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:227
-msgid "Check Updates"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:244
-msgid "Silver Assist Security"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:245
+#: src/Admin/AdminPanel.php:188
+#: src/Admin/AdminPanel.php:193
+#: src/Admin/AdminPanel.php:243
 msgid "Security Essentials"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:338
-msgid "Update available! Redirecting to Updates page..."
+#: src/Admin/AdminPanel.php:191
+msgid "Security configuration for WordPress"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:339
-#: src/Admin/AdminPanel.php:401
-msgid "You're up to date!"
+#: src/Admin/AdminPanel.php:225
+msgid "Check Updates"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:340
-msgid "Error checking updates. Please try again."
+#: src/Admin/AdminPanel.php:242
+msgid "Silver Assist Security"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:341
-msgid "Error connecting to update server."
-msgstr ""
-
-#: src/Admin/AdminPanel.php:363
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:64
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:138
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:186
@@ -95,7 +73,6 @@ msgstr ""
 msgid "Security validation failed"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:368
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:68
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:142
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:190
@@ -110,18 +87,6 @@ msgstr ""
 #: src/Admin/Ajax/SecurityAjaxHandler.php:403
 #: src/Admin/Ajax/SecurityAjaxHandler.php:480
 msgid "Insufficient permissions"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:375
-msgid "Updater not available"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:400
-msgid "Update available!"
-msgstr ""
-
-#: src/Admin/AdminPanel.php:413
-msgid "Error checking for updates"
 msgstr ""
 
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:82
@@ -197,7 +162,7 @@ msgstr ""
 
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:214
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:218
-#: src/Admin/Ajax/SecurityAjaxHandler.php:527
+#: src/Admin/Ajax/SecurityAjaxHandler.php:532
 msgid "Failed to unblock IP address"
 msgstr ""
 
@@ -255,6 +220,7 @@ msgid "IP address is required"
 msgstr ""
 
 #: src/Admin/Ajax/SecurityAjaxHandler.php:417
+#: src/Admin/Ajax/SecurityAjaxHandler.php:492
 msgid "Invalid IP address format"
 msgstr ""
 
@@ -269,12 +235,12 @@ msgid "IP address %s has been successfully blocked"
 msgstr ""
 
 #. translators: %s: IP address
-#: src/Admin/Ajax/SecurityAjaxHandler.php:509
+#: src/Admin/Ajax/SecurityAjaxHandler.php:514
 #, php-format
 msgid "IP address %s has been unblocked"
 msgstr ""
 
-#: src/Admin/Ajax/SecurityAjaxHandler.php:515
+#: src/Admin/Ajax/SecurityAjaxHandler.php:520
 msgid "IP address was not found in the blacklist"
 msgstr ""
 
@@ -452,7 +418,7 @@ msgid "Enabled"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:216
-#: src/Admin/Renderer/DashboardRenderer.php:142
+#: src/Admin/Renderer/DashboardRenderer.php:140
 #: src/Admin/Renderer/RenderHelper.php:37
 #: src/GraphQL/GraphQLConfigManager.php:307
 #: src/GraphQL/GraphQLConfigManager.php:316
@@ -488,163 +454,157 @@ msgstr ""
 msgid "Permission Denied"
 msgstr ""
 
-#: src/Admin/Renderer/AdminPageRenderer.php:90
+#: src/Admin/Renderer/AdminPageRenderer.php:89
 msgid "Security Dashboard"
 msgstr ""
 
-#: src/Admin/Renderer/AdminPageRenderer.php:94
+#: src/Admin/Renderer/AdminPageRenderer.php:93
 msgid "Login Protection"
 msgstr ""
 
-#: src/Admin/Renderer/AdminPageRenderer.php:99
-#: src/Admin/Renderer/DashboardRenderer.php:129
+#: src/Admin/Renderer/AdminPageRenderer.php:98
+#: src/Admin/Renderer/DashboardRenderer.php:127
 msgid "GraphQL Security"
 msgstr ""
 
-#: src/Admin/Renderer/AdminPageRenderer.php:105
-#: src/Admin/Renderer/DashboardRenderer.php:179
-#: src/Admin/Renderer/DashboardRenderer.php:186
+#: src/Admin/Renderer/AdminPageRenderer.php:104
+#: src/Admin/Renderer/DashboardRenderer.php:177
+#: src/Admin/Renderer/DashboardRenderer.php:184
 #: src/Admin/Renderer/SettingsRenderer.php:346
 msgid "Form Protection"
 msgstr ""
 
-#: src/Admin/Renderer/AdminPageRenderer.php:110
+#: src/Admin/Renderer/AdminPageRenderer.php:109
 msgid "IP Management"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:94
+#: src/Admin/Renderer/DashboardRenderer.php:92
 msgid "Login Security"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:101
+#: src/Admin/Renderer/DashboardRenderer.php:99
 msgid "Max Attempts"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:102
-#: src/Admin/Renderer/DashboardRenderer.php:209
-#: src/Admin/Renderer/DashboardRenderer.php:234
+#: src/Admin/Renderer/DashboardRenderer.php:100
+#: src/Admin/Renderer/DashboardRenderer.php:207
+#: src/Admin/Renderer/DashboardRenderer.php:232
 msgid "Blocked IPs"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:103
+#: src/Admin/Renderer/DashboardRenderer.php:101
 msgid "Lockout (min)"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:111
+#: src/Admin/Renderer/DashboardRenderer.php:109
 msgid "Admin Security"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:118
+#: src/Admin/Renderer/DashboardRenderer.php:116
 #: src/Admin/Renderer/SettingsRenderer.php:120
 msgid "Password Strength Enforcement"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:119
+#: src/Admin/Renderer/DashboardRenderer.php:117
 #: src/Admin/Renderer/SettingsRenderer.php:126
 msgid "Bot Protection"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:120
+#: src/Admin/Renderer/DashboardRenderer.php:118
 msgid "Session Timeout (min)"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:136
+#: src/Admin/Renderer/DashboardRenderer.php:134
 #: src/GraphQL/GraphQLConfigManager.php:308
 msgid "Max Depth"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:137
+#: src/Admin/Renderer/DashboardRenderer.php:135
 msgid "Max Complexity"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:138
+#: src/Admin/Renderer/DashboardRenderer.php:136
 msgid "Timeout"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:140
+#: src/Admin/Renderer/DashboardRenderer.php:138
 msgid "Introspection"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:143
+#: src/Admin/Renderer/DashboardRenderer.php:141
 msgid "Public"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:153
+#: src/Admin/Renderer/DashboardRenderer.php:151
 msgid "General Security"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:160
+#: src/Admin/Renderer/DashboardRenderer.php:158
 msgid "HTTPOnly Cookies"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:161
+#: src/Admin/Renderer/DashboardRenderer.php:159
 msgid "XML-RPC Protection"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:162
+#: src/Admin/Renderer/DashboardRenderer.php:160
 msgid "Version Hiding"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:163
+#: src/Admin/Renderer/DashboardRenderer.php:161
 msgid "SSL/HTTPS"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:165
+#: src/Admin/Renderer/DashboardRenderer.php:163
 #: src/Admin/Renderer/SettingsRenderer.php:422
 msgid "Under Attack Mode"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:167
+#: src/Admin/Renderer/DashboardRenderer.php:165
+#: src/Admin/Renderer/DashboardRenderer.php:179
 msgid "Active"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:168
+#: src/Admin/Renderer/DashboardRenderer.php:166
+#: src/Admin/Renderer/DashboardRenderer.php:179
 msgid "Inactive"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:170
+#: src/Admin/Renderer/DashboardRenderer.php:168
 msgid "IP Blacklisting"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:181
-msgid "active"
-msgstr ""
-
-#: src/Admin/Renderer/DashboardRenderer.php:181
-msgid "inactive"
-msgstr ""
-
-#: src/Admin/Renderer/DashboardRenderer.php:187
+#: src/Admin/Renderer/DashboardRenderer.php:185
 msgid "Rate Limit (min)"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:205
+#: src/Admin/Renderer/DashboardRenderer.php:203
 msgid "Security Statistics"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:210
+#: src/Admin/Renderer/DashboardRenderer.php:208
 msgid "Failed Login Attempts (24h)"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:211
+#: src/Admin/Renderer/DashboardRenderer.php:209
 msgid "Security Events (7d)"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:228
+#: src/Admin/Renderer/DashboardRenderer.php:226
 msgid "Recent Security Activity"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:238
+#: src/Admin/Renderer/DashboardRenderer.php:236
 msgid "Security Logs"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:245
+#: src/Admin/Renderer/DashboardRenderer.php:243
 #: src/Admin/Renderer/SettingsRenderer.php:384
 #: src/Admin/Renderer/SettingsRenderer.php:450
 msgid "Loading blocked IPs..."
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:252
+#: src/Admin/Renderer/DashboardRenderer.php:250
 msgid "Loading security logs..."
 msgstr ""
 
@@ -889,18 +849,18 @@ msgstr ""
 msgid "%d hours"
 msgstr ""
 
-#: src/Core/SecurityHelper.php:687
+#: src/Core/SecurityHelper.php:692
 msgid "Contact Form 7 plugin is not active"
 msgstr ""
 
 #. translators: %s: Contact Form 7 version
-#: src/Core/SecurityHelper.php:701
+#: src/Core/SecurityHelper.php:706
 #, php-format
 msgid "Contact Form 7 v%s is active and compatible"
 msgstr ""
 
 #. translators: %s: Contact Form 7 version
-#: src/Core/SecurityHelper.php:706
+#: src/Core/SecurityHelper.php:711
 #, php-format
 msgid "Contact Form 7 v%s detected but requires v5.0 or higher"
 msgstr ""
@@ -1034,6 +994,14 @@ msgstr ""
 
 #: src/Security/ContactForm7Integration.php:129
 msgid "Security validation failed. Please try again."
+msgstr ""
+
+#: src/Security/ContactForm7Integration.php:587
+msgid "Invalid nonce"
+msgstr ""
+
+#: src/Security/ContactForm7Integration.php:591
+msgid "Not in Under Attack mode"
 msgstr ""
 
 #: src/Security/GeneralSecurity.php:269

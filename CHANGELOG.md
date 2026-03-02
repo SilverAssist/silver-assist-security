@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.16] - 2026-03-02
+
+### ♻️ Refactoring & Architecture
+
+- **Settings Hub Integration**: Renamed plugin tab from "Security" to "Security Essentials" for clearer identification
+- **Update Check Delegation**: Simplified update checking by delegating to `wp-github-updater` v1.3.0 built-in `enqueueCheckUpdatesScript()`, removing custom AJAX handler and `update-check.js`
+- **Removed `update-check.js`**: Eliminated standalone update check script in favor of centralized wp-github-updater functionality
+- **Removed duplicate `<h1>` title**: AdminPageRenderer no longer renders standalone page title (handled by Settings Hub)
+- **Version badge CSS**: Added `.version-badge` component style using CSS design system variables
+
+### 📦 Dependencies
+
+- **wp-github-updater**: Updated from `^1.0` to `^1.3` for built-in update check UI support
+- **wp-settings-hub**: Updated from `^1.1.3` to `^1.2` for `plugin_file` registration support
+- **Updater config**: Added `text_domain` parameter for localized update notifications
+
+### 🔧 CI/CD
+
+- **Copilot Setup Steps**: Added `.github/workflows/copilot-setup-steps.yml` for automated PHP dependency setup in Copilot coding agents
+
 ## [1.1.15] - 2026-02-28
 
 ### 🚨 Under Attack Mode & CAPTCHA Protection
