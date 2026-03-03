@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 1.2.0). Leave empty to use plugin file version.'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Detect version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          elif [[ -n "${{ github.event.inputs.version }}" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=$(grep -o 'Version: [0-9]\+\.[0-9]\+\.[0-9]\+' *.php 2>/dev/null | head -1 | cut -d' ' -f2)
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "🏷️ Version: $VERSION"
+
+      - name: Install dependencies
+        run: composer install --no-interaction
+
+      - name: Update version
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if [ -f "scripts/update-version.sh" ]; then
+            chmod +x scripts/update-version.sh
+            ./scripts/update-version.sh "$VERSION" --no-confirm --force
+          elif [ -f "scripts/update-version-simple.sh" ]; then
+            chmod +x scripts/update-version-simple.sh
+            ./scripts/update-version-simple.sh "$VERSION" --no-confirm --force
+          fi
+
+      - name: Code quality
+        run: |
+          HAS_CHECKS=false
+          if [ -f phpcs.xml ] || [ -f .phpcs.xml.dist ] || [ -f phpcs.xml.dist ]; then
+            echo "▶ PHPCS"
+            vendor/bin/phpcs
+            HAS_CHECKS=true
+          fi
+          if [ -f phpstan.neon ] || [ -f phpstan.neon.dist ]; then
+            echo "▶ PHPStan"
+            vendor/bin/phpstan analyse --no-progress
+            HAS_CHECKS=true
+          fi
+          if [ "$HAS_CHECKS" = false ]; then
+            echo "ℹ️ No quality tool configs found — skipping"
+          fi
+
+      - name: Build release
+        id: build
+        run: |
+          chmod +x scripts/build-release.sh
+          ./scripts/build-release.sh "${{ steps.version.outputs.version }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          files: |
+            build/*.zip
+            build/*.md5
+            build/*.sha256
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,274 +1,209 @@
 #!/bin/bash
 
-###############################################################################
-# Silver Assist Security Essentials - Release ZIP Creator
+################################################################################
+# Silver Assist — Unified Build Release Script
 #
-# Creates a properly structured ZIP file for WordPress plugin distribution
-# The ZIP will have a versioned filename but the internal folder will be just "silver-assist-security"
+# Creates a production-ready WordPress plugin ZIP package.
+# Auto-detects plugin structure and copies only runtime files.
 #
 # Usage: ./scripts/build-release.sh [version]
-# If version is not provided, it will be extracted from the main plugin file
 #
-# @package SilverAssist\Security
-# @since 1.0.0
-# @author Silver Assist
-# @version 1.1.16
-###############################################################################
+# @package SilverAssist
+# @author  Silver Assist
+################################################################################
 
 set -e
 
-# Colors for output
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-echo -e "${CYAN}=== Silver Assist Security Essentials Release ZIP Creator ===${NC}"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PLUGIN_SLUG=$(basename "$PROJECT_ROOT")
+
+echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}  ${PLUGIN_SLUG} — Release Builder${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
 echo ""
 
-# Get current directory (should be project root)
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$PROJECT_ROOT"
-
-# Check if we're in the right directory
-if [ ! -f "silver-assist-security.php" ]; then
-    echo -e "${RED}❌ Error: silver-assist-security.php not found. Make sure you're running this from the project root.${NC}"
+# Auto-detect main plugin file
+MAIN_FILE=$(find "$PROJECT_ROOT" -maxdepth 1 -name "*.php" -exec grep -l "Plugin Name:" {} \; 2>/dev/null | head -1)
+if [ -z "$MAIN_FILE" ]; then
+    echo -e "${RED}❌ No main plugin file found${NC}"
     exit 1
 fi
+MAIN_FILE_NAME=$(basename "$MAIN_FILE")
 
-# Get version from parameter or extract from main plugin file
+# Get version
 if [ -n "$1" ]; then
     VERSION="$1"
-    echo -e "${YELLOW}📋 Using provided version: ${VERSION}${NC}"
 else
-    VERSION=$(grep "Version:" silver-assist-security.php | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
-    echo -e "${YELLOW}📋 Extracted version from plugin file: ${VERSION}${NC}"
+    VERSION=$(grep -o "Version: [0-9]\+\.[0-9]\+\.[0-9]\+" "$MAIN_FILE" | cut -d' ' -f2)
 fi
 
 if [ -z "$VERSION" ]; then
-    echo -e "${RED}❌ Error: Could not determine version. Please provide version as argument or ensure silver-assist-security.php has proper version header.${NC}"
+    echo -e "${RED}❌ Could not detect version${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}📦 Creating ZIP for version: ${VERSION}${NC}"
+echo -e "  Plugin:  ${PLUGIN_SLUG}"
+echo -e "  File:    ${MAIN_FILE_NAME}"
+echo -e "  Version: ${VERSION}"
 echo ""
 
-# Define files and directories to include
-ZIP_NAME="silver-assist-security-v${VERSION}.zip"
-TEMP_DIR="/tmp/silver-assist-security-release"
-PLUGIN_DIR="${TEMP_DIR}/silver-assist-security"
+# Setup
+BUILD_DIR="${PROJECT_ROOT}/build"
+PLUGIN_DIR="${BUILD_DIR}/${PLUGIN_SLUG}"
+ZIP_FILE="${PLUGIN_SLUG}-v${VERSION}.zip"
 
-# Clean up any existing temp directory
-if [ -d "$TEMP_DIR" ]; then
-    rm -rf "$TEMP_DIR"
-fi
-
-# Create temporary directory structure
+rm -rf "$BUILD_DIR"
 mkdir -p "$PLUGIN_DIR"
 
-echo -e "${YELLOW}📋 Copying files...${NC}"
+# ─── Copy plugin files ───────────────────────────────────────────────────────
 
-# Copy main plugin file
-cp silver-assist-security.php "$PLUGIN_DIR/"
-echo "  ✅ silver-assist-security.php copied"
+echo -e "${YELLOW}📋 Copying plugin files...${NC}"
 
-# Copy documentation files
-cp README.md "$PLUGIN_DIR/"
-cp LICENSE "$PLUGIN_DIR/"
-echo "  ✅ Documentation files copied"
+cp "$MAIN_FILE" "$PLUGIN_DIR/"
+echo "  ✅ ${MAIN_FILE_NAME}"
 
-# Copy CHANGELOG.md if it exists
-if [ -f "CHANGELOG.md" ]; then
-    cp CHANGELOG.md "$PLUGIN_DIR/"
-    echo "  ✅ CHANGELOG.md copied"
-fi
-
-# Copy src directory
-if [ -d "src" ]; then
-    cp -r src "$PLUGIN_DIR/"
-    echo "  ✅ src/ directory copied"
-fi
-
-# Copy assets directory
-if [ -d "assets" ]; then
-    # Generate minified asset versions BEFORE copying
-    echo -e "${YELLOW}🔧 Generating minified assets for production (NPM + Grunt)...${NC}"
-    if [ -f "scripts/minify-assets-npm.sh" ]; then
-        # Run NPM-based minification script - reliable professional build system
-        MINIFY_OUTPUT=$(./scripts/minify-assets-npm.sh 2>&1)
-        MINIFY_EXIT_CODE=$?
-        
-        if [ $MINIFY_EXIT_CODE -eq 0 ]; then
-            echo "  ✅ Minified CSS and JS files generated successfully with NPM + Grunt"
-            echo "$MINIFY_OUTPUT" | grep -E "(SUCCESS|✓)" | sed 's/^/    /' || true
-        else
-            echo -e "${YELLOW}  ⚠️  Warning: NPM asset minification failed (exit code: $MINIFY_EXIT_CODE)${NC}"
-            echo -e "${YELLOW}  📋 Minification output:${NC}"
-            echo "$MINIFY_OUTPUT" | sed 's/^/    /'
-            echo -e "${YELLOW}  🔄 Proceeding with original files - build will continue${NC}"
-        fi
-    else
-        echo -e "${YELLOW}  ⚠️  Warning: NPM minification script not found, using original assets${NC}"
+for dir in includes Includes src assets languages blocks templates; do
+    if [ -d "${PROJECT_ROOT}/${dir}" ]; then
+        cp -r "${PROJECT_ROOT}/${dir}" "$PLUGIN_DIR/"
+        echo "  ✅ ${dir}/"
     fi
-    
-    # Now copy the assets directory (including minified files)
-    cp -r assets "$PLUGIN_DIR/"
-    echo "  ✅ assets/ directory copied"
-    
-    # Show compression statistics if minified files exist
-    if [ -f "assets/css/admin.css" ] && [ -f "assets/css/admin.min.css" ]; then
-        original_css=$(wc -c < "assets/css/admin.css")
-        minified_css=$(wc -c < "assets/css/admin.min.css")
-        css_reduction=$(( (original_css - minified_css) * 100 / original_css ))
-        echo "  📊 CSS compression: ${css_reduction}% reduction"
-    fi
-    
-    if [ -f "assets/js/admin.js" ] && [ -f "assets/js/admin.min.js" ]; then
-        original_js=$(wc -c < "assets/js/admin.js")
-        minified_js=$(wc -c < "assets/js/admin.min.js")
-        js_reduction=$(( (original_js - minified_js) * 100 / original_js ))
-        echo "  📊 JS compression: ${js_reduction}% reduction"
-    fi
-fi
+done
 
-# Copy languages directory if it exists
-if [ -d "languages" ]; then
-    cp -r languages "$PLUGIN_DIR/"
-    echo "  ✅ languages/ directory copied"
-fi
-
-# Copy composer.json if it exists (for PSR-4 autoloading)
-if [ -f "composer.json" ]; then
-    cp composer.json "$PLUGIN_DIR/"
-    echo "  ✅ composer.json copied"
-fi
-
-# Copy vendor directory (Composer dependencies) - REQUIRED for external packages
-if [ -d "vendor" ]; then
-    echo -e "${YELLOW}📦 Installing production dependencies...${NC}"
-    
-    # Install only production dependencies (no dev packages)
-    composer install --no-dev --optimize-autoloader --no-scripts --quiet
-    
-    # Create vendor directory in plugin
-    mkdir -p "$PLUGIN_DIR/vendor"
-    
-    # Copy only essential vendor files (exclude unnecessary files)
-    echo -e "${YELLOW}📦 Copying optimized vendor dependencies...${NC}"
-    
-    # Copy Composer autoloader files (essential)
-    cp -r vendor/composer "$PLUGIN_DIR/vendor/"
-    cp vendor/autoload.php "$PLUGIN_DIR/vendor/"
-    
-    # Copy only silverassist packages and their essential files
-    if [ -d "vendor/silverassist" ]; then
-        mkdir -p "$PLUGIN_DIR/vendor/silverassist"
-        
-        # Copy each silverassist package, excluding unnecessary files
-        for package_dir in vendor/silverassist/*/; do
-            if [ -d "$package_dir" ]; then
-                package_name=$(basename "$package_dir")
-                dest_dir="$PLUGIN_DIR/vendor/silverassist/$package_name"
-                mkdir -p "$dest_dir"
-                
-                # Copy essential files only
-                [ -f "$package_dir/composer.json" ] && cp "$package_dir/composer.json" "$dest_dir/"
-                [ -d "$package_dir/src" ] && cp -r "$package_dir/src" "$dest_dir/"
-                
-                # Copy assets directory if it exists (required for JS/CSS files)
-                if [ -d "$package_dir/assets" ]; then
-                    cp -r "$package_dir/assets" "$dest_dir/"
-                    echo "    ✅ silverassist/$package_name (optimized + assets)"
-                else
-                    echo "    ✅ silverassist/$package_name (optimized)"
-                fi
-            fi
-        done
+for file in README.md CHANGELOG.md LICENSE LICENSE.md; do
+    if [ -f "${PROJECT_ROOT}/${file}" ]; then
+        cp "${PROJECT_ROOT}/${file}" "$PLUGIN_DIR/"
     fi
-    
-    echo "  ✅ vendor/ directory copied (production dependencies - optimized)"
-    
-    # Restore dev dependencies after build
-    composer install --quiet
-    echo "  ✅ Development dependencies restored"
-else
-    echo -e "${RED}⚠️  Warning: vendor/ directory not found. Run 'composer install' first.${NC}"
-fi
+done
 
-# Validate vendor package assets (CSS/JS required at runtime)
-if [ -d "$PLUGIN_DIR/vendor" ]; then
-    if [ ! -f "$PLUGIN_DIR/vendor/silverassist/wp-settings-hub/assets/css/settings-hub.css" ]; then
-        echo -e "${RED}⚠️  Settings Hub CSS asset missing: vendor/silverassist/wp-settings-hub/assets/css/settings-hub.css${NC}"
-    else
-        echo "  ✅ Settings Hub CSS asset included"
-    fi
-    if [ ! -f "$PLUGIN_DIR/vendor/silverassist/wp-github-updater/assets/js/check-updates.js" ]; then
-        echo -e "${RED}⚠️  GitHub updater JS asset missing: vendor/silverassist/wp-github-updater/assets/js/check-updates.js${NC}"
-    else
-        echo "  ✅ GitHub updater JS asset included"
-    fi
-fi
+# ─── Vendor dependencies ─────────────────────────────────────────────────────
 
 echo ""
-
-# Create releases directory if it doesn't exist
-mkdir -p "$PROJECT_ROOT/releases"
-
-# Create the ZIP file directly in releases directory
-echo -e "${YELLOW}🗜️  Creating ZIP archive...${NC}"
-cd "$TEMP_DIR"
-zip -r "$ZIP_NAME" silver-assist-security/ -x "*.DS_Store*" "*.git*" "*node_modules*" "*.log*" "*.tmp*" "*scripts*" "*.github*" "*tests*" "*.idea*" "*.vscode*" "*HEADER-STANDARDS.md*" "*MIGRATION.md*" "*phpunit.xml*" "*.phpcs.xml*"
-
-# Move ZIP directly to releases directory (no copy in project root)
-mv "$ZIP_NAME" "$PROJECT_ROOT/releases/"
+echo -e "${YELLOW}📦 Building vendor dependencies...${NC}"
 
 cd "$PROJECT_ROOT"
 
-# Clean up temp directory
-rm -rf "$TEMP_DIR"
-
-# Get ZIP size information from releases directory
-ZIP_PATH="$PROJECT_ROOT/releases/$ZIP_NAME"
-ZIP_SIZE=$(du -h "$ZIP_PATH" | cut -f1)
-ZIP_SIZE_BYTES=$(stat -f%z "$ZIP_PATH" 2>/dev/null || stat -c%s "$ZIP_PATH" 2>/dev/null || echo "0")
-ZIP_SIZE_KB=$((ZIP_SIZE_BYTES / 1024))
-
-echo ""
-echo -e "${GREEN}✅ Release ZIP created successfully!${NC}"
-echo -e "${BLUE}📦 File: releases/${ZIP_NAME}${NC}"
-echo -e "${BLUE}📏 Size: ${ZIP_SIZE} (~${ZIP_SIZE_KB}KB)${NC}"
-echo ""
-echo -e "${GREEN}🎉 Ready for WordPress installation!${NC}"
-echo ""
-echo -e "${BLUE}📋 Next steps:${NC}"
-if [ -n "$GITHUB_OUTPUT" ]; then
-    # Running in CI/CD - shorter, technical output
-    echo "• Package created for GitHub Release automation"
-    echo "• File: releases/${ZIP_NAME}"
-    echo "• GitHub Actions will handle release creation"
-else
-    # Running manually - detailed user instructions
-    echo "1. Navigate to releases/ folder to find your ZIP file"
-    echo "2. Upload ${ZIP_NAME} to WordPress admin (Plugins → Add New → Upload Plugin)"
-    echo "3. The plugin folder will be extracted as 'silver-assist-security' (without version)"
-    echo "4. Activate and configure the security settings"
+if [ ! -f "composer.json" ]; then
+    echo -e "${RED}❌ composer.json not found${NC}"
+    exit 1
 fi
-echo ""
-echo -e "${CYAN}🔧 Development notes:${NC}"
-echo "• ZIP location: releases/${ZIP_NAME}"
-echo "• Internal folder name: silver-assist-security (clean, no version)"
-echo "• Size: ~${ZIP_SIZE_KB}KB"
-echo "• Excludes: .git, node_modules, vendor, scripts, tests, .vscode, development files"
-echo "• Includes: Core security features, admin panel, GraphQL protection"
 
-# Output package information for GitHub Actions (if running in CI)
+composer install --no-dev --optimize-autoloader --no-interaction
+
+if [ ! -f "vendor/autoload.php" ]; then
+    echo -e "${RED}❌ vendor/autoload.php not found${NC}"
+    exit 1
+fi
+
+echo -e "${YELLOW}📦 Copying production vendor files...${NC}"
+
+mkdir -p "$PLUGIN_DIR/vendor/composer"
+cp vendor/autoload.php "$PLUGIN_DIR/vendor/"
+cp vendor/composer/*.php "$PLUGIN_DIR/vendor/composer/"
+cp vendor/composer/*.json "$PLUGIN_DIR/vendor/composer/" 2>/dev/null || true
+echo "  ✅ autoloader"
+
+if [ -d "vendor/composer/installers" ]; then
+    mkdir -p "$PLUGIN_DIR/vendor/composer/installers"
+    [ -d "vendor/composer/installers/src" ] && cp -r "vendor/composer/installers/src" "$PLUGIN_DIR/vendor/composer/installers/"
+    echo "  ✅ composer/installers"
+fi
+
+if [ -d "vendor/silverassist" ]; then
+    mkdir -p "$PLUGIN_DIR/vendor/silverassist"
+    for package_dir in vendor/silverassist/*/; do
+        if [ -d "$package_dir" ]; then
+            package_name=$(basename "$package_dir")
+            dest="$PLUGIN_DIR/vendor/silverassist/$package_name"
+            mkdir -p "$dest"
+            [ -d "$package_dir/src" ] && cp -r "$package_dir/src" "$dest/"
+            [ -d "$package_dir/assets" ] && cp -r "$package_dir/assets" "$dest/"
+            echo "  ✅ silverassist/${package_name}"
+        fi
+    done
+fi
+
+# Restore dev dependencies (skip in CI — environment is ephemeral)
+if [ -z "$GITHUB_ACTIONS" ]; then
+    echo ""
+    echo -e "${YELLOW}📦 Restoring development dependencies...${NC}"
+    composer install --no-interaction > /dev/null 2>&1
+    echo "  ✅ Dev environment restored"
+fi
+
+# ─── Validate ─────────────────────────────────────────────────────────────────
+
+echo ""
+echo -e "${YELLOW}🔍 Validating package...${NC}"
+
+ERRORS=0
+
+if [ ! -f "$PLUGIN_DIR/$MAIN_FILE_NAME" ]; then
+    echo -e "${RED}  ❌ Main plugin file${NC}"
+    ERRORS=$((ERRORS + 1))
+fi
+
+if [ ! -f "$PLUGIN_DIR/vendor/autoload.php" ]; then
+    echo -e "${RED}  ❌ Autoloader${NC}"
+    ERRORS=$((ERRORS + 1))
+fi
+
+if [ ! -f "$PLUGIN_DIR/vendor/silverassist/wp-settings-hub/assets/css/settings-hub.css" ]; then
+    echo -e "${RED}  ❌ wp-settings-hub CSS asset${NC}"
+    ERRORS=$((ERRORS + 1))
+else
+    echo "  ✅ Settings Hub CSS"
+fi
+
+if [ ! -f "$PLUGIN_DIR/vendor/silverassist/wp-github-updater/assets/js/check-updates.js" ]; then
+    echo -e "${RED}  ❌ wp-github-updater JS asset${NC}"
+    ERRORS=$((ERRORS + 1))
+else
+    echo "  ✅ GitHub Updater JS"
+fi
+
+if [ $ERRORS -gt 0 ]; then
+    echo -e "${RED}❌ Validation failed (${ERRORS} errors)${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}  ✅ All checks passed${NC}"
+
+# ─── Create ZIP ───────────────────────────────────────────────────────────────
+
+echo ""
+echo -e "${YELLOW}🗜️  Creating ZIP...${NC}"
+
+cd "$BUILD_DIR"
+zip -r "$ZIP_FILE" "$PLUGIN_SLUG/" -x "*.DS_Store*" > /dev/null
+
+# Checksums
+md5sum "$ZIP_FILE" > "${ZIP_FILE}.md5" 2>/dev/null || md5 -r "$ZIP_FILE" > "${ZIP_FILE}.md5"
+shasum -a 256 "$ZIP_FILE" > "${ZIP_FILE}.sha256"
+
+cd "$PROJECT_ROOT"
+
+ZIP_SIZE=$(du -h "$BUILD_DIR/$ZIP_FILE" | cut -f1)
+
+echo ""
+echo -e "${GREEN}═══════════════════════════════════════════════════${NC}"
+echo -e "${GREEN}  ✅ Build complete${NC}"
+echo -e "${GREEN}═══════════════════════════════════════════════════${NC}"
+echo ""
+echo "  📦 build/${ZIP_FILE} (${ZIP_SIZE})"
+echo "  🔐 build/${ZIP_FILE}.md5"
+echo "  🔐 build/${ZIP_FILE}.sha256"
+
+# GitHub Actions output
 if [ -n "$GITHUB_OUTPUT" ]; then
-    echo "package_name=silver-assist-security-v${VERSION}" >> $GITHUB_OUTPUT
-    echo "package_size=${ZIP_SIZE}" >> $GITHUB_OUTPUT
-    echo "package_size_kb=${ZIP_SIZE_KB}KB" >> $GITHUB_OUTPUT
-    echo "zip_path=releases/${ZIP_NAME}" >> $GITHUB_OUTPUT
-    echo "zip_file=${ZIP_NAME}" >> $GITHUB_OUTPUT
-    echo "version=${VERSION}" >> $GITHUB_OUTPUT
+    echo "zip_path=build/${ZIP_FILE}" >> "$GITHUB_OUTPUT"
+    echo "zip_name=${ZIP_FILE}" >> "$GITHUB_OUTPUT"
+    echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+    echo "zip_size=${ZIP_SIZE}" >> "$GITHUB_OUTPUT"
 fi
