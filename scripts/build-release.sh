@@ -197,6 +197,20 @@ else
     echo -e "${RED}⚠️  Warning: vendor/ directory not found. Run 'composer install' first.${NC}"
 fi
 
+# Validate vendor package assets (CSS/JS required at runtime)
+if [ -d "$PLUGIN_DIR/vendor" ]; then
+    if [ ! -f "$PLUGIN_DIR/vendor/silverassist/wp-settings-hub/assets/css/settings-hub.css" ]; then
+        echo -e "${RED}⚠️  Settings Hub CSS asset missing: vendor/silverassist/wp-settings-hub/assets/css/settings-hub.css${NC}"
+    else
+        echo "  ✅ Settings Hub CSS asset included"
+    fi
+    if [ ! -f "$PLUGIN_DIR/vendor/silverassist/wp-github-updater/assets/js/check-updates.js" ]; then
+        echo -e "${RED}⚠️  GitHub updater JS asset missing: vendor/silverassist/wp-github-updater/assets/js/check-updates.js${NC}"
+    else
+        echo "  ✅ GitHub updater JS asset included"
+    fi
+fi
+
 echo ""
 
 # Create releases directory if it doesn't exist
