@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Security
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.1.16
+ * @version 1.2.0
  */
 
 namespace SilverAssist\Security\Security;
@@ -810,12 +810,15 @@ class LoginSecurity {
 		$captcha = $this->under_attack->generate_captcha();
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template handles its own escaping.
-		echo SecurityHelper::render_template( 'captcha-field.php', array(
-			'question'     => $captcha['question'],
-			'token'        => $captcha['token'],
-			'show_refresh' => false,
-			'input_class'  => 'input',
-		) );
+		echo SecurityHelper::render_template(
+			'captcha-field.php',
+			array(
+				'question'     => $captcha['question'],
+				'token'        => $captcha['token'],
+				'show_refresh' => false,
+				'input_class'  => 'input',
+			)
+		);
 	}
 
 	/**
@@ -843,7 +846,7 @@ class LoginSecurity {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- CAPTCHA validation, nonce handled separately
 		$captcha_answer = isset( $_POST['silver_captcha_answer'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_captcha_answer'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$captcha_token  = isset( $_POST['silver_captcha_token'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_captcha_token'] ) ) : '';
+		$captcha_token = isset( $_POST['silver_captcha_token'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_captcha_token'] ) ) : '';
 
 		if ( '' === $captcha_answer || '' === $captcha_token ) {
 			return new WP_Error(

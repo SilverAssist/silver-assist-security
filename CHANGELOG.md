@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-03-03
+
+### 🐛 Fixed
+- **Vendor Assets**: Ensure vendor package assets (CSS/JS) are included in release builds
+- **Null Safety**: Add null guards for `UnderAttackMode` in CF7 CAPTCHA methods (`inject_captcha_field`, `ajax_generate_captcha`, `enqueue_captcha_assets`)
+
+### 🧹 Code Quality
+- **PHPCS**: Fix 7 auto-fixable formatting issues in `ContactForm7AjaxHandler`, `ContactForm7Integration`, and `LoginSecurity`
+- **PHPStan**: Resolve all 5 nullable type errors — now 0 errors at configured level
+
+### ♻️ Refactoring
+- **Release Pipeline**: Unify release workflow and build script across all plugins
+  - Selective copy strategy replaces copy-all-then-clean approach
+  - Remove `composer.json` from ZIP (not needed at runtime)
+  - Auto-detect plugin structure (directories, main file, version)
+  - Generate MD5 + SHA256 checksums
+
+### 🔒 Security
+- **GitHub Actions**: Pin all dependencies to SHA hashes for supply chain protection
+  - `actions/checkout@v4.3.1`
+  - `shivammathur/setup-php@v2.36.0`
+  - `softprops/action-gh-release@v2.5.0`
+
 ## [1.1.16] - 2026-03-02
 
 ### ♻️ Refactoring & Architecture

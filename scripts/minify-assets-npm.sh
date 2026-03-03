@@ -11,7 +11,7 @@
 # - Container queries  
 # - Modern CSS syntax
 #
-# @version 1.1.16
+# @version 1.2.0
 # @author Silver Assist Security Team
 # @since 1.1.10
 

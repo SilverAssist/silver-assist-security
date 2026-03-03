@@ -545,18 +545,21 @@ class ContactForm7Integration {
 	 * @return string Modified form HTML with CAPTCHA widget injected.
 	 */
 	public function inject_captcha_field( string $form ): string {
-		if ( ! $this->under_attack->is_under_attack() ) {
+		if ( ! $this->under_attack || ! $this->under_attack->is_under_attack() ) {
 			return $form;
 		}
 
 		$captcha = $this->under_attack->generate_captcha();
 
-		$captcha_html = SecurityHelper::render_template( 'captcha-field.php', array(
-			'question'     => $captcha['question'],
-			'token'        => $captcha['token'],
-			'show_refresh' => true,
-			'input_class'  => '',
-		) );
+		$captcha_html = SecurityHelper::render_template(
+			'captcha-field.php',
+			array(
+				'question'     => $captcha['question'],
+				'token'        => $captcha['token'],
+				'show_refresh' => true,
+				'input_class'  => '',
+			)
+		);
 
 		// Insert CAPTCHA just before the submit button.
 		// CF7 may place class/id attributes before type="submit", so use a regex
@@ -587,7 +590,7 @@ class ContactForm7Integration {
 			\wp_send_json_error( array( 'message' => \__( 'Invalid nonce', 'silver-assist-security' ) ), 403 );
 		}
 
-		if ( ! $this->under_attack->is_under_attack() ) {
+		if ( ! $this->under_attack || ! $this->under_attack->is_under_attack() ) {
 			\wp_send_json_error( array( 'message' => \__( 'Not in Under Attack mode', 'silver-assist-security' ) ), 400 );
 		}
 
@@ -610,7 +613,7 @@ class ContactForm7Integration {
 	 * @return void
 	 */
 	public function enqueue_captcha_assets(): void {
-		if ( ! $this->under_attack->is_under_attack() ) {
+		if ( ! $this->under_attack || ! $this->under_attack->is_under_attack() ) {
 			return;
 		}
 
