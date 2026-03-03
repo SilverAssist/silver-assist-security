@@ -47,12 +47,12 @@ jobs:
       - name: Update version
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          if [ -f "scripts/update-version.sh" ]; then
-            chmod +x scripts/update-version.sh
-            ./scripts/update-version.sh "$VERSION" --no-confirm --force
-          elif [ -f "scripts/update-version-simple.sh" ]; then
+          if [ -f "scripts/update-version-simple.sh" ]; then
             chmod +x scripts/update-version-simple.sh
             ./scripts/update-version-simple.sh "$VERSION" --no-confirm --force
+          elif [ -f "scripts/update-version.sh" ]; then
+            chmod +x scripts/update-version.sh
+            ./scripts/update-version.sh "$VERSION" --no-confirm --force
           fi
 
       - name: Code quality
