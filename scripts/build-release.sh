@@ -177,7 +177,13 @@ if [ -d "vendor" ]; then
                 [ -f "$package_dir/composer.json" ] && cp "$package_dir/composer.json" "$dest_dir/"
                 [ -d "$package_dir/src" ] && cp -r "$package_dir/src" "$dest_dir/"
                 
-                echo "    ✅ silverassist/$package_name (optimized)"
+                # Copy assets directory if it exists (required for JS/CSS files)
+                if [ -d "$package_dir/assets" ]; then
+                    cp -r "$package_dir/assets" "$dest_dir/"
+                    echo "    ✅ silverassist/$package_name (optimized + assets)"
+                else
+                    echo "    ✅ silverassist/$package_name (optimized)"
+                fi
             fi
         done
     fi
