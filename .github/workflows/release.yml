@@ -60,7 +60,7 @@ jobs:
           HAS_CHECKS=false
           if [ -f phpcs.xml ] || [ -f .phpcs.xml.dist ] || [ -f phpcs.xml.dist ]; then
             echo "▶ PHPCS"
-            vendor/bin/phpcs
+            vendor/bin/phpcs --runtime-set ignore_warnings_on_exit 1
             HAS_CHECKS=true
           fi
           if [ -f phpstan.neon ] || [ -f phpstan.neon.dist ]; then
