@@ -97,8 +97,9 @@ class GeneralSecurity {
 			header( 'Permissions-Policy: geolocation=(), microphone=(), camera=()' );
 
 			// HSTS for HTTPS sites (only in production, not in development environments)
+			// Includes preload directive to allow submission to browser HSTS preload lists
 			if ( \is_ssl() && ! $this->is_development_environment() ) {
-				header( 'Strict-Transport-Security: max-age=31536000; includeSubDomains' );
+				header( 'Strict-Transport-Security: max-age=31536000; includeSubDomains; preload' );
 			}
 		}
 	}
