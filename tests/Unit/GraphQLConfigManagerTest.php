@@ -335,18 +335,29 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
      */
     public function test_security_level_no_double_counting_auth(): void
     {
-        // Enable authentication via WPGraphQL native setting.
+        if (! \class_exists('WPGraphQL')) {
+            $this->markTestSkipped('WPGraphQL plugin not available');
+        }
+
+        // Scenario 1: Endpoint access restricted via headless mode only.
+        update_option('silver_assist_graphql_headless_mode', 1);
+        delete_option('graphql_general_settings');
+
+        $this->config_manager->clear_cache();
+        $status_headless_only = $this->config_manager->get_integration_status();
+
+        // Scenario 2: Both endpoint access restriction and WPGraphQL auth are enabled.
         $settings = get_option('graphql_general_settings', array());
         $settings['restrict_endpoint_to_logged_in_users'] = 'on';
         update_option('graphql_general_settings', $settings);
 
         $this->config_manager->clear_cache();
-        $status = $this->config_manager->get_integration_status();
+        $status_both = $this->config_manager->get_integration_status();
 
-        $this->assertContains(
-            $status['security_level'],
-            array('high', 'medium', 'low'),
-            'Security level should be one of high, medium, or low'
+        $this->assertSame(
+            $status_headless_only['security_level'],
+            $status_both['security_level'],
+            'Security level should not increase when both endpoint access restriction and authentication requirement are enabled (no double-counting of auth).'
         );
     }
 }

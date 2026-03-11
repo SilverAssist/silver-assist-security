@@ -346,6 +346,7 @@ class SettingsRenderer {
 						<form method="post" action="" id="graphql-auth-form">
 							<?php \wp_nonce_field( 'silver_assist_security_settings' ); ?>
 							<input type="hidden" name="save_silver_assist_security" value="1" />
+							<input type="hidden" name="settings_section" value="graphql_auth" />
 
 							<h4><?php \esc_html_e( 'API Key Management', 'silver-assist-security' ); ?></h4>
 
@@ -425,13 +426,13 @@ class SettingsRenderer {
 							</table>
 
 							<?php if ( $has_api_key ) : ?>
-								<div class="notice notice-success inline" id="graphql-api-key-usage" style="margin: 15px 0;">
-									<h4 style="margin-top: 10px;"><?php \esc_html_e( 'Usage Example', 'silver-assist-security' ); ?></h4>
+								<div class="notice notice-success inline" id="graphql-api-key-usage">
+									<h4><?php \esc_html_e( 'Usage Example', 'silver-assist-security' ); ?></h4>
 									<p><?php \esc_html_e( 'Add one of the following headers to your GraphQL requests:', 'silver-assist-security' ); ?></p>
 									<p><strong>X-API-Key:</strong></p>
-									<code style="display: block; padding: 8px 12px; background: #f0f0f0; margin-bottom: 10px;">X-API-Key: your-api-key</code>
+									<code class="api-key-usage-code">X-API-Key: your-api-key</code>
 									<p><strong>Authorization Bearer:</strong></p>
-									<code style="display: block; padding: 8px 12px; background: #f0f0f0; margin-bottom: 10px;">Authorization: Bearer your-api-key</code>
+									<code class="api-key-usage-code">Authorization: Bearer your-api-key</code>
 								</div>
 							<?php endif; ?>
 

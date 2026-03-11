@@ -1873,7 +1873,7 @@
                             $result.html(
                                 "<div class=\"notice notice-success inline\">" +
                                 "<p><strong>" + (response.data.message || "") + "</strong></p>" +
-                                "<code style=\"display: inline-block; margin-bottom: 10px;\">" +
+                                "<code class=\"api-key-code\">" +
                                 $("<span>").text(response.data.api_key).html() +
                                 "</code></div>"
                             ).show();
@@ -1897,13 +1897,13 @@
                             // Show usage example if not visible.
                             if (!$usage.length) {
                                 $actions.closest("table").after(
-                                    "<div class=\"notice notice-success inline\" id=\"graphql-api-key-usage\" style=\"margin: 15px 0;\">" +
-                                    "<h4 style=\"margin-top: 10px;\">" + (strings.usageExample || "Usage Example") + "</h4>" +
+                                    "<div class=\"notice notice-success inline\" id=\"graphql-api-key-usage\">" +
+                                    "<h4>" + (strings.usageExample || "Usage Example") + "</h4>" +
                                     "<p>" + (strings.usageExampleDesc || "Add one of the following headers to your GraphQL requests:") + "</p>" +
                                     "<p><strong>X-API-Key:</strong></p>" +
-                                    "<code style=\"display: block; padding: 8px 12px; background: #f0f0f0; margin-bottom: 10px;\">X-API-Key: your-api-key</code>" +
+                                    "<code class=\"api-key-usage-code\">X-API-Key: your-api-key</code>" +
                                     "<p><strong>Authorization Bearer:</strong></p>" +
-                                    "<code style=\"display: block; padding: 8px 12px; background: #f0f0f0; margin-bottom: 10px;\">Authorization: Bearer your-api-key</code>" +
+                                    "<code class=\"api-key-usage-code\">Authorization: Bearer your-api-key</code>" +
                                     "</div>"
                                 );
                             }

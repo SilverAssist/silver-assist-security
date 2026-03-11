@@ -608,6 +608,21 @@
         }
     }
 
+    /* API Key Code Blocks */
+    .api-key-code {
+        display: inline-block;
+        margin-bottom: var(--silver-spacing-md);
+        user-select: all;
+    }
+
+    .api-key-usage-code {
+        display: block;
+        padding: var(--silver-spacing-sm) var(--silver-spacing-md);
+        background: var(--silver-bg-primary);
+        border-radius: var(--silver-radius-sm);
+        margin-bottom: var(--silver-spacing-md);
+    }
+
 }
 
 /* =============================================================================
