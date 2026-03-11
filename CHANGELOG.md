@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🔒 Security
 
-- **GraphQL Authentication Requirement**: Enforce authentication for all GraphQL requests via `graphql_request_data` filter, using WPGraphQL's native `restrict_endpoint_to_authenticated_users` setting as the single source of truth (RSM pentest audit finding)
+- **GraphQL Authentication Requirement**: Enforce authentication for all GraphQL requests via `graphql_request_data` filter, using WPGraphQL's native `restrict_endpoint_to_logged_in_users` setting as the single source of truth (RSM pentest audit finding)
 - **Custom API Key Authentication**: Plugin-managed API key system supporting `X-API-Key` header and `Authorization: Bearer` token for server-to-server authentication
 - **Secure Key Storage**: API keys stored as hashed values using `wp_hash_password()`, verified with `wp_check_password()`
 - **Service User Binding**: API key authentication resolves to a configurable WordPress service account user

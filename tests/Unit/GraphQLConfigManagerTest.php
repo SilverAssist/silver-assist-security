@@ -271,7 +271,7 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
     public function test_authentication_required_wpgraphql_off(): void
     {
         $settings = get_option('graphql_general_settings', array());
-        $settings['restrict_endpoint_to_authenticated_users'] = 'off';
+        $settings['restrict_endpoint_to_logged_in_users'] = 'off';
         update_option('graphql_general_settings', $settings);
 
         $this->config_manager->clear_cache();
@@ -295,7 +295,7 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
         }
 
         $settings = get_option('graphql_general_settings', array());
-        $settings['restrict_endpoint_to_authenticated_users'] = 'on';
+        $settings['restrict_endpoint_to_logged_in_users'] = 'on';
         update_option('graphql_general_settings', $settings);
 
         $this->config_manager->clear_cache();
@@ -337,7 +337,7 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
     {
         // Enable authentication via WPGraphQL native setting.
         $settings = get_option('graphql_general_settings', array());
-        $settings['restrict_endpoint_to_authenticated_users'] = 'on';
+        $settings['restrict_endpoint_to_logged_in_users'] = 'on';
         update_option('graphql_general_settings', $settings);
 
         $this->config_manager->clear_cache();

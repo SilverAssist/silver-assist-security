@@ -231,7 +231,7 @@ class GraphQLConfigManager {
 		$config['debug_mode'] = $this->get_wpgraphql_setting( 'debug_mode_enabled', 'off' ) === 'on';
 
 		// Endpoint Access
-		$auth_required             = $this->get_wpgraphql_setting( 'restrict_endpoint_to_authenticated_users', 'off' );
+		$auth_required             = $this->get_wpgraphql_setting( 'restrict_endpoint_to_logged_in_users', 'off' );
 		$config['endpoint_access'] = $auth_required === 'on' ? 'restricted' : 'public';
 
 		// Batch Queries
@@ -428,13 +428,13 @@ class GraphQLConfigManager {
 	/**
 	 * Check if authentication is required for GraphQL requests
 	 *
-	 * Delegates to WPGraphQL's native restrict_endpoint_to_authenticated_users setting.
+	 * Delegates to WPGraphQL's native restrict_endpoint_to_logged_in_users setting.
 	 *
 	 * @since 1.8.0
 	 * @return bool True if authentication is required.
 	 */
 	public function is_authentication_required(): bool {
-		return $this->get_wpgraphql_setting( 'restrict_endpoint_to_authenticated_users', 'off' ) === 'on';
+		return $this->get_wpgraphql_setting( 'restrict_endpoint_to_logged_in_users', 'off' ) === 'on';
 	}
 
 	/**
