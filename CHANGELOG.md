@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Authentication Settings UI**: Admin panel section showing WPGraphQL authentication status badge with direct link to WPGraphQL settings, API key management (generate/regenerate/revoke), service user dropdown, and one-time key display
 - **Dashboard Auth Indicator**: Authentication status ("Required" / "Public") shown in GraphQL Security dashboard card
 - **Security Level Scoring**: Authentication requirement contributes to the GraphQL security level calculation
+- **AJAX API Key Management**: Generate, regenerate, and revoke API keys via AJAX without page reload, keeping the user on the GraphQL Security tab
+- **API Key Usage Example**: Success-styled notice showing `X-API-Key` and `Authorization: Bearer` header formats, visible only when an API key is configured
 
 ### 🐛 Fixed
 
@@ -30,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Unit tests for `is_authentication_required()` covering WPGraphQL setting on/off and security level scoring
 - Integration tests for auth enforcement, `validate_authentication()`, and `authenticate_api_key()` (filter registration, logged-in pass-through, unauthenticated blocking, env bypass, API key via X-API-Key and Bearer headers)
+- Unit tests for `GraphQLApiKeyAjaxHandler`: generate success, nonce validation, capability checks, key regeneration, revoke flow, hex format validation
 
 ### 🌐 Translations
 

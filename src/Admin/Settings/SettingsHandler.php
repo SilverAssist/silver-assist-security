@@ -160,65 +160,6 @@ class SettingsHandler {
 			}
 			\update_option( 'silver_assist_graphql_service_user_id', $service_user_id );
 		}
-
-		// API key generation (only when explicitly requested).
-		if ( isset( $_POST['silver_assist_graphql_generate_api_key'] ) && '1' === \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_generate_api_key'] ) ) ) {
-			$this->generate_graphql_api_key();
-		}
-
-		// API key revocation.
-		if ( isset( $_POST['silver_assist_graphql_revoke_api_key'] ) && '1' === \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_revoke_api_key'] ) ) ) {
-			\update_option( 'silver_assist_graphql_api_key', '' );
-			\update_option( 'silver_assist_graphql_service_user_id', 0 );
-		}
-	}
-
-	/**
-	 * Generate a new GraphQL API key
-	 *
-	 * Creates a cryptographically secure API key, stores the hash,
-	 * and displays the key once via an admin notice.
-	 *
-	 * @since 1.8.0
-	 * @return void
-	 */
-	private function generate_graphql_api_key(): void {
-		// Generate a cryptographically secure API key.
-		try {
-			$bytes   = \random_bytes( 32 );
-			$api_key = \bin2hex( $bytes );
-		} catch ( \Throwable $e ) {
-			SecurityHelper::log_security_event(
-				'graphql_api_key_error',
-				'Failed to generate GraphQL API key using random_bytes().',
-				array(
-					'exception_message' => $e->getMessage(),
-					'file'              => __FILE__,
-					'line'              => __LINE__,
-				)
-			);
-
-			\set_transient(
-				'silver_assist_graphql_new_api_key_error',
-				\__(
-					'Failed to generate a new GraphQL API key. Please check your server\'s randomness configuration or contact your hosting provider.',
-					'silver-assist-security'
-				),
-				60
-			);
-
-			return;
-		}
-
-		// Store only the hash.
-		\update_option( 'silver_assist_graphql_api_key', \wp_hash_password( $api_key ) );
-
-		// Show the key once to the generating admin via a user-scoped transient.
-		$user_id = \get_current_user_id();
-		if ( $user_id ) {
-			$transient_key = 'silver_assist_graphql_new_api_key_' . (int) $user_id;
-			\set_transient( $transient_key, $api_key, 60 );
-		}
 	}
 
 	/**

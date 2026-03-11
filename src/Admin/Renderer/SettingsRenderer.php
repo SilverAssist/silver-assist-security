@@ -379,58 +379,61 @@ class SettingsRenderer {
 											<?php \esc_html_e( 'API Key', 'silver-assist-security' ); ?>
 										</th>
 										<td>
-											<?php
-											$has_api_key   = ! empty( DefaultConfig::get_option( 'silver_assist_graphql_api_key' ) );
-											$transient_key = 'silver_assist_graphql_new_api_key_' . (int) \get_current_user_id();
-											$new_api_key   = \get_transient( $transient_key );
-											if ( $new_api_key ) :
-												\delete_transient( $transient_key );
-												?>
-												<div class="notice notice-success inline">
-													<p><strong><?php \esc_html_e( 'New API Key Generated — Copy it now, it will not be shown again:', 'silver-assist-security' ); ?></strong></p>
-													<code style="font-size: 14px; padding: 5px 10px; background: #f0f0f0; user-select: all;"><?php echo \esc_html( $new_api_key ); ?></code>
-												</div>
-											<?php endif; ?>
+											<?php $has_api_key = ! empty( DefaultConfig::get_option( 'silver_assist_graphql_api_key' ) ); ?>
 
-											<?php if ( $has_api_key ) : ?>
-												<span class="feature-value enabled"><?php \esc_html_e( 'Active', 'silver-assist-security' ); ?></span>
-												<p class="description">
-													<?php \esc_html_e( 'An API key is configured. Regenerate to create a new key (invalidates the current one).', 'silver-assist-security' ); ?>
-												</p>
-												<p style="margin-top: 10px;">
-													<button type="submit"
-														name="silver_assist_graphql_generate_api_key"
-														value="1"
+											<div id="graphql-api-key-result" style="display:none;"></div>
+
+											<div id="graphql-api-key-status">
+												<?php if ( $has_api_key ) : ?>
+													<span class="feature-value enabled"><?php \esc_html_e( 'Active', 'silver-assist-security' ); ?></span>
+													<p class="description">
+														<?php \esc_html_e( 'An API key is configured. Regenerate to create a new key (invalidates the current one).', 'silver-assist-security' ); ?>
+													</p>
+												<?php else : ?>
+													<span class="feature-value disabled"><?php \esc_html_e( 'Not configured', 'silver-assist-security' ); ?></span>
+													<p class="description">
+														<?php \esc_html_e( 'Generate an API key for server-to-server authentication. Use the X-API-Key header or Authorization: Bearer token.', 'silver-assist-security' ); ?>
+													</p>
+												<?php endif; ?>
+											</div>
+
+											<p style="margin-top: 10px;" id="graphql-api-key-actions">
+												<?php if ( $has_api_key ) : ?>
+													<button type="button"
+														id="graphql-regenerate-api-key"
 														class="button button-secondary"
-														onclick="return confirm('<?php \esc_attr_e( 'This will invalidate the current API key. All consumers using it will need to update. Continue?', 'silver-assist-security' ); ?>');">
+														data-confirm="<?php \esc_attr_e( 'This will invalidate the current API key. All consumers using it will need to update. Continue?', 'silver-assist-security' ); ?>">
 														<?php \esc_html_e( 'Regenerate API Key', 'silver-assist-security' ); ?>
 													</button>
-													<button type="submit"
-														name="silver_assist_graphql_revoke_api_key"
-														value="1"
+													<button type="button"
+														id="graphql-revoke-api-key"
 														class="button button-link-delete"
-														onclick="return confirm('<?php \esc_attr_e( 'This will revoke the API key. All consumers using it will lose access. Continue?', 'silver-assist-security' ); ?>');">
+														data-confirm="<?php \esc_attr_e( 'This will revoke the API key. All consumers using it will lose access. Continue?', 'silver-assist-security' ); ?>">
 														<?php \esc_html_e( 'Revoke API Key', 'silver-assist-security' ); ?>
 													</button>
-												</p>
-											<?php else : ?>
-												<span class="feature-value disabled"><?php \esc_html_e( 'Not configured', 'silver-assist-security' ); ?></span>
-												<p class="description">
-													<?php \esc_html_e( 'Generate an API key for server-to-server authentication. Use the X-API-Key header or Authorization: Bearer token.', 'silver-assist-security' ); ?>
-												</p>
-												<p style="margin-top: 10px;">
-													<button type="submit"
-														name="silver_assist_graphql_generate_api_key"
-														value="1"
+												<?php else : ?>
+													<button type="button"
+														id="graphql-generate-api-key"
 														class="button button-secondary">
 														<?php \esc_html_e( 'Generate API Key', 'silver-assist-security' ); ?>
 													</button>
-												</p>
-											<?php endif; ?>
+												<?php endif; ?>
+											</p>
 										</td>
 									</tr>
 								</tbody>
 							</table>
+
+							<?php if ( $has_api_key ) : ?>
+								<div class="notice notice-success inline" id="graphql-api-key-usage" style="margin: 15px 0;">
+									<h4 style="margin-top: 10px;"><?php \esc_html_e( 'Usage Example', 'silver-assist-security' ); ?></h4>
+									<p><?php \esc_html_e( 'Add one of the following headers to your GraphQL requests:', 'silver-assist-security' ); ?></p>
+									<p><strong>X-API-Key:</strong></p>
+									<code style="display: block; padding: 8px 12px; background: #f0f0f0; margin-bottom: 10px;">X-API-Key: your-api-key</code>
+									<p><strong>Authorization Bearer:</strong></p>
+									<code style="display: block; padding: 8px 12px; background: #f0f0f0; margin-bottom: 10px;">Authorization: Bearer your-api-key</code>
+								</div>
+							<?php endif; ?>
 
 							<p class="submit">
 								<input type="submit"

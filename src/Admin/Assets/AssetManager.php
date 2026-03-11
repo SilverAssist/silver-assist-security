@@ -156,66 +156,78 @@ class AssetManager {
 	 */
 	private function get_localized_strings(): array {
 		return array(
-			'loading'                => \__( 'Loading...', 'silver-assist-security' ),
-			'error'                  => \__( 'Error loading data', 'silver-assist-security' ),
-			'lastUpdated'            => \__( 'Last updated:', 'silver-assist-security' ),
-			'noThreats'              => \__( 'No active threats detected', 'silver-assist-security' ),
-			'refreshing'             => \__( 'Refreshing...', 'silver-assist-security' ),
-			'updateUrl'              => \admin_url( 'update-core.php' ),
+			'loading'                 => \__( 'Loading...', 'silver-assist-security' ),
+			'error'                   => \__( 'Error loading data', 'silver-assist-security' ),
+			'lastUpdated'             => \__( 'Last updated:', 'silver-assist-security' ),
+			'noThreats'               => \__( 'No active threats detected', 'silver-assist-security' ),
+			'refreshing'              => \__( 'Refreshing...', 'silver-assist-security' ),
+			'updateUrl'               => \admin_url( 'update-core.php' ),
 			// Version check strings
-			'newVersionAvailable'    =>
+			'newVersionAvailable'     =>
 				/* translators: %s: new version number */
 				\__( 'New version %s available.', 'silver-assist-security' ),
-			'updateNow'              => \__( 'Update now', 'silver-assist-security' ),
-			'checking'               => \__( 'Checking...', 'silver-assist-security' ),
-			'newVersionFound'        =>
+			'updateNow'               => \__( 'Update now', 'silver-assist-security' ),
+			'checking'                => \__( 'Checking...', 'silver-assist-security' ),
+			'newVersionFound'         =>
 				/* translators: %1$s: new version number, %2$s: current version number */
 				\__( "New version available: %1\$s\\nCurrent version: %2\$s", 'silver-assist-security' ),
-			'upToDate'               =>
+			'upToDate'                =>
 				/* translators: %s: current version number */
 				\__( 'The plugin is up to date with the latest version (%s)', 'silver-assist-security' ),
-			'checkError'             => \__( 'Error checking for updates:', 'silver-assist-security' ),
-			'unknownError'           => \__( 'Unknown error', 'silver-assist-security' ),
-			'connectivityError'      => \__( 'Connectivity error while checking for updates', 'silver-assist-security' ),
+			'checkError'              => \__( 'Error checking for updates:', 'silver-assist-security' ),
+			'unknownError'            => \__( 'Unknown error', 'silver-assist-security' ),
+			'connectivityError'       => \__( 'Connectivity error while checking for updates', 'silver-assist-security' ),
 			// Form validation error strings
-			'loginAttemptsError'     => \__( 'Login attempts must be between 1 and 20', 'silver-assist-security' ),
-			'lockoutDurationError'   => \__( 'Lockout duration must be between 60 and 3600 seconds', 'silver-assist-security' ),
-			'sessionTimeoutError'    => \__( 'Session timeout must be between 5 and 120 minutes', 'silver-assist-security' ),
-			'graphqlDepthError'      => \__( 'GraphQL query depth must be between 1 and 20', 'silver-assist-security' ),
-			'graphqlComplexityError' => \__( 'GraphQL query complexity must be between 10 and 1000', 'silver-assist-security' ),
-			'graphqlTimeoutError'    => \sprintf(
+			'loginAttemptsError'      => \__( 'Login attempts must be between 1 and 20', 'silver-assist-security' ),
+			'lockoutDurationError'    => \__( 'Lockout duration must be between 60 and 3600 seconds', 'silver-assist-security' ),
+			'sessionTimeoutError'     => \__( 'Session timeout must be between 5 and 120 minutes', 'silver-assist-security' ),
+			'graphqlDepthError'       => \__( 'GraphQL query depth must be between 1 and 20', 'silver-assist-security' ),
+			'graphqlComplexityError'  => \__( 'GraphQL query complexity must be between 10 and 1000', 'silver-assist-security' ),
+			'graphqlTimeoutError'     => \sprintf(
 				/* translators: %d: maximum timeout in seconds based on PHP limit */
 				\__( 'GraphQL query timeout must be between 1 and %d seconds (PHP limit)', 'silver-assist-security' ),
 				$this->config_manager->get_php_execution_timeout()
 			),
-			'customUrlPatternError'  => \__( 'Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)', 'silver-assist-security' ),
-			'urlPatternError'        => \__( 'Use only lowercase letters, numbers, and hyphens (3-30 characters)', 'silver-assist-security' ),
+			'customUrlPatternError'   => \__( 'Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)', 'silver-assist-security' ),
+			'urlPatternError'         => \__( 'Use only lowercase letters, numbers, and hyphens (3-30 characters)', 'silver-assist-security' ),
 			// Admin path validation strings
-			'pathValidating'         => \__( 'Validating...', 'silver-assist-security' ),
-			'pathValid'              => \__( '✓ Path is valid', 'silver-assist-security' ),
-			'pathTooShort'           => \__( 'Path must be at least 3 characters long', 'silver-assist-security' ),
-			'pathTooLong'            => \__( 'Path must be 50 characters or less', 'silver-assist-security' ),
-			'pathForbidden'          => \__( 'This path contains forbidden keywords', 'silver-assist-security' ),
-			'pathInvalidChars'       => \__( 'Path can only contain letters, numbers, hyphens, and underscores', 'silver-assist-security' ),
-			'pathEmpty'              => \__( 'Path cannot be empty', 'silver-assist-security' ),
+			'pathValidating'          => \__( 'Validating...', 'silver-assist-security' ),
+			'pathValid'               => \__( '✓ Path is valid', 'silver-assist-security' ),
+			'pathTooShort'            => \__( 'Path must be at least 3 characters long', 'silver-assist-security' ),
+			'pathTooLong'             => \__( 'Path must be 50 characters or less', 'silver-assist-security' ),
+			'pathForbidden'           => \__( 'This path contains forbidden keywords', 'silver-assist-security' ),
+			'pathInvalidChars'        => \__( 'Path can only contain letters, numbers, hyphens, and underscores', 'silver-assist-security' ),
+			'pathEmpty'               => \__( 'Path cannot be empty', 'silver-assist-security' ),
 			// Auto-save strings
-			'saving'                 => \__( 'Saving...', 'silver-assist-security' ),
-			'saved'                  => \__( 'Saved!', 'silver-assist-security' ),
-			'saveFailed'             => \__( 'Save failed', 'silver-assist-security' ),
+			'saving'                  => \__( 'Saving...', 'silver-assist-security' ),
+			'saved'                   => \__( 'Saved!', 'silver-assist-security' ),
+			'saveFailed'              => \__( 'Save failed', 'silver-assist-security' ),
 			// AJAX error strings
-			'updateCheckFailed'      => \__( 'Failed to check for Silver Assist updates', 'silver-assist-security' ),
-			'securityStatusFailed'   => \__( 'Failed to load security essentials', 'silver-assist-security' ),
-			'loginStatsFailed'       => \__( 'Failed to load login stats', 'silver-assist-security' ),
+			'updateCheckFailed'       => \__( 'Failed to check for Silver Assist updates', 'silver-assist-security' ),
+			'securityStatusFailed'    => \__( 'Failed to load security essentials', 'silver-assist-security' ),
+			'loginStatsFailed'        => \__( 'Failed to load login stats', 'silver-assist-security' ),
 			// Table headers
-			'ipHash'                 => \__( 'IP Hash', 'silver-assist-security' ),
-			'blockedTime'            => \__( 'Blocked Time', 'silver-assist-security' ),
-			'remaining'              => \__( 'Remaining', 'silver-assist-security' ),
-			'minutes'                => \__( 'min', 'silver-assist-security' ),
+			'ipHash'                  => \__( 'IP Hash', 'silver-assist-security' ),
+			'blockedTime'             => \__( 'Blocked Time', 'silver-assist-security' ),
+			'remaining'               => \__( 'Remaining', 'silver-assist-security' ),
+			'minutes'                 => \__( 'min', 'silver-assist-security' ),
 			// Dashboard dynamic values
-			'enabled'                => \__( 'Enabled', 'silver-assist-security' ),
-			'disabled'               => \__( 'Disabled', 'silver-assist-security' ),
-			'headlessCms'            => \__( 'Headless CMS', 'silver-assist-security' ),
-			'standard'               => \__( 'Standard', 'silver-assist-security' ),
+			'enabled'                 => \__( 'Enabled', 'silver-assist-security' ),
+			'disabled'                => \__( 'Disabled', 'silver-assist-security' ),
+			'headlessCms'             => \__( 'Headless CMS', 'silver-assist-security' ),
+			'standard'                => \__( 'Standard', 'silver-assist-security' ),
+			// GraphQL API key strings
+			'apiKeyActive'            => \__( 'Active', 'silver-assist-security' ),
+			'apiKeyNotConfigured'     => \__( 'Not configured', 'silver-assist-security' ),
+			'apiKeyConfigured'        => \__( 'An API key is configured. Regenerate to create a new key (invalidates the current one).', 'silver-assist-security' ),
+			'apiKeyGenerateDesc'      => \__( 'Generate an API key for server-to-server authentication.', 'silver-assist-security' ),
+			'generateApiKey'          => \__( 'Generate API Key', 'silver-assist-security' ),
+			'regenerateApiKey'        => \__( 'Regenerate API Key', 'silver-assist-security' ),
+			'revokeApiKey'            => \__( 'Revoke API Key', 'silver-assist-security' ),
+			'apiKeyRegenerateConfirm' => \__( 'This will invalidate the current API key. All consumers using it will need to update. Continue?', 'silver-assist-security' ),
+			'apiKeyRevokeConfirm'     => \__( 'This will revoke the API key. All consumers using it will lose access. Continue?', 'silver-assist-security' ),
+			'usageExample'            => \__( 'Usage Example', 'silver-assist-security' ),
+			'usageExampleDesc'        => \__( 'Add one of the following headers to your GraphQL requests:', 'silver-assist-security' ),
 		);
 	}
 }

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-03-11T17:42:31+00:00\n"
+"POT-Creation-Date: 2026-03-11T18:06:19+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: silver-assist-security\n"
@@ -39,21 +39,21 @@ msgstr ""
 msgid "http://silverassist.com/"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:188
-#: src/Admin/AdminPanel.php:193
-#: src/Admin/AdminPanel.php:243
+#: src/Admin/AdminPanel.php:200
+#: src/Admin/AdminPanel.php:205
+#: src/Admin/AdminPanel.php:255
 msgid "Security Essentials"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:191
+#: src/Admin/AdminPanel.php:203
 msgid "Security configuration for WordPress"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:225
+#: src/Admin/AdminPanel.php:237
 msgid "Check Updates"
 msgstr ""
 
-#: src/Admin/AdminPanel.php:242
+#: src/Admin/AdminPanel.php:254
 msgid "Silver Assist Security"
 msgstr ""
 
@@ -62,6 +62,8 @@ msgstr ""
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:186
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:230
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:267
+#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:56
+#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:106
 #: src/Admin/Ajax/SecurityAjaxHandler.php:87
 #: src/Admin/Ajax/SecurityAjaxHandler.php:115
 #: src/Admin/Ajax/SecurityAjaxHandler.php:143
@@ -78,6 +80,8 @@ msgstr ""
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:190
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:234
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:271
+#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:60
+#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:110
 #: src/Admin/Ajax/SecurityAjaxHandler.php:91
 #: src/Admin/Ajax/SecurityAjaxHandler.php:119
 #: src/Admin/Ajax/SecurityAjaxHandler.php:147
@@ -178,6 +182,18 @@ msgstr ""
 
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:305
 msgid "Failed to export blocked IPs"
+msgstr ""
+
+#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:79
+msgid "Failed to generate a new GraphQL API key. Please check your server's randomness configuration."
+msgstr ""
+
+#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:93
+msgid "API key generated successfully. Copy it now — it will not be shown again."
+msgstr ""
+
+#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:118
+msgid "API key has been revoked successfully."
 msgstr ""
 
 #: src/Admin/Ajax/SecurityAjaxHandler.php:103
@@ -437,6 +453,62 @@ msgstr ""
 msgid "Standard"
 msgstr ""
 
+#: src/Admin/Assets/AssetManager.php:220
+#: src/Admin/Renderer/DashboardRenderer.php:171
+#: src/Admin/Renderer/DashboardRenderer.php:185
+#: src/Admin/Renderer/SettingsRenderer.php:388
+msgid "Active"
+msgstr ""
+
+#: src/Admin/Assets/AssetManager.php:221
+#: src/Admin/Renderer/SettingsRenderer.php:393
+msgid "Not configured"
+msgstr ""
+
+#: src/Admin/Assets/AssetManager.php:222
+#: src/Admin/Renderer/SettingsRenderer.php:390
+msgid "An API key is configured. Regenerate to create a new key (invalidates the current one)."
+msgstr ""
+
+#: src/Admin/Assets/AssetManager.php:223
+msgid "Generate an API key for server-to-server authentication."
+msgstr ""
+
+#: src/Admin/Assets/AssetManager.php:224
+#: src/Admin/Renderer/SettingsRenderer.php:418
+msgid "Generate API Key"
+msgstr ""
+
+#: src/Admin/Assets/AssetManager.php:225
+#: src/Admin/Renderer/SettingsRenderer.php:406
+msgid "Regenerate API Key"
+msgstr ""
+
+#: src/Admin/Assets/AssetManager.php:226
+#: src/Admin/Renderer/SettingsRenderer.php:412
+msgid "Revoke API Key"
+msgstr ""
+
+#: src/Admin/Assets/AssetManager.php:227
+#: src/Admin/Renderer/SettingsRenderer.php:405
+msgid "This will invalidate the current API key. All consumers using it will need to update. Continue?"
+msgstr ""
+
+#: src/Admin/Assets/AssetManager.php:228
+#: src/Admin/Renderer/SettingsRenderer.php:411
+msgid "This will revoke the API key. All consumers using it will lose access. Continue?"
+msgstr ""
+
+#: src/Admin/Assets/AssetManager.php:229
+#: src/Admin/Renderer/SettingsRenderer.php:429
+msgid "Usage Example"
+msgstr ""
+
+#: src/Admin/Assets/AssetManager.php:230
+#: src/Admin/Renderer/SettingsRenderer.php:430
+msgid "Add one of the following headers to your GraphQL requests:"
+msgstr ""
+
 #. translators: %d: number of security logs found
 #: src/Admin/Data/SecurityDataProvider.php:280
 #, php-format
@@ -472,7 +544,7 @@ msgstr ""
 #: src/Admin/Renderer/AdminPageRenderer.php:104
 #: src/Admin/Renderer/DashboardRenderer.php:183
 #: src/Admin/Renderer/DashboardRenderer.php:190
-#: src/Admin/Renderer/SettingsRenderer.php:493
+#: src/Admin/Renderer/SettingsRenderer.php:496
 msgid "Form Protection"
 msgstr ""
 
@@ -568,14 +640,8 @@ msgid "SSL/HTTPS"
 msgstr ""
 
 #: src/Admin/Renderer/DashboardRenderer.php:169
-#: src/Admin/Renderer/SettingsRenderer.php:569
+#: src/Admin/Renderer/SettingsRenderer.php:572
 msgid "Under Attack Mode"
-msgstr ""
-
-#: src/Admin/Renderer/DashboardRenderer.php:171
-#: src/Admin/Renderer/DashboardRenderer.php:185
-#: src/Admin/Renderer/SettingsRenderer.php:396
-msgid "Active"
 msgstr ""
 
 #: src/Admin/Renderer/DashboardRenderer.php:172
@@ -612,8 +678,8 @@ msgid "Security Logs"
 msgstr ""
 
 #: src/Admin/Renderer/DashboardRenderer.php:249
-#: src/Admin/Renderer/SettingsRenderer.php:531
-#: src/Admin/Renderer/SettingsRenderer.php:597
+#: src/Admin/Renderer/SettingsRenderer.php:534
+#: src/Admin/Renderer/SettingsRenderer.php:600
 msgid "Loading blocked IPs..."
 msgstr ""
 
@@ -787,131 +853,99 @@ msgstr ""
 msgid "API Key"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:390
-msgid "New API Key Generated — Copy it now, it will not be shown again:"
-msgstr ""
-
-#: src/Admin/Renderer/SettingsRenderer.php:398
-msgid "An API key is configured. Regenerate to create a new key (invalidates the current one)."
-msgstr ""
-
-#: src/Admin/Renderer/SettingsRenderer.php:405
-msgid "This will invalidate the current API key. All consumers using it will need to update. Continue?"
-msgstr ""
-
-#: src/Admin/Renderer/SettingsRenderer.php:406
-msgid "Regenerate API Key"
-msgstr ""
-
-#: src/Admin/Renderer/SettingsRenderer.php:412
-msgid "This will revoke the API key. All consumers using it will lose access. Continue?"
-msgstr ""
-
-#: src/Admin/Renderer/SettingsRenderer.php:413
-msgid "Revoke API Key"
-msgstr ""
-
-#: src/Admin/Renderer/SettingsRenderer.php:417
-msgid "Not configured"
-msgstr ""
-
-#: src/Admin/Renderer/SettingsRenderer.php:419
+#: src/Admin/Renderer/SettingsRenderer.php:395
 msgid "Generate an API key for server-to-server authentication. Use the X-API-Key header or Authorization: Bearer token."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:426
-msgid "Generate API Key"
-msgstr ""
-
-#: src/Admin/Renderer/SettingsRenderer.php:440
+#: src/Admin/Renderer/SettingsRenderer.php:443
 msgid "Save Authentication Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:451
+#: src/Admin/Renderer/SettingsRenderer.php:454
 msgid "WPGraphQL Plugin Not Detected"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:454
+#: src/Admin/Renderer/SettingsRenderer.php:457
 msgid "GraphQL security features require the WPGraphQL plugin to be installed and activated."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:459
+#: src/Admin/Renderer/SettingsRenderer.php:462
 msgid "Install WPGraphQL Plugin"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:483
+#: src/Admin/Renderer/SettingsRenderer.php:486
 msgid "Contact Form 7 Protection"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:496
+#: src/Admin/Renderer/SettingsRenderer.php:499
 msgid "Enable protection for Contact Form 7 submissions"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:499
+#: src/Admin/Renderer/SettingsRenderer.php:502
 msgid "Rate Limit (submissions/minute)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:506
+#: src/Admin/Renderer/SettingsRenderer.php:509
 msgid "Maximum form submissions per minute per IP address"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:517
+#: src/Admin/Renderer/SettingsRenderer.php:520
 msgid "Save Form Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:526
+#: src/Admin/Renderer/SettingsRenderer.php:529
 msgid "Blocked IPs Management"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:553
+#: src/Admin/Renderer/SettingsRenderer.php:556
 msgid "IP Management & Attack Protection"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:563
+#: src/Admin/Renderer/SettingsRenderer.php:566
 msgid "IP Blacklist"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:566
+#: src/Admin/Renderer/SettingsRenderer.php:569
 msgid "Enable automatic IP blacklisting for repeat offenders"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:572
+#: src/Admin/Renderer/SettingsRenderer.php:575
 msgid "Enable enhanced protection during active attacks"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:583
+#: src/Admin/Renderer/SettingsRenderer.php:586
 msgid "Save IP Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:592
+#: src/Admin/Renderer/SettingsRenderer.php:595
 msgid "Login Security - Blocked IPs"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:606
+#: src/Admin/Renderer/SettingsRenderer.php:609
 msgid "Form Protection - Blocked IPs"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:611
+#: src/Admin/Renderer/SettingsRenderer.php:614
 msgid "Loading CF7 blocked IPs..."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:620
+#: src/Admin/Renderer/SettingsRenderer.php:623
 msgid "Manual IP Management"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:627
+#: src/Admin/Renderer/SettingsRenderer.php:630
 msgid "Enter IP address (e.g., 192.168.1.100)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:631
+#: src/Admin/Renderer/SettingsRenderer.php:634
 msgid "Reason for blocking"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:635
+#: src/Admin/Renderer/SettingsRenderer.php:638
 msgid "Block IP"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:639
+#: src/Admin/Renderer/SettingsRenderer.php:642
 msgid "Manually block specific IP addresses. Blocked IPs will be denied access to login and forms."
 msgstr ""
 
@@ -921,11 +955,7 @@ msgstr ""
 msgid "Security check failed."
 msgstr ""
 
-#: src/Admin/Settings/SettingsHandler.php:203
-msgid "Failed to generate a new GraphQL API key. Please check your server's randomness configuration or contact your hosting provider."
-msgstr ""
-
-#: src/Admin/Settings/SettingsHandler.php:328
+#: src/Admin/Settings/SettingsHandler.php:269
 msgid "Security settings have been saved successfully."
 msgstr ""
 
