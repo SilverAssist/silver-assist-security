@@ -296,6 +296,157 @@ class SettingsRenderer {
 					</div>
 				</div>
 
+				<!-- GraphQL Authentication Section -->
+				<div class="status-card graphql-security">
+					<div class="card-header">
+						<h3><?php \esc_html_e( 'GraphQL Authentication', 'silver-assist-security' ); ?></h3>
+					</div>
+					<div class="card-content">
+
+						<?php
+						$is_auth_required = $this->config_manager->is_authentication_required();
+						?>
+
+						<table class="form-table">
+							<tbody>
+								<tr>
+									<th scope="row">
+										<?php \esc_html_e( 'Require Authentication', 'silver-assist-security' ); ?>
+									</th>
+									<td>
+										<?php if ( $is_auth_required ) : ?>
+											<span class="feature-value enabled"><?php \esc_html_e( 'Enabled', 'silver-assist-security' ); ?></span>
+										<?php else : ?>
+											<span class="feature-value disabled"><?php \esc_html_e( 'Disabled', 'silver-assist-security' ); ?></span>
+										<?php endif; ?>
+										<p class="description">
+											<?php
+											\printf(
+												/* translators: %s: URL to WPGraphQL settings page. */
+												\esc_html__( 'This setting is managed by WPGraphQL. %s to change it.', 'silver-assist-security' ),
+												'<a href="' . \esc_url( \admin_url( 'admin.php?page=graphql-settings' ) ) . '">' . \esc_html__( 'Go to WPGraphQL Settings', 'silver-assist-security' ) . '</a>'
+											);
+											?>
+										</p>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+
+						<!-- Authentication info -->
+						<div class="admin-hide-warning">
+							<h4><?php \esc_html_e( 'Important Notice', 'silver-assist-security' ); ?></h4>
+							<ul>
+								<li><?php \esc_html_e( 'When enabled, all GraphQL consumers must authenticate via Application Passwords, API Key, or WordPress session.', 'silver-assist-security' ); ?></li>
+								<li><?php \esc_html_e( 'Authentication is not enforced in local/development environments to allow development tooling.', 'silver-assist-security' ); ?></li>
+								<li><?php \esc_html_e( 'Headless front-end applications (Next.js, Gatsby, etc.) will need to use Application Passwords or the API Key below.', 'silver-assist-security' ); ?></li>
+							</ul>
+						</div>
+
+						<form method="post" action="" id="graphql-auth-form">
+							<?php \wp_nonce_field( 'silver_assist_security_settings' ); ?>
+							<input type="hidden" name="save_silver_assist_security" value="1" />
+							<input type="hidden" name="settings_section" value="graphql_auth" />
+
+							<h4><?php \esc_html_e( 'API Key Management', 'silver-assist-security' ); ?></h4>
+
+							<table class="form-table">
+								<tbody>
+									<tr>
+										<th scope="row">
+											<label for="silver_assist_graphql_service_user_id">
+												<?php \esc_html_e( 'Service User', 'silver-assist-security' ); ?>
+											</label>
+										</th>
+										<td>
+											<?php
+											\wp_dropdown_users(
+												array(
+													'name' => 'silver_assist_graphql_service_user_id',
+													'id'   => 'silver_assist_graphql_service_user_id',
+													'selected' => $config['graphql_service_user_id'],
+													'show_option_none' => \__( '— Select Service User —', 'silver-assist-security' ),
+													'option_none_value' => '0',
+												)
+											);
+											?>
+											<p class="description">
+												<?php \esc_html_e( 'WordPress user for API key authentication. A Subscriber role is recommended.', 'silver-assist-security' ); ?>
+											</p>
+										</td>
+									</tr>
+									<tr>
+										<th scope="row">
+											<?php \esc_html_e( 'API Key', 'silver-assist-security' ); ?>
+										</th>
+										<td>
+											<?php $has_api_key = ! empty( DefaultConfig::get_option( 'silver_assist_graphql_api_key' ) ); ?>
+
+											<div id="graphql-api-key-result" style="display:none;"></div>
+
+											<div id="graphql-api-key-status">
+												<?php if ( $has_api_key ) : ?>
+													<span class="feature-value enabled"><?php \esc_html_e( 'Active', 'silver-assist-security' ); ?></span>
+													<p class="description">
+														<?php \esc_html_e( 'An API key is configured. Regenerate to create a new key (invalidates the current one).', 'silver-assist-security' ); ?>
+													</p>
+												<?php else : ?>
+													<span class="feature-value disabled"><?php \esc_html_e( 'Not configured', 'silver-assist-security' ); ?></span>
+													<p class="description">
+														<?php \esc_html_e( 'Generate an API key for server-to-server authentication. Use the X-API-Key header or Authorization: Bearer token.', 'silver-assist-security' ); ?>
+													</p>
+												<?php endif; ?>
+											</div>
+
+											<p style="margin-top: 10px;" id="graphql-api-key-actions">
+												<?php if ( $has_api_key ) : ?>
+													<button type="button"
+														id="graphql-regenerate-api-key"
+														class="button button-secondary"
+														data-confirm="<?php \esc_attr_e( 'This will invalidate the current API key. All consumers using it will need to update. Continue?', 'silver-assist-security' ); ?>">
+														<?php \esc_html_e( 'Regenerate API Key', 'silver-assist-security' ); ?>
+													</button>
+													<button type="button"
+														id="graphql-revoke-api-key"
+														class="button button-link-delete"
+														data-confirm="<?php \esc_attr_e( 'This will revoke the API key. All consumers using it will lose access. Continue?', 'silver-assist-security' ); ?>">
+														<?php \esc_html_e( 'Revoke API Key', 'silver-assist-security' ); ?>
+													</button>
+												<?php else : ?>
+													<button type="button"
+														id="graphql-generate-api-key"
+														class="button button-secondary">
+														<?php \esc_html_e( 'Generate API Key', 'silver-assist-security' ); ?>
+													</button>
+												<?php endif; ?>
+											</p>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+
+							<?php if ( $has_api_key ) : ?>
+								<div class="notice notice-success inline" id="graphql-api-key-usage">
+									<h4><?php \esc_html_e( 'Usage Example', 'silver-assist-security' ); ?></h4>
+									<p><?php \esc_html_e( 'Add one of the following headers to your GraphQL requests:', 'silver-assist-security' ); ?></p>
+									<p><strong>X-API-Key:</strong></p>
+									<code class="api-key-usage-code">X-API-Key: your-api-key</code>
+									<p><strong>Authorization Bearer:</strong></p>
+									<code class="api-key-usage-code">Authorization: Bearer your-api-key</code>
+								</div>
+							<?php endif; ?>
+
+							<p class="submit">
+								<input type="submit"
+									name="submit"
+									id="graphql-auth-submit"
+									class="button button-primary"
+									value="<?php \esc_attr_e( 'Save Authentication Settings', 'silver-assist-security' ); ?>">
+							</p>
+						</form>
+					</div>
+				</div>
+
 			<?php else : ?>
 
 				<!-- WPGraphQL not installed message -->
@@ -523,6 +674,7 @@ class SettingsRenderer {
 			'attack_threshold'              => DefaultConfig::get_option( 'silver_assist_attack_threshold' ),
 			'admin_hide_enabled'            => DefaultConfig::get_option( 'silver_assist_admin_hide_enabled' ),
 			'admin_hide_path'               => DefaultConfig::get_option( 'silver_assist_admin_hide_path' ),
+			'graphql_service_user_id'       => (int) DefaultConfig::get_option( 'silver_assist_graphql_service_user_id' ),
 		);
 	}
 }

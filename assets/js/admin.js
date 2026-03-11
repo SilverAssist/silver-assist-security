@@ -1832,6 +1832,147 @@
     };
 
     // ========================================
+    // GRAPHQL API KEY MANAGEMENT
+    // ========================================
+
+    /**
+     * Initialize GraphQL API key AJAX management
+     *
+     * Handles generate, regenerate, and revoke API key actions via AJAX
+     * without page reload.
+     *
+     * @since 1.8.0
+     * @returns {void}
+     */
+    const initGraphQLApiKey = () => {
+        const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
+
+        /**
+         * Handle API key AJAX request
+         *
+         * @param {string} action  AJAX action name.
+         * @param {jQuery} $button Clicked button element.
+         */
+        const handleApiKeyAction = (action, $button) => {
+            const originalText = $button.text();
+            $button.prop("disabled", true).text(strings.loading || "Loading...");
+
+            $.post(ajaxurl, {
+                action: action,
+                nonce: nonce
+            })
+                .done(response => {
+                    const $result = $("#graphql-api-key-result");
+                    const $status = $("#graphql-api-key-status");
+                    const $actions = $("#graphql-api-key-actions");
+                    const $usage = $("#graphql-api-key-usage");
+
+                    if (response.success) {
+                        if (response.data.api_key) {
+                            // Key generated — show it once.
+                            $result.html(
+                                "<div class=\"notice notice-success inline\">" +
+                                "<p><strong>" + (response.data.message || "") + "</strong></p>" +
+                                "<code class=\"api-key-code\">" +
+                                $("<span>").text(response.data.api_key).html() +
+                                "</code></div>"
+                            ).show();
+
+                            // Update status to Active.
+                            $status.html(
+                                "<span class=\"feature-value enabled\">" + (strings.apiKeyActive || "Active") + "</span>" +
+                                "<p class=\"description\">" + (strings.apiKeyConfigured || "An API key is configured. Regenerate to create a new key (invalidates the current one).") + "</p>"
+                            );
+
+                            // Update buttons to regenerate/revoke.
+                            $actions.html(
+                                "<button type=\"button\" id=\"graphql-regenerate-api-key\" class=\"button button-secondary\" " +
+                                "data-confirm=\"" + (strings.apiKeyRegenerateConfirm || "This will invalidate the current API key. Continue?") + "\">" +
+                                (strings.regenerateApiKey || "Regenerate API Key") + "</button> " +
+                                "<button type=\"button\" id=\"graphql-revoke-api-key\" class=\"button button-link-delete\" " +
+                                "data-confirm=\"" + (strings.apiKeyRevokeConfirm || "This will revoke the API key. Continue?") + "\">" +
+                                (strings.revokeApiKey || "Revoke API Key") + "</button>"
+                            );
+
+                            // Show usage example if not visible.
+                            if (!$usage.length) {
+                                $actions.closest("table").after(
+                                    "<div class=\"notice notice-success inline\" id=\"graphql-api-key-usage\">" +
+                                    "<h4>" + (strings.usageExample || "Usage Example") + "</h4>" +
+                                    "<p>" + (strings.usageExampleDesc || "Add one of the following headers to your GraphQL requests:") + "</p>" +
+                                    "<p><strong>X-API-Key:</strong></p>" +
+                                    "<code class=\"api-key-usage-code\">X-API-Key: your-api-key</code>" +
+                                    "<p><strong>Authorization Bearer:</strong></p>" +
+                                    "<code class=\"api-key-usage-code\">Authorization: Bearer your-api-key</code>" +
+                                    "</div>"
+                                );
+                            }
+                        } else {
+                            // Key revoked.
+                            $result.html(
+                                "<div class=\"notice notice-success inline\"><p>" +
+                                $("<span>").text(response.data.message || "").html() +
+                                "</p></div>"
+                            ).show();
+
+                            // Update status to Not configured.
+                            $status.html(
+                                "<span class=\"feature-value disabled\">" + (strings.apiKeyNotConfigured || "Not configured") + "</span>" +
+                                "<p class=\"description\">" + (strings.apiKeyGenerateDesc || "Generate an API key for server-to-server authentication.") + "</p>"
+                            );
+
+                            // Update button to generate.
+                            $actions.html(
+                                "<button type=\"button\" id=\"graphql-generate-api-key\" class=\"button button-secondary\">" +
+                                (strings.generateApiKey || "Generate API Key") + "</button>"
+                            );
+
+                            // Hide usage example.
+                            if ($usage.length) {
+                                $usage.remove();
+                            }
+                        }
+                    } else {
+                        $result.html(
+                            "<div class=\"notice notice-error inline\"><p>" +
+                            $("<span>").text(response.data.error || strings.error || "Error").html() +
+                            "</p></div>"
+                        ).show();
+                    }
+                })
+                .fail(() => {
+                    $("#graphql-api-key-result").html(
+                        "<div class=\"notice notice-error inline\"><p>" +
+                        (strings.error || "Error loading data") +
+                        "</p></div>"
+                    ).show();
+                })
+                .always(() => {
+                    $button.prop("disabled", false).text(originalText);
+                });
+        };
+
+        // Delegate click events for dynamically replaced buttons.
+        $(document).on("click", "#graphql-generate-api-key, #graphql-regenerate-api-key", function () {
+            const $btn = $(this);
+            const confirmMsg = $btn.data("confirm");
+            if (confirmMsg && !confirm(confirmMsg)) {
+                return;
+            }
+            handleApiKeyAction("silver_assist_generate_graphql_api_key", $btn);
+        });
+
+        $(document).on("click", "#graphql-revoke-api-key", function () {
+            const $btn = $(this);
+            const confirmMsg = $btn.data("confirm");
+            if (confirmMsg && !confirm(confirmMsg)) {
+                return;
+            }
+            handleApiKeyAction("silver_assist_revoke_graphql_api_key", $btn);
+        });
+    };
+
+    // ========================================
     // INITIALIZATION
     // ========================================
 
@@ -1847,6 +1988,7 @@
         initAdminPathValidation();
         initCF7BlockedIPs(); // Initialize CF7 panel
         initManualIPManagement(); // Initialize manual IP management
+        initGraphQLApiKey(); // Initialize GraphQL API key management
     });
 
 }))(jQuery);

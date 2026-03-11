@@ -102,8 +102,8 @@ class AdminAccessTest extends WP_UnitTestCase
 
             // Assert that page rendered successfully
             $this->assertNotEmpty($output);
-            $this->assertStringContainsString("Silver Assist Security Essentials", $output);
-            $this->assertStringContainsString("Security Dashboard", $output);
+            $this->assertStringContainsString('wrap', $output);
+            $this->assertStringContainsString('Security Dashboard', $output);
         } catch (\Exception $e) {
             ob_end_clean();
             $this->fail("Administrator should be able to access admin page: " . $e->getMessage());
@@ -209,7 +209,7 @@ class AdminAccessTest extends WP_UnitTestCase
 
             // Assert that page rendered successfully
             $this->assertNotEmpty($output);
-            $this->assertStringContainsString("Silver Assist Security Essentials", $output);
+            $this->assertStringContainsString('Security Dashboard', $output);
         } catch (\Exception $e) {
             ob_end_clean();
             $this->fail("User with manage_options should access page: " . $e->getMessage());

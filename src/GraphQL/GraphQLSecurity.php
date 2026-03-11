@@ -17,6 +17,7 @@ namespace SilverAssist\Security\GraphQL;
 use GraphQL\Error\Error;
 use GraphQL\Error\UserError;
 use GraphQL\Executor\ExecutionResult;
+use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\SecurityHelper;
 
 /**
@@ -129,6 +130,10 @@ class GraphQLSecurity {
 		\add_filter( 'graphql_request_data', array( $this, 'validate_query_before_execution' ), 1, 5 );
 		\add_action( 'graphql_init', array( $this, 'set_execution_timeout' ) );
 		\add_action( 'send_headers', array( $this, 'add_graphql_security_headers' ) );
+		\add_action( 'graphql_init', array( $this, 'enforce_authentication_requirement' ) );
+
+		// Hook into determine_current_user early to authenticate API key requests.
+		\add_filter( 'determine_current_user', array( $this, 'authenticate_api_key' ), 5 );
 	}
 
 	/**
@@ -1294,7 +1299,6 @@ class GraphQLSecurity {
 	 */
 	public function enable_headless_mode(): void {
 		\update_option( 'silver_assist_graphql_headless_mode', true );
-		$this->headless_mode = true;
 		$this->init_configuration();
 	}
 
@@ -1306,7 +1310,6 @@ class GraphQLSecurity {
 	 */
 	public function disable_headless_mode(): void {
 		\update_option( 'silver_assist_graphql_headless_mode', false );
-		$this->headless_mode = false;
 		$this->init_configuration();
 	}
 
@@ -1392,5 +1395,175 @@ class GraphQLSecurity {
 			'security_status' => $integration_status['security_level'],
 			'recommendations' => $integration_status['recommendations'],
 		);
+	}
+
+	/**
+	 * Enforce authentication requirement for GraphQL requests
+	 *
+	 * When enabled, all GraphQL queries require a logged-in user via
+	 * WordPress session, Application Passwords, or API key.
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function enforce_authentication_requirement(): void {
+		if ( ! $this->config_manager->is_authentication_required() ) {
+			return;
+		}
+
+		// Hook before query execution to check authentication.
+		\add_filter( 'graphql_request_data', array( $this, 'validate_authentication' ), 0, 5 );
+	}
+
+	/**
+	 * Validate that the current request is authenticated
+	 *
+	 * Checks is_user_logged_in() which returns true for:
+	 * 1. WordPress session (admin/editor logged in)
+	 * 2. Application Password sent via Authorization: Basic header
+	 * 3. API key authenticated via determine_current_user filter
+	 *
+	 * @since 1.8.0
+	 * @param array       $request_data   Request data including query.
+	 * @param mixed       $request        HTTP request object (optional).
+	 * @param string|null $operation_name GraphQL operation name (optional).
+	 * @param array|null  $variables      Query variables (optional).
+	 * @param mixed       $context        Request context (optional).
+	 * @return array Request data passed through.
+	 * @throws UserError When the request is not authenticated.
+	 */
+	public function validate_authentication( array $request_data, $request = null, ?string $operation_name = null, ?array $variables = null, $context = null ): array {
+		// Allow unauthenticated access only in explicit local/development environments for tooling.
+		$environment = 'production';
+
+		if ( \function_exists( 'wp_get_environment_type' ) ) {
+			$environment = \wp_get_environment_type();
+		} elseif ( \defined( 'WP_ENVIRONMENT_TYPE' ) ) {
+			$environment = WP_ENVIRONMENT_TYPE;
+		}
+
+		if ( \in_array( $environment, array( 'local', 'development' ), true ) ) {
+			return $request_data;
+		}
+
+		if ( ! \is_user_logged_in() ) {
+			SecurityHelper::log_security_event(
+				'GRAPHQL_AUTH_DENIED',
+				'Unauthenticated GraphQL request blocked',
+				array(
+					'ip'         => SecurityHelper::get_client_ip(),
+					'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] )
+						? \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) )
+						: '',
+				)
+			);
+
+			throw new UserError(
+				\esc_html( \__( 'Authentication required to access GraphQL endpoint.', 'silver-assist-security' ) )
+			);
+		}
+
+		return $request_data;
+	}
+
+	/**
+	 * Authenticate GraphQL requests using a plugin-managed API key
+	 *
+	 * Hooks into determine_current_user at priority 5 to authenticate
+	 * server-to-server requests before is_user_logged_in() is checked.
+	 * Supports X-API-Key header and Authorization: Bearer token.
+	 *
+	 * @since 1.8.0
+	 * @param int|false $user_id The current user ID, or false if not determined.
+	 * @return int|false The authenticated user ID, or the original value.
+	 */
+	public function authenticate_api_key( $user_id ) {
+		// Only process if no user is already authenticated.
+		if ( $user_id ) {
+			return $user_id;
+		}
+
+		// Only apply to GraphQL requests.
+		if ( ! $this->is_graphql_request() ) {
+			return $user_id;
+		}
+
+		$api_key = $this->get_api_key_from_request();
+		if ( empty( $api_key ) ) {
+			return $user_id;
+		}
+
+		$stored_key_hash = DefaultConfig::get_option( 'silver_assist_graphql_api_key' );
+		if ( empty( $stored_key_hash ) ) {
+			return $user_id;
+		}
+
+		// Verify API key against stored hash.
+		if ( ! \wp_check_password( $api_key, $stored_key_hash ) ) {
+			SecurityHelper::log_security_event(
+				'GRAPHQL_API_KEY_INVALID',
+				'Invalid GraphQL API key used',
+				array( 'ip' => SecurityHelper::get_client_ip() )
+			);
+			return $user_id;
+		}
+
+		// Return the service account user ID.
+		$service_user_id = (int) DefaultConfig::get_option( 'silver_assist_graphql_service_user_id' );
+		if ( $service_user_id > 0 && \get_userdata( $service_user_id ) ) {
+			SecurityHelper::log_security_event(
+				'GRAPHQL_API_KEY_AUTH',
+				'GraphQL request authenticated via API key',
+				array(
+					'ip'              => SecurityHelper::get_client_ip(),
+					'service_user_id' => $service_user_id,
+				)
+			);
+			return $service_user_id;
+		}
+
+		return $user_id;
+	}
+
+	/**
+	 * Check if the current request is a GraphQL request
+	 *
+	 * @since 1.8.0
+	 * @return bool True if the current request targets the GraphQL endpoint.
+	 */
+	private function is_graphql_request(): bool {
+		$request_uri = isset( $_SERVER['REQUEST_URI'] )
+			? \sanitize_text_field( \wp_unslash( $_SERVER['REQUEST_URI'] ) )
+			: '';
+
+		return strpos( $request_uri, '/graphql' ) !== false;
+	}
+
+	/**
+	 * Extract API key from request headers
+	 *
+	 * Supports X-API-Key header and Authorization: Bearer token.
+	 *
+	 * @since 1.8.0
+	 * @return string The API key, or empty string if not found.
+	 */
+	private function get_api_key_from_request(): string {
+		// Check X-API-Key header.
+		if ( isset( $_SERVER['HTTP_X_API_KEY'] ) ) {
+			$api_key = \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_X_API_KEY'] ) );
+			if ( ! empty( $api_key ) ) {
+				return $api_key;
+			}
+		}
+
+		// Fallback: Check Authorization: Bearer <key>.
+		if ( isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
+			$auth = \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_AUTHORIZATION'] ) );
+			if ( str_starts_with( $auth, 'Bearer ' ) ) {
+				return substr( $auth, 7 );
+			}
+		}
+
+		return '';
 	}
 }

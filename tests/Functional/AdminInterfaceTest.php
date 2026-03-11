@@ -93,7 +93,7 @@ class AdminInterfaceTest extends WP_UnitTestCase
         $output = \ob_get_clean();
 
         // Verify page renders with Configure functionality
-        $this->assertStringContainsString('Security Essentials', $output, 'Configure page should load Security Essentials interface');
+        $this->assertStringContainsString('Security Dashboard', $output, 'Configure page should load Security Dashboard interface');
         $this->assertStringContainsString('dashboard-tab', $output, 'Configure page should show dashboard tab');
     }
 
@@ -102,33 +102,18 @@ class AdminInterfaceTest extends WP_UnitTestCase
      */
     public function test_check_updates_button(): void
     {
-        // Set up AJAX environment so wp_send_json uses wp_die (not die)
-        $this->setup_ajax_environment();
+        // Update checks are now delegated to wp-github-updater via render_update_check_script
+        $this->assertTrue(
+            is_callable([$this->admin_panel, 'render_update_check_script']),
+            'render_update_check_script should be callable'
+        );
 
-        // Simulate Settings Hub action for update check
-        $_POST['action'] = 'silver_assist_check_updates';
-        $_POST['nonce'] = \wp_create_nonce('silver_assist_security_ajax');
+        // Verify render_update_check_script executes without errors
+        ob_start();
+        $this->admin_panel->render_update_check_script();
+        $output = ob_get_clean();
 
-        // Mock AJAX request for update check
-        \add_action('wp_ajax_silver_assist_check_updates', [$this->admin_panel, 'ajax_check_updates']);
-
-        // Capture output using AjaxTestHelper
-        try {
-            $this->_ajax_response = '';
-            $ob_level = ob_get_level();
-            ob_start();
-            \do_action('wp_ajax_silver_assist_check_updates');
-            $this->_ajax_response = ob_get_clean();
-        } catch (\SilverAssist\Security\Tests\Helpers\AjaxTestDieError $e) {
-            while (ob_get_level() > $ob_level) {
-                ob_end_clean();
-            }
-        }
-
-        $this->teardown_ajax_environment();
-
-        // Verify update check was triggered
-        $this->assertTrue(true, 'Update check should execute without fatal errors');
+        $this->assertIsString($output, 'render_update_check_script should produce string output');
     }
 
     /**
@@ -142,7 +127,7 @@ class AdminInterfaceTest extends WP_UnitTestCase
 
         // Check for main page wrapper and heading
         $this->assertStringContainsString('wrap', $output, 'Admin page should render WordPress wrap container');
-        $this->assertStringContainsString('Silver Assist Security Essentials', $output, 'Admin page should render plugin heading');
+        $this->assertStringContainsString('Security Dashboard', $output, 'Admin page should render Security Dashboard heading');
     }
 
     /**

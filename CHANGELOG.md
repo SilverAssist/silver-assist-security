@@ -7,22 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🔒 Security
+
+- **GraphQL Authentication Requirement**: Enforce authentication for all GraphQL requests via `graphql_request_data` filter, using WPGraphQL's native `restrict_endpoint_to_logged_in_users` setting as the single source of truth (RSM pentest audit finding)
+- **Custom API Key Authentication**: Plugin-managed API key system supporting `X-API-Key` header and `Authorization: Bearer` token for server-to-server authentication
+- **Secure Key Storage**: API keys stored as hashed values using `wp_hash_password()`, verified with `wp_check_password()`
+- **Service User Binding**: API key authentication resolves to a configurable WordPress service account user
+- **Environment-Aware Bypass**: Authentication enforcement is bypassed only in `local`/`development` environments to allow development tooling
+
+### ✨ Added
+
+- **Authentication Settings UI**: Admin panel section showing WPGraphQL authentication status badge with direct link to WPGraphQL settings, API key management (generate/regenerate/revoke), service user dropdown, and one-time key display
+- **Dashboard Auth Indicator**: Authentication status ("Required" / "Public") shown in GraphQL Security dashboard card
+- **Security Level Scoring**: Authentication requirement contributes to the GraphQL security level calculation
+- **AJAX API Key Management**: Generate, regenerate, and revoke API keys via AJAX without page reload, keeping the user on the GraphQL Security tab
+- **API Key Usage Example**: Success-styled notice showing `X-API-Key` and `Authorization: Bearer` header formats, visible only when an API key is configured
+
+### 🐛 Fixed
+
+- **Undefined Property**: Remove dead `$this->headless_mode` assignments in `enable_headless_mode()` and `disable_headless_mode()`
+- **Security Score Double-Counting**: `calculate_security_level()` no longer awards points twice when both endpoint access is restricted and authentication is required
+
+### ✅ Tests
+
+- Unit tests for `is_authentication_required()` covering WPGraphQL setting on/off and security level scoring
+- Integration tests for auth enforcement, `validate_authentication()`, and `authenticate_api_key()` (filter registration, logged-in pass-through, unauthenticated blocking, env bypass, API key via X-API-Key and Bearer headers)
+- Unit tests for `GraphQLApiKeyAjaxHandler`: generate success, nonce validation, capability checks, key regeneration, revoke flow, hex format validation
+
+### 🌐 Translations
+
+- Updated POT file with new translatable strings
+- Added Spanish (es_ES) translations for all authentication UI strings
+
 ## [1.2.1] - 2026-03-09
 
 ### 🔧 CI
+
 - **Release Workflow**: Make Node.js setup, npm install, and build steps conditional on `package.json` existence
 
 ## [1.2.0] - 2026-03-03
 
 ### 🐛 Fixed
+
 - **Vendor Assets**: Ensure vendor package assets (CSS/JS) are included in release builds
 - **Null Safety**: Add null guards for `UnderAttackMode` in CF7 CAPTCHA methods (`inject_captcha_field`, `ajax_generate_captcha`, `enqueue_captcha_assets`)
 
 ### 🧹 Code Quality
+
 - **PHPCS**: Fix 7 auto-fixable formatting issues in `ContactForm7AjaxHandler`, `ContactForm7Integration`, and `LoginSecurity`
 - **PHPStan**: Resolve all 5 nullable type errors — now 0 errors at configured level
 
 ### ♻️ Refactoring
+
 - **Release Pipeline**: Unify release workflow and build script across all plugins
   - Selective copy strategy replaces copy-all-then-clean approach
   - Remove `composer.json` from ZIP (not needed at runtime)
@@ -30,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Generate MD5 + SHA256 checksums
 
 ### 🔒 Security
+
 - **GitHub Actions**: Pin all dependencies to SHA hashes for supply chain protection
   - `actions/checkout@v4.3.1`
   - `shivammathur/setup-php@v2.36.0`

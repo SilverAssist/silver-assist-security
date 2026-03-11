@@ -63,14 +63,22 @@ class SettingsHandler {
 			\wp_die( \esc_html__( 'Security check failed.', 'silver-assist-security' ) );
 		}
 
-		// Process different settings categories
-		$this->save_login_security_settings();
-		$this->save_admin_hide_settings();
-		$this->save_graphql_settings();
-		$this->save_contact_form7_settings();
-		$this->save_ip_management_settings();
-		$this->save_attack_protection_settings();
-		$this->save_advanced_protection_settings();
+		// Check if submission is scoped to a specific section.
+		$section = isset( $_POST['settings_section'] ) ? \sanitize_text_field( \wp_unslash( $_POST['settings_section'] ) ) : '';
+
+		if ( $section === 'graphql_auth' ) {
+			// Only save GraphQL auth-related settings (service user ID).
+			$this->save_graphql_auth_settings();
+		} else {
+			// Process all settings categories.
+			$this->save_login_security_settings();
+			$this->save_admin_hide_settings();
+			$this->save_graphql_settings();
+			$this->save_contact_form7_settings();
+			$this->save_ip_management_settings();
+			$this->save_attack_protection_settings();
+			$this->save_advanced_protection_settings();
+		}
 
 		$this->add_success_notice();
 	}
@@ -140,15 +148,48 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_graphql_settings(): void {
-		// Headless mode setting
-		\update_option( 'silver_assist_graphql_headless_mode', (int) ( isset( $_POST['silver_assist_graphql_headless_mode'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_headless_mode'] ) ) : 0 ) );
+		// Headless mode setting — only update when present in the form.
+		if ( isset( $_POST['silver_assist_graphql_headless_mode'] ) ) {
+			$headless_mode = (int) \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_headless_mode'] ) );
+			\update_option( 'silver_assist_graphql_headless_mode', $headless_mode );
+		}
 
-		// GraphQL timeout setting
+		// GraphQL timeout setting.
 		if ( isset( $_POST['silver_assist_graphql_query_timeout'] ) ) {
 			$graphql_timeout = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_query_timeout'] ) ) );
 			$php_timeout     = $this->config_manager->get_php_execution_timeout();
 			$graphql_timeout = \max( 1, \min( $php_timeout, $graphql_timeout ) );
 			\update_option( 'silver_assist_graphql_query_timeout', $graphql_timeout );
+		}
+
+		// Service User ID for API key authentication.
+		if ( isset( $_POST['silver_assist_graphql_service_user_id'] ) ) {
+			$service_user_id = \absint( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_service_user_id'] ) ) );
+			// Validate user exists.
+			if ( $service_user_id > 0 && ! \get_userdata( $service_user_id ) ) {
+				$service_user_id = 0;
+			}
+			\update_option( 'silver_assist_graphql_service_user_id', $service_user_id );
+		}
+	}
+
+	/**
+	 * Save only GraphQL authentication settings (service user)
+	 *
+	 * Used when the GraphQL Authentication form is submitted with
+	 * settings_section=graphql_auth to avoid overwriting unrelated settings.
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	private function save_graphql_auth_settings(): void {
+		if ( isset( $_POST['silver_assist_graphql_service_user_id'] ) ) {
+			$service_user_id = \absint( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_service_user_id'] ) ) );
+			// Validate user exists.
+			if ( $service_user_id > 0 && ! \get_userdata( $service_user_id ) ) {
+				$service_user_id = 0;
+			}
+			\update_option( 'silver_assist_graphql_service_user_id', $service_user_id );
 		}
 	}
 

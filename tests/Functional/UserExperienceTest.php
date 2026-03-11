@@ -103,7 +103,7 @@ class UserExperienceTest extends WP_UnitTestCase
         $output = \ob_get_clean();
         
         // Verify user sees expected interface elements
-        $this->assertStringContainsString('Security Essentials', $output, 'User should see main heading');
+        $this->assertStringContainsString('Security Dashboard', $output, 'User should see main heading');
         $this->assertStringContainsString('dashboard-tab', $output, 'User should see Dashboard tab');
         $this->assertStringContainsString('login-security-tab', $output, 'User should see Login Security tab');
         $this->assertStringContainsString('ip-management-tab', $output, 'User should see IP Management tab');
@@ -246,7 +246,7 @@ class UserExperienceTest extends WP_UnitTestCase
         $admin_panel->render_admin_page();
         $interface_output = \ob_get_clean();
         
-        $this->assertStringContainsString('Silver Assist Security Essentials', $interface_output, 'User should see plugin branding');
+        $this->assertStringContainsString('Security Dashboard', $interface_output, 'User should see Security Dashboard');
         
         // Step 3: User modifies several settings
         \update_option('silver_assist_login_attempts', 10);

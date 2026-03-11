@@ -261,4 +261,103 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
         
         $this->assertTrue(true);
     }
+
+    /**
+     * Test is_authentication_required returns false when WPGraphQL setting is off
+     *
+     * @since 1.8.0
+     * @return void
+     */
+    public function test_authentication_required_wpgraphql_off(): void
+    {
+        $settings = get_option('graphql_general_settings', array());
+        $settings['restrict_endpoint_to_logged_in_users'] = 'off';
+        update_option('graphql_general_settings', $settings);
+
+        $this->config_manager->clear_cache();
+
+        $this->assertFalse(
+            $this->config_manager->is_authentication_required(),
+            'Should return false when WPGraphQL setting is off'
+        );
+    }
+
+    /**
+     * Test is_authentication_required returns true when WPGraphQL setting is on
+     *
+     * @since 1.8.0
+     * @return void
+     */
+    public function test_authentication_required_wpgraphql_on(): void
+    {
+        if (! \class_exists('WPGraphQL')) {
+            $this->markTestSkipped('WPGraphQL plugin not available');
+        }
+
+        $settings = get_option('graphql_general_settings', array());
+        $settings['restrict_endpoint_to_logged_in_users'] = 'on';
+        update_option('graphql_general_settings', $settings);
+
+        $this->config_manager->clear_cache();
+
+        $this->assertTrue(
+            $this->config_manager->is_authentication_required(),
+            'Should return true when WPGraphQL setting is enabled'
+        );
+    }
+
+    /**
+     * Test is_authentication_required returns false when setting is not set
+     *
+     * @since 1.8.0
+     * @return void
+     */
+    public function test_authentication_required_default(): void
+    {
+        delete_option('graphql_general_settings');
+
+        $this->config_manager->clear_cache();
+
+        $this->assertFalse(
+            $this->config_manager->is_authentication_required(),
+            'Should return false when WPGraphQL setting is not configured'
+        );
+    }
+
+    /**
+     * Test security level does not double-count authentication restriction
+     *
+     * When both endpoint_access is restricted and authentication is required,
+     * the score should only get +3 once, not +6.
+     *
+     * @since 1.8.0
+     * @return void
+     */
+    public function test_security_level_no_double_counting_auth(): void
+    {
+        if (! \class_exists('WPGraphQL')) {
+            $this->markTestSkipped('WPGraphQL plugin not available');
+        }
+
+        // Scenario 1: Endpoint access restricted via headless mode only.
+        update_option('silver_assist_graphql_headless_mode', 1);
+        delete_option('graphql_general_settings');
+
+        $this->config_manager->clear_cache();
+        $status_headless_only = $this->config_manager->get_integration_status();
+
+        // Scenario 2: Both endpoint access restriction and WPGraphQL auth are enabled.
+        $settings = get_option('graphql_general_settings', array());
+        $settings['restrict_endpoint_to_logged_in_users'] = 'on';
+        update_option('graphql_general_settings', $settings);
+
+        $this->config_manager->clear_cache();
+        $status_both = $this->config_manager->get_integration_status();
+
+        $this->assertSame(
+            $status_headless_only['security_level'],
+            $status_both['security_level'],
+            'Security level should not increase when both endpoint access restriction and authentication requirement are enabled (no double-counting of auth).'
+        );
+    }
 }

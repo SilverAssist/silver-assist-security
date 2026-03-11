@@ -20,6 +20,7 @@ use SilverAssist\Security\Core\Plugin;
 use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 use SilverAssist\SettingsHub\SettingsHub;
+use SilverAssist\Security\Admin\Ajax\GraphQLApiKeyAjaxHandler;
 use SilverAssist\Security\Admin\Ajax\SecurityAjaxHandler;
 use SilverAssist\Security\Admin\Ajax\ContactForm7AjaxHandler;
 use SilverAssist\Security\Admin\Assets\AssetManager;
@@ -96,6 +97,14 @@ class AdminPanel {
 	private ContactForm7AjaxHandler $cf7_ajax_handler;
 
 	/**
+	 * GraphQL API Key AJAX Handler instance
+	 *
+	 * @var GraphQLApiKeyAjaxHandler
+	 * @phpstan-ignore-next-line Property is instantiated but used via WordPress hooks
+	 */
+	private GraphQLApiKeyAjaxHandler $graphql_api_key_handler;
+
+	/**
 	 * Asset Manager instance
 	 *
 	 * @var AssetManager
@@ -126,6 +135,9 @@ class AdminPanel {
 
 		// Initialize CF7 AJAX handler
 		$this->cf7_ajax_handler = new ContactForm7AjaxHandler();
+
+		// Initialize GraphQL API Key AJAX handler
+		$this->graphql_api_key_handler = new GraphQLApiKeyAjaxHandler();
 
 		// Initialize asset manager
 		$this->asset_manager = new AssetManager( $this->plugin_version );

@@ -40,6 +40,8 @@ class DefaultConfig {
 			'silver_assist_graphql_query_complexity'      => 100,
 			'silver_assist_graphql_query_timeout'         => 30, // Dynamic: Based on PHP timeout, capped at 30s.
 			'silver_assist_graphql_headless_mode'         => 0,
+			'silver_assist_graphql_api_key'               => '', // Hashed API key for server-to-server authentication.
+			'silver_assist_graphql_service_user_id'       => 0, // WordPress user ID for API key authentication.
 
 			// Form Protection Settings
 			'silver_assist_form_protection_enabled'       => 1, // Enable form protection by default
