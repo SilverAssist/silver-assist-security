@@ -541,7 +541,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Test enforce_authentication_requirement does nothing when auth is not required
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function test_enforce_auth_skips_when_not_required(): void {
@@ -566,7 +566,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Test enforce_authentication_requirement registers filter when auth is required
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function test_enforce_auth_registers_filter_when_required(): void {
@@ -591,7 +591,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Test validate_authentication allows logged-in users
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function test_validate_auth_allows_logged_in_user(): void {
@@ -613,7 +613,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Test validate_authentication blocks unauthenticated in production
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function test_validate_auth_blocks_unauthenticated(): void {
@@ -641,7 +641,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Test validate_authentication allows through in local/development environment
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function test_validate_auth_allows_local_environment(): void {
@@ -671,7 +671,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Test authenticate_api_key skips when user already authenticated
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function test_api_key_auth_skips_authenticated_user(): void {
@@ -688,7 +688,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Test authenticate_api_key skips non-GraphQL requests
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function test_api_key_auth_skips_non_graphql_request(): void {
@@ -708,7 +708,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Test authenticate_api_key returns false when no key is provided
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function test_api_key_auth_returns_false_without_key(): void {
@@ -728,7 +728,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Test authenticate_api_key rejects invalid key
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function test_api_key_auth_rejects_invalid_key(): void {
@@ -757,7 +757,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Test authenticate_api_key authenticates with valid key
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function test_api_key_auth_succeeds_with_valid_key(): void {
@@ -795,7 +795,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	/**
 	 * Test authenticate_api_key supports Bearer token
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function test_api_key_auth_supports_bearer_token(): void {

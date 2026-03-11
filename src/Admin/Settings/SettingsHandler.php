@@ -179,7 +179,7 @@ class SettingsHandler {
 	 * Used when the GraphQL Authentication form is submitted with
 	 * settings_section=graphql_auth to avoid overwriting unrelated settings.
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	private function save_graphql_auth_settings(): void {

@@ -6,7 +6,7 @@
  * generation, regeneration, and revocation of API keys.
  *
  * @package SilverAssist\Security\Admin\Ajax
- * @since 1.8.0
+ * @since 1.3.0
  * @author Silver Assist
  */
 
@@ -21,14 +21,14 @@ use SilverAssist\Security\Core\SecurityHelper;
  * Manages AJAX endpoints for API key generation and revocation
  * with proper security validation and error handling.
  *
- * @since 1.8.0
+ * @since 1.3.0
  */
 class GraphQLApiKeyAjaxHandler {
 
 	/**
 	 * Constructor
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 */
 	public function __construct() {
 		$this->register_ajax_handlers();
@@ -37,7 +37,7 @@ class GraphQLApiKeyAjaxHandler {
 	/**
 	 * Register AJAX handlers for API key management
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	private function register_ajax_handlers(): void {
@@ -48,7 +48,7 @@ class GraphQLApiKeyAjaxHandler {
 	/**
 	 * AJAX handler for generating a new GraphQL API key
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function generate_api_key(): void {
@@ -98,7 +98,7 @@ class GraphQLApiKeyAjaxHandler {
 	/**
 	 * AJAX handler for revoking the GraphQL API key
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function revoke_api_key(): void {

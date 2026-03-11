@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\GraphQL
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.2.1
+ * @version 1.3.0
  */
 
 namespace SilverAssist\Security\GraphQL;
@@ -1403,7 +1403,7 @@ class GraphQLSecurity {
 	 * When enabled, all GraphQL queries require a logged-in user via
 	 * WordPress session, Application Passwords, or API key.
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function enforce_authentication_requirement(): void {
@@ -1423,7 +1423,7 @@ class GraphQLSecurity {
 	 * 2. Application Password sent via Authorization: Basic header
 	 * 3. API key authenticated via determine_current_user filter
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @param array       $request_data   Request data including query.
 	 * @param mixed       $request        HTTP request object (optional).
 	 * @param string|null $operation_name GraphQL operation name (optional).
@@ -1473,7 +1473,7 @@ class GraphQLSecurity {
 	 * server-to-server requests before is_user_logged_in() is checked.
 	 * Supports X-API-Key header and Authorization: Bearer token.
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @param int|false $user_id The current user ID, or false if not determined.
 	 * @return int|false The authenticated user ID, or the original value.
 	 */
@@ -1528,7 +1528,7 @@ class GraphQLSecurity {
 	/**
 	 * Check if the current request is a GraphQL request
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return bool True if the current request targets the GraphQL endpoint.
 	 */
 	private function is_graphql_request(): bool {
@@ -1544,7 +1544,7 @@ class GraphQLSecurity {
 	 *
 	 * Supports X-API-Key header and Authorization: Bearer token.
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return string The API key, or empty string if not found.
 	 */
 	private function get_api_key_from_request(): string {

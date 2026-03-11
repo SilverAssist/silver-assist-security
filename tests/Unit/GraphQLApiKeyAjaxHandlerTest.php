@@ -5,7 +5,7 @@
  * Tests for AJAX-based API key generation and revocation.
  *
  * @package SilverAssist\Security\Tests\Unit
- * @since 1.8.0
+ * @since 1.3.0
  */
 
 namespace SilverAssist\Security\Tests\Unit;
@@ -17,7 +17,7 @@ use WP_UnitTestCase;
 /**
  * Test GraphQLApiKeyAjaxHandler functionality
  *
- * @since 1.8.0
+ * @since 1.3.0
  */
 class GraphQLApiKeyAjaxHandlerTest extends WP_UnitTestCase {
 

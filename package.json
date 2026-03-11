@@ -1,6 +1,6 @@
 {
   "name": "silver-assist-security",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "WordPress security plugin that resolves critical security vulnerabilities found in WordPress security audits",
   "main": "silver-assist-security.php",
   "scripts": {

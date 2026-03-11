@@ -35,7 +35,7 @@
 # @package SilverAssist\Security
 # @since 1.1.5
 # @author Silver Assist
-# @version 1.2.1
+# @version 1.3.0
 ##############################################################################
 
 # Configuration

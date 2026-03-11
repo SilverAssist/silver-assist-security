@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\GraphQL
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.2.1
+ * @version 1.3.0
  */
 
 namespace SilverAssist\Security\GraphQL;
@@ -430,7 +430,7 @@ class GraphQLConfigManager {
 	 *
 	 * Delegates to WPGraphQL's native restrict_endpoint_to_logged_in_users setting.
 	 *
-	 * @since 1.8.0
+	 * @since 1.3.0
 	 * @return bool True if authentication is required.
 	 */
 	public function is_authentication_required(): bool {

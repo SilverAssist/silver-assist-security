@@ -265,7 +265,7 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
     /**
      * Test is_authentication_required returns false when WPGraphQL setting is off
      *
-     * @since 1.8.0
+     * @since 1.3.0
      * @return void
      */
     public function test_authentication_required_wpgraphql_off(): void
@@ -285,7 +285,7 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
     /**
      * Test is_authentication_required returns true when WPGraphQL setting is on
      *
-     * @since 1.8.0
+     * @since 1.3.0
      * @return void
      */
     public function test_authentication_required_wpgraphql_on(): void
@@ -309,7 +309,7 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
     /**
      * Test is_authentication_required returns false when setting is not set
      *
-     * @since 1.8.0
+     * @since 1.3.0
      * @return void
      */
     public function test_authentication_required_default(): void
@@ -330,7 +330,7 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
      * When both endpoint_access is restricted and authentication is required,
      * the score should only get +3 once, not +6.
      *
-     * @since 1.8.0
+     * @since 1.3.0
      * @return void
      */
     public function test_security_level_no_double_counting_auth(): void

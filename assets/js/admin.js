@@ -6,7 +6,7 @@
  * security status management.
  *
  * @file admin.js
- * @version 1.2.1
+ * @version 1.3.0
  * @author Silver Assist
  * @requires jQuery
  * @since 1.0.0

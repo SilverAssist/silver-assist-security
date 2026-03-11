@@ -8,7 +8,7 @@
 # @package SilverAssist\Security
 # @since 1.1.15
 # @author Silver Assist
-# @version 1.2.1
+# @version 1.3.0
 #
 # Usage:
 #   bash scripts/install-cf7-for-tests.sh
