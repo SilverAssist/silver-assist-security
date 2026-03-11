@@ -148,7 +148,7 @@ class SettingsHubTest extends WP_UnitTestCase
     /**
      * Test AJAX update check handler
      *
-     * @covers ::ajax_check_updates
+     * @covers ::render_update_check_script
      * @return void
      */
     public function test_ajax_update_check_handler(): void
@@ -160,33 +160,28 @@ class SettingsHubTest extends WP_UnitTestCase
         $_POST["nonce"] = $nonce;
         $_POST["action"] = "silver_assist_check_updates";
 
-        // This test verifies the handler exists and can be called
-        // The actual AJAX execution would require WordPress AJAX environment
-        $this->assertTrue(method_exists($this->admin_panel, "ajax_check_updates"), "ajax_check_updates method should exist");
+        // Update checks are now delegated to wp-github-updater via render_update_check_script
+        $this->assertTrue(method_exists($this->admin_panel, "render_update_check_script"), "render_update_check_script method should exist");
 
         // Clean up
         unset($_POST["nonce"], $_POST["action"]);
     }
 
     /**
-     * Test AJAX update check security validation
+     * Test update check script execution
      *
-     * @covers ::ajax_check_updates
+     * @covers ::render_update_check_script
      * @return void
      */
     public function test_ajax_update_check_security_validation(): void
     {
-        // Test without nonce - should fail
-        $_POST["action"] = "silver_assist_check_updates";
-        unset($_POST["nonce"]);
+        // Update checks are now handled by wp-github-updater
+        // Verify render_update_check_script executes without errors
+        ob_start();
+        $this->admin_panel->render_update_check_script();
+        $output = ob_get_clean();
 
-        $response = $this->call_ajax_handler($this->admin_panel, 'ajax_check_updates');
-
-        $this->assertIsArray($response, 'Response should be valid JSON');
-        $this->assertFalse($response["success"] ?? true, "Request without nonce should fail");
-
-        // Clean up
-        unset($_POST["action"]);
+        $this->assertIsString($output, 'render_update_check_script should produce string output');
     }
 
     /**
@@ -204,44 +199,17 @@ class SettingsHubTest extends WP_UnitTestCase
 
         // Verify JavaScript handler is returned
         if (!empty($output)) {
-            // Method now returns onclick handler string, not full script tag
+            // Method now returns onclick handler string from wp-github-updater
             $this->assertIsString($output, "Output should be a string");
-            $this->assertStringContainsString("silverAssistCheckUpdates", $output, "Handler should call global function");
+            $this->assertStringContainsString("wpGithubUpdaterCheckUpdates", $output, "Handler should call wp-github-updater function");
             $this->assertStringContainsString("return false", $output, "Handler should prevent default action");
             
             // Verify it's a valid onclick handler format (no script tags)
             $this->assertStringNotContainsString("<script", $output, "Should not contain script tags");
             $this->assertStringNotContainsString("</script>", $output, "Should not contain script closing tags");
             
-            // Verify script was enqueued
-            $this->assertTrue(\wp_script_is("silver-assist-update-check", "registered"), "Update check script should be registered");
-            $this->assertTrue(\wp_script_is("silver-assist-update-check", "enqueued"), "Update check script should be enqueued");
-            
-            // Verify script has correct dependencies
-            global $wp_scripts;
-            $script_data = $wp_scripts->registered["silver-assist-update-check"];
-            $this->assertContains("jquery", $script_data->deps, "Script should depend on jQuery");
-            
-            // Verify script is loaded in footer (WordPress stores this in extra['group'] = 1)
-            $extra_data = $wp_scripts->get_data("silver-assist-update-check", "group");
-            $this->assertEquals(1, $extra_data, "Script should load in footer (group 1)");
-            
-            // Verify localization data was registered
-            $localized_data = $wp_scripts->get_data("silver-assist-update-check", "data");
-            $this->assertNotEmpty($localized_data, "Script should have localized data");
-            
-            // Verify localized data contains required properties
-            $this->assertStringContainsString("silverAssistUpdateCheck", $localized_data, "Should define silverAssistUpdateCheck object");
-            $this->assertStringContainsString("ajaxurl", $localized_data, "Should contain ajaxurl");
-            $this->assertStringContainsString("nonce", $localized_data, "Should contain nonce");
-            $this->assertStringContainsString("updateUrl", $localized_data, "Should contain updateUrl");
-            $this->assertStringContainsString("strings", $localized_data, "Should contain strings object");
-            
-            // Verify translation strings are present
-            $this->assertStringContainsString("updateAvailable", $localized_data, "Should contain updateAvailable string");
-            $this->assertStringContainsString("upToDate", $localized_data, "Should contain upToDate string");
-            $this->assertStringContainsString("checkError", $localized_data, "Should contain checkError string");
-            $this->assertStringContainsString("connectError", $localized_data, "Should contain connectError string");
+            // Verify wp-github-updater script was enqueued
+            $this->assertTrue(\wp_script_is("wp-github-updater-check", "enqueued"), "wp-github-updater check script should be enqueued");
         } else {
             // If no updater, output should be empty string
             $updater = $this->plugin->get_updater();
@@ -305,10 +273,15 @@ class SettingsHubTest extends WP_UnitTestCase
      */
     public function test_admin_hooks_registration(): void
     {
-        // Verify AJAX action is registered
-        $ajax_action = "wp_ajax_silver_assist_check_updates";
-        $has_action = has_action($ajax_action);
+        // Verify core admin hooks are registered
+        $this->assertNotFalse(
+            has_action('admin_menu', [$this->admin_panel, 'register_with_hub']),
+            'admin_menu hook should be registered'
+        );
 
-        $this->assertNotFalse($has_action, "AJAX update check action should be registered");
+        $this->assertNotFalse(
+            has_action('admin_init', [$this->admin_panel, 'register_settings']),
+            'register_settings hook should be registered'
+        );
     }
 }

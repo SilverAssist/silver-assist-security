@@ -170,7 +170,6 @@ class AdminPanelTest extends WP_UnitTestCase
             'silver_assist_get_security_logs',
             'silver_assist_auto_save',
             'silver_assist_validate_admin_path',
-            'silver_assist_check_updates',
         ];
 
         foreach ($ajax_actions as $action) {
@@ -284,17 +283,17 @@ class AdminPanelTest extends WP_UnitTestCase
     }
 
     /**
-     * Test AdminPanel still handles update checks directly
+     * Test AdminPanel delegates update checks to wp-github-updater
      */
     public function test_admin_panel_handles_update_checks(): void
     {
         // Login as administrator
         \wp_set_current_user($this->admin_user_id);
 
-        // Update check should remain in AdminPanel (not delegated)
+        // Update check is now delegated to wp-github-updater via render_update_check_script
         $this->assertTrue(
-            is_callable([$this->admin_panel, 'ajax_check_updates']),
-            'AdminPanel should still handle update checks directly'
+            is_callable([$this->admin_panel, 'render_update_check_script']),
+            'AdminPanel should delegate update checks via render_update_check_script'
         );
     }
 
@@ -510,21 +509,25 @@ class AdminPanelTest extends WP_UnitTestCase
     }
 
     /**
-     * Test update check AJAX endpoint
+     * Test update check delegation to wp-github-updater
      */
     public function test_ajax_check_updates_with_admin_user(): void
     {
         // Login as administrator
         \wp_set_current_user($this->admin_user_id);
 
-        // AJAX endpoint exists and is callable
+        // Update check is now handled by wp-github-updater, not AdminPanel directly
         $this->assertTrue(
-            is_callable([$this->admin_panel, 'ajax_check_updates']),
-            'AJAX check updates endpoint should be callable'
+            is_callable([$this->admin_panel, 'render_update_check_script']),
+            'Update check should be available via render_update_check_script'
         );
-        
-        // Update check functionality exists (may fail in test environment)
-        $this->assertTrue(true, 'Update check endpoint is available');
+
+        // Verify the method executes without error
+        ob_start();
+        $this->admin_panel->render_update_check_script();
+        $output = ob_get_clean();
+
+        $this->assertIsString($output, 'render_update_check_script should produce string output');
     }
 
     /**
