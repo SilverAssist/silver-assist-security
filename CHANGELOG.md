@@ -7,22 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🔒 Security
+
+- **GraphQL Authentication Requirement**: Enforce authentication for all GraphQL requests via `graphql_request_data` filter (RSM pentest audit finding)
+- **Custom API Key Authentication**: Plugin-managed API key system via `determine_current_user` filter at priority 5, supporting `X-API-Key` header and `Authorization: Bearer` token
+- **Secure Key Storage**: API keys stored as hashed values using `wp_hash_password()`, verified with `wp_check_password()`
+- **Service User Binding**: API key authentication resolves to a configurable WordPress service account user
+
+### ✨ Added
+
+- **Authentication Settings UI**: Full admin panel section for GraphQL authentication with toggle, API key management (generate/regenerate/revoke), service user dropdown, and one-time key display
+- **Dashboard Auth Indicator**: Authentication status ("Required" / "Public") shown in GraphQL Security dashboard card
+- **`is_authentication_required()` method**: Centralized check in `GraphQLConfigManager` that coordinates with WPGraphQL's native `restrict_endpoint_to_authenticated_users` setting
+- **Security Level Scoring**: Authentication requirement adds +3 points to the GraphQL security level calculation
+- **Default Config Options**: Added `silver_assist_graphql_require_authentication`, `silver_assist_graphql_api_key`, and `silver_assist_graphql_service_user_id`
+
+### 🐛 Fixed
+
+- **Undefined Property**: Remove dead `$this->headless_mode` assignments in `enable_headless_mode()` and `disable_headless_mode()` (property was never declared; state is managed by `GraphQLConfigManager`)
+
 ## [1.2.1] - 2026-03-09
 
 ### 🔧 CI
+
 - **Release Workflow**: Make Node.js setup, npm install, and build steps conditional on `package.json` existence
 
 ## [1.2.0] - 2026-03-03
 
 ### 🐛 Fixed
+
 - **Vendor Assets**: Ensure vendor package assets (CSS/JS) are included in release builds
 - **Null Safety**: Add null guards for `UnderAttackMode` in CF7 CAPTCHA methods (`inject_captcha_field`, `ajax_generate_captcha`, `enqueue_captcha_assets`)
 
 ### 🧹 Code Quality
+
 - **PHPCS**: Fix 7 auto-fixable formatting issues in `ContactForm7AjaxHandler`, `ContactForm7Integration`, and `LoginSecurity`
 - **PHPStan**: Resolve all 5 nullable type errors — now 0 errors at configured level
 
 ### ♻️ Refactoring
+
 - **Release Pipeline**: Unify release workflow and build script across all plugins
   - Selective copy strategy replaces copy-all-then-clean approach
   - Remove `composer.json` from ZIP (not needed at runtime)
@@ -30,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Generate MD5 + SHA256 checksums
 
 ### 🔒 Security
+
 - **GitHub Actions**: Pin all dependencies to SHA hashes for supply chain protection
   - `actions/checkout@v4.3.1`
   - `shivammathur/setup-php@v2.36.0`

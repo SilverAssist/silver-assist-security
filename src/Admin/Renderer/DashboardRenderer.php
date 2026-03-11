@@ -140,6 +140,12 @@ class DashboardRenderer {
 						\__( 'Disabled', 'silver-assist-security' ),
 						\__( 'Public', 'silver-assist-security' )
 					);
+					RenderHelper::render_feature_status(
+						\__( 'Authentication', 'silver-assist-security' ),
+						(bool) $security_status['graphql_security']['authentication_required'],
+						\__( 'Required', 'silver-assist-security' ),
+						\__( 'Public', 'silver-assist-security' )
+					);
 					?>
 				</div>
 			</div>

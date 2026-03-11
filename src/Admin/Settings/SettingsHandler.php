@@ -140,16 +140,60 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_graphql_settings(): void {
-		// Headless mode setting
+		// Headless mode setting.
 		\update_option( 'silver_assist_graphql_headless_mode', (int) ( isset( $_POST['silver_assist_graphql_headless_mode'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_headless_mode'] ) ) : 0 ) );
 
-		// GraphQL timeout setting
+		// GraphQL timeout setting.
 		if ( isset( $_POST['silver_assist_graphql_query_timeout'] ) ) {
 			$graphql_timeout = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_query_timeout'] ) ) );
 			$php_timeout     = $this->config_manager->get_php_execution_timeout();
 			$graphql_timeout = \max( 1, \min( $php_timeout, $graphql_timeout ) );
 			\update_option( 'silver_assist_graphql_query_timeout', $graphql_timeout );
 		}
+
+		// Require Authentication toggle.
+		\update_option( 'silver_assist_graphql_require_authentication', (int) ( isset( $_POST['silver_assist_graphql_require_authentication'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_require_authentication'] ) ) : 0 ) );
+
+		// Service User ID for API key authentication.
+		if ( isset( $_POST['silver_assist_graphql_service_user_id'] ) ) {
+			$service_user_id = \absint( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_service_user_id'] ) ) );
+			// Validate user exists.
+			if ( $service_user_id > 0 && ! \get_userdata( $service_user_id ) ) {
+				$service_user_id = 0;
+			}
+			\update_option( 'silver_assist_graphql_service_user_id', $service_user_id );
+		}
+
+		// API key generation (only when explicitly requested).
+		if ( isset( $_POST['silver_assist_graphql_generate_api_key'] ) && '1' === \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_generate_api_key'] ) ) ) {
+			$this->generate_graphql_api_key();
+		}
+
+		// API key revocation.
+		if ( isset( $_POST['silver_assist_graphql_revoke_api_key'] ) && '1' === \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_revoke_api_key'] ) ) ) {
+			\update_option( 'silver_assist_graphql_api_key', '' );
+			\update_option( 'silver_assist_graphql_service_user_id', 0 );
+		}
+	}
+
+	/**
+	 * Generate a new GraphQL API key
+	 *
+	 * Creates a cryptographically secure API key, stores the hash,
+	 * and displays the key once via an admin notice.
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	private function generate_graphql_api_key(): void {
+		// Generate a cryptographically secure API key.
+		$api_key = \bin2hex( \random_bytes( 32 ) );
+
+		// Store only the hash.
+		\update_option( 'silver_assist_graphql_api_key', \wp_hash_password( $api_key ) );
+
+		// Show the key once to the admin via a transient-based notice.
+		\set_transient( 'silver_assist_graphql_new_api_key', $api_key, 60 );
 	}
 
 	/**

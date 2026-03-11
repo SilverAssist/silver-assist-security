@@ -338,6 +338,19 @@ class GraphQLConfigManager {
 
 		// Security recommendations
 		$recommendations = $this->get_security_recommendations();
+
+		// Authentication requirement status.
+		$auth_required = $this->is_authentication_required();
+		$auth_status   = $auth_required ?
+			'<span style="color: #00a32a; font-weight: bold;">' . \esc_html__( 'REQUIRED', 'silver-assist-security' ) . '</span>' :
+			'<span style="color: #d63638; font-weight: bold;">' . \esc_html__( 'PUBLIC', 'silver-assist-security' ) . '</span>';
+
+		$settings[] = sprintf(
+			'<strong>%s:</strong> %s',
+			\esc_html__( 'Authentication', 'silver-assist-security' ),
+			$auth_status
+		);
+
 		if ( ! empty( $recommendations ) ) {
 			$warning_messages = array_map(
 				function ( $rec ) {
@@ -413,6 +426,26 @@ class GraphQLConfigManager {
 	}
 
 	/**
+	 * Check if authentication is required for GraphQL requests
+	 *
+	 * Returns true if either our plugin setting or WPGraphQL's native
+	 * restrict_endpoint_to_authenticated_users is enabled.
+	 *
+	 * @since 1.8.0
+	 * @return bool True if authentication is required.
+	 */
+	public function is_authentication_required(): bool {
+		// Check our plugin setting.
+		$our_setting = (bool) DefaultConfig::get_option( 'silver_assist_graphql_require_authentication' );
+
+		// Also check WPGraphQL native setting.
+		$wpgraphql_setting = $this->get_wpgraphql_setting( 'restrict_endpoint_to_authenticated_users', 'off' ) === 'on';
+
+		// Either setting being enabled should enforce authentication.
+		return $our_setting || $wpgraphql_setting;
+	}
+
+	/**
 	 * Clear configuration cache (for testing or dynamic updates)
 	 *
 	 * @since 1.1.1
@@ -459,6 +492,9 @@ class GraphQLConfigManager {
 			$score += 2;
 		}
 		if ( $config['endpoint_access'] === 'restricted' ) {
+			$score += 3;
+		}
+		if ( $this->is_authentication_required() ) {
 			$score += 3;
 		}
 		if ( $config['query_depth_limit'] > 0 && $config['query_depth_limit'] <= 15 ) {
