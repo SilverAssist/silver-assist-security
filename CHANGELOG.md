@@ -9,43 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🔒 Security
 
-- **GraphQL Authentication Requirement**: Enforce authentication for all GraphQL requests via `graphql_request_data` filter (RSM pentest audit finding)
-- **Custom API Key Authentication**: Plugin-managed API key system via `determine_current_user` filter at priority 5, supporting `X-API-Key` header and `Authorization: Bearer` token
+- **GraphQL Authentication Requirement**: Enforce authentication for all GraphQL requests via `graphql_request_data` filter, using WPGraphQL's native `restrict_endpoint_to_authenticated_users` setting as the single source of truth (RSM pentest audit finding)
+- **Custom API Key Authentication**: Plugin-managed API key system supporting `X-API-Key` header and `Authorization: Bearer` token for server-to-server authentication
 - **Secure Key Storage**: API keys stored as hashed values using `wp_hash_password()`, verified with `wp_check_password()`
 - **Service User Binding**: API key authentication resolves to a configurable WordPress service account user
-- **User-Scoped API Key Display**: Newly generated API key transient is scoped to the current user ID, preventing other admins from viewing it
-- **Environment Bypass Restricted**: Auth bypass now only applies to `local`/`development` environments (not all non-production), using `wp_get_environment_type()`
-- **Safe Key Generation**: `random_bytes()` wrapped in try/catch with `SecurityHelper::log_security_event()` logging and admin notice on failure
+- **Environment-Aware Bypass**: Authentication enforcement is bypassed only in `local`/`development` environments to allow development tooling
 
 ### ✨ Added
 
-- **Authentication Settings UI**: Full admin panel section for GraphQL authentication with toggle, API key management (generate/regenerate/revoke), service user dropdown, and one-time key display
+- **Authentication Settings UI**: Admin panel section showing WPGraphQL authentication status badge with direct link to WPGraphQL settings, API key management (generate/regenerate/revoke), service user dropdown, and one-time key display
 - **Dashboard Auth Indicator**: Authentication status ("Required" / "Public") shown in GraphQL Security dashboard card
-- **`is_authentication_required()` method**: Centralized check in `GraphQLConfigManager` that coordinates with WPGraphQL's native `restrict_endpoint_to_authenticated_users` setting
-- **Security Level Scoring**: Authentication requirement adds +3 points to the GraphQL security level calculation (no double-counting with endpoint access restriction)
-- **Default Config Options**: Added `silver_assist_graphql_require_authentication`, `silver_assist_graphql_api_key`, and `silver_assist_graphql_service_user_id`
+- **Security Level Scoring**: Authentication requirement contributes to the GraphQL security level calculation
 
 ### 🐛 Fixed
 
-- **Undefined Property**: Remove dead `$this->headless_mode` assignments in `enable_headless_mode()` and `disable_headless_mode()` (property was never declared; state is managed by `GraphQLConfigManager`)
-- **Security Score Double-Counting**: `calculate_security_level()` no longer awards +3 twice when both endpoint access is restricted and authentication is required
-- **Form Nonce Mismatch**: GraphQL Authentication form now uses correct nonce field name (`_wpnonce`) and includes `save_silver_assist_security` trigger field
-- **Inline Styles**: Removed hardcoded inline styles from notice divs, replaced with CSS classes
-- **IP Detection Consistency**: Use centralized `SecurityHelper::get_client_ip()` instead of `$this->get_client_ip()` in new auth code
-
-### 🧹 Code Quality
-
-- **Variable Naming**: Renamed `$auth_status` to `$authentication_status` in `get_settings_display()` to avoid collision with Endpoint Access status variable
+- **Undefined Property**: Remove dead `$this->headless_mode` assignments in `enable_headless_mode()` and `disable_headless_mode()`
+- **Security Score Double-Counting**: `calculate_security_level()` no longer awards points twice when both endpoint access is restricted and authentication is required
 
 ### ✅ Tests
 
-- **`is_authentication_required()` Decision Matrix**: 5 unit tests covering plugin option on/off × WPGraphQL setting on/off combinations and security level scoring
-- **Auth Enforcement**: 10 integration tests covering `enforce_authentication_requirement()`, `validate_authentication()`, and `authenticate_api_key()` (filter registration, logged-in pass-through, unauthenticated blocking, env bypass, API key via X-API-Key and Bearer headers)
+- Unit tests for `is_authentication_required()` covering WPGraphQL setting on/off and security level scoring
+- Integration tests for auth enforcement, `validate_authentication()`, and `authenticate_api_key()` (filter registration, logged-in pass-through, unauthenticated blocking, env bypass, API key via X-API-Key and Bearer headers)
 
 ### 🌐 Translations
 
 - Updated POT file with new translatable strings
-- Added Spanish (es_ES) translations for all new authentication UI strings
+- Added Spanish (es_ES) translations for all authentication UI strings
 
 ## [1.2.1] - 2026-03-09
 

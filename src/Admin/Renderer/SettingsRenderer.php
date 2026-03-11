@@ -304,43 +304,48 @@ class SettingsRenderer {
 					<div class="card-content">
 
 						<?php
-						// Show coordination notice if WPGraphQL native restriction is enabled.
-						$wpgraphql_auth = $this->config_manager->get_wpgraphql_setting( 'restrict_endpoint_to_authenticated_users', 'off' );
-						if ( 'on' === $wpgraphql_auth ) :
-							?>
-							<div class="notice notice-info inline">
-								<p>
-									<?php \esc_html_e( 'WPGraphQL authentication restriction is already enabled. Silver Assist Security is coordinating with this setting.', 'silver-assist-security' ); ?>
-								</p>
-							</div>
-						<?php endif; ?>
+						$is_auth_required = $this->config_manager->is_authentication_required();
+						?>
+
+						<table class="form-table">
+							<tbody>
+								<tr>
+									<th scope="row">
+										<?php \esc_html_e( 'Require Authentication', 'silver-assist-security' ); ?>
+									</th>
+									<td>
+										<?php if ( $is_auth_required ) : ?>
+											<span class="feature-value enabled"><?php \esc_html_e( 'Enabled', 'silver-assist-security' ); ?></span>
+										<?php else : ?>
+											<span class="feature-value disabled"><?php \esc_html_e( 'Disabled', 'silver-assist-security' ); ?></span>
+										<?php endif; ?>
+										<p class="description">
+											<?php
+											\printf(
+												/* translators: %s: URL to WPGraphQL settings page. */
+												\esc_html__( 'This setting is managed by WPGraphQL. %s to change it.', 'silver-assist-security' ),
+												'<a href="' . \esc_url( \admin_url( 'admin.php?page=graphql-settings' ) ) . '">' . \esc_html__( 'Go to WPGraphQL Settings', 'silver-assist-security' ) . '</a>'
+											);
+											?>
+										</p>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+
+						<!-- Authentication info -->
+						<div class="admin-hide-warning">
+							<h4><?php \esc_html_e( 'Important Notice', 'silver-assist-security' ); ?></h4>
+							<ul>
+								<li><?php \esc_html_e( 'When enabled, all GraphQL consumers must authenticate via Application Passwords, API Key, or WordPress session.', 'silver-assist-security' ); ?></li>
+								<li><?php \esc_html_e( 'Authentication is not enforced in local/development environments to allow development tooling.', 'silver-assist-security' ); ?></li>
+								<li><?php \esc_html_e( 'Headless front-end applications (Next.js, Gatsby, etc.) will need to use Application Passwords or the API Key below.', 'silver-assist-security' ); ?></li>
+							</ul>
+						</div>
 
 						<form method="post" action="" id="graphql-auth-form">
 							<?php \wp_nonce_field( 'silver_assist_security_settings' ); ?>
 							<input type="hidden" name="save_silver_assist_security" value="1" />
-
-							<table class="form-table">
-								<tbody>
-									<?php
-									RenderHelper::render_toggle_row(
-										\__( 'Require Authentication', 'silver-assist-security' ),
-										'silver_assist_graphql_require_authentication',
-										$config['graphql_require_authentication'],
-										\__( 'When enabled, all GraphQL queries will require a logged-in user. Supports WordPress sessions, Application Passwords, and API Keys.', 'silver-assist-security' )
-									);
-									?>
-								</tbody>
-							</table>
-
-							<!-- Authentication warning -->
-							<div class="admin-hide-warning">
-								<h4><?php \esc_html_e( 'Important Notice', 'silver-assist-security' ); ?></h4>
-								<ul>
-									<li><?php \esc_html_e( 'Enabling this will require all GraphQL consumers to authenticate via Application Passwords, API Key, or WordPress session.', 'silver-assist-security' ); ?></li>
-									<li><?php \esc_html_e( 'Authentication is not enforced in local/development environments to allow development tooling.', 'silver-assist-security' ); ?></li>
-									<li><?php \esc_html_e( 'Headless front-end applications (Next.js, Gatsby, etc.) will need to use Application Passwords or the API Key below.', 'silver-assist-security' ); ?></li>
-								</ul>
-							</div>
 
 							<h4><?php \esc_html_e( 'API Key Management', 'silver-assist-security' ); ?></h4>
 
@@ -648,25 +653,24 @@ class SettingsRenderer {
 	 */
 	private function get_current_config(): array {
 		return array(
-			'login_attempts'                 => DefaultConfig::get_option( 'silver_assist_login_attempts' ),
-			'lockout_duration'               => DefaultConfig::get_option( 'silver_assist_lockout_duration' ),
-			'session_timeout'                => DefaultConfig::get_option( 'silver_assist_session_timeout' ),
-			'bot_protection'                 => DefaultConfig::get_option( 'silver_assist_bot_protection' ),
-			'password_strength_enforcement'  => DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' ),
-			'graphql_headless_mode'          => DefaultConfig::get_option( 'silver_assist_graphql_headless_mode' ),
-			'graphql_query_timeout'          => \get_option( 'silver_assist_graphql_query_timeout', $this->config_manager->get_php_execution_timeout() ),
-			'cf7_protection_enabled'         => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) : 0,
-			'cf7_rate_limit'                 => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' ) : DefaultConfig::get_default( 'silver_assist_cf7_rate_limit' ) ?? 2,
-			'cf7_rate_window'                => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_rate_window' ) : DefaultConfig::get_default( 'silver_assist_cf7_rate_window' ) ?? 60,
-			'ip_blacklist_enabled'           => DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' ),
-			'ip_violation_threshold'         => DefaultConfig::get_option( 'silver_assist_ip_violation_threshold' ),
-			'ip_blacklist_duration'          => DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' ),
-			'under_attack_enabled'           => DefaultConfig::get_option( 'silver_assist_under_attack_enabled' ),
-			'attack_threshold'               => DefaultConfig::get_option( 'silver_assist_attack_threshold' ),
-			'admin_hide_enabled'             => DefaultConfig::get_option( 'silver_assist_admin_hide_enabled' ),
-			'admin_hide_path'                => DefaultConfig::get_option( 'silver_assist_admin_hide_path' ),
-			'graphql_require_authentication' => DefaultConfig::get_option( 'silver_assist_graphql_require_authentication' ),
-			'graphql_service_user_id'        => (int) DefaultConfig::get_option( 'silver_assist_graphql_service_user_id' ),
+			'login_attempts'                => DefaultConfig::get_option( 'silver_assist_login_attempts' ),
+			'lockout_duration'              => DefaultConfig::get_option( 'silver_assist_lockout_duration' ),
+			'session_timeout'               => DefaultConfig::get_option( 'silver_assist_session_timeout' ),
+			'bot_protection'                => DefaultConfig::get_option( 'silver_assist_bot_protection' ),
+			'password_strength_enforcement' => DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' ),
+			'graphql_headless_mode'         => DefaultConfig::get_option( 'silver_assist_graphql_headless_mode' ),
+			'graphql_query_timeout'         => \get_option( 'silver_assist_graphql_query_timeout', $this->config_manager->get_php_execution_timeout() ),
+			'cf7_protection_enabled'        => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) : 0,
+			'cf7_rate_limit'                => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' ) : DefaultConfig::get_default( 'silver_assist_cf7_rate_limit' ) ?? 2,
+			'cf7_rate_window'               => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_rate_window' ) : DefaultConfig::get_default( 'silver_assist_cf7_rate_window' ) ?? 60,
+			'ip_blacklist_enabled'          => DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' ),
+			'ip_violation_threshold'        => DefaultConfig::get_option( 'silver_assist_ip_violation_threshold' ),
+			'ip_blacklist_duration'         => DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' ),
+			'under_attack_enabled'          => DefaultConfig::get_option( 'silver_assist_under_attack_enabled' ),
+			'attack_threshold'              => DefaultConfig::get_option( 'silver_assist_attack_threshold' ),
+			'admin_hide_enabled'            => DefaultConfig::get_option( 'silver_assist_admin_hide_enabled' ),
+			'admin_hide_path'               => DefaultConfig::get_option( 'silver_assist_admin_hide_path' ),
+			'graphql_service_user_id'       => (int) DefaultConfig::get_option( 'silver_assist_graphql_service_user_id' ),
 		);
 	}
 }

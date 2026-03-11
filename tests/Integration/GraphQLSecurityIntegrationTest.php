@@ -549,7 +549,6 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 			$this->markTestSkipped( 'WPGraphQL plugin not available' );
 		}
 
-		\update_option( 'silver_assist_graphql_require_authentication', 0 );
 		$settings = \get_option( 'graphql_general_settings', array() );
 		$settings['restrict_endpoint_to_authenticated_users'] = 'off';
 		\update_option( 'graphql_general_settings', $settings );
@@ -575,7 +574,9 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 			$this->markTestSkipped( 'WPGraphQL plugin not available' );
 		}
 
-		\update_option( 'silver_assist_graphql_require_authentication', 1 );
+		$settings = \get_option( 'graphql_general_settings', array() );
+		$settings['restrict_endpoint_to_authenticated_users'] = 'on';
+		\update_option( 'graphql_general_settings', $settings );
 		$this->config_manager->clear_cache();
 
 		$security = new GraphQLSecurity();

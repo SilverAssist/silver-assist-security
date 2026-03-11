@@ -428,21 +428,13 @@ class GraphQLConfigManager {
 	/**
 	 * Check if authentication is required for GraphQL requests
 	 *
-	 * Returns true if either our plugin setting or WPGraphQL's native
-	 * restrict_endpoint_to_authenticated_users is enabled.
+	 * Delegates to WPGraphQL's native restrict_endpoint_to_authenticated_users setting.
 	 *
 	 * @since 1.8.0
 	 * @return bool True if authentication is required.
 	 */
 	public function is_authentication_required(): bool {
-		// Check our plugin setting.
-		$our_setting = (bool) DefaultConfig::get_option( 'silver_assist_graphql_require_authentication' );
-
-		// Also check WPGraphQL native setting.
-		$wpgraphql_setting = $this->get_wpgraphql_setting( 'restrict_endpoint_to_authenticated_users', 'off' ) === 'on';
-
-		// Either setting being enabled should enforce authentication.
-		return $our_setting || $wpgraphql_setting;
+		return $this->get_wpgraphql_setting( 'restrict_endpoint_to_authenticated_users', 'off' ) === 'on';
 	}
 
 	/**

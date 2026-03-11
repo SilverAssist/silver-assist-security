@@ -151,9 +151,6 @@ class SettingsHandler {
 			\update_option( 'silver_assist_graphql_query_timeout', $graphql_timeout );
 		}
 
-		// Require Authentication toggle.
-		\update_option( 'silver_assist_graphql_require_authentication', (int) ( isset( $_POST['silver_assist_graphql_require_authentication'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_require_authentication'] ) ) : 0 ) );
-
 		// Service User ID for API key authentication.
 		if ( isset( $_POST['silver_assist_graphql_service_user_id'] ) ) {
 			$service_user_id = \absint( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_service_user_id'] ) ) );

@@ -263,15 +263,13 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
     }
 
     /**
-     * Test is_authentication_required returns false when both settings are off
+     * Test is_authentication_required returns false when WPGraphQL setting is off
      *
      * @since 1.8.0
      * @return void
      */
-    public function test_authentication_required_both_off(): void
+    public function test_authentication_required_wpgraphql_off(): void
     {
-        update_option('silver_assist_graphql_require_authentication', 0);
-        // WPGraphQL native setting defaults to 'off' when not set.
         $settings = get_option('graphql_general_settings', array());
         $settings['restrict_endpoint_to_authenticated_users'] = 'off';
         update_option('graphql_general_settings', $settings);
@@ -280,44 +278,22 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
 
         $this->assertFalse(
             $this->config_manager->is_authentication_required(),
-            'Should return false when both plugin and WPGraphQL settings are off'
+            'Should return false when WPGraphQL setting is off'
         );
     }
 
     /**
-     * Test is_authentication_required returns true when plugin setting is on
+     * Test is_authentication_required returns true when WPGraphQL setting is on
      *
      * @since 1.8.0
      * @return void
      */
-    public function test_authentication_required_plugin_on_wpgraphql_off(): void
-    {
-        update_option('silver_assist_graphql_require_authentication', 1);
-        $settings = get_option('graphql_general_settings', array());
-        $settings['restrict_endpoint_to_authenticated_users'] = 'off';
-        update_option('graphql_general_settings', $settings);
-
-        $this->config_manager->clear_cache();
-
-        $this->assertTrue(
-            $this->config_manager->is_authentication_required(),
-            'Should return true when plugin setting is enabled'
-        );
-    }
-
-    /**
-     * Test is_authentication_required returns true when WPGraphQL native setting is on
-     *
-     * @since 1.8.0
-     * @return void
-     */
-    public function test_authentication_required_plugin_off_wpgraphql_on(): void
+    public function test_authentication_required_wpgraphql_on(): void
     {
         if (! \class_exists('WPGraphQL')) {
             $this->markTestSkipped('WPGraphQL plugin not available');
         }
 
-        update_option('silver_assist_graphql_require_authentication', 0);
         $settings = get_option('graphql_general_settings', array());
         $settings['restrict_endpoint_to_authenticated_users'] = 'on';
         update_option('graphql_general_settings', $settings);
@@ -326,32 +302,25 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
 
         $this->assertTrue(
             $this->config_manager->is_authentication_required(),
-            'Should return true when WPGraphQL native setting is enabled'
+            'Should return true when WPGraphQL setting is enabled'
         );
     }
 
     /**
-     * Test is_authentication_required returns true when both settings are on
+     * Test is_authentication_required returns false when setting is not set
      *
      * @since 1.8.0
      * @return void
      */
-    public function test_authentication_required_both_on(): void
+    public function test_authentication_required_default(): void
     {
-        if (! \class_exists('WPGraphQL')) {
-            $this->markTestSkipped('WPGraphQL plugin not available');
-        }
-
-        update_option('silver_assist_graphql_require_authentication', 1);
-        $settings = get_option('graphql_general_settings', array());
-        $settings['restrict_endpoint_to_authenticated_users'] = 'on';
-        update_option('graphql_general_settings', $settings);
+        delete_option('graphql_general_settings');
 
         $this->config_manager->clear_cache();
 
-        $this->assertTrue(
+        $this->assertFalse(
             $this->config_manager->is_authentication_required(),
-            'Should return true when both settings are enabled'
+            'Should return false when WPGraphQL setting is not configured'
         );
     }
 
@@ -366,8 +335,10 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
      */
     public function test_security_level_no_double_counting_auth(): void
     {
-        // Enable authentication requirement.
-        update_option('silver_assist_graphql_require_authentication', 1);
+        // Enable authentication via WPGraphQL native setting.
+        $settings = get_option('graphql_general_settings', array());
+        $settings['restrict_endpoint_to_authenticated_users'] = 'on';
+        update_option('graphql_general_settings', $settings);
 
         $this->config_manager->clear_cache();
         $status = $this->config_manager->get_integration_status();

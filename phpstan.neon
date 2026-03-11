@@ -72,6 +72,3 @@ parameters:
         -
             message: '#Instantiated class GraphQL\\Executor\\ExecutionResult not found#'
             path: src/GraphQL/GraphQLSecurity.php
-        -
-            message: '#Access to an undefined property.*GraphQL#'
-            path: src/GraphQL/GraphQLSecurity.php
