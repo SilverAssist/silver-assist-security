@@ -340,15 +340,15 @@ class GraphQLConfigManager {
 		$recommendations = $this->get_security_recommendations();
 
 		// Authentication requirement status.
-		$auth_required = $this->is_authentication_required();
-		$auth_status   = $auth_required ?
+		$auth_required         = $this->is_authentication_required();
+		$authentication_status = $auth_required ?
 			'<span style="color: #00a32a; font-weight: bold;">' . \esc_html__( 'REQUIRED', 'silver-assist-security' ) . '</span>' :
 			'<span style="color: #d63638; font-weight: bold;">' . \esc_html__( 'PUBLIC', 'silver-assist-security' ) . '</span>';
 
 		$settings[] = sprintf(
 			'<strong>%s:</strong> %s',
 			\esc_html__( 'Authentication', 'silver-assist-security' ),
-			$auth_status
+			$authentication_status
 		);
 
 		if ( ! empty( $recommendations ) ) {
@@ -491,10 +491,9 @@ class GraphQLConfigManager {
 		if ( ! $config['debug_mode'] ) {
 			$score += 2;
 		}
-		if ( $config['endpoint_access'] === 'restricted' ) {
-			$score += 3;
-		}
-		if ( $this->is_authentication_required() ) {
+		// Treat authentication-restricted access as a single control, even if detected via multiple signals.
+		$is_auth_restricted = ( $config['endpoint_access'] === 'restricted' ) || $this->is_authentication_required();
+		if ( $is_auth_restricted ) {
 			$score += 3;
 		}
 		if ( $config['query_depth_limit'] > 0 && $config['query_depth_limit'] <= 15 ) {

@@ -537,4 +537,295 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 
 		$this->assertTrue( $has_graphql_content, 'HTML should contain WPGraphQL-related content' );
 	}
+
+	/**
+	 * Test enforce_authentication_requirement does nothing when auth is not required
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function test_enforce_auth_skips_when_not_required(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		\update_option( 'silver_assist_graphql_require_authentication', 0 );
+		$settings = \get_option( 'graphql_general_settings', array() );
+		$settings['restrict_endpoint_to_authenticated_users'] = 'off';
+		\update_option( 'graphql_general_settings', $settings );
+		$this->config_manager->clear_cache();
+
+		$security = new GraphQLSecurity();
+		$security->enforce_authentication_requirement();
+
+		$this->assertFalse(
+			\has_filter( 'graphql_request_data', array( $security, 'validate_authentication' ) ),
+			'Filter should not be registered when auth is not required'
+		);
+	}
+
+	/**
+	 * Test enforce_authentication_requirement registers filter when auth is required
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function test_enforce_auth_registers_filter_when_required(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		\update_option( 'silver_assist_graphql_require_authentication', 1 );
+		$this->config_manager->clear_cache();
+
+		$security = new GraphQLSecurity();
+		$security->enforce_authentication_requirement();
+
+		$this->assertNotFalse(
+			\has_filter( 'graphql_request_data', array( $security, 'validate_authentication' ) ),
+			'Filter should be registered when auth is required'
+		);
+	}
+
+	/**
+	 * Test validate_authentication allows logged-in users
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function test_validate_auth_allows_logged_in_user(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		$user_id = $this->factory()->user->create( array( 'role' => 'editor' ) );
+		\wp_set_current_user( $user_id );
+
+		$security     = new GraphQLSecurity();
+		$request_data = array( 'query' => '{ posts { nodes { title } } }' );
+
+		$result = $security->validate_authentication( $request_data );
+
+		$this->assertSame( $request_data, $result, 'Logged-in user should pass through' );
+	}
+
+	/**
+	 * Test validate_authentication blocks unauthenticated in production
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function test_validate_auth_blocks_unauthenticated(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		// Skip if env is local/development — auth bypass is expected there.
+		$env = \function_exists( 'wp_get_environment_type' ) ? \wp_get_environment_type() : 'production';
+		if ( \in_array( $env, array( 'local', 'development' ), true ) ) {
+			$this->markTestSkipped( 'Auth bypass is expected in local/development environments' );
+		}
+
+		\wp_set_current_user( 0 );
+
+		$security     = new GraphQLSecurity();
+		$request_data = array( 'query' => '{ posts { nodes { title } } }' );
+
+		$this->expectException( \GraphQL\Error\UserError::class );
+		$this->expectExceptionMessage( 'Authentication required' );
+
+		$security->validate_authentication( $request_data );
+	}
+
+	/**
+	 * Test validate_authentication allows through in local/development environment
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function test_validate_auth_allows_local_environment(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		$env = \function_exists( 'wp_get_environment_type' ) ? \wp_get_environment_type() : 'production';
+		if ( ! \in_array( $env, array( 'local', 'development' ), true ) ) {
+			$this->markTestSkipped( 'This test requires local/development environment' );
+		}
+
+		\wp_set_current_user( 0 );
+
+		$security     = new GraphQLSecurity();
+		$request_data = array( 'query' => '{ posts { nodes { title } } }' );
+
+		$result = $security->validate_authentication( $request_data );
+
+		$this->assertSame(
+			$request_data,
+			$result,
+			'Unauthenticated requests should pass through in local/development'
+		);
+	}
+
+	/**
+	 * Test authenticate_api_key skips when user already authenticated
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function test_api_key_auth_skips_authenticated_user(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		$security = new GraphQLSecurity();
+		$result   = $security->authenticate_api_key( 42 );
+
+		$this->assertSame( 42, $result, 'Should return existing user ID without processing' );
+	}
+
+	/**
+	 * Test authenticate_api_key skips non-GraphQL requests
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function test_api_key_auth_skips_non_graphql_request(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		// Ensure REQUEST_URI does not contain /graphql.
+		$_SERVER['REQUEST_URI'] = '/wp-admin/options.php';
+
+		$security = new GraphQLSecurity();
+		$result   = $security->authenticate_api_key( false );
+
+		$this->assertFalse( $result, 'Should return false for non-GraphQL requests' );
+	}
+
+	/**
+	 * Test authenticate_api_key returns false when no key is provided
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function test_api_key_auth_returns_false_without_key(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		$_SERVER['REQUEST_URI'] = '/graphql';
+		unset( $_SERVER['HTTP_X_API_KEY'], $_SERVER['HTTP_AUTHORIZATION'] );
+
+		$security = new GraphQLSecurity();
+		$result   = $security->authenticate_api_key( false );
+
+		$this->assertFalse( $result, 'Should return false when no API key is provided' );
+	}
+
+	/**
+	 * Test authenticate_api_key rejects invalid key
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function test_api_key_auth_rejects_invalid_key(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		// Store a hashed key.
+		$valid_key = 'test-valid-key-12345';
+		\update_option( 'silver_assist_graphql_api_key', \wp_hash_password( $valid_key ) );
+
+		// Send a different key.
+		$_SERVER['REQUEST_URI']   = '/graphql';
+		$_SERVER['HTTP_X_API_KEY'] = 'wrong-key-99999';
+
+		$security = new GraphQLSecurity();
+		$result   = $security->authenticate_api_key( false );
+
+		$this->assertFalse( $result, 'Should return false for invalid API key' );
+
+		// Cleanup.
+		\delete_option( 'silver_assist_graphql_api_key' );
+		unset( $_SERVER['HTTP_X_API_KEY'] );
+	}
+
+	/**
+	 * Test authenticate_api_key authenticates with valid key
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function test_api_key_auth_succeeds_with_valid_key(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		// Create a service user.
+		$service_user_id = $this->factory()->user->create( array( 'role' => 'editor' ) );
+		\update_option( 'silver_assist_graphql_service_user_id', $service_user_id );
+
+		// Store a hashed key.
+		$valid_key = 'test-valid-key-12345';
+		\update_option( 'silver_assist_graphql_api_key', \wp_hash_password( $valid_key ) );
+
+		// Send the correct key via X-API-Key header.
+		$_SERVER['REQUEST_URI']   = '/graphql';
+		$_SERVER['HTTP_X_API_KEY'] = $valid_key;
+
+		$security = new GraphQLSecurity();
+		$result   = $security->authenticate_api_key( false );
+
+		$this->assertSame(
+			$service_user_id,
+			$result,
+			'Should return service user ID for valid API key'
+		);
+
+		// Cleanup.
+		\delete_option( 'silver_assist_graphql_api_key' );
+		\delete_option( 'silver_assist_graphql_service_user_id' );
+		unset( $_SERVER['HTTP_X_API_KEY'] );
+	}
+
+	/**
+	 * Test authenticate_api_key supports Bearer token
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function test_api_key_auth_supports_bearer_token(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		// Create a service user.
+		$service_user_id = $this->factory()->user->create( array( 'role' => 'editor' ) );
+		\update_option( 'silver_assist_graphql_service_user_id', $service_user_id );
+
+		// Store a hashed key.
+		$valid_key = 'test-bearer-key-67890';
+		\update_option( 'silver_assist_graphql_api_key', \wp_hash_password( $valid_key ) );
+
+		// Send via Authorization: Bearer header.
+		$_SERVER['REQUEST_URI']       = '/graphql';
+		$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $valid_key;
+
+		$security = new GraphQLSecurity();
+		$result   = $security->authenticate_api_key( false );
+
+		$this->assertSame(
+			$service_user_id,
+			$result,
+			'Should authenticate via Authorization: Bearer header'
+		);
+
+		// Cleanup.
+		\delete_option( 'silver_assist_graphql_api_key' );
+		\delete_option( 'silver_assist_graphql_service_user_id' );
+		unset( $_SERVER['HTTP_AUTHORIZATION'] );
+	}
 }

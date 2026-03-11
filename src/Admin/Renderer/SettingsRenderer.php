@@ -308,7 +308,7 @@ class SettingsRenderer {
 						$wpgraphql_auth = $this->config_manager->get_wpgraphql_setting( 'restrict_endpoint_to_authenticated_users', 'off' );
 						if ( 'on' === $wpgraphql_auth ) :
 							?>
-							<div class="notice notice-info inline" style="margin: 0 0 15px;">
+							<div class="notice notice-info inline">
 								<p>
 									<?php \esc_html_e( 'WPGraphQL authentication restriction is already enabled. Silver Assist Security is coordinating with this setting.', 'silver-assist-security' ); ?>
 								</p>
@@ -316,7 +316,8 @@ class SettingsRenderer {
 						<?php endif; ?>
 
 						<form method="post" action="" id="graphql-auth-form">
-							<?php \wp_nonce_field( 'silver_assist_security_settings', 'silver_assist_security_nonce' ); ?>
+							<?php \wp_nonce_field( 'silver_assist_security_settings' ); ?>
+							<input type="hidden" name="save_silver_assist_security" value="1" />
 
 							<table class="form-table">
 								<tbody>
@@ -336,7 +337,7 @@ class SettingsRenderer {
 								<h4><?php \esc_html_e( 'Important Notice', 'silver-assist-security' ); ?></h4>
 								<ul>
 									<li><?php \esc_html_e( 'Enabling this will require all GraphQL consumers to authenticate via Application Passwords, API Key, or WordPress session.', 'silver-assist-security' ); ?></li>
-									<li><?php \esc_html_e( 'Authentication is not enforced in non-production environments to allow development tooling.', 'silver-assist-security' ); ?></li>
+									<li><?php \esc_html_e( 'Authentication is not enforced in local/development environments to allow development tooling.', 'silver-assist-security' ); ?></li>
 									<li><?php \esc_html_e( 'Headless front-end applications (Next.js, Gatsby, etc.) will need to use Application Passwords or the API Key below.', 'silver-assist-security' ); ?></li>
 								</ul>
 							</div>
@@ -374,12 +375,13 @@ class SettingsRenderer {
 										</th>
 										<td>
 											<?php
-											$has_api_key = ! empty( DefaultConfig::get_option( 'silver_assist_graphql_api_key' ) );
-											$new_api_key = \get_transient( 'silver_assist_graphql_new_api_key' );
+											$has_api_key   = ! empty( DefaultConfig::get_option( 'silver_assist_graphql_api_key' ) );
+											$transient_key = 'silver_assist_graphql_new_api_key_' . (int) \get_current_user_id();
+											$new_api_key   = \get_transient( $transient_key );
 											if ( $new_api_key ) :
-												\delete_transient( 'silver_assist_graphql_new_api_key' );
+												\delete_transient( $transient_key );
 												?>
-												<div class="notice notice-success inline" style="margin: 0 0 10px; padding: 10px;">
+												<div class="notice notice-success inline">
 													<p><strong><?php \esc_html_e( 'New API Key Generated — Copy it now, it will not be shown again:', 'silver-assist-security' ); ?></strong></p>
 													<code style="font-size: 14px; padding: 5px 10px; background: #f0f0f0; user-select: all;"><?php echo \esc_html( $new_api_key ); ?></code>
 												</div>

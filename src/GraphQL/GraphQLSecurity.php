@@ -1433,8 +1433,16 @@ class GraphQLSecurity {
 	 * @throws UserError When the request is not authenticated.
 	 */
 	public function validate_authentication( array $request_data, $request = null, ?string $operation_name = null, ?array $variables = null, $context = null ): array {
-		// Allow unauthenticated access in non-production environments for tooling.
-		if ( \defined( 'WP_ENVIRONMENT_TYPE' ) && WP_ENVIRONMENT_TYPE !== 'production' ) {
+		// Allow unauthenticated access only in explicit local/development environments for tooling.
+		$environment = 'production';
+
+		if ( \function_exists( 'wp_get_environment_type' ) ) {
+			$environment = \wp_get_environment_type();
+		} elseif ( \defined( 'WP_ENVIRONMENT_TYPE' ) ) {
+			$environment = WP_ENVIRONMENT_TYPE;
+		}
+
+		if ( \in_array( $environment, array( 'local', 'development' ), true ) ) {
 			return $request_data;
 		}
 
@@ -1443,7 +1451,7 @@ class GraphQLSecurity {
 				'GRAPHQL_AUTH_DENIED',
 				'Unauthenticated GraphQL request blocked',
 				array(
-					'ip'         => $this->get_client_ip(),
+					'ip'         => SecurityHelper::get_client_ip(),
 					'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] )
 						? \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) )
 						: '',
@@ -1495,7 +1503,7 @@ class GraphQLSecurity {
 			SecurityHelper::log_security_event(
 				'GRAPHQL_API_KEY_INVALID',
 				'Invalid GraphQL API key used',
-				array( 'ip' => $this->get_client_ip() )
+				array( 'ip' => SecurityHelper::get_client_ip() )
 			);
 			return $user_id;
 		}
@@ -1507,7 +1515,7 @@ class GraphQLSecurity {
 				'GRAPHQL_API_KEY_AUTH',
 				'GraphQL request authenticated via API key',
 				array(
-					'ip'              => $this->get_client_ip(),
+					'ip'              => SecurityHelper::get_client_ip(),
 					'service_user_id' => $service_user_id,
 				)
 			);
