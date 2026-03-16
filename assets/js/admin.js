@@ -1870,7 +1870,7 @@
                     if (response.success) {
                         if (response.data.api_key) {
                             // Key generated — show it once.
-                            var resultHtml =
+                            let resultHtml =
                                 "<div class=\"notice notice-success inline\">" +
                                 "<p><strong>" + (response.data.message || "") + "</strong></p>" +
                                 "<code class=\"api-key-code\">" +

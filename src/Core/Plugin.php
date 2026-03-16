@@ -112,7 +112,7 @@ class Plugin {
 		// is registered before WordPress resolves the current user.
 		\add_action( 'plugins_loaded', array( $this, 'init_graphql_security' ), 5 );
 
-		// Load text domain for translations (safe to call here since we're in init hook).
+		// Schedule load_textdomain() to run on the init hook.
 		\add_action( 'init', array( $this, 'load_textdomain' ) );
 
 		// Initialize components.
