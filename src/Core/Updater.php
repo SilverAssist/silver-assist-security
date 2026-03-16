@@ -8,7 +8,7 @@
  * @package SilverAssist\Security\Core
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.3.0
+ * @version 1.3.1
  */
 
 namespace SilverAssist\Security\Core;

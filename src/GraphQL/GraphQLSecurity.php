@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\GraphQL
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.3.0
+ * @version 1.3.1
  */
 
 namespace SilverAssist\Security\GraphQL;
@@ -132,8 +132,16 @@ class GraphQLSecurity {
 		\add_action( 'send_headers', array( $this, 'add_graphql_security_headers' ) );
 		\add_action( 'graphql_init', array( $this, 'enforce_authentication_requirement' ) );
 
-		// Hook into determine_current_user early to authenticate API key requests.
-		\add_filter( 'determine_current_user', array( $this, 'authenticate_api_key' ), 5 );
+		// Hook into determine_current_user AFTER WordPress core callbacks
+		// (wp_validate_auth_cookie at 10, wp_validate_logged_in_cookie at 20)
+		// so that our returned user ID is not overwritten by cookie validation.
+		\add_filter( 'determine_current_user', array( $this, 'authenticate_api_key' ), 30 );
+
+		// Prevent WPGraphQL from downgrading API key-authenticated users to guest.
+		// WPGraphQL's Router checks for Authorization header to skip nonce validation,
+		// but X-API-Key is not recognized as an auth header. This filter tells WPGraphQL
+		// to preserve the authenticated user when our API key auth succeeded.
+		\add_filter( 'graphql_authentication_errors', array( $this, 'preserve_api_key_authentication' ) );
 	}
 
 	/**
@@ -1523,6 +1531,32 @@ class GraphQLSecurity {
 		}
 
 		return $user_id;
+	}
+
+	/**
+	 * Preserve API key authentication during WPGraphQL's CSRF validation
+	 *
+	 * WPGraphQL's Router downgrades cookie-authenticated users to guest when no
+	 * nonce is provided. It only skips this check when an Authorization header
+	 * is present. Since X-API-Key is not an Authorization header, this filter
+	 * tells WPGraphQL to preserve the authenticated user when our API key was
+	 * used for authentication.
+	 *
+	 * @since 1.3.1
+	 * @param bool|null $errors Null to allow default behavior, false to preserve auth.
+	 * @return bool|null False if API key auth was used, original value otherwise.
+	 */
+	public function preserve_api_key_authentication( $errors ) {
+		if ( ! isset( $_SERVER['HTTP_X_API_KEY'] ) ) {
+			return $errors;
+		}
+
+		// Only preserve auth if user is actually logged in via our API key filter.
+		if ( \is_user_logged_in() ) {
+			return false;
+		}
+
+		return $errors;
 	}
 
 	/**

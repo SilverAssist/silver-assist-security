@@ -87,6 +87,12 @@ class GraphQLApiKeyAjaxHandler {
 		// Store only the hash.
 		\update_option( 'silver_assist_graphql_api_key', \wp_hash_password( $api_key ) );
 
+		// Auto-assign current admin as service user if none is configured.
+		$current_service_user = (int) DefaultConfig::get_option( 'silver_assist_graphql_service_user_id' );
+		if ( $current_service_user <= 0 || ! \get_userdata( $current_service_user ) ) {
+			\update_option( 'silver_assist_graphql_service_user_id', \get_current_user_id() );
+		}
+
 		\wp_send_json_success(
 			array(
 				'api_key' => $api_key,

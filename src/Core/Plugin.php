@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Core
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.3.0
+ * @version 1.3.1
  */
 
 namespace SilverAssist\Security\Core;
@@ -108,12 +108,15 @@ class Plugin {
 		// Initialize security components early (before setup_theme).
 		\add_action( 'plugins_loaded', array( $this, 'init_security_components' ), 1 );
 
+		// Initialize GraphQL security early so determine_current_user filter
+		// is registered before WordPress resolves the current user.
+		\add_action( 'plugins_loaded', array( $this, 'init_graphql_security' ), 5 );
+
 		// Load text domain for translations (safe to call here since we're in init hook).
 		\add_action( 'init', array( $this, 'load_textdomain' ) );
 
 		// Initialize components.
 		\add_action( 'init', array( $this, 'init_admin_panel' ) );
-		\add_action( 'init', array( $this, 'init_graphql_security' ) );
 		\add_action( 'init', array( $this, 'init_cf7_integration' ) );
 		\add_action( 'init', array( $this, 'init_updater' ) );
 		\add_action( 'init', array( $this, 'init_ip_cleanup_cron' ) );
