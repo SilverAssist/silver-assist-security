@@ -87,12 +87,24 @@ class GraphQLApiKeyAjaxHandler {
 		// Store only the hash.
 		\update_option( 'silver_assist_graphql_api_key', \wp_hash_password( $api_key ) );
 
-		\wp_send_json_success(
-			array(
-				'api_key' => $api_key,
-				'message' => \__( 'API key generated successfully. Copy it now — it will not be shown again.', 'silver-assist-security' ),
-			)
+		// Check if a service user is configured.
+		$current_service_user = (int) DefaultConfig::get_option( 'silver_assist_graphql_service_user_id' );
+		$needs_service_user   = $current_service_user <= 0 || ! \get_userdata( $current_service_user );
+
+		$response = array(
+			'api_key'            => $api_key,
+			'message'            => \__( 'API key generated successfully. Copy it now — it will not be shown again.', 'silver-assist-security' ),
+			'needs_service_user' => $needs_service_user,
 		);
+
+		if ( $needs_service_user ) {
+			$response['warning'] = \__(
+				'No service user is configured. The API key will not work until you select a service user in the GraphQL settings.',
+				'silver-assist-security'
+			);
+		}
+
+		\wp_send_json_success( $response );
 	}
 
 	/**

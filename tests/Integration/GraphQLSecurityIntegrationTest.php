@@ -829,4 +829,128 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 		\delete_option( 'silver_assist_graphql_service_user_id' );
 		unset( $_SERVER['HTTP_AUTHORIZATION'] );
 	}
+
+	/**
+	 * Test preserve_api_key_authentication returns false after successful API key auth
+	 *
+	 * @since 1.3.1
+	 * @return void
+	 */
+	public function test_preserve_auth_returns_false_after_api_key_success(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		// Set up a valid API key auth scenario.
+		$service_user_id = $this->factory()->user->create( array( 'role' => 'editor' ) );
+		\update_option( 'silver_assist_graphql_service_user_id', $service_user_id );
+
+		$valid_key = 'test-preserve-key-12345';
+		\update_option( 'silver_assist_graphql_api_key', \wp_hash_password( $valid_key ) );
+
+		$_SERVER['REQUEST_URI']    = '/graphql';
+		$_SERVER['HTTP_X_API_KEY'] = $valid_key;
+
+		$security = new GraphQLSecurity();
+
+		// First authenticate via API key.
+		$result = $security->authenticate_api_key( false );
+		$this->assertSame( $service_user_id, $result );
+
+		// Now verify preserve_api_key_authentication returns false (no error).
+		$preserve_result = $security->preserve_api_key_authentication( null );
+		$this->assertFalse( $preserve_result, 'Should return false to preserve auth after successful API key authentication' );
+
+		// Cleanup.
+		\delete_option( 'silver_assist_graphql_api_key' );
+		\delete_option( 'silver_assist_graphql_service_user_id' );
+		unset( $_SERVER['HTTP_X_API_KEY'] );
+		unset( $_SERVER['REQUEST_URI'] );
+	}
+
+	/**
+	 * Test preserve_api_key_authentication passes through when no API key auth occurred
+	 *
+	 * @since 1.3.1
+	 * @return void
+	 */
+	public function test_preserve_auth_passes_through_without_api_key_auth(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		$security = new GraphQLSecurity();
+
+		// Without API key authentication, should pass through null.
+		$result = $security->preserve_api_key_authentication( null );
+		$this->assertNull( $result, 'Should return null when no API key auth occurred' );
+	}
+
+	/**
+	 * Test preserve_api_key_authentication does not bypass CSRF for invalid API key
+	 *
+	 * Verifies that sending an X-API-Key header with an invalid key does NOT
+	 * bypass WPGraphQL's CSRF protection.
+	 *
+	 * @since 1.3.1
+	 * @return void
+	 */
+	public function test_preserve_auth_does_not_bypass_csrf_for_invalid_key(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		// Store a valid key hash but send the wrong key.
+		\update_option( 'silver_assist_graphql_api_key', \wp_hash_password( 'correct-key' ) );
+
+		$_SERVER['REQUEST_URI']    = '/graphql';
+		$_SERVER['HTTP_X_API_KEY'] = 'wrong-key';
+
+		$security = new GraphQLSecurity();
+
+		// API key auth should fail.
+		$auth_result = $security->authenticate_api_key( false );
+		$this->assertFalse( $auth_result, 'Auth should fail with invalid key' );
+
+		// Preserve should NOT bypass CSRF (return null, not false).
+		$preserve_result = $security->preserve_api_key_authentication( null );
+		$this->assertNull( $preserve_result, 'Should NOT bypass CSRF when API key auth failed' );
+
+		// Cleanup.
+		\delete_option( 'silver_assist_graphql_api_key' );
+		unset( $_SERVER['HTTP_X_API_KEY'] );
+		unset( $_SERVER['REQUEST_URI'] );
+	}
+
+	/**
+	 * Test preserve_api_key_authentication does not bypass CSRF for cookie-only users
+	 *
+	 * Verifies that a cookie-authenticated user sending X-API-Key header
+	 * does not get CSRF protection bypassed unless the key validated.
+	 *
+	 * @since 1.3.1
+	 * @return void
+	 */
+	public function test_preserve_auth_does_not_bypass_csrf_for_cookie_user_with_header(): void {
+		if ( ! \class_exists( 'WPGraphQL' ) ) {
+			$this->markTestSkipped( 'WPGraphQL plugin not available' );
+		}
+
+		// User is logged in via cookie (simulate already-authenticated user).
+		$admin_user = $this->factory()->user->create( array( 'role' => 'administrator' ) );
+		\wp_set_current_user( $admin_user );
+
+		// Send X-API-Key header but with empty/no stored key.
+		$_SERVER['HTTP_X_API_KEY'] = 'some-header-value';
+
+		$security = new GraphQLSecurity();
+
+		// No API key auth occurred (no stored key), so preserve should pass through.
+		$preserve_result = $security->preserve_api_key_authentication( null );
+		$this->assertNull( $preserve_result, 'Should NOT bypass CSRF for cookie user with X-API-Key header when no API key auth succeeded' );
+
+		// Cleanup.
+		\wp_set_current_user( 0 );
+		unset( $_SERVER['HTTP_X_API_KEY'] );
+	}
 }

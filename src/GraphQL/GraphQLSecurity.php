@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\GraphQL
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.3.0
+ * @version 1.3.1
  */
 
 namespace SilverAssist\Security\GraphQL;
@@ -80,6 +80,18 @@ class GraphQLSecurity {
 	private int $query_timeout;
 
 	/**
+	 * Whether the current request was authenticated via API key
+	 *
+	 * Set to true in authenticate_api_key() on successful validation.
+	 * Used by preserve_api_key_authentication() to safely bypass
+	 * WPGraphQL's CSRF nonce check only for verified API key requests.
+	 *
+	 * @since 1.3.1
+	 * @var bool
+	 */
+	private bool $api_key_authenticated = false;
+
+	/**
 	 * Constructor
 	 *
 	 * @since 1.1.1
@@ -132,8 +144,16 @@ class GraphQLSecurity {
 		\add_action( 'send_headers', array( $this, 'add_graphql_security_headers' ) );
 		\add_action( 'graphql_init', array( $this, 'enforce_authentication_requirement' ) );
 
-		// Hook into determine_current_user early to authenticate API key requests.
-		\add_filter( 'determine_current_user', array( $this, 'authenticate_api_key' ), 5 );
+		// Hook into determine_current_user AFTER WordPress core callbacks
+		// (wp_validate_auth_cookie at 10, wp_validate_logged_in_cookie at 20)
+		// so that our returned user ID is not overwritten by cookie validation.
+		\add_filter( 'determine_current_user', array( $this, 'authenticate_api_key' ), 30 );
+
+		// Prevent WPGraphQL from downgrading API key-authenticated users to guest.
+		// WPGraphQL's Router checks for Authorization header to skip nonce validation,
+		// but X-API-Key is not recognized as an auth header. This filter tells WPGraphQL
+		// to preserve the authenticated user when our API key auth succeeded.
+		\add_filter( 'graphql_authentication_errors', array( $this, 'preserve_api_key_authentication' ) );
 	}
 
 	/**
@@ -1511,6 +1531,8 @@ class GraphQLSecurity {
 		// Return the service account user ID.
 		$service_user_id = (int) DefaultConfig::get_option( 'silver_assist_graphql_service_user_id' );
 		if ( $service_user_id > 0 && \get_userdata( $service_user_id ) ) {
+			$this->api_key_authenticated = true;
+
 			SecurityHelper::log_security_event(
 				'GRAPHQL_API_KEY_AUTH',
 				'GraphQL request authenticated via API key',
@@ -1523,6 +1545,28 @@ class GraphQLSecurity {
 		}
 
 		return $user_id;
+	}
+
+	/**
+	 * Preserve API key authentication during WPGraphQL's CSRF validation
+	 *
+	 * WPGraphQL's Router downgrades cookie-authenticated users to guest when no
+	 * nonce is provided. It only skips this check when an Authorization header
+	 * is present. Since X-API-Key is not an Authorization header, this filter
+	 * tells WPGraphQL to preserve the authenticated user when our API key was
+	 * used for authentication.
+	 *
+	 * @since 1.3.1
+	 * @param bool|null $errors Null to allow default behavior, false to preserve auth.
+	 * @return bool|null False if API key auth was used, original value otherwise.
+	 */
+	public function preserve_api_key_authentication( $errors ) {
+		// Only bypass CSRF check when API key auth actually succeeded.
+		if ( $this->api_key_authenticated ) {
+			return false;
+		}
+
+		return $errors;
 	}
 
 	/**
