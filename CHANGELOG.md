@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **API Key Auth Filter Priority**: Move `determine_current_user` filter from priority 5 to 30, running after WordPress core's `wp_validate_auth_cookie` (prio 10) and `wp_validate_logged_in_cookie` (prio 20). Previously, core callbacks overwrote the authenticated user ID with `false`
 - **GraphQL Init Timing**: Move `GraphQLSecurity` initialization from `init` hook to `plugins_loaded` (priority 5) so the `determine_current_user` filter is registered before WordPress resolves the current user
 - **X-API-Key CSRF Downgrade**: Add `graphql_authentication_errors` filter to prevent WPGraphQL from downgrading API key-authenticated users to guest. WPGraphQL's Router only recognizes `Authorization` header as non-cookie auth; `X-API-Key` was incorrectly treated as cookie-based, triggering nonce-less downgrade
-- **Auto-assign Service User on Key Generation**: Generate API key AJAX handler now auto-assigns the current admin user as service user when none is configured, preventing silent authentication failure after key generation
+- **Service User Validation on Key Generation**: Generate API key AJAX handler now checks if a valid service user is configured and returns a warning prompting the admin to select one, preventing silent authentication failure after key generation
 
 ## [1.3.0] - 2026-03-11
 

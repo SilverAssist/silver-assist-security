@@ -865,6 +865,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 		\delete_option( 'silver_assist_graphql_api_key' );
 		\delete_option( 'silver_assist_graphql_service_user_id' );
 		unset( $_SERVER['HTTP_X_API_KEY'] );
+		unset( $_SERVER['REQUEST_URI'] );
 	}
 
 	/**
@@ -918,6 +919,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 		// Cleanup.
 		\delete_option( 'silver_assist_graphql_api_key' );
 		unset( $_SERVER['HTTP_X_API_KEY'] );
+		unset( $_SERVER['REQUEST_URI'] );
 	}
 
 	/**

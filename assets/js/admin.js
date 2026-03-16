@@ -1870,13 +1870,21 @@
                     if (response.success) {
                         if (response.data.api_key) {
                             // Key generated — show it once.
-                            $result.html(
+                            var resultHtml =
                                 "<div class=\"notice notice-success inline\">" +
                                 "<p><strong>" + (response.data.message || "") + "</strong></p>" +
                                 "<code class=\"api-key-code\">" +
                                 $("<span>").text(response.data.api_key).html() +
-                                "</code></div>"
-                            ).show();
+                                "</code></div>";
+
+                            if (response.data.needs_service_user && response.data.warning) {
+                                resultHtml +=
+                                    "<div class=\"notice notice-warning inline\">" +
+                                    "<p>" + $("<span>").text(response.data.warning).html() + "</p>" +
+                                    "</div>";
+                            }
+
+                            $result.html(resultHtml).show();
 
                             // Update status to Active.
                             $status.html(
