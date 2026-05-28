@@ -3,7 +3,7 @@
  * Silver Assist Security Essentials - Contact Form 7 Integration Test
  *
  * TDD test suite for Contact Form 7 integration that applies all security
- * measures (rate limiting, IP blacklist) to CF7 forms.
+ * measures (rate limiting, IP blacklist, spam detection) to CF7 forms.
  *
  * @package SilverAssist\Security\Tests
  * @since 1.1.15
