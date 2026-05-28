@@ -61,8 +61,15 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 			WHERE option_name LIKE '_transient_form_rate_%'
 			OR option_name LIKE '_transient_ip_blacklist_%'
 			OR option_name LIKE '_transient_ip_violations_%'
-			OR option_name LIKE '_transient_cf7_submission_%'"
+			OR option_name LIKE '_transient_cf7_submission_%'
+			OR option_name LIKE '_transient_timeout_form_rate_%'
+			OR option_name LIKE '_transient_timeout_ip_blacklist_%'
+			OR option_name LIKE '_transient_timeout_ip_violations_%'
+			OR option_name LIKE '_transient_timeout_cf7_submission_%'"
 		);
+
+		// Flush object cache to clear stale notoptions entries (required for WP 7.0+).
+		\wp_cache_flush();
 	}
 
 	/**
