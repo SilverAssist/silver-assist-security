@@ -71,15 +71,6 @@ This plugin automatically implements enterprise-level security measures without 
 
 ## ✨ Additional Security Features
 
-### 🔥 Under Attack Mode *(v1.1.15+)*
-
-- **Emergency CAPTCHA Protection**: When activated, injects math-based CAPTCHA challenges on login and Contact Form 7 forms
-- **Shared Template System**: Consistent CAPTCHA rendering via `templates/captcha-field.php` across all entry points
-- **Automatic Refresh**: CAPTCHA questions regenerate without page reload via JavaScript
-- **Accessible Design**: ARIA labels, screen reader support, and keyboard navigation
-- **Dashboard Indicator**: Real-time Active/Inactive status shown on the Security Dashboard card
-- **Toggle Control**: Enable/disable from IP Management tab with instant autosave
-
 ### 🚫 IP Blacklisting *(v1.1.15+)*
 
 - **Automatic Blacklisting**: Repeat offenders are automatically blacklisted after configurable threshold

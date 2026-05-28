@@ -168,8 +168,6 @@ class AdminPageRenderer {
 			'ip_blacklist_enabled'          => DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' ),
 			'ip_violation_threshold'        => DefaultConfig::get_option( 'silver_assist_ip_violation_threshold' ),
 			'ip_blacklist_duration'         => DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' ),
-			'under_attack_enabled'          => DefaultConfig::get_option( 'silver_assist_under_attack_enabled' ),
-			'attack_threshold'              => DefaultConfig::get_option( 'silver_assist_attack_threshold' ),
 			'graphql_service_user_id'       => (int) DefaultConfig::get_option( 'silver_assist_graphql_service_user_id' ),
 		);
 	}

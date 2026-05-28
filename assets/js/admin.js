@@ -922,7 +922,7 @@
         // Update General Security panel dynamic statuses
         if (data.general_security) {
             // Use destructuring for nested data
-            const { ssl_enabled, under_attack_active, ip_blacklist_enabled } = data.general_security;
+            const { ssl_enabled, ip_blacklist_enabled } = data.general_security;
 
             // Find the SSL/HTTPS feature status (4th feature-status div in general-security)
             const $sslElement = $(".general-security .feature-status:nth-child(4) .feature-value");
@@ -935,19 +935,8 @@
                         (strings.disabled || "Disabled"));
             }
 
-            // Update Under Attack Mode status (5th feature-status div)
-            const $underAttackElement = $(".general-security .feature-status:nth-child(5) .feature-value");
-            if ($underAttackElement.length) {
-                $underAttackElement
-                    .removeClass("enabled disabled")
-                    .addClass(under_attack_active ? "enabled" : "disabled")
-                    .text(under_attack_active ?
-                        (strings.active || "Active") :
-                        (strings.inactive || "Inactive"));
-            }
-
-            // Update IP Blacklisting status (6th feature-status div)
-            const $blacklistElement = $(".general-security .feature-status:nth-child(6) .feature-value");
+            // Update IP Blacklisting status (5th feature-status div)
+            const $blacklistElement = $(".general-security .feature-status:nth-child(5) .feature-value");
             if ($blacklistElement.length) {
                 $blacklistElement
                     .removeClass("enabled disabled")

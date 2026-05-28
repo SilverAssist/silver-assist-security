@@ -55,13 +55,6 @@ class DefaultConfig {
 			'silver_assist_ip_blacklist_duration'         => 86400, // 24 hours blacklist duration
 			'silver_assist_ip_violation_window'           => 3600, // 1 hour violation tracking window
 
-			// Under Attack Mode Settings
-			'silver_assist_under_attack_enabled'          => 0, // Under Attack mode disabled by default
-			'silver_assist_under_attack_threshold'        => 10, // Attacks per minute to trigger mode
-			'silver_assist_under_attack_duration'         => 1800, // 30 minutes Under Attack mode duration
-			'silver_assist_under_attack_window'           => 60, // 1 minute window for attack detection
-			'silver_assist_captcha_difficulty'            => 'medium', // easy, medium, hard
-
 			// Contact Form 7 Integration Settings
 			'silver_assist_cf7_protection_enabled'        => 1, // Enable CF7 protection by default
 			'silver_assist_cf7_rate_limit'                => 2, // Max CF7 submissions per minute per IP

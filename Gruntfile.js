@@ -39,11 +39,6 @@ module.exports = function (grunt) {
                 files: {
                     "assets/js/password-validation.min.js": ["assets/js/password-validation.js"]
                 }
-            },
-            captcha: {
-                files: {
-                    "assets/js/captcha.min.js": ["assets/js/captcha.js"]
-                }
             }
         }
     });

@@ -3,7 +3,7 @@
  * Silver Assist Security Essentials - Contact Form 7 Integration Test
  *
  * TDD test suite for Contact Form 7 integration that applies all security
- * measures (rate limiting, IP blacklist, Under Attack mode) to CF7 forms.
+ * measures (rate limiting, IP blacklist) to CF7 forms.
  *
  * @package SilverAssist\Security\Tests
  * @since 1.1.15
@@ -11,7 +11,6 @@
 
 use SilverAssist\Security\Security\ContactForm7Integration;
 use SilverAssist\Security\Security\IPBlacklist;
-use SilverAssist\Security\Security\UnderAttackMode;
 use SilverAssist\Security\Core\DefaultConfig;
 
 /**
@@ -62,8 +61,6 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 			WHERE option_name LIKE '_transient_form_rate_%'
 			OR option_name LIKE '_transient_ip_blacklist_%'
 			OR option_name LIKE '_transient_ip_violations_%'
-			OR option_name LIKE '_transient_under_attack_%'
-			OR option_name LIKE '_transient_attack_counter_%'
 			OR option_name LIKE '_transient_cf7_submission_%'"
 		);
 	}
@@ -223,57 +220,6 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 			$cf7_integration->validate_cf7_submission( $mock_contact_form, $submission_data, $blacklisted_ip ),
 			'CF7 submission from blacklisted IP should be blocked'
 		);
-	}
-
-	/**
-	 * Test CF7 Under Attack mode integration
-	 *
-	 * Should require CAPTCHA during Under Attack mode.
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function test_cf7_under_attack_mode(): void {
-		$cf7_integration = new ContactForm7Integration();
-		$under_attack = UnderAttackMode::getInstance();
-		
-		// Set modern user agent to avoid obsolete browser detection
-		$_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15';
-		
-		// Enable the Under Attack toggle and activate mode.
-		\update_option( 'silver_assist_under_attack_enabled', 1 );
-		$under_attack->activate_under_attack_mode( 'CF7 Testing' );
-		
-		$mock_contact_form = $this->create_mock_cf7_form();
-		$submission_without_captcha = [
-			'your-name' => 'Test User',
-			'your-email' => 'test@example.com',
-			'your-message' => 'This is a normal message without any suspicious content'
-		];
-		
-		// Should block without CAPTCHA
-		$this->assertFalse(
-			$cf7_integration->validate_cf7_submission( $mock_contact_form, $submission_without_captcha, '192.168.4.100' ),
-			'CF7 submission should be blocked without CAPTCHA in Under Attack mode'
-		);
-		
-		// Should allow with valid CAPTCHA
-		$captcha = $under_attack->generate_captcha();
-		$submission_with_captcha = [
-			'your-name' => 'Test User',
-			'your-email' => 'test@example.com',
-			'your-message' => 'This is a normal message without any suspicious content',
-			'silver_captcha_answer' => (string) $captcha['answer'],
-			'silver_captcha_token' => $captcha['token']
-		];
-		
-		$this->assertTrue(
-			$cf7_integration->validate_cf7_submission( $mock_contact_form, $submission_with_captcha, '192.168.4.101' ),
-			'CF7 submission should be allowed with valid CAPTCHA'
-		);
-		
-		// Reset user agent
-		unset( $_SERVER['HTTP_USER_AGENT'] );
 	}
 
 	/**
@@ -444,80 +390,6 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test CF7 comprehensive security integration
-	 *
-	 * Simulates the exact attack scenario from the user's report.
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function test_cf7_comprehensive_attack_scenario(): void {
-		$cf7_integration = new ContactForm7Integration();
-		$attack_ip = '45.148.8.70';
-		
-		// Enable the Under Attack toggle so record_attack() counts toward threshold.
-		\update_option( 'silver_assist_under_attack_enabled', 1 );
-		
-		// Simulate the exact attack from user's report
-		$_SERVER['HTTP_USER_AGENT'] = 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; 360SE)';
-		$_SERVER['QUERY_STRING'] = 'location=1-1+OR+128%3D%28SELECT+128+FROM+PG_SLEEP%2815%29%29--';
-		
-		$mock_contact_form = $this->create_mock_cf7_form();
-		$malicious_submission = [
-			'your-name' => 'Attacker',
-			'your-email' => 'attacker@evil.com',
-			'your-message' => 'PG_SLEEP attack attempt'
-		];
-		
-		// First attack should be blocked due to multiple security violations
-		$this->assertFalse(
-			$cf7_integration->validate_cf7_submission( $mock_contact_form, $malicious_submission, $attack_ip ),
-			'Comprehensive attack should be blocked by multiple security measures'
-		);
-		
-		// Simulate multiple rapid attacks (12 submissions as reported)
-		// Use different IPs to ensure Under Attack mode is triggered by multiple attackers
-		$attack_ips = [
-			'45.148.8.70',   // Original attacker
-			'45.148.8.71',   // Simulated coordinated attack  
-			'45.148.8.72',   // Simulated coordinated attack
-			'192.168.100.1', // Additional attackers
-			'192.168.100.2', 
-			'10.0.0.100',
-			'10.0.0.101',
-			'172.16.0.1',
-			'172.16.0.2',
-			'203.0.113.10',  // More attackers to trigger threshold
-			'203.0.113.11',
-			'203.0.113.12'
-		];
-		
-		// Create coordinated attack from multiple IPs 
-		foreach ( $attack_ips as $attacker_ip ) {
-			$cf7_integration->validate_cf7_submission( $mock_contact_form, $malicious_submission, $attacker_ip );
-		}
-		
-		// Original IP should have violations recorded (blacklisting happens at 5 violations)
-		$ip_blacklist = new IPBlacklist();
-		// The original IP only had 2 attacks, so won't be auto-blacklisted yet
-		// But violations should be recorded  
-		$this->assertFalse(
-			$ip_blacklist->is_blacklisted( $attack_ip ),
-			'Attack IP should not be auto-blacklisted until 5 violations (only had 2)'
-		);
-		
-		// Under Attack mode should be activated due to coordinated attack
-		$under_attack = UnderAttackMode::getInstance();
-		$this->assertTrue(
-			$under_attack->is_under_attack(),
-			'Under Attack mode should be activated after coordinated attack from multiple IPs'
-		);
-		
-		// Reset environment
-		unset( $_SERVER['HTTP_USER_AGENT'], $_SERVER['QUERY_STRING'] );
-	}
-
-	/**
 	 * Create mock Contact Form 7 form for testing
 	 *
 	 * @since 1.1.15
@@ -535,58 +407,5 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 				'recipient' => 'admin@example.com'
 			]
 		];
-	}
-
-	/**
-	 * Test CAPTCHA field injection into CF7 form HTML when Under Attack mode is active.
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function test_captcha_field_injection_when_under_attack(): void {
-		$cf7_integration = new ContactForm7Integration();
-		$under_attack    = UnderAttackMode::getInstance();
-
-		// Enable the Under Attack toggle and activate mode.
-		\update_option( 'silver_assist_under_attack_enabled', 1 );
-		$under_attack->activate_under_attack_mode( 'Test injection' );
-
-		$form_html = '<p>Name: <input type="text" name="your-name" /></p>'
-			. '<p><input type="submit" value="Send" /></p>';
-
-		$result = $cf7_integration->inject_captcha_field( $form_html );
-
-		// CAPTCHA wrapper should be present.
-		$this->assertStringContainsString( 'silver-assist-captcha-wrap', $result );
-		// Hidden token field.
-		$this->assertStringContainsString( 'name="silver_captcha_token"', $result );
-		// Answer input.
-		$this->assertStringContainsString( 'name="silver_captcha_answer"', $result );
-		// Should appear before the submit button.
-		$captcha_pos = strpos( $result, 'silver-assist-captcha-wrap' );
-		$submit_pos  = strpos( $result, 'type="submit"' );
-		$this->assertLessThan( $submit_pos, $captcha_pos, 'CAPTCHA should be injected before the submit button' );
-
-		// Deactivate.
-		\delete_transient( 'under_attack_mode' );
-	}
-
-	/**
-	 * Test CAPTCHA field is NOT injected when Under Attack mode is inactive.
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function test_captcha_field_not_injected_when_not_under_attack(): void {
-		$cf7_integration = new ContactForm7Integration();
-
-		// Make sure Under Attack mode is off.
-		\delete_transient( 'under_attack_mode' );
-
-		$form_html = '<p><input type="submit" value="Send" /></p>';
-		$result    = $cf7_integration->inject_captcha_field( $form_html );
-
-		$this->assertStringNotContainsString( 'silver-assist-captcha-wrap', $result );
-		$this->assertEquals( $form_html, $result, 'Form should be returned unchanged when not under attack' );
 	}
 }
