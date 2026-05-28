@@ -58,21 +58,12 @@ class LoginSecurity {
 	private string $plugin_version;
 
 	/**
-	 * Under Attack Mode instance
-	 *
-	 * @since 1.1.15
-	 * @var UnderAttackMode
-	 */
-	private UnderAttackMode $under_attack;
-
-	/**
 	 * Constructor
 	 *
 	 * @since 1.1.1
 	 */
 	public function __construct() {
 		$this->plugin_version = SILVER_ASSIST_SECURITY_VERSION;
-		$this->under_attack   = UnderAttackMode::getInstance();
 		$this->init_configuration();
 		$this->init();
 	}
@@ -99,11 +90,6 @@ class LoginSecurity {
 		// Login form hooks
 		\add_action( 'login_form', array( $this, 'add_login_form_security' ) );
 		\add_action( 'login_init', array( $this, 'setup_login_protection' ) );
-
-		// Under Attack mode — CAPTCHA on login form
-		\add_action( 'login_form', array( $this, 'render_login_captcha' ) );
-		\add_filter( 'authenticate', array( $this, 'validate_login_captcha' ), 25, 3 );
-		\add_action( 'login_enqueue_scripts', array( $this, 'enqueue_login_captcha_assets' ) );
 
 		// Bot and crawler protection
 		\add_action( 'login_init', array( $this, 'block_suspicious_bots' ), 5 );
@@ -297,9 +283,6 @@ class LoginSecurity {
 			$lockout_key = SecurityHelper::generate_ip_transient_key( 'lockout', $ip );
 			\set_transient( $lockout_key, true, $this->lockout_duration );
 		}
-
-		// Record as attack for Under Attack mode auto-activation
-		$this->under_attack->record_attack( $ip );
 	}
 
 	/**
@@ -792,111 +775,6 @@ class LoginSecurity {
 
 		// Use centralized 404 response without WordPress template to avoid conflicts
 		SecurityHelper::send_404_response( false );
-	}
-
-	/**
-	 * Render CAPTCHA fields on the wp-login form when Under Attack mode is active.
-	 *
-	 * Hooked to `login_form` — outputs HTML directly after the password field.
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function render_login_captcha(): void {
-		if ( ! $this->under_attack->is_under_attack() ) {
-			return;
-		}
-
-		$captcha = $this->under_attack->generate_captcha();
-
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template handles its own escaping.
-		echo SecurityHelper::render_template(
-			'captcha-field.php',
-			array(
-				'question'     => $captcha['question'],
-				'token'        => $captcha['token'],
-				'show_refresh' => false,
-				'input_class'  => 'input',
-			)
-		);
-	}
-
-	/**
-	 * Validate the login CAPTCHA before authentication proceeds.
-	 *
-	 * Priority 25 — runs before `check_login_lockout` (30) so CAPTCHA errors
-	 * are surfaced before lockout messages.
-	 *
-	 * @since 1.1.15
-	 * @param WP_User|WP_Error|null $user     User object, error, or null.
-	 * @param string                $username  Username.
-	 * @param string                $password  Password.
-	 * @return WP_User|WP_Error|null
-	 */
-	public function validate_login_captcha( $user, string $username, string $password ): WP_Error|WP_User|null {
-		// Only check on POST (actual login attempts).
-		if ( empty( $username ) || empty( $password ) ) {
-			return $user;
-		}
-
-		if ( ! $this->under_attack->is_under_attack() ) {
-			return $user;
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- CAPTCHA validation, nonce handled separately
-		$captcha_answer = isset( $_POST['silver_captcha_answer'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_captcha_answer'] ) ) : '';
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$captcha_token = isset( $_POST['silver_captcha_token'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_captcha_token'] ) ) : '';
-
-		if ( '' === $captcha_answer || '' === $captcha_token ) {
-			return new WP_Error(
-				'captcha_missing',
-				\__( '<strong>Error:</strong> Please solve the security challenge.', 'silver-assist-security' )
-			);
-		}
-
-		if ( ! $this->under_attack->validate_captcha( $captcha_answer, $captcha_token ) ) {
-			SecurityHelper::log_security_event(
-				'LOGIN_CAPTCHA_FAILED',
-				'Failed CAPTCHA on login form during Under Attack mode',
-				array( 'ip' => SecurityHelper::get_client_ip() )
-			);
-
-			return new WP_Error(
-				'captcha_invalid',
-				\__( '<strong>Error:</strong> Incorrect answer to the security challenge. Please try again.', 'silver-assist-security' )
-			);
-		}
-
-		return $user;
-	}
-
-	/**
-	 * Enqueue CAPTCHA styles on the login page when Under Attack mode is active.
-	 *
-	 * Hooked to `login_enqueue_scripts`.
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function enqueue_login_captcha_assets(): void {
-		if ( ! $this->under_attack->is_under_attack() ) {
-			return;
-		}
-
-		\wp_enqueue_style(
-			'silver-assist-variables',
-			$this->get_asset_url( 'assets/css/variables.css' ),
-			array(),
-			$this->plugin_version
-		);
-
-		\wp_enqueue_style(
-			'silver-assist-captcha',
-			$this->get_asset_url( 'assets/css/captcha.css' ),
-			array( 'silver-assist-variables' ),
-			$this->plugin_version
-		);
 	}
 
 	/**

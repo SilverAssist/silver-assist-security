@@ -5,6 +5,18 @@ All notable changes to Silver Assist Security Essentials will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### 🗑️ Removed
+
+- **Under Attack Mode**: Removed entirely. The feature's core mechanism (HTML CAPTCHA injection) is architecturally incompatible with headless WordPress where end users never access WordPress directly. The escalation it provided is already covered by IP blacklist + violation tracking.
+  - Deleted `src/Security/UnderAttackMode.php`, `templates/captcha-field.php`, `assets/js/captcha.js`, `assets/css/captcha.css`
+  - Removed CAPTCHA validation, injection, and asset enqueueing from `ContactForm7Integration` and `LoginSecurity`
+  - Removed `under_attack_*` options from `DefaultConfig`
+  - Removed Under Attack Mode settings from admin UI, dashboard badge, and settings handler
+  - Closes #52 (REST API CAPTCHA incompatibility)
+  - Resolves PR #76 CI instability (WP 7.0 test failures caused by Under Attack transient timing)
+
 ## [1.3.1] - 2026-03-16
 
 ### 🐛 Fixed

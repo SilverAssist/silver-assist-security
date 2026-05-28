@@ -76,7 +76,6 @@ class SettingsHandler {
 			$this->save_graphql_settings();
 			$this->save_contact_form7_settings();
 			$this->save_ip_management_settings();
-			$this->save_attack_protection_settings();
 			$this->save_advanced_protection_settings();
 		}
 
@@ -244,31 +243,6 @@ class SettingsHandler {
 			$ip_blacklist_duration = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_duration'] ) ) );
 			$ip_blacklist_duration = \max( 3600, \min( 604800, $ip_blacklist_duration ) );
 			\update_option( 'silver_assist_ip_blacklist_duration', $ip_blacklist_duration );
-		}
-	}
-
-	/**
-	 * Save attack protection settings
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	private function save_attack_protection_settings(): void {
-		// Under Attack Mode enable/disable
-		\update_option( 'silver_assist_under_attack_enabled', (int) ( isset( $_POST['silver_assist_under_attack_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_under_attack_enabled'] ) ) : 0 ) );
-
-		// Attack threshold
-		if ( isset( $_POST['silver_assist_attack_threshold'] ) ) {
-			$attack_threshold = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_attack_threshold'] ) ) );
-			$attack_threshold = \max( 5, \min( 50, $attack_threshold ) );
-			\update_option( 'silver_assist_attack_threshold', $attack_threshold );
-		}
-
-		// Under attack duration
-		if ( isset( $_POST['silver_assist_under_attack_duration'] ) ) {
-			$under_attack_duration = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_under_attack_duration'] ) ) );
-			$under_attack_duration = \max( 300, \min( 7200, $under_attack_duration ) );
-			\update_option( 'silver_assist_under_attack_duration', $under_attack_duration );
 		}
 	}
 
