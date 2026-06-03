@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ✨ Added
+
+- **Login Page Branding**: Custom-branded login page with modern split-layout design (#83)
+  - Two-column layout: login form (left) + decorative illustration panel (right)
+  - Inline SVG Silver Assist logo replacing the WordPress logo
+  - Rocket/mountains illustration in the right panel with dark gradient background
+  - Brand colors (`#00D1FF` cyan), custom typography, and styled form inputs
+  - CTA button: full-width, 48px height, uppercase bold, cyan background
+  - Responsive: 50/50 > 1024px, 60/40 768–1024px, single column < 768px
+  - Togglable via admin settings (enabled by default)
+  - Custom logo URL support via Media Library
+  - Configurable illustration panel visibility and background color
+  - New class `LoginBranding` independent from existing `LoginSecurity`
+  - Unit tests for hook registration, filter outputs, and conditional rendering
+
 ### 🗑️ Removed
 
 - **Under Attack Mode**: Removed entirely. The feature's core mechanism (HTML CAPTCHA injection) is architecturally incompatible with headless WordPress where end users never access WordPress directly. The escalation it provided is already covered by IP blacklist + violation tracking.

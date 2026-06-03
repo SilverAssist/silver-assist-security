@@ -55,6 +55,12 @@ class DefaultConfig {
 			'silver_assist_ip_blacklist_duration'         => 86400, // 24 hours blacklist duration
 			'silver_assist_ip_violation_window'           => 3600, // 1 hour violation tracking window
 
+			// Login Branding Settings
+			'silver_assist_login_branding_enabled'        => 1, // Enable login branding by default.
+			'silver_assist_login_branding_logo_url'       => '', // Custom logo URL (empty = built-in SVG).
+			'silver_assist_login_branding_bg_color'       => '', // Right column bg color (empty = default gradient).
+			'silver_assist_login_branding_show_illustration' => 1, // Show illustration panel.
+
 			// Contact Form 7 Integration Settings
 			'silver_assist_cf7_protection_enabled'        => 1, // Enable CF7 protection by default
 			'silver_assist_cf7_rate_limit'                => 2, // Max CF7 submissions per minute per IP

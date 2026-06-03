@@ -1,0 +1,286 @@
+/**
+ * Silver Assist Login Branding
+ *
+ * Custom styles for the WordPress login page with split-layout design.
+ *
+ * @package SilverAssist\Security
+ * @since 1.4.0
+ */
+
+/* ==========================================================================
+   CSS Custom Properties
+   ========================================================================== */
+
+:root {
+	--silver-brand-cyan: #00D1FF;
+	--silver-brand-cyan-hover: #00b8e6;
+	--silver-text-primary: #1d2327;
+	--silver-text-secondary: #50575e;
+	--silver-bg-primary: #ffffff;
+	--silver-bg-secondary: #f0f0f1;
+	--silver-border-primary: #c3c4c7;
+}
+
+/* ==========================================================================
+   Split Layout (Two-Column)
+   ========================================================================== */
+
+body.silver-assist-split-layout {
+	min-height: 100vh;
+	margin: 0;
+	padding: 0;
+	background: var(--silver-bg-primary);
+}
+
+body.silver-assist-split-layout #login {
+	width: 50%;
+	min-height: 100vh;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 2rem;
+	box-sizing: border-box;
+}
+
+/* ==========================================================================
+   Illustration Panel (Right Column)
+   ========================================================================== */
+
+.silver-login-illustration-panel {
+	width: 50%;
+	background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 100%);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.silver-login-illustration-content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	max-width: 320px;
+	padding: 2rem;
+}
+
+.silver-login-illustration-content svg {
+	width: 100%;
+	height: auto;
+}
+
+.silver-login-illustration-watermark {
+	position: absolute;
+	bottom: 2rem;
+	font-size: 12px;
+	font-weight: 400;
+	color: rgba(255, 255, 255, 0.3);
+	letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   Logo Override
+   ========================================================================== */
+
+body.silver-assist-branded-login #login h1 a {
+	background-image: none !important;
+	width: auto;
+	height: auto;
+	text-indent: 0;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 0 auto 24px;
+	padding: 0;
+	outline: none;
+}
+
+body.silver-assist-branded-login #login h1 a .silver-logo-icon {
+	width: 40px;
+	height: 32px;
+	flex-shrink: 0;
+}
+
+body.silver-assist-branded-login #login h1 a .silver-logo-text {
+	font-size: 24px;
+	font-weight: 600;
+	color: var(--silver-text-primary);
+	white-space: nowrap;
+}
+
+body.silver-assist-branded-login #login h1 a:focus {
+	box-shadow: none;
+}
+
+/* ==========================================================================
+   Form Styling
+   ========================================================================== */
+
+body.silver-assist-branded-login #login {
+	max-width: none;
+	padding: 0 4rem;
+}
+
+body.silver-assist-branded-login #loginform {
+	border: none;
+	box-shadow: none;
+	padding: 0;
+	margin: 0;
+	background: transparent;
+	width: 100%;
+	max-width: 380px;
+}
+
+body.silver-assist-branded-login #loginform p.login-username label,
+body.silver-assist-branded-login #loginform p.login-password label,
+body.silver-assist-branded-login #loginform label {
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--silver-text-primary);
+}
+
+body.silver-assist-branded-login #loginform input[type="text"],
+body.silver-assist-branded-login #loginform input[type="password"],
+body.silver-assist-branded-login #loginform input[type="email"] {
+	width: 100%;
+	border-radius: 6px;
+	padding: 12px 16px;
+	font-size: 16px;
+	border: 1px solid var(--silver-border-primary);
+	background: var(--silver-bg-secondary);
+	box-shadow: none;
+	box-sizing: border-box;
+	margin-top: 4px;
+	transition: border-color 200ms ease, outline 200ms ease;
+}
+
+body.silver-assist-branded-login #loginform input[type="text"]:focus,
+body.silver-assist-branded-login #loginform input[type="password"]:focus,
+body.silver-assist-branded-login #loginform input[type="email"]:focus {
+	border-color: var(--silver-brand-cyan);
+	outline: 2px solid var(--silver-brand-cyan);
+	outline-offset: -2px;
+	box-shadow: none;
+}
+
+/* ==========================================================================
+   CTA Button
+   ========================================================================== */
+
+body.silver-assist-branded-login #loginform .button-primary,
+body.silver-assist-branded-login #loginform #wp-submit {
+	width: 100%;
+	height: 48px;
+	background: var(--silver-brand-cyan);
+	border: none;
+	border-radius: 8px;
+	font-size: 16px;
+	font-weight: 700;
+	text-transform: uppercase;
+	color: #ffffff;
+	cursor: pointer;
+	transition: background 200ms ease;
+	text-shadow: none;
+	box-shadow: none;
+	margin-top: 16px;
+	float: none;
+}
+
+body.silver-assist-branded-login #loginform .button-primary:hover,
+body.silver-assist-branded-login #loginform #wp-submit:hover {
+	background: var(--silver-brand-cyan-hover);
+	border: none;
+	box-shadow: none;
+}
+
+body.silver-assist-branded-login #loginform .button-primary:focus,
+body.silver-assist-branded-login #loginform #wp-submit:focus {
+	background: var(--silver-brand-cyan-hover);
+	outline: 2px solid var(--silver-brand-cyan);
+	outline-offset: 2px;
+	box-shadow: none;
+}
+
+/* ==========================================================================
+   Navigation Links
+   ========================================================================== */
+
+body.silver-assist-branded-login #nav,
+body.silver-assist-branded-login #backtoblog {
+	text-align: center;
+	padding: 0;
+	margin: 16px 0 0;
+}
+
+body.silver-assist-branded-login #nav a,
+body.silver-assist-branded-login #backtoblog a {
+	color: var(--silver-text-secondary);
+	font-size: 13px;
+	text-decoration: none;
+	transition: color 200ms ease;
+}
+
+body.silver-assist-branded-login #nav a:hover,
+body.silver-assist-branded-login #backtoblog a:hover {
+	color: var(--silver-brand-cyan);
+}
+
+/* ==========================================================================
+   Error/Message Styling
+   ========================================================================== */
+
+body.silver-assist-branded-login .message,
+body.silver-assist-branded-login #login_error {
+	border-radius: 6px;
+	max-width: 380px;
+	width: 100%;
+	box-sizing: border-box;
+	margin: 0 0 16px;
+}
+
+body.silver-assist-branded-login .message {
+	border-left-color: var(--silver-brand-cyan);
+}
+
+/* ==========================================================================
+   Hide Default WordPress Elements
+   ========================================================================== */
+
+body.silver-assist-branded-login .language-switcher {
+	display: none;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+	body.silver-assist-split-layout #login {
+		width: 60%;
+	}
+
+	.silver-login-illustration-panel {
+		width: 40%;
+	}
+}
+
+@media (max-width: 768px) {
+	body.silver-assist-split-layout #login,
+	body.silver-assist-branded-login #login {
+		width: 100%;
+		min-height: auto;
+		padding: 2rem;
+		max-width: none;
+	}
+
+	.silver-login-illustration-panel {
+		display: none;
+	}
+}
