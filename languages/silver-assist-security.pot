@@ -2,14 +2,14 @@
 # This file is distributed under the Polyform Noncommercial License 1.0.0.
 msgid ""
 msgstr ""
-"Project-Id-Version: Silver Assist Security Essentials 1.2.1\n"
+"Project-Id-Version: Silver Assist Security Essentials 1.3.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/silver-assist-security\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-03-11T18:06:19+00:00\n"
+"POT-Creation-Date: 2026-06-04T00:59:05+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: silver-assist-security\n"
@@ -31,6 +31,7 @@ msgstr ""
 
 #. Author of the plugin
 #: silver-assist-security.php
+#: src/Security/LoginBranding.php:188
 msgid "Silver Assist"
 msgstr ""
 
@@ -63,15 +64,15 @@ msgstr ""
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:230
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:267
 #: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:56
-#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:106
+#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:118
 #: src/Admin/Ajax/SecurityAjaxHandler.php:87
 #: src/Admin/Ajax/SecurityAjaxHandler.php:115
 #: src/Admin/Ajax/SecurityAjaxHandler.php:143
 #: src/Admin/Ajax/SecurityAjaxHandler.php:171
 #: src/Admin/Ajax/SecurityAjaxHandler.php:199
-#: src/Admin/Ajax/SecurityAjaxHandler.php:319
-#: src/Admin/Ajax/SecurityAjaxHandler.php:399
-#: src/Admin/Ajax/SecurityAjaxHandler.php:476
+#: src/Admin/Ajax/SecurityAjaxHandler.php:318
+#: src/Admin/Ajax/SecurityAjaxHandler.php:398
+#: src/Admin/Ajax/SecurityAjaxHandler.php:475
 msgid "Security validation failed"
 msgstr ""
 
@@ -81,15 +82,15 @@ msgstr ""
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:234
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:271
 #: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:60
-#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:110
+#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:122
 #: src/Admin/Ajax/SecurityAjaxHandler.php:91
 #: src/Admin/Ajax/SecurityAjaxHandler.php:119
 #: src/Admin/Ajax/SecurityAjaxHandler.php:147
 #: src/Admin/Ajax/SecurityAjaxHandler.php:175
 #: src/Admin/Ajax/SecurityAjaxHandler.php:203
-#: src/Admin/Ajax/SecurityAjaxHandler.php:323
-#: src/Admin/Ajax/SecurityAjaxHandler.php:403
-#: src/Admin/Ajax/SecurityAjaxHandler.php:480
+#: src/Admin/Ajax/SecurityAjaxHandler.php:322
+#: src/Admin/Ajax/SecurityAjaxHandler.php:402
+#: src/Admin/Ajax/SecurityAjaxHandler.php:479
 msgid "Insufficient permissions"
 msgstr ""
 
@@ -150,7 +151,7 @@ msgstr ""
 
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:170
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:174
-#: src/Admin/Ajax/SecurityAjaxHandler.php:464
+#: src/Admin/Ajax/SecurityAjaxHandler.php:463
 msgid "Failed to block IP address"
 msgstr ""
 
@@ -166,7 +167,7 @@ msgstr ""
 
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:214
 #: src/Admin/Ajax/ContactForm7AjaxHandler.php:218
-#: src/Admin/Ajax/SecurityAjaxHandler.php:532
+#: src/Admin/Ajax/SecurityAjaxHandler.php:531
 msgid "Failed to unblock IP address"
 msgstr ""
 
@@ -188,11 +189,15 @@ msgstr ""
 msgid "Failed to generate a new GraphQL API key. Please check your server's randomness configuration."
 msgstr ""
 
-#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:93
+#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:96
 msgid "API key generated successfully. Copy it now — it will not be shown again."
 msgstr ""
 
-#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:118
+#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:101
+msgid "No service user is configured. The API key will not work until you select a service user in the GraphQL settings."
+msgstr ""
+
+#: src/Admin/Ajax/GraphQLApiKeyAjaxHandler.php:130
 msgid "API key has been revoked successfully."
 msgstr ""
 
@@ -209,54 +214,54 @@ msgid "Failed to retrieve security logs"
 msgstr ""
 
 #. translators: %d: number of settings saved
-#: src/Admin/Ajax/SecurityAjaxHandler.php:290
+#: src/Admin/Ajax/SecurityAjaxHandler.php:289
 #, php-format
 msgid "%d settings auto-saved successfully"
 msgstr ""
 
-#: src/Admin/Ajax/SecurityAjaxHandler.php:307
+#: src/Admin/Ajax/SecurityAjaxHandler.php:306
 msgid "Failed to save settings"
 msgstr ""
 
-#: src/Admin/Ajax/SecurityAjaxHandler.php:328
+#: src/Admin/Ajax/SecurityAjaxHandler.php:327
 msgid "Admin path is required"
 msgstr ""
 
-#: src/Admin/Ajax/SecurityAjaxHandler.php:373
+#: src/Admin/Ajax/SecurityAjaxHandler.php:372
 msgid "Admin path is valid"
 msgstr ""
 
-#: src/Admin/Ajax/SecurityAjaxHandler.php:387
+#: src/Admin/Ajax/SecurityAjaxHandler.php:386
 msgid "Failed to validate admin path"
 msgstr ""
 
-#: src/Admin/Ajax/SecurityAjaxHandler.php:411
-#: src/Admin/Ajax/SecurityAjaxHandler.php:487
+#: src/Admin/Ajax/SecurityAjaxHandler.php:410
+#: src/Admin/Ajax/SecurityAjaxHandler.php:486
 msgid "IP address is required"
 msgstr ""
 
-#: src/Admin/Ajax/SecurityAjaxHandler.php:417
-#: src/Admin/Ajax/SecurityAjaxHandler.php:492
+#: src/Admin/Ajax/SecurityAjaxHandler.php:416
+#: src/Admin/Ajax/SecurityAjaxHandler.php:491
 msgid "Invalid IP address format"
 msgstr ""
 
-#: src/Admin/Ajax/SecurityAjaxHandler.php:424
+#: src/Admin/Ajax/SecurityAjaxHandler.php:423
 msgid "Manually blocked by administrator"
 msgstr ""
 
 #. translators: %s: IP address
-#: src/Admin/Ajax/SecurityAjaxHandler.php:447
+#: src/Admin/Ajax/SecurityAjaxHandler.php:446
 #, php-format
 msgid "IP address %s has been successfully blocked"
 msgstr ""
 
 #. translators: %s: IP address
-#: src/Admin/Ajax/SecurityAjaxHandler.php:514
+#: src/Admin/Ajax/SecurityAjaxHandler.php:513
 #, php-format
 msgid "IP address %s has been unblocked"
 msgstr ""
 
-#: src/Admin/Ajax/SecurityAjaxHandler.php:520
+#: src/Admin/Ajax/SecurityAjaxHandler.php:519
 msgid "IP address was not found in the blacklist"
 msgstr ""
 
@@ -426,7 +431,7 @@ msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:215
 #: src/Admin/Renderer/RenderHelper.php:34
-#: src/Admin/Renderer/SettingsRenderer.php:318
+#: src/Admin/Renderer/SettingsRenderer.php:404
 #: src/GraphQL/GraphQLConfigManager.php:307
 #: src/GraphQL/GraphQLConfigManager.php:316
 #: src/GraphQL/GraphQLConfigManager.php:326
@@ -437,7 +442,7 @@ msgstr ""
 #: src/Admin/Assets/AssetManager.php:216
 #: src/Admin/Renderer/DashboardRenderer.php:140
 #: src/Admin/Renderer/RenderHelper.php:37
-#: src/Admin/Renderer/SettingsRenderer.php:320
+#: src/Admin/Renderer/SettingsRenderer.php:406
 #: src/GraphQL/GraphQLConfigManager.php:307
 #: src/GraphQL/GraphQLConfigManager.php:316
 #: src/GraphQL/GraphQLConfigManager.php:327
@@ -454,19 +459,18 @@ msgid "Standard"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:220
-#: src/Admin/Renderer/DashboardRenderer.php:171
-#: src/Admin/Renderer/DashboardRenderer.php:185
-#: src/Admin/Renderer/SettingsRenderer.php:388
+#: src/Admin/Renderer/DashboardRenderer.php:179
+#: src/Admin/Renderer/SettingsRenderer.php:475
 msgid "Active"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:221
-#: src/Admin/Renderer/SettingsRenderer.php:393
+#: src/Admin/Renderer/SettingsRenderer.php:480
 msgid "Not configured"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:222
-#: src/Admin/Renderer/SettingsRenderer.php:390
+#: src/Admin/Renderer/SettingsRenderer.php:477
 msgid "An API key is configured. Regenerate to create a new key (invalidates the current one)."
 msgstr ""
 
@@ -475,47 +479,47 @@ msgid "Generate an API key for server-to-server authentication."
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:224
-#: src/Admin/Renderer/SettingsRenderer.php:418
+#: src/Admin/Renderer/SettingsRenderer.php:505
 msgid "Generate API Key"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:225
-#: src/Admin/Renderer/SettingsRenderer.php:406
+#: src/Admin/Renderer/SettingsRenderer.php:493
 msgid "Regenerate API Key"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:226
-#: src/Admin/Renderer/SettingsRenderer.php:412
+#: src/Admin/Renderer/SettingsRenderer.php:499
 msgid "Revoke API Key"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:227
-#: src/Admin/Renderer/SettingsRenderer.php:405
+#: src/Admin/Renderer/SettingsRenderer.php:492
 msgid "This will invalidate the current API key. All consumers using it will need to update. Continue?"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:228
-#: src/Admin/Renderer/SettingsRenderer.php:411
+#: src/Admin/Renderer/SettingsRenderer.php:498
 msgid "This will revoke the API key. All consumers using it will lose access. Continue?"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:229
-#: src/Admin/Renderer/SettingsRenderer.php:429
+#: src/Admin/Renderer/SettingsRenderer.php:516
 msgid "Usage Example"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:230
-#: src/Admin/Renderer/SettingsRenderer.php:430
+#: src/Admin/Renderer/SettingsRenderer.php:517
 msgid "Add one of the following headers to your GraphQL requests:"
 msgstr ""
 
 #. translators: %d: number of security logs found
-#: src/Admin/Data/SecurityDataProvider.php:280
+#: src/Admin/Data/SecurityDataProvider.php:278
 #, php-format
 msgid "Found %d recent security events"
 msgstr ""
 
-#: src/Admin/Data/SecurityDataProvider.php:296
+#: src/Admin/Data/SecurityDataProvider.php:294
 msgid "Unable to retrieve security logs"
 msgstr ""
 
@@ -542,9 +546,9 @@ msgid "GraphQL Security"
 msgstr ""
 
 #: src/Admin/Renderer/AdminPageRenderer.php:104
-#: src/Admin/Renderer/DashboardRenderer.php:183
-#: src/Admin/Renderer/DashboardRenderer.php:190
-#: src/Admin/Renderer/SettingsRenderer.php:496
+#: src/Admin/Renderer/DashboardRenderer.php:177
+#: src/Admin/Renderer/DashboardRenderer.php:184
+#: src/Admin/Renderer/SettingsRenderer.php:583
 msgid "Form Protection"
 msgstr ""
 
@@ -561,8 +565,8 @@ msgid "Max Attempts"
 msgstr ""
 
 #: src/Admin/Renderer/DashboardRenderer.php:100
-#: src/Admin/Renderer/DashboardRenderer.php:213
-#: src/Admin/Renderer/DashboardRenderer.php:238
+#: src/Admin/Renderer/DashboardRenderer.php:207
+#: src/Admin/Renderer/DashboardRenderer.php:232
 msgid "Blocked IPs"
 msgstr ""
 
@@ -639,51 +643,45 @@ msgstr ""
 msgid "SSL/HTTPS"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:169
-#: src/Admin/Renderer/SettingsRenderer.php:572
-msgid "Under Attack Mode"
-msgstr ""
-
-#: src/Admin/Renderer/DashboardRenderer.php:172
-#: src/Admin/Renderer/DashboardRenderer.php:185
-msgid "Inactive"
-msgstr ""
-
-#: src/Admin/Renderer/DashboardRenderer.php:174
+#: src/Admin/Renderer/DashboardRenderer.php:168
 msgid "IP Blacklisting"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:191
+#: src/Admin/Renderer/DashboardRenderer.php:179
+msgid "Inactive"
+msgstr ""
+
+#: src/Admin/Renderer/DashboardRenderer.php:185
 msgid "Rate Limit (min)"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:209
+#: src/Admin/Renderer/DashboardRenderer.php:203
 msgid "Security Statistics"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:214
+#: src/Admin/Renderer/DashboardRenderer.php:208
 msgid "Failed Login Attempts (24h)"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:215
+#: src/Admin/Renderer/DashboardRenderer.php:209
 msgid "Security Events (7d)"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:232
+#: src/Admin/Renderer/DashboardRenderer.php:226
 msgid "Recent Security Activity"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:242
+#: src/Admin/Renderer/DashboardRenderer.php:236
 msgid "Security Logs"
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:249
-#: src/Admin/Renderer/SettingsRenderer.php:534
-#: src/Admin/Renderer/SettingsRenderer.php:600
+#: src/Admin/Renderer/DashboardRenderer.php:243
+#: src/Admin/Renderer/SettingsRenderer.php:621
+#: src/Admin/Renderer/SettingsRenderer.php:681
 msgid "Loading blocked IPs..."
 msgstr ""
 
-#: src/Admin/Renderer/DashboardRenderer.php:256
+#: src/Admin/Renderer/DashboardRenderer.php:250
 msgid "Loading security logs..."
 msgstr ""
 
@@ -775,187 +773,227 @@ msgstr ""
 msgid "Save Admin Hide Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:253
-msgid "GraphQL Security Settings"
+#: src/Admin/Renderer/SettingsRenderer.php:238
+msgid "Login Page Branding"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:269
-msgid "Headless CMS Mode"
+#: src/Admin/Renderer/SettingsRenderer.php:242
+msgid "Customize the WordPress login page with Silver Assist branding and a modern split-layout design."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:272
-msgid "Enable higher limits for headless WordPress configurations"
+#: src/Admin/Renderer/SettingsRenderer.php:254
+msgid "Enable Login Branding"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:275
-msgid "Query Timeout (seconds)"
+#: src/Admin/Renderer/SettingsRenderer.php:257
+msgid "Replace the default WordPress login page with Silver Assist branded design"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:260
+msgid "Show Illustration Panel"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:263
+msgid "Display decorative illustration in a right-side panel (split-layout)"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:271
+msgid "Custom Logo URL"
 msgstr ""
 
 #: src/Admin/Renderer/SettingsRenderer.php:282
+msgid "URL to a custom logo image. Leave empty to use the built-in Silver Assist logo."
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:291
+msgid "Illustration Panel Color"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:303
+msgid "Hex color for the illustration panel background. Leave empty for the default gradient."
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:315
+msgid "Save Branding Settings"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:339
+msgid "GraphQL Security Settings"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:355
+msgid "Headless CMS Mode"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:358
+msgid "Enable higher limits for headless WordPress configurations"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:361
+msgid "Query Timeout (seconds)"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:368
 msgid "Maximum execution time for GraphQL queries (1-30 seconds)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:293
+#: src/Admin/Renderer/SettingsRenderer.php:379
 msgid "Save GraphQL Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:302
+#: src/Admin/Renderer/SettingsRenderer.php:388
 msgid "GraphQL Authentication"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:314
+#: src/Admin/Renderer/SettingsRenderer.php:400
 msgid "Require Authentication"
 msgstr ""
 
 #. translators: %s: URL to WPGraphQL settings page.
-#: src/Admin/Renderer/SettingsRenderer.php:326
+#: src/Admin/Renderer/SettingsRenderer.php:412
 #, php-format
 msgid "This setting is managed by WPGraphQL. %s to change it."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:327
+#: src/Admin/Renderer/SettingsRenderer.php:413
 msgid "Go to WPGraphQL Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:338
+#: src/Admin/Renderer/SettingsRenderer.php:424
 msgid "Important Notice"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:340
+#: src/Admin/Renderer/SettingsRenderer.php:426
 msgid "When enabled, all GraphQL consumers must authenticate via Application Passwords, API Key, or WordPress session."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:341
+#: src/Admin/Renderer/SettingsRenderer.php:427
 msgid "Authentication is not enforced in local/development environments to allow development tooling."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:342
+#: src/Admin/Renderer/SettingsRenderer.php:428
 msgid "Headless front-end applications (Next.js, Gatsby, etc.) will need to use Application Passwords or the API Key below."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:350
+#: src/Admin/Renderer/SettingsRenderer.php:437
 msgid "API Key Management"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:357
+#: src/Admin/Renderer/SettingsRenderer.php:444
 msgid "Service User"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:367
+#: src/Admin/Renderer/SettingsRenderer.php:454
 msgid "— Select Service User —"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:373
+#: src/Admin/Renderer/SettingsRenderer.php:460
 msgid "WordPress user for API key authentication. A Subscriber role is recommended."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:379
+#: src/Admin/Renderer/SettingsRenderer.php:466
 msgid "API Key"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:395
+#: src/Admin/Renderer/SettingsRenderer.php:482
 msgid "Generate an API key for server-to-server authentication. Use the X-API-Key header or Authorization: Bearer token."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:443
+#: src/Admin/Renderer/SettingsRenderer.php:530
 msgid "Save Authentication Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:454
+#: src/Admin/Renderer/SettingsRenderer.php:541
 msgid "WPGraphQL Plugin Not Detected"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:457
+#: src/Admin/Renderer/SettingsRenderer.php:544
 msgid "GraphQL security features require the WPGraphQL plugin to be installed and activated."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:462
+#: src/Admin/Renderer/SettingsRenderer.php:549
 msgid "Install WPGraphQL Plugin"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:486
+#: src/Admin/Renderer/SettingsRenderer.php:573
 msgid "Contact Form 7 Protection"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:499
+#: src/Admin/Renderer/SettingsRenderer.php:586
 msgid "Enable protection for Contact Form 7 submissions"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:502
+#: src/Admin/Renderer/SettingsRenderer.php:589
 msgid "Rate Limit (submissions/minute)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:509
+#: src/Admin/Renderer/SettingsRenderer.php:596
 msgid "Maximum form submissions per minute per IP address"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:520
+#: src/Admin/Renderer/SettingsRenderer.php:607
 msgid "Save Form Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:529
+#: src/Admin/Renderer/SettingsRenderer.php:616
 msgid "Blocked IPs Management"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:556
+#: src/Admin/Renderer/SettingsRenderer.php:643
 msgid "IP Management & Attack Protection"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:566
+#: src/Admin/Renderer/SettingsRenderer.php:653
 msgid "IP Blacklist"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:569
+#: src/Admin/Renderer/SettingsRenderer.php:656
 msgid "Enable automatic IP blacklisting for repeat offenders"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:575
-msgid "Enable enhanced protection during active attacks"
-msgstr ""
-
-#: src/Admin/Renderer/SettingsRenderer.php:586
+#: src/Admin/Renderer/SettingsRenderer.php:667
 msgid "Save IP Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:595
+#: src/Admin/Renderer/SettingsRenderer.php:676
 msgid "Login Security - Blocked IPs"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:609
+#: src/Admin/Renderer/SettingsRenderer.php:690
 msgid "Form Protection - Blocked IPs"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:614
+#: src/Admin/Renderer/SettingsRenderer.php:695
 msgid "Loading CF7 blocked IPs..."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:623
+#: src/Admin/Renderer/SettingsRenderer.php:704
 msgid "Manual IP Management"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:630
+#: src/Admin/Renderer/SettingsRenderer.php:711
 msgid "Enter IP address (e.g., 192.168.1.100)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:634
+#: src/Admin/Renderer/SettingsRenderer.php:715
 msgid "Reason for blocking"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:638
+#: src/Admin/Renderer/SettingsRenderer.php:719
 msgid "Block IP"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:642
+#: src/Admin/Renderer/SettingsRenderer.php:723
 msgid "Manually block specific IP addresses. Blocked IPs will be denied access to login and forms."
 msgstr ""
 
 #: src/Admin/Settings/SettingsHandler.php:63
 #: src/Core/SecurityHelper.php:421
-#: src/Security/LoginSecurity.php:252
+#: src/Security/LoginSecurity.php:238
 msgid "Security check failed."
 msgstr ""
 
-#: src/Admin/Settings/SettingsHandler.php:269
+#: src/Admin/Settings/SettingsHandler.php:300
 msgid "Security settings have been saved successfully."
 msgstr ""
 
@@ -968,7 +1006,7 @@ msgstr ""
 msgid "Path cannot contain \"%s\" for security reasons"
 msgstr ""
 
-#: src/Core/Plugin.php:238
+#: src/Core/Plugin.php:254
 msgid "Settings"
 msgstr ""
 
@@ -1064,94 +1102,86 @@ msgid "⚠️ Security Concerns:"
 msgstr ""
 
 #. translators: 1: estimated complexity, 2: maximum allowed complexity
-#: src/GraphQL/GraphQLSecurity.php:360
+#: src/GraphQL/GraphQLSecurity.php:380
 #, php-format
 msgid "Query complexity %1$d exceeds maximum allowed complexity %2$d"
 msgstr ""
 
-#: src/GraphQL/GraphQLSecurity.php:466
+#: src/GraphQL/GraphQLSecurity.php:486
 msgid "Introspection is disabled in production."
 msgstr ""
 
 #. translators: 1: number of aliases found, 2: maximum allowed
-#: src/GraphQL/GraphQLSecurity.php:503
+#: src/GraphQL/GraphQLSecurity.php:523
 #, php-format
 msgid "Query contains too many aliases (%1$d). Maximum allowed: %2$d"
 msgstr ""
 
 #. translators: 1: number of directives found, 2: maximum allowed
-#: src/GraphQL/GraphQLSecurity.php:518
+#: src/GraphQL/GraphQLSecurity.php:538
 #, php-format
 msgid "Query contains too many directives (%1$d). Maximum allowed: %2$d"
 msgstr ""
 
 #. translators: %d: maximum allowed field duplicates
-#: src/GraphQL/GraphQLSecurity.php:532
+#: src/GraphQL/GraphQLSecurity.php:552
 #, php-format
 msgid "Query contains excessive field duplication. Maximum allowed: %d"
 msgstr ""
 
 #. translators: %d: maximum query depth limit in levels
-#: src/GraphQL/GraphQLSecurity.php:546
+#: src/GraphQL/GraphQLSecurity.php:566
 #, php-format
 msgid "Query depth exceeds maximum limit of %d levels."
 msgstr ""
 
 #. translators: 1: current query length in characters, 2: maximum allowed characters
-#: src/GraphQL/GraphQLSecurity.php:560
+#: src/GraphQL/GraphQLSecurity.php:580
 #, php-format
 msgid "Query is too large (%1$d characters). Maximum allowed: %2$d characters."
 msgstr ""
 
 #. translators: %d: timeout limit in seconds
-#: src/GraphQL/GraphQLSecurity.php:652
-#: src/GraphQL/GraphQLSecurity.php:676
+#: src/GraphQL/GraphQLSecurity.php:672
+#: src/GraphQL/GraphQLSecurity.php:696
 #, php-format
 msgid "Query execution timeout exceeded (%ds limit)"
 msgstr ""
 
-#: src/GraphQL/GraphQLSecurity.php:728
+#: src/GraphQL/GraphQLSecurity.php:748
 msgid "Rate limit exceeded. Please try again later."
 msgstr ""
 
 #. translators: 1: current depth, 2: maximum allowed depth
-#: src/GraphQL/GraphQLSecurity.php:917
+#: src/GraphQL/GraphQLSecurity.php:937
 #, php-format
 msgid "Query depth %1$d exceeds maximum allowed depth %2$d"
 msgstr ""
 
 #. translators: 1: current alias count, 2: maximum allowed aliases
-#: src/GraphQL/GraphQLSecurity.php:1046
+#: src/GraphQL/GraphQLSecurity.php:1066
 #, php-format
 msgid "Query contains %1$d aliases, maximum %2$d allowed"
 msgstr ""
 
 #. translators: 1: current directive count, 2: maximum allowed directives
-#: src/GraphQL/GraphQLSecurity.php:1123
+#: src/GraphQL/GraphQLSecurity.php:1143
 #, php-format
 msgid "Query contains %1$d directives, maximum %2$d allowed"
 msgstr ""
 
 #. translators: 1: current duplicate count, 2: maximum allowed duplicates
-#: src/GraphQL/GraphQLSecurity.php:1199
+#: src/GraphQL/GraphQLSecurity.php:1219
 #, php-format
 msgid "Query contains %1$d field duplicates, maximum %2$d allowed"
 msgstr ""
 
-#: src/GraphQL/GraphQLSecurity.php:1462
+#: src/GraphQL/GraphQLSecurity.php:1482
 msgid "Authentication required to access GraphQL endpoint."
 msgstr ""
 
-#: src/Security/ContactForm7Integration.php:129
+#: src/Security/ContactForm7Integration.php:110
 msgid "Security validation failed. Please try again."
-msgstr ""
-
-#: src/Security/ContactForm7Integration.php:590
-msgid "Invalid nonce"
-msgstr ""
-
-#: src/Security/ContactForm7Integration.php:594
-msgid "Not in Under Attack mode"
 msgstr ""
 
 #: src/Security/GeneralSecurity.php:270
@@ -1164,42 +1194,28 @@ msgstr ""
 msgid "Secured by %s"
 msgstr ""
 
-#: src/Security/LoginSecurity.php:187
-#: src/Security/LoginSecurity.php:553
-#: src/Security/LoginSecurity.php:577
+#. translators: %s: The action-specific title (e.g. "Log In", "Register").
+#: src/Security/LoginBranding.php:222
+#, php-format
+msgid "%s — Silver Assist"
+msgstr ""
+
+#: src/Security/LoginSecurity.php:173
+#: src/Security/LoginSecurity.php:536
+#: src/Security/LoginSecurity.php:560
 msgid "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters."
 msgstr ""
 
-#: src/Security/LoginSecurity.php:188
+#: src/Security/LoginSecurity.php:174
 msgid "Password meets security requirements"
 msgstr ""
 
-#: src/Security/LoginSecurity.php:234
+#: src/Security/LoginSecurity.php:220
 msgid "Website URL (leave blank):"
 msgstr ""
 
 #. translators: %d: number of minutes remaining until unlock
-#: src/Security/LoginSecurity.php:336
+#: src/Security/LoginSecurity.php:319
 #, php-format
 msgid "Too many failed login attempts. Try again in %d minutes."
-msgstr ""
-
-#: src/Security/LoginSecurity.php:854
-msgid "<strong>Error:</strong> Please solve the security challenge."
-msgstr ""
-
-#: src/Security/LoginSecurity.php:867
-msgid "<strong>Error:</strong> Incorrect answer to the security challenge. Please try again."
-msgstr ""
-
-#: templates/captcha-field.php:23
-msgid "Security Check"
-msgstr ""
-
-#: templates/captcha-field.php:33
-msgid "Your answer"
-msgstr ""
-
-#: templates/captcha-field.php:36
-msgid "Get a new question"
 msgstr ""

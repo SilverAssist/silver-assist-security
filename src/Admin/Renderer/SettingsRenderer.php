@@ -231,6 +231,92 @@ class SettingsRenderer {
 				</div>
 			</div>
 		</div>
+
+		<!-- Login Branding Section -->
+		<div class="status-card">
+			<div class="card-header">
+				<h3><?php \esc_html_e( 'Login Page Branding', 'silver-assist-security' ); ?></h3>
+			</div>
+			<div class="card-content">
+				<p class="description">
+					<?php \esc_html_e( 'Customize the WordPress login page with Silver Assist branding and a modern split-layout design.', 'silver-assist-security' ); ?>
+				</p>
+
+				<form method="post" action="" id="login-branding-form">
+					<?php \wp_nonce_field( 'silver_assist_security_settings' ); ?>
+					<input type="hidden" name="save_silver_assist_security" value="1">
+					<input type="hidden" name="settings_section" value="login_branding">
+
+					<table class="form-table">
+						<tbody>
+							<?php
+							RenderHelper::render_toggle_row(
+								\__( 'Enable Login Branding', 'silver-assist-security' ),
+								'silver_assist_login_branding_enabled',
+								$config['login_branding_enabled'],
+								\__( 'Replace the default WordPress login page with Silver Assist branded design', 'silver-assist-security' )
+							);
+							RenderHelper::render_toggle_row(
+								\__( 'Show Illustration Panel', 'silver-assist-security' ),
+								'silver_assist_login_branding_show_illustration',
+								$config['login_branding_show_illustration'],
+								\__( 'Display decorative illustration in a right-side panel (split-layout)', 'silver-assist-security' )
+							);
+							?>
+
+							<!-- Custom Logo URL -->
+							<tr>
+								<th scope="row">
+									<label for="silver_assist_login_branding_logo_url">
+										<?php \esc_html_e( 'Custom Logo URL', 'silver-assist-security' ); ?>
+									</label>
+								</th>
+								<td>
+									<input type="url"
+										id="silver_assist_login_branding_logo_url"
+										name="silver_assist_login_branding_logo_url"
+										value="<?php echo \esc_attr( $config['login_branding_logo_url'] ); ?>"
+										placeholder="https://example.com/logo.png"
+										class="regular-text">
+									<p class="description">
+										<?php \esc_html_e( 'URL to a custom logo image. Leave empty to use the built-in Silver Assist logo.', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+
+							<!-- Background Color -->
+							<tr>
+								<th scope="row">
+									<label for="silver_assist_login_branding_bg_color">
+										<?php \esc_html_e( 'Illustration Panel Color', 'silver-assist-security' ); ?>
+									</label>
+								</th>
+								<td>
+									<input type="text"
+										id="silver_assist_login_branding_bg_color"
+										name="silver_assist_login_branding_bg_color"
+										value="<?php echo \esc_attr( $config['login_branding_bg_color'] ); ?>"
+										placeholder="#0a1628"
+										class="small-text"
+										maxlength="7">
+									<p class="description">
+										<?php \esc_html_e( 'Hex color for the illustration panel background. Leave empty for the default gradient.', 'silver-assist-security' ); ?>
+									</p>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+
+					<p class="submit">
+						<input type="submit"
+							name="submit"
+							id="login-branding-submit"
+							class="button button-primary"
+							value="<?php \esc_attr_e( 'Save Branding Settings', 'silver-assist-security' ); ?>">
+					</p>
+				</form>
+			</div>
+		</div>
 		<?php
 	}
 
@@ -651,22 +737,26 @@ class SettingsRenderer {
 	 */
 	private function get_current_config(): array {
 		return array(
-			'login_attempts'                => DefaultConfig::get_option( 'silver_assist_login_attempts' ),
-			'lockout_duration'              => DefaultConfig::get_option( 'silver_assist_lockout_duration' ),
-			'session_timeout'               => DefaultConfig::get_option( 'silver_assist_session_timeout' ),
-			'bot_protection'                => DefaultConfig::get_option( 'silver_assist_bot_protection' ),
-			'password_strength_enforcement' => DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' ),
-			'graphql_headless_mode'         => DefaultConfig::get_option( 'silver_assist_graphql_headless_mode' ),
-			'graphql_query_timeout'         => \get_option( 'silver_assist_graphql_query_timeout', $this->config_manager->get_php_execution_timeout() ),
-			'cf7_protection_enabled'        => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) : 0,
-			'cf7_rate_limit'                => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' ) : DefaultConfig::get_default( 'silver_assist_cf7_rate_limit' ) ?? 2,
-			'cf7_rate_window'               => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_rate_window' ) : DefaultConfig::get_default( 'silver_assist_cf7_rate_window' ) ?? 60,
-			'ip_blacklist_enabled'          => DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' ),
-			'ip_violation_threshold'        => DefaultConfig::get_option( 'silver_assist_ip_violation_threshold' ),
-			'ip_blacklist_duration'         => DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' ),
-			'admin_hide_enabled'            => DefaultConfig::get_option( 'silver_assist_admin_hide_enabled' ),
-			'admin_hide_path'               => DefaultConfig::get_option( 'silver_assist_admin_hide_path' ),
-			'graphql_service_user_id'       => (int) DefaultConfig::get_option( 'silver_assist_graphql_service_user_id' ),
+			'login_attempts'                   => DefaultConfig::get_option( 'silver_assist_login_attempts' ),
+			'lockout_duration'                 => DefaultConfig::get_option( 'silver_assist_lockout_duration' ),
+			'session_timeout'                  => DefaultConfig::get_option( 'silver_assist_session_timeout' ),
+			'bot_protection'                   => DefaultConfig::get_option( 'silver_assist_bot_protection' ),
+			'password_strength_enforcement'    => DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' ),
+			'graphql_headless_mode'            => DefaultConfig::get_option( 'silver_assist_graphql_headless_mode' ),
+			'graphql_query_timeout'            => \get_option( 'silver_assist_graphql_query_timeout', $this->config_manager->get_php_execution_timeout() ),
+			'cf7_protection_enabled'           => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) : 0,
+			'cf7_rate_limit'                   => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' ) : DefaultConfig::get_default( 'silver_assist_cf7_rate_limit' ) ?? 2,
+			'cf7_rate_window'                  => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_rate_window' ) : DefaultConfig::get_default( 'silver_assist_cf7_rate_window' ) ?? 60,
+			'ip_blacklist_enabled'             => DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' ),
+			'ip_violation_threshold'           => DefaultConfig::get_option( 'silver_assist_ip_violation_threshold' ),
+			'ip_blacklist_duration'            => DefaultConfig::get_option( 'silver_assist_ip_blacklist_duration' ),
+			'admin_hide_enabled'               => DefaultConfig::get_option( 'silver_assist_admin_hide_enabled' ),
+			'admin_hide_path'                  => DefaultConfig::get_option( 'silver_assist_admin_hide_path' ),
+			'graphql_service_user_id'          => (int) DefaultConfig::get_option( 'silver_assist_graphql_service_user_id' ),
+			'login_branding_enabled'           => DefaultConfig::get_option( 'silver_assist_login_branding_enabled' ),
+			'login_branding_show_illustration' => DefaultConfig::get_option( 'silver_assist_login_branding_show_illustration' ),
+			'login_branding_logo_url'          => DefaultConfig::get_option( 'silver_assist_login_branding_logo_url' ),
+			'login_branding_bg_color'          => DefaultConfig::get_option( 'silver_assist_login_branding_bg_color' ),
 		);
 	}
 }

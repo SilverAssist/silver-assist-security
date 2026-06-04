@@ -21,6 +21,7 @@ use SilverAssist\Security\Security\AdminHideSecurity;
 use SilverAssist\Security\Security\ContactForm7Integration;
 use SilverAssist\Security\Security\GeneralSecurity;
 use SilverAssist\Security\Security\IPBlacklist;
+use SilverAssist\Security\Security\LoginBranding;
 use SilverAssist\Security\Security\LoginSecurity;
 
 /**
@@ -53,6 +54,13 @@ class Plugin {
 	 * @var LoginSecurity|null
 	 */
 	private ?LoginSecurity $login_security = null;
+
+	/**
+	 * Login branding instance
+	 *
+	 * @var LoginBranding|null
+	 */
+	private ?LoginBranding $login_branding = null;
 
 	/**
 	 * General security instance
@@ -194,7 +202,12 @@ class Plugin {
 		$this->login_security   = new LoginSecurity();
 		$this->general_security = new GeneralSecurity();
 
-		// Initialize AdminHideSecurity if it's enabled
+		// Initialize LoginBranding if it's enabled.
+		if ( (bool) DefaultConfig::get_option( 'silver_assist_login_branding_enabled' ) ) {
+			$this->login_branding = new LoginBranding();
+		}
+
+		// Initialize AdminHideSecurity if it's enabled.
 		$admin_hide_enabled = (bool) DefaultConfig::get_option( 'silver_assist_admin_hide_enabled' );
 		if ( $admin_hide_enabled ) {
 			new AdminHideSecurity();
@@ -264,6 +277,16 @@ class Plugin {
 	 */
 	public function get_login_security(): ?LoginSecurity {
 		return $this->login_security;
+	}
+
+	/**
+	 * Get login branding instance
+	 *
+	 * @since 1.4.0
+	 * @return LoginBranding|null
+	 */
+	public function get_login_branding(): ?LoginBranding {
+		return $this->login_branding;
 	}
 
 	/**

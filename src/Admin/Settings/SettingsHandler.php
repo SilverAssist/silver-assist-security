@@ -69,9 +69,13 @@ class SettingsHandler {
 		if ( $section === 'graphql_auth' ) {
 			// Only save GraphQL auth-related settings (service user ID).
 			$this->save_graphql_auth_settings();
+		} elseif ( $section === 'login_branding' ) {
+			// Only save login branding settings.
+			$this->save_login_branding_settings();
 		} else {
 			// Process all settings categories.
 			$this->save_login_security_settings();
+			$this->save_login_branding_settings();
 			$this->save_admin_hide_settings();
 			$this->save_graphql_settings();
 			$this->save_contact_form7_settings();
@@ -113,6 +117,28 @@ class SettingsHandler {
 		// Boolean settings
 		\update_option( 'silver_assist_bot_protection', (int) ( isset( $_POST['silver_assist_bot_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_bot_protection'] ) ) : 0 ) );
 		\update_option( 'silver_assist_password_strength_enforcement', (int) ( isset( $_POST['silver_assist_password_strength_enforcement'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_password_strength_enforcement'] ) ) : 0 ) );
+	}
+
+	/**
+	 * Save login branding settings
+	 *
+	 * @since 1.4.0
+	 * @return void
+	 */
+	private function save_login_branding_settings(): void {
+		// Enable/disable login branding.
+		\update_option( 'silver_assist_login_branding_enabled', (int) ( isset( $_POST['silver_assist_login_branding_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_branding_enabled'] ) ) : 0 ) );
+
+		// Show/hide illustration panel.
+		\update_option( 'silver_assist_login_branding_show_illustration', (int) ( isset( $_POST['silver_assist_login_branding_show_illustration'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_branding_show_illustration'] ) ) : 0 ) );
+
+		// Custom logo URL.
+		$logo_url = isset( $_POST['silver_assist_login_branding_logo_url'] ) ? \esc_url_raw( \wp_unslash( $_POST['silver_assist_login_branding_logo_url'] ) ) : '';
+		\update_option( 'silver_assist_login_branding_logo_url', $logo_url );
+
+		// Background color.
+		$bg_color = isset( $_POST['silver_assist_login_branding_bg_color'] ) ? \sanitize_hex_color( \wp_unslash( $_POST['silver_assist_login_branding_bg_color'] ) ) : '';
+		\update_option( 'silver_assist_login_branding_bg_color', $bg_color ?? '' );
 	}
 
 	/**
