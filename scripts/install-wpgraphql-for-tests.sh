@@ -8,7 +8,7 @@
 # @package SilverAssist\Security
 # @since 1.1.15
 # @author Silver Assist
-# @version 1.3.1
+# @version 1.4.0
 #
 # Usage:
 #   bash scripts/install-wpgraphql-for-tests.sh
