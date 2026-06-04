@@ -315,7 +315,6 @@ class SettingsRenderer {
 				</form>
 			</div>
 		</div>
-		</div>
 		<?php
 	}
 
