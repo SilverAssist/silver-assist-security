@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Login Page Branding**: Custom-branded login page with modern split-layout design (#83)
   - Two-column layout: login form (left) + decorative illustration panel (right)
-  - Inline SVG Silver Assist logo replacing the WordPress logo
+  - Silver Assist logo via CSS background-image replacing the WordPress logo
   - Rocket/mountains illustration in the right panel with dark gradient background
   - Brand colors (`#00D1FF` cyan), custom typography, and styled form inputs
   - CTA button: full-width, 48px height, uppercase bold, cyan background

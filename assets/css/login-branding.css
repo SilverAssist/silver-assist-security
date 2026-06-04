@@ -133,7 +133,7 @@ body.silver-assist-branded-login #loginform input[type="text"],
 body.silver-assist-branded-login #loginform input[type="password"],
 body.silver-assist-branded-login #loginform input[type="email"] {
 	border-radius: var(--silver-radius-md);
-	border: 1px solid var(--silver-border-primary);
+	border: var(--silver-border-width-thin) solid var(--silver-border-primary);
 	background: var(--silver-bg-secondary);
 	box-shadow: none;
 	box-sizing: border-box;
@@ -163,7 +163,7 @@ body.silver-assist-branded-login #loginform #wp-submit {
 	border-radius: var(--silver-radius-lg);
 	font-size: var(--silver-font-size-base);
 	font-weight: var(--silver-font-weight-medium);
-	color: #ffffff;
+	color: var(--silver-bg-primary);
 	cursor: pointer;
 	transition: background var(--silver-transition-fast) var(--silver-transition-ease);
 	text-shadow: none;

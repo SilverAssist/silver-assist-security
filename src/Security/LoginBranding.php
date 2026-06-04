@@ -226,30 +226,6 @@ class LoginBranding {
 	}
 
 	/**
-	 * Get the Silver Assist logo SVG markup
-	 *
-	 * @since 1.4.0
-	 * @return string SVG markup.
-	 */
-	public function get_logo_svg(): string {
-		$svg_path = SILVER_ASSIST_SECURITY_PATH . 'assets/images/silver-assist-logo.svg';
-
-		if ( ! file_exists( $svg_path ) ) {
-			return '';
-		}
-
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local file read, not a remote request.
-		$svg = file_get_contents( $svg_path );
-
-		if ( false === $svg ) {
-			return '';
-		}
-
-		// Add the CSS class to the SVG element.
-		return str_replace( '<svg ', '<svg class="silver-logo-icon" ', $svg );
-	}
-
-	/**
 	 * Get the illustration SVG markup for the right panel
 	 *
 	 * @since 1.4.0

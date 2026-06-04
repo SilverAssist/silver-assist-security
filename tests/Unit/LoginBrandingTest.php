@@ -149,18 +149,6 @@ class LoginBrandingTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test get_logo_svg returns valid SVG
-	 */
-	public function test_get_logo_svg_returns_svg(): void {
-		$branding = new LoginBranding();
-		$svg      = $branding->get_logo_svg();
-
-		$this->assertStringContainsString( '<svg', $svg );
-		$this->assertStringContainsString( '</svg>', $svg );
-		$this->assertStringContainsString( '#00D1FF', $svg );
-	}
-
-	/**
 	 * Test inject_login_footer outputs illustration panel
 	 */
 	public function test_inject_login_footer_outputs_illustration(): void {

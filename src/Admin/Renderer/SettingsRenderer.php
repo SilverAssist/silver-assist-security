@@ -238,7 +238,7 @@ class SettingsRenderer {
 				<h3><?php \esc_html_e( 'Login Page Branding', 'silver-assist-security' ); ?></h3>
 			</div>
 			<div class="card-content">
-				<p class="description" style="margin-top: 0;">
+				<p class="description">
 					<?php \esc_html_e( 'Customize the WordPress login page with Silver Assist branding and a modern split-layout design.', 'silver-assist-security' ); ?>
 				</p>
 
