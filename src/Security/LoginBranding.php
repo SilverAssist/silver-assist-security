@@ -19,7 +19,7 @@ use SilverAssist\Security\Core\SecurityHelper;
  * Login Branding class
  *
  * Implements custom branding for the WordPress login page with split-layout
- * design, inline SVG logo, and decorative illustration panel.
+ * design, CSS background-image logo, and decorative illustration panel.
  *
  * @since 1.4.0
  */
@@ -132,7 +132,7 @@ class LoginBranding {
 
 		if ( ! empty( $custom_logo_url ) ) {
 			$css .= 'body.silver-assist-branded-login #login h1 a {'
-				. 'background-image: url(' . \esc_url( $custom_logo_url ) . ') !important;'
+				. 'background-image: url("' . \esc_url_raw( $custom_logo_url ) . '") !important;'
 				. 'background-size: contain;'
 				. 'background-repeat: no-repeat;'
 				. 'background-position: center;'
@@ -183,7 +183,10 @@ class LoginBranding {
 			?>
 			<div class="silver-login-illustration-panel">
 				<div class="silver-login-illustration-content">
-					<?php echo $this->get_illustration_svg(); ?>
+					<?php
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted SVG from local plugin asset.
+					echo $this->get_illustration_svg();
+					?>
 				</div>
 				<div class="silver-login-illustration-watermark"><?php echo \esc_html__( 'Silver Assist', 'silver-assist-security' ); ?></div>
 			</div>
