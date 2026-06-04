@@ -2,23 +2,19 @@
  * Silver Assist Login Branding
  *
  * Custom styles for the WordPress login page with split-layout design.
+ * Depends on silver-assist-variables for shared design tokens.
  *
  * @package SilverAssist\Security
  * @since 1.4.0
  */
 
 /* ==========================================================================
-   CSS Custom Properties
+   Brand-Specific Properties
    ========================================================================== */
 
 :root {
 	--silver-brand-cyan: #00D1FF;
 	--silver-brand-cyan-hover: #00b8e6;
-	--silver-text-primary: #1d2327;
-	--silver-text-secondary: #50575e;
-	--silver-bg-primary: #ffffff;
-	--silver-bg-secondary: #f0f0f1;
-	--silver-border-primary: #c3c4c7;
 }
 
 /* ==========================================================================
@@ -116,7 +112,9 @@ body.silver-assist-branded-login #login h1 a .silver-logo-text {
 }
 
 body.silver-assist-branded-login #login h1 a:focus {
-	box-shadow: none;
+	outline: 2px solid var(--silver-brand-cyan);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 /* ==========================================================================
@@ -247,14 +245,6 @@ body.silver-assist-branded-login #login_error {
 
 body.silver-assist-branded-login .message {
 	border-left-color: var(--silver-brand-cyan);
-}
-
-/* ==========================================================================
-   Hide Default WordPress Elements
-   ========================================================================== */
-
-body.silver-assist-branded-login .language-switcher {
-	display: none;
 }
 
 /* ==========================================================================

@@ -13,6 +13,7 @@
 namespace SilverAssist\Security\Security;
 
 use SilverAssist\Security\Core\DefaultConfig;
+use SilverAssist\Security\Core\SecurityHelper;
 
 /**
  * Login Branding class
@@ -83,11 +84,20 @@ class LoginBranding {
 	 */
 	public function enqueue_login_assets(): void {
 		\wp_enqueue_style(
-			'silver-assist-login-branding',
-			SILVER_ASSIST_SECURITY_URL . 'assets/css/login-branding.css',
+			'silver-assist-variables',
+			SecurityHelper::get_asset_url( 'assets/css/variables.css' ),
 			array(),
 			$this->plugin_version
 		);
+
+		\wp_enqueue_style(
+			'silver-assist-login-branding',
+			SecurityHelper::get_asset_url( 'assets/css/login-branding.css' ),
+			array( 'silver-assist-variables' ),
+			$this->plugin_version
+		);
+
+		$this->add_dynamic_inline_styles();
 	}
 
 	/**
@@ -112,32 +122,50 @@ class LoginBranding {
 	}
 
 	/**
-	 * Inject inline SVG logo and styles into login head
+	 * Inject dynamic inline styles via wp_add_inline_style
+	 *
+	 * @since 1.4.0
+	 * @return void
+	 */
+	private function add_dynamic_inline_styles(): void {
+		$custom_logo_url = DefaultConfig::get_option( 'silver_assist_login_branding_logo_url' );
+		$css             = '';
+
+		if ( ! empty( $custom_logo_url ) ) {
+			$css .= 'body.silver-assist-branded-login #login h1 a {'
+				. 'background-image: url(' . \esc_url( $custom_logo_url ) . ') !important;'
+				. 'background-size: contain;'
+				. 'background-repeat: no-repeat;'
+				. 'background-position: center;'
+				. 'width: 200px;'
+				. 'height: 60px;'
+				. '}'
+				. 'body.silver-assist-branded-login #login h1 a .silver-logo-icon,'
+				. 'body.silver-assist-branded-login #login h1 a .silver-logo-text {'
+				. 'display: none;'
+				. '}';
+		}
+
+		$bg_color = DefaultConfig::get_option( 'silver_assist_login_branding_bg_color' );
+		if ( ! empty( $bg_color ) ) {
+			$css .= '.silver-login-illustration-panel {'
+				. 'background: ' . \sanitize_hex_color( $bg_color ) . ';'
+				. '}';
+		}
+
+		if ( ! empty( $css ) ) {
+			\wp_add_inline_style( 'silver-assist-login-branding', $css );
+		}
+	}
+
+	/**
+	 * Inject additional login head content
 	 *
 	 * @since 1.4.0
 	 * @return void
 	 */
 	public function inject_login_head(): void {
-		$custom_logo_url = DefaultConfig::get_option( 'silver_assist_login_branding_logo_url' );
-
-		if ( ! empty( $custom_logo_url ) ) {
-			?>
-			<style>
-				body.silver-assist-branded-login #login h1 a {
-					background-image: url('<?php echo \esc_url( $custom_logo_url ); ?>') !important;
-					background-size: contain;
-					background-repeat: no-repeat;
-					background-position: center;
-					width: 200px;
-					height: 60px;
-				}
-				body.silver-assist-branded-login #login h1 a .silver-logo-icon,
-				body.silver-assist-branded-login #login h1 a .silver-logo-text {
-					display: none;
-				}
-			</style>
-			<?php
-		}
+		// No-op: dynamic styles are now attached via wp_add_inline_style in enqueue_login_assets().
 	}
 
 	/**
@@ -148,15 +176,10 @@ class LoginBranding {
 	 */
 	public function inject_login_footer(): void {
 		$show_illustration = (bool) DefaultConfig::get_option( 'silver_assist_login_branding_show_illustration' );
-		$bg_color          = DefaultConfig::get_option( 'silver_assist_login_branding_bg_color' );
 
 		if ( $show_illustration ) {
-			$style = '';
-			if ( ! empty( $bg_color ) ) {
-				$style = ' style="background: ' . \esc_attr( $bg_color ) . ';"';
-			}
 			?>
-			<div class="silver-login-illustration-panel"<?php echo $style; ?>>
+			<div class="silver-login-illustration-panel">
 				<div class="silver-login-illustration-content">
 					<?php echo $this->get_illustration_svg(); ?>
 				</div>
