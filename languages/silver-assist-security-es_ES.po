@@ -31,6 +31,7 @@ msgstr "Resuelve vulnerabilidades de seguridad críticas: protección de inicio 
 
 #. Author of the plugin
 #: silver-assist-security.php
+#: src/Security/LoginBranding.php:188
 msgid "Silver Assist"
 msgstr "Silver Assist"
 
@@ -1212,3 +1213,9 @@ msgstr "Color hexadecimal para el fondo del panel de ilustración. Déjalo vací
 #: src/Admin/Renderer/SettingsRenderer.php:313
 msgid "Save Branding Settings"
 msgstr "Guardar ajustes de marca"
+
+#. translators: %s: The action-specific title (e.g. "Log In", "Register").
+#: src/Security/LoginBranding.php:222
+#, php-format
+msgid "%s \\u2014 Silver Assist"
+msgstr "%s \\u2014 Silver Assist"

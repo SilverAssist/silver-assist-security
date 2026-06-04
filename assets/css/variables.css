@@ -24,6 +24,12 @@
    --silver-primary-blue-light: #f0f6fc;
    --silver-primary-blue-alpha: #0073aa20;
 
+   /* Brand Accent Colors */
+   --silver-brand-cyan: #00D1FF;
+   --silver-brand-cyan-hover: #00b8e6;
+   --silver-brand-dark: #0a1628;
+   --silver-brand-dark-secondary: #1a2a4a;
+
    /* Text Colors */
    --silver-text-primary: #1d2327;
    --silver-text-secondary: #50575e;

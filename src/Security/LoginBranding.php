@@ -111,14 +111,13 @@ class LoginBranding {
 	}
 
 	/**
-	 * Custom login header text with inline SVG logo
+	 * Custom login header text
 	 *
 	 * @since 1.4.0
-	 * @return string Site name with logo SVG.
+	 * @return string Site name.
 	 */
 	public function custom_login_text(): string {
-		$site_name = \esc_html( \get_bloginfo( 'name' ) );
-		return $this->get_logo_svg() . '<span class="silver-logo-text">' . $site_name . '</span>';
+		return \esc_html( \get_bloginfo( 'name' ) );
 	}
 
 	/**
@@ -148,9 +147,12 @@ class LoginBranding {
 
 		$bg_color = DefaultConfig::get_option( 'silver_assist_login_branding_bg_color' );
 		if ( ! empty( $bg_color ) ) {
-			$css .= '.silver-login-illustration-panel {'
-				. 'background: ' . \sanitize_hex_color( $bg_color ) . ';'
-				. '}';
+			$sanitized_color = \sanitize_hex_color( $bg_color );
+			if ( ! empty( $sanitized_color ) ) {
+				$css .= '.silver-login-illustration-panel {'
+					. 'background: ' . $sanitized_color . ';'
+					. '}';
+			}
 		}
 
 		if ( ! empty( $css ) ) {
@@ -183,7 +185,7 @@ class LoginBranding {
 				<div class="silver-login-illustration-content">
 					<?php echo $this->get_illustration_svg(); ?>
 				</div>
-				<div class="silver-login-illustration-watermark">Silver Assist</div>
+				<div class="silver-login-illustration-watermark"><?php echo \esc_html__( 'Silver Assist', 'silver-assist-security' ); ?></div>
 			</div>
 			<?php
 		}
@@ -216,7 +218,8 @@ class LoginBranding {
 	 * @return string Modified page title.
 	 */
 	public function custom_login_title( string $login_title, string $title ): string {
-		return $title . ' &mdash; Silver Assist';
+		/* translators: %s: The action-specific title (e.g. "Log In", "Register"). */
+		return \sprintf( \__( '%s \u2014 Silver Assist', 'silver-assist-security' ), $title );
 	}
 
 	/**

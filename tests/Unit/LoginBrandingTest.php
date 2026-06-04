@@ -194,9 +194,9 @@ class LoginBrandingTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test inject_login_head outputs style block when custom logo is set
+	 * Test inject_login_head is a no-op (dynamic styles via wp_add_inline_style)
 	 */
-	public function test_inject_login_head_outputs_styles_with_custom_logo(): void {
+	public function test_inject_login_head_outputs_nothing_with_custom_logo(): void {
 		update_option( 'silver_assist_login_branding_logo_url', 'https://example.com/logo.png' );
 
 		$branding = new LoginBranding();
@@ -205,8 +205,7 @@ class LoginBrandingTest extends WP_UnitTestCase {
 		$branding->inject_login_head();
 		$output = ob_get_clean();
 
-		$this->assertStringContainsString( '<style>', $output );
-		$this->assertStringContainsString( 'https://example.com/logo.png', $output );
+		$this->assertEmpty( trim( $output ) );
 	}
 
 	/**
@@ -225,7 +224,7 @@ class LoginBrandingTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test custom background color is applied
+	 * Test custom background color is applied via wp_add_inline_style
 	 */
 	public function test_custom_bg_color_applied(): void {
 		update_option( 'silver_assist_login_branding_bg_color', '#1a2b3c' );
@@ -233,10 +232,13 @@ class LoginBrandingTest extends WP_UnitTestCase {
 
 		$branding = new LoginBranding();
 
+		// Footer no longer contains inline style; bg color is in wp_add_inline_style.
 		ob_start();
 		$branding->inject_login_footer();
 		$output = ob_get_clean();
 
-		$this->assertStringContainsString( '#1a2b3c', $output );
+		// Footer should have the panel markup but NOT the color inline.
+		$this->assertStringContainsString( 'silver-login-illustration-panel', $output );
+		$this->assertStringNotContainsString( 'style=', $output );
 	}
 }

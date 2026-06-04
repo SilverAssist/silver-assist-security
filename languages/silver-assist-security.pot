@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-04T00:36:23+00:00\n"
+"POT-Creation-Date: 2026-06-04T00:44:53+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: silver-assist-security\n"
@@ -31,6 +31,7 @@ msgstr ""
 
 #. Author of the plugin
 #: silver-assist-security.php
+#: src/Security/LoginBranding.php:188
 msgid "Silver Assist"
 msgstr ""
 
@@ -1191,6 +1192,12 @@ msgstr ""
 #: src/Security/GeneralSecurity.php:317
 #, php-format
 msgid "Secured by %s"
+msgstr ""
+
+#. translators: %s: The action-specific title (e.g. "Log In", "Register").
+#: src/Security/LoginBranding.php:222
+#, php-format
+msgid "%s \\u2014 Silver Assist"
 msgstr ""
 
 #: src/Security/LoginSecurity.php:173
