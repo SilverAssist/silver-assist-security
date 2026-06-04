@@ -219,7 +219,7 @@ class LoginBranding {
 	 */
 	public function custom_login_title( string $login_title, string $title ): string {
 		/* translators: %s: The action-specific title (e.g. "Log In", "Register"). */
-		return \sprintf( \__( '%s \u2014 Silver Assist', 'silver-assist-security' ), $title );
+		return \sprintf( \__( '%s — Silver Assist', 'silver-assist-security' ), $title );
 	}
 
 	/**

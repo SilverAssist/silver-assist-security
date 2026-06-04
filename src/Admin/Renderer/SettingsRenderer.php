@@ -243,7 +243,9 @@ class SettingsRenderer {
 				</p>
 
 				<form method="post" action="" id="login-branding-form">
-					<?php \wp_nonce_field( 'silver_assist_security_settings', 'silver_assist_security_nonce' ); ?>
+					<?php \wp_nonce_field( 'silver_assist_security_settings' ); ?>
+					<input type="hidden" name="save_silver_assist_security" value="1">
+					<input type="hidden" name="settings_section" value="login_branding">
 
 					<table class="form-table">
 						<tbody>

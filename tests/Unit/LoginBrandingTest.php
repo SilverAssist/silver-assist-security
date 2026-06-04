@@ -94,15 +94,13 @@ class LoginBrandingTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test custom login text contains SVG logo
+	 * Test custom login text returns escaped site name
 	 */
-	public function test_custom_login_text_contains_svg(): void {
+	public function test_custom_login_text_returns_site_name(): void {
 		$branding = new LoginBranding();
 		$text     = $branding->custom_login_text();
 
-		$this->assertStringContainsString( '<svg', $text );
-		$this->assertStringContainsString( 'silver-logo-icon', $text );
-		$this->assertStringContainsString( 'silver-logo-text', $text );
+		$this->assertEquals( \esc_html( \get_bloginfo( 'name' ) ), $text );
 	}
 
 	/**
@@ -147,7 +145,7 @@ class LoginBrandingTest extends WP_UnitTestCase {
 		$branding = new LoginBranding();
 		$title    = $branding->custom_login_title( 'Log In &lsaquo; Test Site', 'Log In' );
 
-		$this->assertEquals( 'Log In &mdash; Silver Assist', $title );
+		$this->assertEquals( 'Log In — Silver Assist', $title );
 	}
 
 	/**

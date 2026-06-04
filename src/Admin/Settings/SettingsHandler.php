@@ -69,6 +69,9 @@ class SettingsHandler {
 		if ( $section === 'graphql_auth' ) {
 			// Only save GraphQL auth-related settings (service user ID).
 			$this->save_graphql_auth_settings();
+		} elseif ( $section === 'login_branding' ) {
+			// Only save login branding settings.
+			$this->save_login_branding_settings();
 		} else {
 			// Process all settings categories.
 			$this->save_login_security_settings();
