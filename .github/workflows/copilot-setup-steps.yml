@@ -50,7 +50,7 @@ jobs:
                   coverage: none
 
             - name: 📦 Cache Composer dependencies
-              uses: actions/cache@v6
+              uses: actions/cache@v6.1.0
               with:
                   path: vendor
                   key: composer-copilot-${{ hashFiles('composer.lock') }}
