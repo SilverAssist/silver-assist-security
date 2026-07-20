@@ -35,7 +35,7 @@
     "cssnano": "^8.0.2",
     "grunt": "^1.6.2",
     "grunt-contrib-uglify": "^5.2.2",
-    "postcss": "^8.5.19",
+    "postcss": "^8.5.20",
     "postcss-cli": "^11.0.1"
   },
   "engines": {
