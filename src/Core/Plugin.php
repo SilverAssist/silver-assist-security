@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\Core
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.4.0
+ * @version 1.5.0
  */
 
 namespace SilverAssist\Security\Core;
@@ -23,6 +23,7 @@ use SilverAssist\Security\Security\GeneralSecurity;
 use SilverAssist\Security\Security\IPBlacklist;
 use SilverAssist\Security\Security\LoginBranding;
 use SilverAssist\Security\Security\LoginSecurity;
+use SilverAssist\Security\Security\RestAPISecurity;
 
 /**
  * Main Plugin class
@@ -68,6 +69,13 @@ class Plugin {
 	 * @var GeneralSecurity|null
 	 */
 	private ?GeneralSecurity $general_security = null;
+
+	/**
+	 * REST API security instance
+	 *
+	 * @var RestAPISecurity|null
+	 */
+	private ?RestAPISecurity $rest_api_security = null;
 
 	/**
 	 * GraphQL security instance
@@ -202,6 +210,12 @@ class Plugin {
 		$this->login_security   = new LoginSecurity();
 		$this->general_security = new GeneralSecurity();
 
+		// Initialize RestAPISecurity.
+		if ( (bool) DefaultConfig::get_option( 'silver_assist_rest_batch_endpoint_protection' ) ||
+			 (bool) DefaultConfig::get_option( 'silver_assist_rest_rate_limiting_enabled' ) ) {
+			$this->rest_api_security = new RestAPISecurity();
+		}
+
 		// Initialize LoginBranding if it's enabled.
 		if ( (bool) DefaultConfig::get_option( 'silver_assist_login_branding_enabled' ) ) {
 			$this->login_branding = new LoginBranding();
@@ -297,6 +311,16 @@ class Plugin {
 	 */
 	public function get_general_security(): ?GeneralSecurity {
 		return $this->general_security;
+	}
+
+	/**
+	 * Get REST API security instance
+	 *
+	 * @since 1.5.0
+	 * @return RestAPISecurity|null
+	 */
+	public function get_rest_api_security(): ?RestAPISecurity {
+		return $this->rest_api_security;
 	}
 
 	/**
