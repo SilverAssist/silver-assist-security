@@ -71,10 +71,10 @@ class RestAPISecurity {
 	 * @return void
 	 */
 	private function init_configuration(): void {
-		$this->batch_endpoint_enabled  = (bool) DefaultConfig::get_option( 'silver_assist_rest_batch_endpoint_protection' );
-		$this->rate_limiting_enabled   = (bool) DefaultConfig::get_option( 'silver_assist_rest_rate_limiting_enabled' );
-		$this->rate_limit_requests     = (int) DefaultConfig::get_option( 'silver_assist_rest_rate_limit_requests' );
-		$this->rate_limit_window       = (int) DefaultConfig::get_option( 'silver_assist_rest_rate_limit_window' );
+		$this->batch_endpoint_enabled = (bool) DefaultConfig::get_option( 'silver_assist_rest_batch_endpoint_protection' );
+		$this->rate_limiting_enabled  = (bool) DefaultConfig::get_option( 'silver_assist_rest_rate_limiting_enabled' );
+		$this->rate_limit_requests    = (int) DefaultConfig::get_option( 'silver_assist_rest_rate_limit_requests' );
+		$this->rate_limit_window      = (int) DefaultConfig::get_option( 'silver_assist_rest_rate_limit_window' );
 	}
 
 	/**
@@ -162,60 +162,14 @@ class RestAPISecurity {
 			return $response;
 		}
 
-		// Use fixed-window rate limiting with explicit timestamp
-		// Generate consistent transient keys using established SecurityHelper path
+		// Fixed-window rate limiting with two transients per client:
+		//   - $window_key stores the window start timestamp (also acts as the claim lock).
+		//   - $count_key  stores the request counter, incremented atomically.
 		$window_key = SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_window', $client_ip );
 		$count_key  = SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_limit', $client_ip );
 
-		$current_time = \time();
-
-		// Get the window start time (check if window has expired)
-		$window_start = (int) \get_transient( $window_key );
-
-		// Check if this is a new or expired window
-		if ( ! $window_start || ( $current_time - $window_start ) >= $this->rate_limit_window ) {
-			// Start new window
-			// Critical: store start time with TTL and do NOT update it again
-			// This prevents transient TTL reset that would extend the window indefinitely
-			\set_transient( $window_key, $current_time, $this->rate_limit_window );
-			\set_transient( $count_key, 1, $this->rate_limit_window );
-			// Also initialize in cache for atomic increment
-			\wp_cache_set( $count_key, 1, '' );
-			$request_count = 1;
-		} else {
-			// Window still active - use atomic increment for race condition safety
-			// Try to use wp_cache_incr for atomic increment (requires persistent cache)
-			$request_count = \wp_cache_incr( $count_key, 1, '' );
-
-			if ( false === $request_count ) {
-				// Persistent cache not available (common on shared hosting).
-				// Use MySQL atomic UPDATE on the underlying transient option row.
-				// InnoDB row-level locking makes this safe against concurrent floods.
-				// The transient TTL lives in a separate _transient_timeout_* option,
-				// so this UPDATE does not reset the fixed window expiration.
-				global $wpdb;
-				$option_name = "_transient_{$count_key}";
-				$updated     = $wpdb->query(
-					$wpdb->prepare(
-						"UPDATE {$wpdb->options} SET option_value = CAST(option_value AS UNSIGNED) + 1 WHERE option_name = %s",
-						$option_name
-					)
-				);
-
-				if ( 1 === (int) $updated ) {
-					$request_count = (int) $wpdb->get_var(
-						$wpdb->prepare(
-							"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
-							$option_name
-						)
-					);
-				} else {
-					// Row missing (transient expired between checks) — reinitialize.
-					\set_transient( $count_key, 1, $this->rate_limit_window );
-					$request_count = 1;
-				}
-			}
-		}
+		$current_time  = \time();
+		$request_count = $this->atomic_increment( $window_key, $count_key, $current_time );
 
 		// Return 429 if limit exceeded
 		if ( $request_count > $this->rate_limit_requests ) {
@@ -230,88 +184,197 @@ class RestAPISecurity {
 	}
 
 	/**
+	 * Atomically increment the rate-limit counter for a client
+	 *
+	 * Uses `INSERT IGNORE` (persistent-cache path uses `wp_cache_add`) to claim
+	 * the first request in a new window, guaranteeing that exactly one caller
+	 * initializes the window while every other caller is routed through the
+	 * atomic increment path. This closes the flood-bypass window that opens at
+	 * every window boundary when initialization is done via a non-atomic
+	 * read-then-write sequence.
+	 *
+	 * @since 1.5.0
+	 * @param string $window_key   Transient key for the window start timestamp.
+	 * @param string $count_key    Transient key for the request counter.
+	 * @param int    $current_time Current Unix timestamp.
+	 * @return int Request count for this window (>= 1).
+	 */
+	private function atomic_increment( string $window_key, string $count_key, int $current_time ): int {
+		$ttl = $this->rate_limit_window;
+
+		// Persistent object cache: `wp_cache_add` is atomic across processes.
+		if ( \wp_using_ext_object_cache() ) {
+			if ( \wp_cache_add( $window_key, $current_time, '', $ttl ) ) {
+				// We claimed the new window — seed the counter and persist to DB.
+				\wp_cache_set( $count_key, 1, '', $ttl );
+				\set_transient( $window_key, $current_time, $ttl );
+				\set_transient( $count_key, 1, $ttl );
+				return 1;
+			}
+
+			$count = \wp_cache_incr( $count_key, 1, '' );
+			if ( false !== $count ) {
+				return (int) $count;
+			}
+			// Cache lost the counter while the window key survived: reseed conservatively.
+			\wp_cache_set( $count_key, 1, '', $ttl );
+			\set_transient( $count_key, 1, $ttl );
+			return 1;
+		}
+
+		// No persistent cache: rely on the UNIQUE index of `wp_options.option_name`
+		// (`INSERT IGNORE`) and InnoDB row-level locking (`UPDATE ... value = value + 1`).
+		global $wpdb;
+
+		$count_option   = "_transient_{$count_key}";
+		$count_timeout  = "_transient_timeout_{$count_key}";
+		$window_option  = "_transient_{$window_key}";
+		$window_timeout = "_transient_timeout_{$window_key}";
+		$expiry         = $current_time + $ttl;
+
+		$inserted = (int) $wpdb->query(
+			$wpdb->prepare(
+				"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no'), (%s, %s, 'no'), (%s, %s, 'no'), (%s, %s, 'no')",
+				$window_option,
+				(string) $current_time,
+				$window_timeout,
+				(string) $expiry,
+				$count_option,
+				'1',
+				$count_timeout,
+				(string) $expiry
+			)
+		);
+
+		if ( $inserted > 0 ) {
+			// We won the claim (at least one row was newly inserted).
+			return 1;
+		}
+
+		// Someone else already initialized the window — atomically increment.
+		$updated = (int) $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_value = CAST(option_value AS UNSIGNED) + 1 WHERE option_name = %s",
+				$count_option
+			)
+		);
+
+		if ( 1 === $updated ) {
+			return (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+					$count_option
+				)
+			);
+		}
+
+		// Row vanished (transient GC between claim and increment) — reseed.
+		\set_transient( $window_key, $current_time, $ttl );
+		\set_transient( $count_key, 1, $ttl );
+		return 1;
+	}
+
+	/**
 	 * Get client IP address
 	 *
-	 * Determines the real client IP considering only trusted proxies.
-	 * Only honors forwarded headers (CF-Connecting-IP, X-Forwarded-For) if REMOTE_ADDR
-	 * is from a known trusted proxy (Cloudflare, etc).
+	 * `X-Forwarded-For` is honored only when REMOTE_ADDR belongs to a configured
+	 * trusted proxy (this plugin's target infrastructure sits behind AWS
+	 * CloudFront + ALB; each site declares its VPC/edge CIDRs via
+	 * `SILVER_ASSIST_TRUSTED_PROXY_CIDRS` or the filter of the same name).
+	 * The chain is parsed right-to-left so trusted proxy hops are discarded and
+	 * the first untrusted address is used as the client IP.
 	 *
 	 * @since 1.5.0
 	 * @return string Client IP address or empty string if not found
 	 */
 	private function get_client_ip(): string {
-		// Get the direct connection IP
 		$remote_addr = ! empty( $_SERVER['REMOTE_ADDR'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 
-		// If REMOTE_ADDR is from a trusted proxy, check forwarded headers
-		if ( $remote_addr && $this->is_from_trusted_proxy( $remote_addr ) ) {
-			// Try Cloudflare header first
-			if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
-				$ip = \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) );
-				if ( \filter_var( $ip, \FILTER_VALIDATE_IP ) ) {
-					return $ip;
-				}
-			}
-
-			// Try X-Forwarded-For header
-			if ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-				$forwarded_ips = \array_map( 'trim', \explode( ',', \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) ) );
-				if ( ! empty( $forwarded_ips[0] ) ) {
-					$ip = $forwarded_ips[0];
-					if ( \filter_var( $ip, \FILTER_VALIDATE_IP ) ) {
-						return $ip;
-					}
-				}
+		if ( $remote_addr && $this->is_from_trusted_proxy( $remote_addr ) && ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+			$client_ip = $this->extract_forwarded_client_ip(
+				\sanitize_text_field( \wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) )
+			);
+			if ( '' !== $client_ip ) {
+				return $client_ip;
 			}
 		}
 
-		// Fall back to REMOTE_ADDR if no trusted forwarded header found
 		return ( \filter_var( $remote_addr, \FILTER_VALIDATE_IP ) ) ? $remote_addr : '';
 	}
 
 	/**
-	 * Check if REMOTE_ADDR is from a trusted proxy
+	 * Extract the real client IP from an `X-Forwarded-For` chain
 	 *
-	 * Verifies that the direct connection IP is from a known trusted service
-	 * (e.g., Cloudflare, AWS ELB, etc) before trusting forwarded headers.
+	 * Walks the chain right-to-left, discarding trusted proxy hops. The first
+	 * untrusted address is treated as the client IP; this prevents spoofing via
+	 * attacker-controlled leftmost values that a proxy may have appended to.
+	 *
+	 * @since 1.5.0
+	 * @param string $header Raw `X-Forwarded-For` header value.
+	 * @return string The client IP, or empty string if the chain contains no valid untrusted IP.
+	 */
+	private function extract_forwarded_client_ip( string $header ): string {
+		$hops = \array_values(
+			\array_filter(
+				\array_map( 'trim', \explode( ',', $header ) ),
+				static fn( string $hop ): bool => '' !== $hop
+			)
+		);
+
+		for ( $i = \count( $hops ) - 1; $i >= 0; $i-- ) {
+			$hop = $hops[ $i ];
+			if ( ! \filter_var( $hop, \FILTER_VALIDATE_IP ) ) {
+				continue;
+			}
+			if ( $this->is_from_trusted_proxy( $hop ) ) {
+				continue;
+			}
+			return $hop;
+		}
+
+		return '';
+	}
+
+	/**
+	 * Check whether REMOTE_ADDR belongs to a configured trusted proxy
+	 *
+	 * Trusted CIDRs come from two sources (merged, in this order):
+	 * 1. The `SILVER_ASSIST_TRUSTED_PROXY_CIDRS` constant defined in `wp-config.php`,
+	 *    accepted as a comma-separated string or an array — the recommended way to
+	 *    declare the VPC / CloudFront edge ranges for each environment.
+	 * 2. The `silver_assist_trusted_proxy_cidrs` filter, for programmatic overrides.
+	 *
+	 * There is no baked-in default: until a site declares its proxies, forwarded
+	 * headers are ignored and REMOTE_ADDR is used verbatim.
 	 *
 	 * @since 1.5.0
 	 * @param string $remote_addr The REMOTE_ADDR IP to check.
 	 * @return bool True if IP is from a trusted proxy, false otherwise
 	 */
 	private function is_from_trusted_proxy( string $remote_addr ): bool {
-		// Cloudflare official IP ranges (https://www.cloudflare.com/ips/)
-		// Updated: 2026 official published ranges
-		$cloudflare_ips = array(
-			// IPv4 ranges
-			'103.21.244.0/22',
-			'103.22.200.0/22',
-			'103.31.4.0/22',
-			'104.16.0.0/12',
-			'108.162.192.0/18',
-			'131.0.72.0/22',
-			'141.101.64.0/18',      // Official range (was missing)
-			'162.158.0.0/15',
-			'172.64.0.0/13',
-			'173.245.48.0/20',
-			'188.114.96.0/20',
-			'190.93.240.0/20',
-			'197.234.240.0/22',
-			'198.41.128.0/17',
-			// IPv6 ranges
-			'2400:cb00::/32',
-			'2606:4700::/32',
-			'2803:f800::/32',
-			'2405:b500::/32',
-			'2405:8100::/32',
-			'2a06:98c0::/29',
-			'2c0f:f248::/32',
-		);
+		$configured = array();
 
-		// Allow site owners to override with custom trusted proxies via filter
-		$trusted_ips = \apply_filters( 'silver_assist_trusted_proxy_cidrs', $cloudflare_ips );
+		if ( \defined( 'SILVER_ASSIST_TRUSTED_PROXY_CIDRS' ) ) {
+			$raw = \constant( 'SILVER_ASSIST_TRUSTED_PROXY_CIDRS' );
+			if ( \is_string( $raw ) ) {
+				$configured = \array_values( \array_filter( \array_map( 'trim', \explode( ',', $raw ) ) ) );
+			} elseif ( \is_array( $raw ) ) {
+				$configured = \array_values( \array_filter( \array_map( 'strval', $raw ) ) );
+			}
+		}
 
-		// Check against trusted proxy CIDR ranges
+		/**
+		 * Filters the list of trusted proxy CIDRs.
+		 *
+		 * @since 1.5.0
+		 * @param string[] $configured CIDRs already collected from `SILVER_ASSIST_TRUSTED_PROXY_CIDRS`.
+		 */
+		$trusted_ips = \apply_filters( 'silver_assist_trusted_proxy_cidrs', $configured );
+
+		if ( empty( $trusted_ips ) || ! \is_array( $trusted_ips ) ) {
+			return false;
+		}
+
 		return $this->is_ip_in_range( $remote_addr, $trusted_ips );
 	}
 
@@ -357,16 +420,16 @@ class RestAPISecurity {
 		}
 
 		list( $subnet, $bits ) = \explode( '/', $cidr );
-		$ip_long = \ip2long( $ip );
-		$subnet_long = \ip2long( $subnet );
+		$ip_long               = \ip2long( $ip );
+		$subnet_long           = \ip2long( $subnet );
 
 		if ( false === $ip_long || false === $subnet_long ) {
 			return false;
 		}
 
-		$mask = -1 << ( 32 - (int) $bits );
+		$mask         = -1 << ( 32 - (int) $bits );
 		$subnet_long &= $mask;
-		$ip_long &= $mask;
+		$ip_long     &= $mask;
 
 		return $ip_long === $subnet_long;
 	}
@@ -385,10 +448,10 @@ class RestAPISecurity {
 		}
 
 		list( $subnet, $bits ) = \explode( '/', $cidr );
-		$bits = (int) $bits;
+		$bits                  = (int) $bits;
 
 		// Convert to binary representation
-		$ip_bin = \inet_pton( $ip );
+		$ip_bin     = \inet_pton( $ip );
 		$subnet_bin = \inet_pton( $subnet );
 
 		if ( false === $ip_bin || false === $subnet_bin ) {
@@ -396,7 +459,7 @@ class RestAPISecurity {
 		}
 
 		// Create bitmask: calculate bytes and remainder bits
-		$bytes = (int) ( $bits / 8 );       // Full bytes
+		$bytes          = (int) ( $bits / 8 );       // Full bytes
 		$remainder_bits = $bits % 8;        // Remaining bits in last byte
 
 		$mask = \str_repeat( \chr( 255 ), $bytes );

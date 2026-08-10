@@ -237,65 +237,61 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test CloudFlare IP detection in rate limiting
+	 * Test trusted-proxy client IP extraction from X-Forwarded-For
+	 *
+	 * Simulates the target infrastructure (AWS CloudFront + ALB): REMOTE_ADDR is
+	 * the ALB's private IP (declared as trusted via the filter) and the real
+	 * client address travels at the leftmost position of `X-Forwarded-For`,
+	 * followed by CloudFront edge and ALB hops.
 	 *
 	 * @since 1.5.0
 	 * @return void
 	 */
-	public function test_cloudflare_ip_detection(): void {
-		// Enable rate limiting
+	public function test_trusted_proxy_client_ip_detection(): void {
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 1 );
 		\update_option( 'silver_assist_rest_rate_limit_requests', 1 );
 		\update_option( 'silver_assist_rest_rate_limit_window', 60 );
 
+		$alb_private_ip     = '10.0.1.42';    // ALB inside the VPC
+		$cloudfront_edge_ip = '52.84.1.1';    // CloudFront edge (also treated as trusted proxy hop)
+		$client_ip          = '203.0.113.5';  // Real client public IP
+
+		$trusted_cidrs_filter = static fn (): array => array( '10.0.0.0/8', '52.84.0.0/15' );
+		\add_filter( 'silver_assist_trusted_proxy_cidrs', $trusted_cidrs_filter );
+
 		$rest_api_security = new RestAPISecurity();
 
-		// Simulate traffic through Cloudflare:
-		// REMOTE_ADDR is a Cloudflare edge IP (from the official range 104.16.0.0/12)
-		// HTTP_CF_CONNECTING_IP contains the real client IP
-		$cloudflare_edge_ip = '104.16.1.1';      // Valid Cloudflare IP
-		$client_ip = '203.0.113.5';               // Client's real public IP
-		$_SERVER['REMOTE_ADDR'] = $cloudflare_edge_ip;
-		$_SERVER['HTTP_CF_CONNECTING_IP'] = $client_ip;
+		$_SERVER['REMOTE_ADDR']          = $alb_private_ip;
+		$_SERVER['HTTP_X_FORWARDED_FOR'] = "{$client_ip}, {$cloudfront_edge_ip}, {$alb_private_ip}";
 
-		// Ensure user is not logged in
-		wp_set_current_user( 0 );
+		\wp_set_current_user( 0 );
 
-		// Create mock request
 		$request = new WP_REST_Request( 'GET', '/wp/v2/posts' );
 
-		// Calculate expected transient key based on client IP (extracted from CF header)
-		// Use the same SecurityHelper method as the implementation
-		$client_ip_hash = \hash( 'md5', $client_ip );
-		$cf_window_key = "silver_assist_rest_window_{$client_ip_hash}";
-		$cf_limit_key = "silver_assist_rest_limit_{$client_ip_hash}";
+		$client_hash     = \hash( 'md5', $client_ip );
+		$client_window   = "silver_assist_rest_window_{$client_hash}";
+		$client_counter  = "silver_assist_rest_limit_{$client_hash}";
+		$alb_hash        = \hash( 'md5', $alb_private_ip );
+		$alb_window      = "silver_assist_rest_window_{$alb_hash}";
+		$alb_counter     = "silver_assist_rest_limit_{$alb_hash}";
 
-		// Also calculate key for edge IP (should NOT be used)
-		$edge_ip_hash = \hash( 'md5', $cloudflare_edge_ip );
-		$edge_window_key = "silver_assist_rest_window_{$edge_ip_hash}";
-		$edge_limit_key = "silver_assist_rest_limit_{$edge_ip_hash}";
+		\delete_transient( $client_window );
+		\delete_transient( $client_counter );
+		\delete_transient( $alb_window );
+		\delete_transient( $alb_counter );
 
-		// Clean transients before test
-		\delete_transient( $cf_window_key );
-		\delete_transient( $cf_limit_key );
-		\delete_transient( $edge_window_key );
-		\delete_transient( $edge_limit_key );
-
-		// First request should succeed
 		$response1 = $rest_api_security->rate_limit_rest_api( null, new WP_REST_Server(), $request );
 		$this->assertNull( $response1, 'First request should not be rate limited' );
 
-		// Verify the client IP transient was created (from CF header), not edge IP
 		$this->assertNotFalse(
-			\get_transient( $cf_window_key ),
-			'Window transient should be created for client IP from CF header'
+			\get_transient( $client_window ),
+			'Window transient should be created for the real client IP extracted from X-Forwarded-For'
 		);
 		$this->assertFalse(
-			\get_transient( $edge_window_key ),
-			'Window transient should NOT be created for edge IP'
+			\get_transient( $alb_window ),
+			'Window transient should NOT be created for the ALB proxy IP'
 		);
 
-		// Second request should be rate limited
 		$response2 = $rest_api_security->rate_limit_rest_api( null, new WP_REST_Server(), $request );
 		$this->assertInstanceOf(
 			\WP_Error::class,
@@ -303,12 +299,12 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 			'Second request should be rate limited'
 		);
 
-		// Clean up
-		\delete_transient( $cf_window_key );
-		\delete_transient( $cf_limit_key );
-		\delete_transient( $edge_window_key );
-		\delete_transient( $edge_limit_key );
-		unset( $_SERVER['HTTP_CF_CONNECTING_IP'] );
+		\delete_transient( $client_window );
+		\delete_transient( $client_counter );
+		\delete_transient( $alb_window );
+		\delete_transient( $alb_counter );
+		\remove_filter( 'silver_assist_trusted_proxy_cidrs', $trusted_cidrs_filter );
+		unset( $_SERVER['HTTP_X_FORWARDED_FOR'] );
 		unset( $_SERVER['REMOTE_ADDR'] );
 	}
 }

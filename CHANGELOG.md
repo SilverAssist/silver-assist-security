@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **REST API Batch Endpoint Protection**: Block unauthenticated requests to `/batch/v1` endpoint with 403 Forbidden response, preventing WP2Shell pre-auth RCE entry point (CVE-2026-60137 + CVE-2026-63030)
 - **REST API Rate Limiting**: Limit unauthenticated REST API requests to 100 per 60 seconds per IP address using WordPress transients for stateless, scalable protection
-- **Proxy-Aware IP Detection**: Support CloudFlare (`HTTP_CF_CONNECTING_IP`), X-Forwarded-For, and direct client connections for accurate IP detection in CDN/load balancer environments
+- **Proxy-Aware IP Detection**: Trust `X-Forwarded-For` only when `REMOTE_ADDR` matches a proxy CIDR declared via the `SILVER_ASSIST_TRUSTED_PROXY_CIDRS` constant (or the filter of the same name), and parse the chain right-to-left so trusted hops (AWS CloudFront edges, ALB private ranges) are discarded and only the real client address is used
+- **Atomic Rate-Limit Counter**: Fixed-window counter initialized via `wp_cache_add` on persistent object caches and `INSERT IGNORE` + `UPDATE ... value + 1` on the transient row otherwise, closing the flood-bypass race at every window boundary
 
 ### ✨ Added
 
@@ -30,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Unit tests for batch endpoint restriction: unauthenticated blocking, authenticated pass-through, non-batch endpoints regression
 - Unit tests for rate limiting: transient counting, authenticated bypass, configuration validation, feature disable
-- Integration tests for REST API security: plugin initialization, real WordPress REST API blocking, GraphQL endpoint non-interference, partial feature initialization, CloudFlare IP detection
+- Integration tests for REST API security: plugin initialization, real WordPress REST API blocking, GraphQL endpoint non-interference, partial feature initialization, trusted-proxy client IP extraction from X-Forwarded-For
 
 ### 🛡️ Defense-in-Depth
 
