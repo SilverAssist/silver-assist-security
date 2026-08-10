@@ -72,10 +72,12 @@ class SettingsHandler {
 		} elseif ( $section === 'login_branding' ) {
 			// Only save login branding settings.
 			$this->save_login_branding_settings();
+		} elseif ( $section === 'rest_api' ) {
+			// Only save REST API security settings.
+			$this->save_rest_api_settings();
 		} else {
 			// Process all settings categories.
 			$this->save_login_security_settings();
-			$this->save_rest_api_settings();
 			$this->save_login_branding_settings();
 			$this->save_admin_hide_settings();
 			$this->save_graphql_settings();

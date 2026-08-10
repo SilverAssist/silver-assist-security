@@ -215,9 +215,9 @@ class RestAPISecurityTest extends WP_UnitTestCase {
 		$this->assertArrayHasKey( 'silver_assist_rest_rate_limit_requests', $defaults );
 		$this->assertArrayHasKey( 'silver_assist_rest_rate_limit_window', $defaults );
 
-		// Verify values are reasonable
-		$this->assertTrue( $defaults['silver_assist_rest_batch_endpoint_protection'] );
-		$this->assertTrue( $defaults['silver_assist_rest_rate_limiting_enabled'] );
+		// Verify values are reasonable (defaults are integer 1, not boolean true).
+		$this->assertSame( 1, (int) $defaults['silver_assist_rest_batch_endpoint_protection'] );
+		$this->assertSame( 1, (int) $defaults['silver_assist_rest_rate_limiting_enabled'] );
 		$this->assertGreaterThan( 0, $defaults['silver_assist_rest_rate_limit_requests'] );
 		$this->assertGreaterThan( 0, $defaults['silver_assist_rest_rate_limit_window'] );
 	}

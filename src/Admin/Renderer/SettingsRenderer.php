@@ -339,21 +339,23 @@ class SettingsRenderer {
 				</div>
 				<div class="card-content">
 					<form method="post" action="" id="rest-api-security-form">
-						<?php \wp_nonce_field( 'silver_assist_security_settings', 'silver_assist_security_nonce' ); ?>
+						<?php \wp_nonce_field( 'silver_assist_security_settings' ); ?>
+						<input type="hidden" name="save_silver_assist_security" value="1">
+						<input type="hidden" name="settings_section" value="rest_api">
 
 						<table class="form-table">
 							<tbody>
 								<?php
-								RenderHelper::render_checkbox_row(
+								RenderHelper::render_toggle_row(
 									\__( 'Enable Batch Endpoint Protection', 'silver-assist-security' ),
 									'silver_assist_rest_batch_endpoint_protection',
-									(bool) $config['rest_batch_endpoint_protection'],
+									$config['rest_batch_endpoint_protection'],
 									\__( 'Block unauthenticated access to /batch/v1 endpoint', 'silver-assist-security' )
 								);
-								RenderHelper::render_checkbox_row(
+								RenderHelper::render_toggle_row(
 									\__( 'Enable Rate Limiting', 'silver-assist-security' ),
 									'silver_assist_rest_rate_limiting_enabled',
-									(bool) $config['rest_rate_limiting_enabled'],
+									$config['rest_rate_limiting_enabled'],
 									\__( 'Limit REST API requests from unauthenticated users', 'silver-assist-security' )
 								);
 								RenderHelper::render_range_row(
