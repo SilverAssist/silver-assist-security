@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace SilverAssist\Security\Tests\Integration;
 
 use SilverAssist\Security\Core\Plugin;
+use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\Security\RestAPISecurity;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -137,16 +138,18 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		// Ensure user is not logged in
 		wp_set_current_user( 0 );
 
-		// Get client IP that will be used for rate limiting
+		// Get client IP and generate keys using same method as implementation
 		$client_ip = ! empty( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '127.0.0.1';
-		$client_ip_hash = \hash( 'sha256', $client_ip );
+		$window_key = SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_window', $client_ip );
+		$count_key = SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_limit', $client_ip );
 
 		// Clean any REST transients first
-		\delete_transient( "silver_assist_rest_window_{$client_ip_hash}" );
-		\delete_transient( "silver_assist_rest_limit_{$client_ip_hash}" );
+		\delete_transient( $window_key );
+		\delete_transient( $count_key );
 
-		// Make a real GraphQL request via REST API
-		// This should NOT increment the REST rate limit counter
+		// Make a request to /graphql via REST API
+		// This should NOT increment the REST rate limit counter because
+		// GraphQL requests use the separate graphql_request hook, not REST filters
 		$request = \rest_ensure_request(
 			new WP_REST_Request( 'POST', '/graphql' )
 		);
@@ -155,8 +158,8 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		$response = \rest_do_request( $request );
 
 		// Verify REST rate limit transient was NOT created for GraphQL
-		$window_exists = \get_transient( "silver_assist_rest_window_{$client_ip_hash}" );
-		$count_exists = \get_transient( "silver_assist_rest_limit_{$client_ip_hash}" );
+		$window_exists = \get_transient( $window_key );
+		$count_exists = \get_transient( $count_key );
 
 		$this->assertFalse(
 			$window_exists,
