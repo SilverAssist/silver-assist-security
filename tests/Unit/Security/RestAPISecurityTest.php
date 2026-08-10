@@ -38,7 +38,7 @@ class RestAPISecurityTest extends WP_UnitTestCase {
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-		$this->rest_api_security = new RestAPISecurity();
+		// Don't construct here - let each test do it with appropriate options set
 	}
 
 	/**
@@ -229,12 +229,20 @@ class RestAPISecurityTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_batch_endpoint_protection_can_be_disabled(): void {
-		// Disable batch endpoint protection
+		// Disable batch endpoint protection BEFORE construction
 		\update_option( 'silver_assist_rest_batch_endpoint_protection', 0 );
 
-		// RestAPISecurity should still initialize
+		// Clean any previously registered hooks
+		\remove_all_filters( 'rest_pre_dispatch' );
+
+		// Construct instance with disabled option
 		$rest_api_security = new RestAPISecurity();
-		$this->assertInstanceOf( RestAPISecurity::class, $rest_api_security );
+
+		// Verify the batch endpoint filter is NOT registered
+		$this->assertFalse(
+			\has_filter( 'rest_pre_dispatch', array( $rest_api_security, 'restrict_batch_endpoint' ) ),
+			'Batch endpoint filter should not be registered when disabled'
+		);
 	}
 
 	/**
@@ -244,11 +252,19 @@ class RestAPISecurityTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_rate_limiting_can_be_disabled(): void {
-		// Disable rate limiting
+		// Disable rate limiting BEFORE construction
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 0 );
 
-		// RestAPISecurity should still initialize
+		// Clean any previously registered hooks
+		\remove_all_filters( 'rest_pre_dispatch' );
+
+		// Construct instance with disabled option
 		$rest_api_security = new RestAPISecurity();
-		$this->assertInstanceOf( RestAPISecurity::class, $rest_api_security );
+
+		// Verify the rate limit filter is NOT registered
+		$this->assertFalse(
+			\has_filter( 'rest_pre_dispatch', array( $rest_api_security, 'rate_limit_rest_api' ) ),
+			'Rate limiting filter should not be registered when disabled'
+		);
 	}
 }
