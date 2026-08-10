@@ -122,8 +122,8 @@ class RestAPISecurity {
 
 		$route = $request->get_route();
 
-		// Check if this is a batch endpoint request
-		if ( \strpos( $route, '/batch/v1' ) === 0 ) {
+		// Check if this is a batch endpoint request (/batch/v1 or /batch/v1/...)
+		if ( \strpos( $route, '/batch/v1' ) === 0 && ( \strlen( $route ) === 9 || $route[9] === '/' ) ) {
 			return new \WP_Error(
 				'rest_batch_disabled',
 				'Batch requests require authentication.',
@@ -163,7 +163,8 @@ class RestAPISecurity {
 		}
 
 		// Use fixed-window rate limiting with explicit timestamp
-		$client_ip_hash = \sanitize_text_field( $client_ip );
+		// Generate consistent transient keys using IP hash
+		$client_ip_hash = \hash( 'sha256', $client_ip );
 		$window_key     = "silver_assist_rest_window_{$client_ip_hash}";
 		$count_key      = "silver_assist_rest_limit_{$client_ip_hash}";
 
@@ -177,20 +178,12 @@ class RestAPISecurity {
 			$window_start = $current_time;
 			\set_transient( $window_key, $window_start, $this->rate_limit_window );
 			\delete_transient( $count_key );
-			$request_count = 0;
+			$request_count = 1;
 		} else {
-			// Window still active - use atomic increment if available (WP 6.1+)
-			if ( \function_exists( 'wp_cache_get_last_changed' ) && \function_exists( 'wp_cache_incr' ) ) {
-				// Use atomic cache increment
-				$request_count = \wp_cache_incr( $count_key, 1, '' );
-				if ( false === $request_count ) {
-					// Fallback: transient increment with race condition check
-					$request_count = (int) \get_transient( $count_key ) + 1;
-				}
-			} else {
-				// Fallback for older WordPress: transient-based increment
-				$request_count = (int) \get_transient( $count_key ) + 1;
-			}
+			// Window still active - increment counter
+			// Note: transients are stored in options table without persistent cache
+			// Read-modify-write is not atomic, but acceptable for security threshold validation
+			$request_count = (int) \get_transient( $count_key ) + 1;
 			\set_transient( $count_key, $request_count, $this->rate_limit_window );
 		}
 
@@ -257,16 +250,17 @@ class RestAPISecurity {
 	 * @return bool True if IP is from a trusted proxy, false otherwise
 	 */
 	private function is_from_trusted_proxy( string $remote_addr ): bool {
-		// Cloudflare IPs (core set for testing; production should fetch from Cloudflare API)
+		// Cloudflare official IP ranges (https://www.cloudflare.com/ips/)
+		// Updated: 2026 official published ranges
 		$cloudflare_ips = array(
+			// IPv4 ranges
 			'103.21.244.0/22',
 			'103.22.200.0/22',
 			'103.31.4.0/22',
 			'104.16.0.0/12',
 			'108.162.192.0/18',
 			'131.0.72.0/22',
-			'141.98.251.0/24',
-			'162.125.18.0/23',
+			'141.101.64.0/18',      // Official range (was missing)
 			'162.158.0.0/15',
 			'172.64.0.0/13',
 			'173.245.48.0/20',
@@ -274,6 +268,7 @@ class RestAPISecurity {
 			'190.93.240.0/20',
 			'197.234.240.0/22',
 			'198.41.128.0/17',
+			// IPv6 ranges
 			'2400:cb00::/32',
 			'2606:4700::/32',
 			'2803:f800::/32',
@@ -283,8 +278,11 @@ class RestAPISecurity {
 			'2c0f:f248::/32',
 		);
 
-		// Check against Cloudflare CIDR ranges
-		return $this->is_ip_in_range( $remote_addr, $cloudflare_ips );
+		// Allow site owners to override with custom trusted proxies via filter
+		$trusted_ips = \apply_filters( 'silver_assist_trusted_proxy_cidrs', $cloudflare_ips );
+
+		// Check against trusted proxy CIDR ranges
+		return $this->is_ip_in_range( $remote_addr, $trusted_ips );
 	}
 
 	/**
@@ -357,6 +355,7 @@ class RestAPISecurity {
 		}
 
 		list( $subnet, $bits ) = \explode( '/', $cidr );
+		$bits = (int) $bits;
 
 		// Convert to binary representation
 		$ip_bin = \inet_pton( $ip );
@@ -366,13 +365,14 @@ class RestAPISecurity {
 			return false;
 		}
 
-		// Create bitmask
-		$bytes = (int) $bits / 8;
-		$bits = $bits % 8;
+		// Create bitmask: calculate bytes and remainder bits
+		$bytes = (int) ( $bits / 8 );       // Full bytes
+		$remainder_bits = $bits % 8;        // Remaining bits in last byte
 
 		$mask = \str_repeat( \chr( 255 ), $bytes );
-		if ( $bits > 0 ) {
-			$mask .= \chr( 255 - ( 1 << ( 8 - $bits ) ) - 1 );
+		if ( $remainder_bits > 0 ) {
+			// High-bit mask formula: 255 << (8 - remainder_bits)
+			$mask .= \chr( 255 << ( 8 - $remainder_bits ) );
 		}
 		$mask .= \str_repeat( \chr( 0 ), 16 - \strlen( $mask ) );
 

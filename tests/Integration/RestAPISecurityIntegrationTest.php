@@ -247,11 +247,13 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 
 		$rest_api_security = new RestAPISecurity();
 
-		// Mock CloudFlare header with a valid test IP (not TEST-NET)
-		// Using 198.51.100.42 which is in the documentation test IP range
-		$cloudflare_ip = '198.51.100.42';
-		$_SERVER['HTTP_CF_CONNECTING_IP'] = $cloudflare_ip;
-		$_SERVER['REMOTE_ADDR'] = '127.0.0.1'; // Fallback IP that should NOT be used
+		// Simulate traffic through Cloudflare:
+		// REMOTE_ADDR is a Cloudflare edge IP (from the official range 104.16.0.0/12)
+		// HTTP_CF_CONNECTING_IP contains the real client IP
+		$cloudflare_edge_ip = '104.16.1.1';      // Valid Cloudflare IP
+		$client_ip = '203.0.113.5';               // Client's real public IP
+		$_SERVER['REMOTE_ADDR'] = $cloudflare_edge_ip;
+		$_SERVER['HTTP_CF_CONNECTING_IP'] = $client_ip;
 
 		// Ensure user is not logged in
 		wp_set_current_user( 0 );
@@ -259,23 +261,34 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		// Create mock request
 		$request = new WP_REST_Request( 'GET', '/wp/v2/posts' );
 
-		// Calculate expected transient key based on CloudFlare IP
-		$cf_ip_hash = \hash( 'sha256', $cloudflare_ip );
-		$window_key = "silver_assist_rest_window_{$cf_ip_hash}";
-		$limit_key = "silver_assist_rest_limit_{$cf_ip_hash}";
+		// Calculate expected transient key based on client IP (extracted from CF header)
+		$client_ip_hash = \hash( 'sha256', $client_ip );
+		$cf_window_key = "silver_assist_rest_window_{$client_ip_hash}";
+		$cf_limit_key = "silver_assist_rest_limit_{$client_ip_hash}";
+
+		// Also calculate key for edge IP (should NOT be used)
+		$edge_ip_hash = \hash( 'sha256', $cloudflare_edge_ip );
+		$edge_window_key = "silver_assist_rest_window_{$edge_ip_hash}";
+		$edge_limit_key = "silver_assist_rest_limit_{$edge_ip_hash}";
 
 		// Clean transients before test
-		\delete_transient( $window_key );
-		\delete_transient( $limit_key );
+		\delete_transient( $cf_window_key );
+		\delete_transient( $cf_limit_key );
+		\delete_transient( $edge_window_key );
+		\delete_transient( $edge_limit_key );
 
 		// First request should succeed
 		$response1 = $rest_api_security->rate_limit_rest_api( null, new WP_REST_Server(), $request );
 		$this->assertNull( $response1, 'First request should not be rate limited' );
 
-		// Verify the CloudFlare IP transient was created, not the fallback IP
+		// Verify the client IP transient was created (from CF header), not edge IP
 		$this->assertNotFalse(
-			\get_transient( $window_key ),
-			'Window transient should be created for CloudFlare IP'
+			\get_transient( $cf_window_key ),
+			'Window transient should be created for client IP from CF header'
+		);
+		$this->assertFalse(
+			\get_transient( $edge_window_key ),
+			'Window transient should NOT be created for edge IP'
 		);
 
 		// Second request should be rate limited
@@ -287,8 +300,10 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		);
 
 		// Clean up
-		\delete_transient( $window_key );
-		\delete_transient( $limit_key );
+		\delete_transient( $cf_window_key );
+		\delete_transient( $cf_limit_key );
+		\delete_transient( $edge_window_key );
+		\delete_transient( $edge_limit_key );
 		unset( $_SERVER['HTTP_CF_CONNECTING_IP'] );
 		unset( $_SERVER['REMOTE_ADDR'] );
 	}
