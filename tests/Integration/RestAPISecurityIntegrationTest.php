@@ -134,32 +134,38 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		\update_option( 'silver_assist_rest_batch_endpoint_protection', 1 );
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 1 );
 
-		$rest_api_security = new RestAPISecurity();
-
-		// Mock GraphQL request (should not be affected)
-		$request = new WP_REST_Request( 'POST', '/graphql' );
-
 		// Ensure user is not logged in
 		wp_set_current_user( 0 );
 
-		// Apply filters
-		$result_batch = $rest_api_security->restrict_batch_endpoint(
-			null,
-			new WP_REST_Server(),
-			$request
-		);
-		$result_rate = $rest_api_security->rate_limit_rest_api(
-			null,
-			new WP_REST_Server(),
-			$request
+		// Get client IP that will be used for rate limiting
+		$client_ip = ! empty( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '127.0.0.1';
+		$client_ip_hash = \hash( 'sha256', $client_ip );
+
+		// Clean any REST transients first
+		\delete_transient( "silver_assist_rest_window_{$client_ip_hash}" );
+		\delete_transient( "silver_assist_rest_limit_{$client_ip_hash}" );
+
+		// Make a real GraphQL request via REST API
+		// This should NOT increment the REST rate limit counter
+		$request = \rest_ensure_request(
+			new WP_REST_Request( 'POST', '/graphql' )
 		);
 
-		// GraphQL should not be affected by batch endpoint restriction
-		$this->assertNull( $result_batch );
+		// Dispatch the request
+		$response = \rest_do_request( $request );
 
-		// GraphQL has its own rate limiting in GraphQLSecurity
-		// REST API rate limiting should not interfere
-		$this->assertNull( $result_rate );
+		// Verify REST rate limit transient was NOT created for GraphQL
+		$window_exists = \get_transient( "silver_assist_rest_window_{$client_ip_hash}" );
+		$count_exists = \get_transient( "silver_assist_rest_limit_{$client_ip_hash}" );
+
+		$this->assertFalse(
+			$window_exists,
+			'GraphQL request should not create REST rate limit window transient'
+		);
+		$this->assertFalse(
+			$count_exists,
+			'GraphQL request should not create REST rate limit counter transient'
+		);
 	}
 
 	/**
@@ -169,18 +175,38 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_features_can_be_disabled_via_options(): void {
-		// Disable both features
+		// Disable both features BEFORE re-initialization
 		\update_option( 'silver_assist_rest_batch_endpoint_protection', 0 );
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 0 );
 
-		// Plugin should not initialize REST API security if both are disabled
-		$this->plugin->init_security_components();
+		// Reset the plugin singleton to clear previously registered hooks
+		$reflection = new \ReflectionClass( Plugin::class );
+		$instance_property = $reflection->getProperty( 'instance' );
+		$instance_property->setAccessible( true );
+		$instance_property->setValue( null, null );
 
-		// Verify REST API security was not initialized (or is null)
-		$rest_api_security = $this->plugin->get_rest_api_security();
+		// Clean all REST filters
+		\remove_all_filters( 'rest_pre_dispatch' );
+
+		// Get fresh plugin instance and initialize
+		$plugin = Plugin::getInstance();
+		$plugin->init_security_components();
+
+		// Verify REST API security was not initialized
+		$rest_api_security = $plugin->get_rest_api_security();
 		$this->assertNull(
 			$rest_api_security,
 			'REST API security should not be initialized when both features are disabled'
+		);
+
+		// Verify the REST filters are not registered
+		$this->assertFalse(
+			\has_filter( 'rest_pre_dispatch', array( $rest_api_security, 'restrict_batch_endpoint' ) ),
+			'Batch endpoint filter should not be registered when disabled'
+		);
+		$this->assertFalse(
+			\has_filter( 'rest_pre_dispatch', array( $rest_api_security, 'rate_limit_rest_api' ) ),
+			'Rate limiting filter should not be registered when disabled'
 		);
 	}
 
@@ -221,8 +247,11 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 
 		$rest_api_security = new RestAPISecurity();
 
-		// Mock CloudFlare header
-		$_SERVER['HTTP_CF_CONNECTING_IP'] = '203.0.113.1';
+		// Mock CloudFlare header with a valid test IP (not TEST-NET)
+		// Using 198.51.100.42 which is in the documentation test IP range
+		$cloudflare_ip = '198.51.100.42';
+		$_SERVER['HTTP_CF_CONNECTING_IP'] = $cloudflare_ip;
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.1'; // Fallback IP that should NOT be used
 
 		// Ensure user is not logged in
 		wp_set_current_user( 0 );
@@ -230,9 +259,24 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		// Create mock request
 		$request = new WP_REST_Request( 'GET', '/wp/v2/posts' );
 
+		// Calculate expected transient key based on CloudFlare IP
+		$cf_ip_hash = \hash( 'sha256', $cloudflare_ip );
+		$window_key = "silver_assist_rest_window_{$cf_ip_hash}";
+		$limit_key = "silver_assist_rest_limit_{$cf_ip_hash}";
+
+		// Clean transients before test
+		\delete_transient( $window_key );
+		\delete_transient( $limit_key );
+
 		// First request should succeed
 		$response1 = $rest_api_security->rate_limit_rest_api( null, new WP_REST_Server(), $request );
-		$this->assertNull( $response1 );
+		$this->assertNull( $response1, 'First request should not be rate limited' );
+
+		// Verify the CloudFlare IP transient was created, not the fallback IP
+		$this->assertNotFalse(
+			\get_transient( $window_key ),
+			'Window transient should be created for CloudFlare IP'
+		);
 
 		// Second request should be rate limited
 		$response2 = $rest_api_security->rate_limit_rest_api( null, new WP_REST_Server(), $request );
@@ -243,7 +287,9 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		);
 
 		// Clean up
-		\delete_transient( 'silver_assist_rest_limit_203.0.113.1' );
+		\delete_transient( $window_key );
+		\delete_transient( $limit_key );
 		unset( $_SERVER['HTTP_CF_CONNECTING_IP'] );
+		unset( $_SERVER['REMOTE_ADDR'] );
 	}
 }
