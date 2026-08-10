@@ -182,7 +182,7 @@ class RestAPISecurity {
 			// Window still active - use atomic increment if available (WP 6.1+)
 			if ( \function_exists( 'wp_cache_get_last_changed' ) && \function_exists( 'wp_cache_incr' ) ) {
 				// Use atomic cache increment
-				$request_count = \wp_cache_incr( $count_key, 1, '', $this->rate_limit_window );
+				$request_count = \wp_cache_incr( $count_key, 1, '' );
 				if ( false === $request_count ) {
 					// Fallback: transient increment with race condition check
 					$request_count = (int) \get_transient( $count_key ) + 1;
