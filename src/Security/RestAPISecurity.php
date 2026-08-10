@@ -218,10 +218,16 @@ class RestAPISecurity {
 			if ( false !== $count ) {
 				return (int) $count;
 			}
-			// Cache evicted the counter mid-window: reseed conservatively.
-			\wp_cache_set( $count_key, 1, '', $ttl );
-			\set_transient( $count_key, 1, $ttl );
-			return 1;
+			// Cache evicted the counter mid-window. Reclaim atomically so that if
+			// several requests observe the miss simultaneously, only one caller
+			// wins the `wp_cache_add` and returns 1; every loser is guaranteed to
+			// find the reseeded counter and increment it instead of also returning 1.
+			if ( \wp_cache_add( $count_key, 1, '', $ttl ) ) {
+				\set_transient( $count_key, 1, $ttl );
+				return 1;
+			}
+			$count = \wp_cache_incr( $count_key, 1, '' );
+			return false === $count ? 1 : (int) $count;
 		}
 
 		// No persistent cache: rely on the UNIQUE index of `wp_options.option_name`
