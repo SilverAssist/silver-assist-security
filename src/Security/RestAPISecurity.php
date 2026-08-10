@@ -109,7 +109,12 @@ class RestAPISecurity {
 	 * @param \WP_REST_Request         $request  REST request object.
 	 * @return mixed Original response or error
 	 */
-	public function restrict_batch_endpoint( $response, $server, $request ) {
+	public function restrict_batch_endpoint( $response, \WP_REST_Server $server, \WP_REST_Request $request ) {
+		// Preserve any pre-existing error responses from earlier filters
+		if ( \is_wp_error( $response ) ) {
+			return $response;
+		}
+
 		// Only restrict if user is not authenticated
 		if ( \is_user_logged_in() ) {
 			return $response;
@@ -141,7 +146,12 @@ class RestAPISecurity {
 	 * @param \WP_REST_Request         $request  REST request object.
 	 * @return mixed Original response or error
 	 */
-	public function rate_limit_rest_api( $response, $server, $request ) {
+	public function rate_limit_rest_api( $response, \WP_REST_Server $server, \WP_REST_Request $request ) {
+		// Preserve any pre-existing error responses from earlier filters
+		if ( \is_wp_error( $response ) ) {
+			return $response;
+		}
+
 		// Only apply rate limiting to unauthenticated requests
 		if ( \is_user_logged_in() ) {
 			return $response;
@@ -152,26 +162,45 @@ class RestAPISecurity {
 			return $response;
 		}
 
-		// Check rate limit using transients
-		$rate_limit_key = 'silver_assist_rest_limit_' . \sanitize_text_field( $client_ip );
-		$request_count  = (int) \get_transient( $rate_limit_key );
+		// Use fixed-window rate limiting with explicit timestamp
+		$client_ip_hash = \sanitize_text_field( $client_ip );
+		$window_key     = 'silver_assist_rest_window_' . $client_ip_hash;
+		$count_key      = 'silver_assist_rest_limit_' . $client_ip_hash;
 
-		// Increment counter
-		if ( 0 === $request_count ) {
-			// First request in this window
-			\set_transient( $rate_limit_key, 1, $this->rate_limit_window );
+		// Get or create window start time
+		$window_start = (int) \get_transient( $window_key );
+		$current_time = \time();
+
+		// Check if window has expired
+		if ( ! $window_start || ( $current_time - $window_start ) > $this->rate_limit_window ) {
+			// Start new window
+			$window_start = $current_time;
+			\set_transient( $window_key, $window_start, $this->rate_limit_window );
+			\delete_transient( $count_key );
+			$request_count = 0;
 		} else {
-			if ( $request_count >= $this->rate_limit_requests ) {
-				// Rate limit exceeded
-				return new \WP_Error(
-					'rest_rate_limit_exceeded',
-					'Too many requests. Please try again later.',
-					array( 'status' => 429 )
-				);
+			// Window still active - use atomic increment if available (WP 6.1+)
+			if ( \function_exists( 'wp_cache_get_last_changed' ) && \function_exists( 'wp_cache_incr' ) ) {
+				// Use atomic cache increment
+				$request_count = \wp_cache_incr( $count_key, 1, '', $this->rate_limit_window );
+				if ( false === $request_count ) {
+					// Fallback: transient increment with race condition check
+					$request_count = (int) \get_transient( $count_key ) + 1;
+				}
+			} else {
+				// Fallback for older WordPress: transient-based increment
+				$request_count = (int) \get_transient( $count_key ) + 1;
 			}
+			\set_transient( $count_key, $request_count, $this->rate_limit_window );
+		}
 
-			// Increment counter (without resetting the expiration)
-			\set_transient( $rate_limit_key, $request_count + 1, $this->rate_limit_window );
+		// Check if rate limit exceeded
+		if ( $request_count > $this->rate_limit_requests ) {
+			return new \WP_Error(
+				'rest_rate_limit_exceeded',
+				'Too many requests. Please try again later.',
+				array( 'status' => 429 )
+			);
 		}
 
 		return $response;
