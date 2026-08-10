@@ -61,6 +61,12 @@ class DefaultConfig {
 			'silver_assist_login_branding_bg_color'       => '', // Right column bg color (empty = default gradient).
 			'silver_assist_login_branding_show_illustration' => 1, // Show illustration panel.
 
+			// REST API Security Settings
+			'silver_assist_rest_batch_endpoint_protection' => 1, // Restrict batch endpoint for unauthenticated users
+			'silver_assist_rest_rate_limiting_enabled'     => 1, // Enable REST API rate limiting
+			'silver_assist_rest_rate_limit_requests'       => 100, // Max requests per window for unauthenticated users
+			'silver_assist_rest_rate_limit_window'         => 60, // Rate limit window in seconds
+
 			// Contact Form 7 Integration Settings
 			'silver_assist_cf7_protection_enabled'        => 1, // Enable CF7 protection by default
 			'silver_assist_cf7_rate_limit'                => 2, // Max CF7 submissions per minute per IP

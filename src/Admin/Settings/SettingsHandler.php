@@ -72,6 +72,9 @@ class SettingsHandler {
 		} elseif ( $section === 'login_branding' ) {
 			// Only save login branding settings.
 			$this->save_login_branding_settings();
+		} elseif ( $section === 'rest_api' ) {
+			// Only save REST API security settings.
+			$this->save_rest_api_settings();
 		} else {
 			// Process all settings categories.
 			$this->save_login_security_settings();
@@ -117,6 +120,34 @@ class SettingsHandler {
 		// Boolean settings
 		\update_option( 'silver_assist_bot_protection', (int) ( isset( $_POST['silver_assist_bot_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_bot_protection'] ) ) : 0 ) );
 		\update_option( 'silver_assist_password_strength_enforcement', (int) ( isset( $_POST['silver_assist_password_strength_enforcement'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_password_strength_enforcement'] ) ) : 0 ) );
+	}
+
+	/**
+	 * Save REST API security settings
+	 *
+	 * @since 1.5.0
+	 * @return void
+	 */
+	private function save_rest_api_settings(): void {
+		// Batch endpoint protection
+		\update_option( 'silver_assist_rest_batch_endpoint_protection', (int) ( isset( $_POST['silver_assist_rest_batch_endpoint_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_rest_batch_endpoint_protection'] ) ) : 0 ) );
+
+		// Rate limiting enabled
+		\update_option( 'silver_assist_rest_rate_limiting_enabled', (int) ( isset( $_POST['silver_assist_rest_rate_limiting_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_rest_rate_limiting_enabled'] ) ) : 0 ) );
+
+		// Rate limit requests validation
+		if ( isset( $_POST['silver_assist_rest_rate_limit_requests'] ) ) {
+			$rate_limit_requests = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_rest_rate_limit_requests'] ) ) );
+			$rate_limit_requests = \max( 10, \min( 1000, $rate_limit_requests ) );
+			\update_option( 'silver_assist_rest_rate_limit_requests', $rate_limit_requests );
+		}
+
+		// Rate limit window validation
+		if ( isset( $_POST['silver_assist_rest_rate_limit_window'] ) ) {
+			$rate_limit_window = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_rest_rate_limit_window'] ) ) );
+			$rate_limit_window = \max( 30, \min( 300, $rate_limit_window ) );
+			\update_option( 'silver_assist_rest_rate_limit_window', $rate_limit_window );
+		}
 	}
 
 	/**

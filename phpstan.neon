@@ -47,6 +47,13 @@ parameters:
             message: '#(If condition|Ternary operator condition) is always true#'
             path: src/Admin/Data/SecurityDataProvider.php
         
+        # PHPStan caches the return of same-args pure calls; the eviction-recovery
+        # wp_cache_add() reclaim in RestAPISecurity intentionally repeats the initial
+        # claim call to race a fresh seed after the object cache evicted the counter.
+        -
+            message: '#If condition is always false#'
+            path: src/Security/RestAPISecurity.php
+        
         # Always-false condition for WP_DEBUG_LOG type check (WordPress constant can be bool or string)
         -
             message: '#Result of && is always false#'

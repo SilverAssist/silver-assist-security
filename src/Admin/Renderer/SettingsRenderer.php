@@ -49,6 +49,7 @@ class SettingsRenderer {
 	 */
 	public function render_all_tabs(): void {
 		$this->render_login_security_tab();
+		$this->render_rest_api_security_tab();
 
 		if ( \class_exists( 'WPGraphQL' ) ) {
 			$this->render_graphql_security_tab();
@@ -315,6 +316,81 @@ class SettingsRenderer {
 							value="<?php \esc_attr_e( 'Save Branding Settings', 'silver-assist-security' ); ?>">
 					</p>
 				</form>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render REST API security settings tab
+	 *
+	 * @since 1.5.0
+	 * @return void
+	 */
+	private function render_rest_api_security_tab(): void {
+		$config = $this->get_current_config();
+		?>
+		<!-- REST API Security Tab -->
+		<div id="rest-api-security-content" class="silver-tab-content">
+
+			<div class="status-card rest-api-security">
+				<div class="card-header">
+					<h3><?php \esc_html_e( 'REST API Security Settings', 'silver-assist-security' ); ?></h3>
+				</div>
+				<div class="card-content">
+					<form method="post" action="" id="rest-api-security-form">
+						<?php \wp_nonce_field( 'silver_assist_security_settings' ); ?>
+						<input type="hidden" name="save_silver_assist_security" value="1">
+						<input type="hidden" name="settings_section" value="rest_api">
+
+						<table class="form-table">
+							<tbody>
+								<?php
+								RenderHelper::render_toggle_row(
+									\__( 'Enable Batch Endpoint Protection', 'silver-assist-security' ),
+									'silver_assist_rest_batch_endpoint_protection',
+									$config['rest_batch_endpoint_protection'],
+									\__( 'Block unauthenticated access to /batch/v1 endpoint', 'silver-assist-security' )
+								);
+								RenderHelper::render_toggle_row(
+									\__( 'Enable Rate Limiting', 'silver-assist-security' ),
+									'silver_assist_rest_rate_limiting_enabled',
+									$config['rest_rate_limiting_enabled'],
+									\__( 'Limit REST API requests from unauthenticated users', 'silver-assist-security' )
+								);
+								RenderHelper::render_range_row(
+									\__( 'Rate Limit (requests)', 'silver-assist-security' ),
+									'silver_assist_rest_rate_limit_requests',
+									$config['rest_rate_limit_requests'],
+									10,
+									1000,
+									'rest-rate-limit-requests-value',
+									(string) $config['rest_rate_limit_requests'],
+									\__( 'Maximum requests per window (10-1000)', 'silver-assist-security' )
+								);
+								RenderHelper::render_range_row(
+									\__( 'Rate Limit Window (seconds)', 'silver-assist-security' ),
+									'silver_assist_rest_rate_limit_window',
+									$config['rest_rate_limit_window'],
+									30,
+									300,
+									'rest-rate-limit-window-value',
+									(string) $config['rest_rate_limit_window'],
+									\__( 'Time window for rate limiting (30-300 seconds)', 'silver-assist-security' )
+								);
+								?>
+							</tbody>
+						</table>
+
+						<p class="submit">
+							<input type="submit"
+								name="submit"
+								id="rest-api-security-submit"
+								class="button button-primary"
+								value="<?php \esc_attr_e( 'Save REST API Settings', 'silver-assist-security' ); ?>">
+						</p>
+					</form>
+				</div>
 			</div>
 		</div>
 		<?php
@@ -742,6 +818,10 @@ class SettingsRenderer {
 			'session_timeout'                  => DefaultConfig::get_option( 'silver_assist_session_timeout' ),
 			'bot_protection'                   => DefaultConfig::get_option( 'silver_assist_bot_protection' ),
 			'password_strength_enforcement'    => DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' ),
+			'rest_batch_endpoint_protection'   => DefaultConfig::get_option( 'silver_assist_rest_batch_endpoint_protection' ),
+			'rest_rate_limiting_enabled'       => DefaultConfig::get_option( 'silver_assist_rest_rate_limiting_enabled' ),
+			'rest_rate_limit_requests'         => DefaultConfig::get_option( 'silver_assist_rest_rate_limit_requests' ),
+			'rest_rate_limit_window'           => DefaultConfig::get_option( 'silver_assist_rest_rate_limit_window' ),
 			'graphql_headless_mode'            => DefaultConfig::get_option( 'silver_assist_graphql_headless_mode' ),
 			'graphql_query_timeout'            => \get_option( 'silver_assist_graphql_query_timeout', $this->config_manager->get_php_execution_timeout() ),
 			'cf7_protection_enabled'           => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) : 0,

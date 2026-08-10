@@ -92,6 +92,10 @@ class AdminPageRenderer {
 					<span class="dashicons dashicons-lock"></span>
 					<?php \esc_html_e( 'Login Protection', 'silver-assist-security' ); ?>
 				</a>
+				<a href="#rest-api-security" class="silver-nav-tab" id="rest-api-security-tab">
+					<span class="dashicons dashicons-rest-api"></span>
+					<?php \esc_html_e( 'REST API Security', 'silver-assist-security' ); ?>
+				</a>
 				<?php if ( \class_exists( 'WPGraphQL' ) ) : ?>
 				<a href="#graphql-security" class="silver-nav-tab" id="graphql-security-tab">
 					<span class="dashicons dashicons-database"></span>

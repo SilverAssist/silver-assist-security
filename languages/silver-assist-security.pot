@@ -2,14 +2,14 @@
 # This file is distributed under the Polyform Noncommercial License 1.0.0.
 msgid ""
 msgstr ""
-"Project-Id-Version: Silver Assist Security Essentials 1.3.1\n"
+"Project-Id-Version: Silver Assist Security Essentials 1.5.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/silver-assist-security\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-04T00:59:05+00:00\n"
+"POT-Creation-Date: 2026-08-10T16:34:37+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: silver-assist-security\n"
@@ -31,7 +31,7 @@ msgstr ""
 
 #. Author of the plugin
 #: silver-assist-security.php
-#: src/Security/LoginBranding.php:188
+#: src/Security/LoginBranding.php:191
 msgid "Silver Assist"
 msgstr ""
 
@@ -431,7 +431,7 @@ msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:215
 #: src/Admin/Renderer/RenderHelper.php:34
-#: src/Admin/Renderer/SettingsRenderer.php:404
+#: src/Admin/Renderer/SettingsRenderer.php:480
 #: src/GraphQL/GraphQLConfigManager.php:307
 #: src/GraphQL/GraphQLConfigManager.php:316
 #: src/GraphQL/GraphQLConfigManager.php:326
@@ -442,7 +442,7 @@ msgstr ""
 #: src/Admin/Assets/AssetManager.php:216
 #: src/Admin/Renderer/DashboardRenderer.php:140
 #: src/Admin/Renderer/RenderHelper.php:37
-#: src/Admin/Renderer/SettingsRenderer.php:406
+#: src/Admin/Renderer/SettingsRenderer.php:482
 #: src/GraphQL/GraphQLConfigManager.php:307
 #: src/GraphQL/GraphQLConfigManager.php:316
 #: src/GraphQL/GraphQLConfigManager.php:327
@@ -460,17 +460,17 @@ msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:220
 #: src/Admin/Renderer/DashboardRenderer.php:179
-#: src/Admin/Renderer/SettingsRenderer.php:475
+#: src/Admin/Renderer/SettingsRenderer.php:551
 msgid "Active"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:221
-#: src/Admin/Renderer/SettingsRenderer.php:480
+#: src/Admin/Renderer/SettingsRenderer.php:556
 msgid "Not configured"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:222
-#: src/Admin/Renderer/SettingsRenderer.php:477
+#: src/Admin/Renderer/SettingsRenderer.php:553
 msgid "An API key is configured. Regenerate to create a new key (invalidates the current one)."
 msgstr ""
 
@@ -479,37 +479,37 @@ msgid "Generate an API key for server-to-server authentication."
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:224
-#: src/Admin/Renderer/SettingsRenderer.php:505
+#: src/Admin/Renderer/SettingsRenderer.php:581
 msgid "Generate API Key"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:225
-#: src/Admin/Renderer/SettingsRenderer.php:493
+#: src/Admin/Renderer/SettingsRenderer.php:569
 msgid "Regenerate API Key"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:226
-#: src/Admin/Renderer/SettingsRenderer.php:499
+#: src/Admin/Renderer/SettingsRenderer.php:575
 msgid "Revoke API Key"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:227
-#: src/Admin/Renderer/SettingsRenderer.php:492
+#: src/Admin/Renderer/SettingsRenderer.php:568
 msgid "This will invalidate the current API key. All consumers using it will need to update. Continue?"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:228
-#: src/Admin/Renderer/SettingsRenderer.php:498
+#: src/Admin/Renderer/SettingsRenderer.php:574
 msgid "This will revoke the API key. All consumers using it will lose access. Continue?"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:229
-#: src/Admin/Renderer/SettingsRenderer.php:516
+#: src/Admin/Renderer/SettingsRenderer.php:592
 msgid "Usage Example"
 msgstr ""
 
 #: src/Admin/Assets/AssetManager.php:230
-#: src/Admin/Renderer/SettingsRenderer.php:517
+#: src/Admin/Renderer/SettingsRenderer.php:593
 msgid "Add one of the following headers to your GraphQL requests:"
 msgstr ""
 
@@ -540,19 +540,23 @@ msgstr ""
 msgid "Login Protection"
 msgstr ""
 
-#: src/Admin/Renderer/AdminPageRenderer.php:98
+#: src/Admin/Renderer/AdminPageRenderer.php:97
+msgid "REST API Security"
+msgstr ""
+
+#: src/Admin/Renderer/AdminPageRenderer.php:102
 #: src/Admin/Renderer/DashboardRenderer.php:127
 msgid "GraphQL Security"
 msgstr ""
 
-#: src/Admin/Renderer/AdminPageRenderer.php:104
+#: src/Admin/Renderer/AdminPageRenderer.php:108
 #: src/Admin/Renderer/DashboardRenderer.php:177
 #: src/Admin/Renderer/DashboardRenderer.php:184
-#: src/Admin/Renderer/SettingsRenderer.php:583
+#: src/Admin/Renderer/SettingsRenderer.php:659
 msgid "Form Protection"
 msgstr ""
 
-#: src/Admin/Renderer/AdminPageRenderer.php:109
+#: src/Admin/Renderer/AdminPageRenderer.php:113
 msgid "IP Management"
 msgstr ""
 
@@ -579,12 +583,12 @@ msgid "Admin Security"
 msgstr ""
 
 #: src/Admin/Renderer/DashboardRenderer.php:116
-#: src/Admin/Renderer/SettingsRenderer.php:120
+#: src/Admin/Renderer/SettingsRenderer.php:121
 msgid "Password Strength Enforcement"
 msgstr ""
 
 #: src/Admin/Renderer/DashboardRenderer.php:117
-#: src/Admin/Renderer/SettingsRenderer.php:126
+#: src/Admin/Renderer/SettingsRenderer.php:127
 msgid "Bot Protection"
 msgstr ""
 
@@ -676,8 +680,8 @@ msgid "Security Logs"
 msgstr ""
 
 #: src/Admin/Renderer/DashboardRenderer.php:243
-#: src/Admin/Renderer/SettingsRenderer.php:621
-#: src/Admin/Renderer/SettingsRenderer.php:681
+#: src/Admin/Renderer/SettingsRenderer.php:697
+#: src/Admin/Renderer/SettingsRenderer.php:757
 msgid "Loading blocked IPs..."
 msgstr ""
 
@@ -685,305 +689,345 @@ msgstr ""
 msgid "Loading security logs..."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:78
+#: src/Admin/Renderer/SettingsRenderer.php:79
 msgid "Login Protection Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:88
+#: src/Admin/Renderer/SettingsRenderer.php:89
 msgid "Failed Login Attempts"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:95
+#: src/Admin/Renderer/SettingsRenderer.php:96
 msgid "Number of failed login attempts before IP lockout (1-20)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:98
+#: src/Admin/Renderer/SettingsRenderer.php:99
 msgid "Lockout Duration (minutes)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:105
+#: src/Admin/Renderer/SettingsRenderer.php:106
 msgid "Duration to block IP after failed attempts (1-60 minutes)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:110
+#: src/Admin/Renderer/SettingsRenderer.php:111
 msgid "Session Timeout (minutes)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:117
+#: src/Admin/Renderer/SettingsRenderer.php:118
 msgid "Automatic logout after inactivity (5-120 minutes)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:123
+#: src/Admin/Renderer/SettingsRenderer.php:124
 msgid "Require strong passwords (12+ chars, mixed case, numbers, symbols)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:129
+#: src/Admin/Renderer/SettingsRenderer.php:130
 msgid "Block known bots, crawlers, and security scanners"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:140
+#: src/Admin/Renderer/SettingsRenderer.php:141
 msgid "Save Login Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:149
+#: src/Admin/Renderer/SettingsRenderer.php:150
 msgid "Admin Hide Security"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:153
+#: src/Admin/Renderer/SettingsRenderer.php:154
 msgid "Hide WordPress admin and login pages from unauthorized users by redirecting to custom URLs."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:164
+#: src/Admin/Renderer/SettingsRenderer.php:165
 msgid "Enable Admin Hiding"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:176
+#: src/Admin/Renderer/SettingsRenderer.php:177
 msgid "Hide /wp-admin and /wp-login.php from unauthorized users"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:179
+#: src/Admin/Renderer/SettingsRenderer.php:180
 msgid "When enabled, direct access to WordPress admin URLs will return 404 errors. Use the custom path below to access the admin area."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:188
+#: src/Admin/Renderer/SettingsRenderer.php:189
 msgid "Custom Admin Path"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:201
+#: src/Admin/Renderer/SettingsRenderer.php:202
 msgid "Custom path to access the admin area (e.g., 'my-secret-admin'). Avoid common words like 'admin', 'login', etc."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:211
+#: src/Admin/Renderer/SettingsRenderer.php:212
 msgid "Important Security Notice"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:214
+#: src/Admin/Renderer/SettingsRenderer.php:215
 msgid "Save your custom admin URL in a secure location before enabling this feature."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:216
+#: src/Admin/Renderer/SettingsRenderer.php:217
 msgid "If you forget the custom path, you can disable this feature via FTP by adding this line to wp-config.php:"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:219
+#: src/Admin/Renderer/SettingsRenderer.php:220
 msgid "This feature adds an extra layer of security but should be used alongside strong passwords and other security measures."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:228
+#: src/Admin/Renderer/SettingsRenderer.php:229
 msgid "Save Admin Hide Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:238
+#: src/Admin/Renderer/SettingsRenderer.php:239
 msgid "Login Page Branding"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:242
+#: src/Admin/Renderer/SettingsRenderer.php:243
 msgid "Customize the WordPress login page with Silver Assist branding and a modern split-layout design."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:254
+#: src/Admin/Renderer/SettingsRenderer.php:255
 msgid "Enable Login Branding"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:257
+#: src/Admin/Renderer/SettingsRenderer.php:258
 msgid "Replace the default WordPress login page with Silver Assist branded design"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:260
+#: src/Admin/Renderer/SettingsRenderer.php:261
 msgid "Show Illustration Panel"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:263
+#: src/Admin/Renderer/SettingsRenderer.php:264
 msgid "Display decorative illustration in a right-side panel (split-layout)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:271
+#: src/Admin/Renderer/SettingsRenderer.php:272
 msgid "Custom Logo URL"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:282
+#: src/Admin/Renderer/SettingsRenderer.php:283
 msgid "URL to a custom logo image. Leave empty to use the built-in Silver Assist logo."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:291
+#: src/Admin/Renderer/SettingsRenderer.php:292
 msgid "Illustration Panel Color"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:303
+#: src/Admin/Renderer/SettingsRenderer.php:304
 msgid "Hex color for the illustration panel background. Leave empty for the default gradient."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:315
+#: src/Admin/Renderer/SettingsRenderer.php:316
 msgid "Save Branding Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:339
-msgid "GraphQL Security Settings"
+#: src/Admin/Renderer/SettingsRenderer.php:338
+msgid "REST API Security Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:355
-msgid "Headless CMS Mode"
+#: src/Admin/Renderer/SettingsRenderer.php:350
+msgid "Enable Batch Endpoint Protection"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:358
-msgid "Enable higher limits for headless WordPress configurations"
+#: src/Admin/Renderer/SettingsRenderer.php:353
+msgid "Block unauthenticated access to /batch/v1 endpoint"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:361
-msgid "Query Timeout (seconds)"
+#: src/Admin/Renderer/SettingsRenderer.php:356
+msgid "Enable Rate Limiting"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:368
-msgid "Maximum execution time for GraphQL queries (1-30 seconds)"
+#: src/Admin/Renderer/SettingsRenderer.php:359
+msgid "Limit REST API requests from unauthenticated users"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:362
+msgid "Rate Limit (requests)"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:369
+msgid "Maximum requests per window (10-1000)"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:372
+msgid "Rate Limit Window (seconds)"
 msgstr ""
 
 #: src/Admin/Renderer/SettingsRenderer.php:379
+msgid "Time window for rate limiting (30-300 seconds)"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:390
+msgid "Save REST API Settings"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:415
+msgid "GraphQL Security Settings"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:431
+msgid "Headless CMS Mode"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:434
+msgid "Enable higher limits for headless WordPress configurations"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:437
+msgid "Query Timeout (seconds)"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:444
+msgid "Maximum execution time for GraphQL queries (1-30 seconds)"
+msgstr ""
+
+#: src/Admin/Renderer/SettingsRenderer.php:455
 msgid "Save GraphQL Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:388
+#: src/Admin/Renderer/SettingsRenderer.php:464
 msgid "GraphQL Authentication"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:400
+#: src/Admin/Renderer/SettingsRenderer.php:476
 msgid "Require Authentication"
 msgstr ""
 
 #. translators: %s: URL to WPGraphQL settings page.
-#: src/Admin/Renderer/SettingsRenderer.php:412
+#: src/Admin/Renderer/SettingsRenderer.php:488
 #, php-format
 msgid "This setting is managed by WPGraphQL. %s to change it."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:413
+#: src/Admin/Renderer/SettingsRenderer.php:489
 msgid "Go to WPGraphQL Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:424
+#: src/Admin/Renderer/SettingsRenderer.php:500
 msgid "Important Notice"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:426
+#: src/Admin/Renderer/SettingsRenderer.php:502
 msgid "When enabled, all GraphQL consumers must authenticate via Application Passwords, API Key, or WordPress session."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:427
+#: src/Admin/Renderer/SettingsRenderer.php:503
 msgid "Authentication is not enforced in local/development environments to allow development tooling."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:428
+#: src/Admin/Renderer/SettingsRenderer.php:504
 msgid "Headless front-end applications (Next.js, Gatsby, etc.) will need to use Application Passwords or the API Key below."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:437
+#: src/Admin/Renderer/SettingsRenderer.php:513
 msgid "API Key Management"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:444
+#: src/Admin/Renderer/SettingsRenderer.php:520
 msgid "Service User"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:454
+#: src/Admin/Renderer/SettingsRenderer.php:530
 msgid "— Select Service User —"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:460
+#: src/Admin/Renderer/SettingsRenderer.php:536
 msgid "WordPress user for API key authentication. A Subscriber role is recommended."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:466
+#: src/Admin/Renderer/SettingsRenderer.php:542
 msgid "API Key"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:482
+#: src/Admin/Renderer/SettingsRenderer.php:558
 msgid "Generate an API key for server-to-server authentication. Use the X-API-Key header or Authorization: Bearer token."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:530
+#: src/Admin/Renderer/SettingsRenderer.php:606
 msgid "Save Authentication Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:541
+#: src/Admin/Renderer/SettingsRenderer.php:617
 msgid "WPGraphQL Plugin Not Detected"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:544
+#: src/Admin/Renderer/SettingsRenderer.php:620
 msgid "GraphQL security features require the WPGraphQL plugin to be installed and activated."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:549
+#: src/Admin/Renderer/SettingsRenderer.php:625
 msgid "Install WPGraphQL Plugin"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:573
+#: src/Admin/Renderer/SettingsRenderer.php:649
 msgid "Contact Form 7 Protection"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:586
+#: src/Admin/Renderer/SettingsRenderer.php:662
 msgid "Enable protection for Contact Form 7 submissions"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:589
+#: src/Admin/Renderer/SettingsRenderer.php:665
 msgid "Rate Limit (submissions/minute)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:596
+#: src/Admin/Renderer/SettingsRenderer.php:672
 msgid "Maximum form submissions per minute per IP address"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:607
+#: src/Admin/Renderer/SettingsRenderer.php:683
 msgid "Save Form Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:616
+#: src/Admin/Renderer/SettingsRenderer.php:692
 msgid "Blocked IPs Management"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:643
+#: src/Admin/Renderer/SettingsRenderer.php:719
 msgid "IP Management & Attack Protection"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:653
+#: src/Admin/Renderer/SettingsRenderer.php:729
 msgid "IP Blacklist"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:656
+#: src/Admin/Renderer/SettingsRenderer.php:732
 msgid "Enable automatic IP blacklisting for repeat offenders"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:667
+#: src/Admin/Renderer/SettingsRenderer.php:743
 msgid "Save IP Settings"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:676
+#: src/Admin/Renderer/SettingsRenderer.php:752
 msgid "Login Security - Blocked IPs"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:690
+#: src/Admin/Renderer/SettingsRenderer.php:766
 msgid "Form Protection - Blocked IPs"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:695
+#: src/Admin/Renderer/SettingsRenderer.php:771
 msgid "Loading CF7 blocked IPs..."
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:704
+#: src/Admin/Renderer/SettingsRenderer.php:780
 msgid "Manual IP Management"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:711
+#: src/Admin/Renderer/SettingsRenderer.php:787
 msgid "Enter IP address (e.g., 192.168.1.100)"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:715
+#: src/Admin/Renderer/SettingsRenderer.php:791
 msgid "Reason for blocking"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:719
+#: src/Admin/Renderer/SettingsRenderer.php:795
 msgid "Block IP"
 msgstr ""
 
-#: src/Admin/Renderer/SettingsRenderer.php:723
+#: src/Admin/Renderer/SettingsRenderer.php:799
 msgid "Manually block specific IP addresses. Blocked IPs will be denied access to login and forms."
 msgstr ""
 
@@ -993,7 +1037,7 @@ msgstr ""
 msgid "Security check failed."
 msgstr ""
 
-#: src/Admin/Settings/SettingsHandler.php:300
+#: src/Admin/Settings/SettingsHandler.php:331
 msgid "Security settings have been saved successfully."
 msgstr ""
 
@@ -1006,7 +1050,7 @@ msgstr ""
 msgid "Path cannot contain \"%s\" for security reasons"
 msgstr ""
 
-#: src/Core/Plugin.php:254
+#: src/Core/Plugin.php:268
 msgid "Settings"
 msgstr ""
 
@@ -1195,7 +1239,7 @@ msgid "Secured by %s"
 msgstr ""
 
 #. translators: %s: The action-specific title (e.g. "Log In", "Register").
-#: src/Security/LoginBranding.php:222
+#: src/Security/LoginBranding.php:225
 #, php-format
 msgid "%s — Silver Assist"
 msgstr ""
