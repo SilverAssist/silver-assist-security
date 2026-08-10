@@ -203,12 +203,14 @@ class RestAPISecurity {
 		$ttl = $this->rate_limit_window;
 
 		// Persistent object cache: `wp_cache_add` is atomic across processes.
+		// We claim the window by adding the *counter* key (not the window key) so
+		// that any loser is guaranteed to find a valid counter to increment — no
+		// gap between claim and counter-seeding for concurrent losers to slip into.
 		if ( \wp_using_ext_object_cache() ) {
-			if ( \wp_cache_add( $window_key, $current_time, '', $ttl ) ) {
-				// We claimed the new window — seed the counter and persist to DB.
-				\wp_cache_set( $count_key, 1, '', $ttl );
-				\set_transient( $window_key, $current_time, $ttl );
+			if ( \wp_cache_add( $count_key, 1, '', $ttl ) ) {
+				\wp_cache_set( $window_key, $current_time, '', $ttl );
 				\set_transient( $count_key, 1, $ttl );
+				\set_transient( $window_key, $current_time, $ttl );
 				return 1;
 			}
 
@@ -216,7 +218,7 @@ class RestAPISecurity {
 			if ( false !== $count ) {
 				return (int) $count;
 			}
-			// Cache lost the counter while the window key survived: reseed conservatively.
+			// Cache evicted the counter mid-window: reseed conservatively.
 			\wp_cache_set( $count_key, 1, '', $ttl );
 			\set_transient( $count_key, 1, $ttl );
 			return 1;
@@ -419,7 +421,14 @@ class RestAPISecurity {
 			return $ip === $cidr;
 		}
 
-		list( $subnet, $bits ) = \explode( '/', $cidr );
+		$parts = \explode( '/', $cidr );
+
+		// Reject CIDRs that contain extra slashes (e.g. "192.0.2.0/0/typo") so a
+		// stray path component cannot be dropped and silently trust every address.
+		if ( 2 !== \count( $parts ) ) {
+			return false;
+		}
+		list( $subnet, $bits ) = $parts;
 
 		// Reject non-numeric or out-of-range prefixes so a typo like "/foo" or "/99" cannot silently trust every IPv4.
 		if ( ! \ctype_digit( $bits ) ) {
@@ -461,7 +470,14 @@ class RestAPISecurity {
 			return $ip === $cidr;
 		}
 
-		list( $subnet, $bits ) = \explode( '/', $cidr );
+		$parts = \explode( '/', $cidr );
+
+		// Reject CIDRs with extra slashes (e.g. "2001:db8::/0/typo") so a stray
+		// path component cannot be dropped and silently trust every IPv6 sender.
+		if ( 2 !== \count( $parts ) ) {
+			return false;
+		}
+		list( $subnet, $bits ) = $parts;
 
 		// Reject non-numeric or out-of-range prefixes so a typo like "/foo" or "/200" cannot trust every IPv6 or raise a ValueError in str_repeat().
 		if ( ! \ctype_digit( $bits ) ) {

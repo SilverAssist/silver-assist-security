@@ -291,6 +291,8 @@ class RestAPISecurityTest extends WP_UnitTestCase {
 		$this->assertFalse( $method->invoke( $rest_api_security, '203.0.113.5', '192.0.2.0/33' ), 'IPv4 prefix above 32 must be rejected' );
 		$this->assertFalse( $method->invoke( $rest_api_security, '203.0.113.5', '192.0.2.0/-1' ), 'Negative IPv4 prefix must be rejected' );
 		$this->assertFalse( $method->invoke( $rest_api_security, '203.0.113.5', '192.0.2.0/' ), 'Empty IPv4 prefix must be rejected' );
+		$this->assertFalse( $method->invoke( $rest_api_security, '203.0.113.5', '192.0.2.0/0/typo' ), 'IPv4 CIDR with extra slashes must be rejected' );
+		$this->assertFalse( $method->invoke( $rest_api_security, '203.0.113.5', '192.0.2.0/24/oops' ), 'IPv4 CIDR with extra path component must be rejected' );
 
 		// IPv4 — valid boundaries still work.
 		$this->assertTrue( $method->invoke( $rest_api_security, '203.0.113.5', '0.0.0.0/0' ), 'IPv4 /0 must match every address' );
@@ -302,6 +304,7 @@ class RestAPISecurityTest extends WP_UnitTestCase {
 		$this->assertFalse( $method->invoke( $rest_api_security, '2001:db8::1', '2001:db8::/bad' ), 'Non-numeric IPv6 prefix must be rejected' );
 		$this->assertFalse( $method->invoke( $rest_api_security, '2001:db8::1', '2001:db8::/129' ), 'IPv6 prefix above 128 must be rejected' );
 		$this->assertFalse( $method->invoke( $rest_api_security, '2001:db8::1', '2001:db8::/200' ), 'IPv6 prefix well above 128 must be rejected' );
+		$this->assertFalse( $method->invoke( $rest_api_security, '2001:db8::1', '2001:db8::/0/typo' ), 'IPv6 CIDR with extra slashes must be rejected' );
 
 		// IPv6 — valid boundaries still work.
 		$this->assertTrue( $method->invoke( $rest_api_security, '2001:db8::1', '2001:db8::/32' ), 'IPv6 in-range address must match' );
