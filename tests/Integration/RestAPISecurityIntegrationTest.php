@@ -307,4 +307,81 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		unset( $_SERVER['HTTP_X_FORWARDED_FOR'] );
 		unset( $_SERVER['REMOTE_ADDR'] );
 	}
+
+	/**
+	 * Test client IP falls back to REMOTE_ADDR when no trusted proxies are configured
+	 *
+	 * Validates the safe default: with neither the `SILVER_ASSIST_TRUSTED_PROXY_CIDRS`
+	 * constant nor the `silver_assist_trusted_proxy_cidrs` filter attached, the
+	 * `X-Forwarded-For` header is ignored entirely and the rate limit is keyed on
+	 * `REMOTE_ADDR`. This prevents header spoofing on sites that have not yet
+	 * declared their proxy CIDRs.
+	 *
+	 * @since 1.5.0
+	 * @return void
+	 */
+	public function test_client_ip_uses_remote_addr_when_no_trusted_proxies_configured(): void {
+		\update_option( 'silver_assist_rest_rate_limiting_enabled', 1 );
+		\update_option( 'silver_assist_rest_rate_limit_requests', 1 );
+		\update_option( 'silver_assist_rest_rate_limit_window', 60 );
+
+		$this->assertFalse(
+			\defined( 'SILVER_ASSIST_TRUSTED_PROXY_CIDRS' ),
+			'This test requires the trusted-proxy constant to be undefined'
+		);
+		$this->assertFalse(
+			\has_filter( 'silver_assist_trusted_proxy_cidrs' ),
+			'This test requires no filter attached to silver_assist_trusted_proxy_cidrs'
+		);
+
+		$remote_addr    = '198.51.100.7';   // Direct client REMOTE_ADDR
+		$spoofed_client = '203.0.113.99';   // Attacker-supplied leftmost value
+
+		$rest_api_security = new RestAPISecurity();
+
+		$_SERVER['REMOTE_ADDR']          = $remote_addr;
+		$_SERVER['HTTP_X_FORWARDED_FOR'] = "{$spoofed_client}, 10.0.0.1";
+
+		\wp_set_current_user( 0 );
+
+		$request = new WP_REST_Request( 'GET', '/wp/v2/posts' );
+
+		$remote_hash    = \hash( 'md5', $remote_addr );
+		$remote_window  = "silver_assist_rest_window_{$remote_hash}";
+		$remote_counter = "silver_assist_rest_limit_{$remote_hash}";
+		$spoof_hash     = \hash( 'md5', $spoofed_client );
+		$spoof_window   = "silver_assist_rest_window_{$spoof_hash}";
+		$spoof_counter  = "silver_assist_rest_limit_{$spoof_hash}";
+
+		\delete_transient( $remote_window );
+		\delete_transient( $remote_counter );
+		\delete_transient( $spoof_window );
+		\delete_transient( $spoof_counter );
+
+		$response1 = $rest_api_security->rate_limit_rest_api( null, new WP_REST_Server(), $request );
+		$this->assertNull( $response1, 'First request should not be rate limited' );
+
+		$this->assertNotFalse(
+			\get_transient( $remote_window ),
+			'Window transient should be created for REMOTE_ADDR when no proxies are trusted'
+		);
+		$this->assertFalse(
+			\get_transient( $spoof_window ),
+			'Window transient must NOT be created for the spoofed leftmost X-Forwarded-For value'
+		);
+
+		$response2 = $rest_api_security->rate_limit_rest_api( null, new WP_REST_Server(), $request );
+		$this->assertInstanceOf(
+			\WP_Error::class,
+			$response2,
+			'Second request from the same REMOTE_ADDR should be rate limited'
+		);
+
+		\delete_transient( $remote_window );
+		\delete_transient( $remote_counter );
+		\delete_transient( $spoof_window );
+		\delete_transient( $spoof_counter );
+		unset( $_SERVER['HTTP_X_FORWARDED_FOR'] );
+		unset( $_SERVER['REMOTE_ADDR'] );
+	}
 }
