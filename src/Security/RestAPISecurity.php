@@ -167,26 +167,37 @@ class RestAPISecurity {
 		$window_key = SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_window', $client_ip );
 		$count_key  = SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_limit', $client_ip );
 
-		// Get or create window start time
-		$window_start = (int) \get_transient( $window_key );
 		$current_time = \time();
 
-		// Check if window has expired
-		if ( ! $window_start || ( $current_time - $window_start ) > $this->rate_limit_window ) {
+		// Get the window start time (check if window has expired)
+		$window_start = (int) \get_transient( $window_key );
+
+		// Check if this is a new or expired window
+		if ( ! $window_start || ( $current_time - $window_start ) >= $this->rate_limit_window ) {
 			// Start new window
-			$window_start = $current_time;
-			\set_transient( $window_key, $window_start, $this->rate_limit_window );
-			\delete_transient( $count_key );
+			// Critical: store start time with TTL and do NOT update it again
+			// This prevents transient TTL reset that would extend the window indefinitely
+			\set_transient( $window_key, $current_time, $this->rate_limit_window );
+			\set_transient( $count_key, 1, $this->rate_limit_window );
+			// Also initialize in cache for atomic increment
+			\wp_cache_set( $count_key, 1, '' );
 			$request_count = 1;
 		} else {
-			// Window still active - increment counter
-			// Note: transients are stored in options table without persistent cache
-			// Read-modify-write is not atomic, but acceptable for security threshold validation
-			$request_count = (int) \get_transient( $count_key ) + 1;
-			\set_transient( $count_key, $request_count, $this->rate_limit_window );
+			// Window still active - use atomic increment for race condition safety
+			// Try to use wp_cache_incr for atomic increment (requires persistent cache)
+			$request_count = \wp_cache_incr( $count_key, 1, '' );
+
+			if ( false === $request_count ) {
+				// Persistent cache not available (common on shared hosting)
+				// Fall back to get/set but accept race condition risk
+				// This is acceptable for rate-limit enforcement (temporary overages are acceptable)
+				$current_count = (int) \get_transient( $count_key );
+				$request_count = $current_count + 1;
+				\set_transient( $count_key, $request_count, $this->rate_limit_window );
+			}
 		}
 
-		// Check if rate limit exceeded
+		// Return 429 if limit exceeded
 		if ( $request_count > $this->rate_limit_requests ) {
 			return new \WP_Error(
 				'rest_rate_limit_exceeded',
