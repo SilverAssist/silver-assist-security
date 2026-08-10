@@ -311,4 +311,74 @@ class RestAPISecurityTest extends WP_UnitTestCase {
 		$this->assertTrue( $method->invoke( $rest_api_security, '2001:db8::1', '2001:db8::1/128' ), 'IPv6 /128 must match exact address' );
 		$this->assertFalse( $method->invoke( $rest_api_security, '2001:db8::1', '2001:db9::/32' ), 'IPv6 out-of-range address must not match' );
 	}
+
+	/**
+	 * Test the DB fallback path resets the counter once the window expires
+	 *
+	 * WordPress does not sweep `_transient_timeout_*` rows in `wp_options` unless the
+	 * transient is read via `get_transient`. `atomic_increment()` writes and updates
+	 * those rows directly, so it must detect an expired timeout and reset the counter
+	 * itself — otherwise the counter keeps growing forever and clients stay
+	 * rate-limited long after the configured window.
+	 *
+	 * @since 1.5.0
+	 * @return void
+	 */
+	public function test_atomic_increment_resets_after_window_expires(): void {
+		global $wpdb;
+
+		\update_option( 'silver_assist_rest_rate_limiting_enabled', 1 );
+		\update_option( 'silver_assist_rest_rate_limit_requests', 5 );
+		\update_option( 'silver_assist_rest_rate_limit_window', 60 );
+
+		if ( \wp_using_ext_object_cache() ) {
+			$this->markTestSkipped( 'This test targets the DB fallback path (no persistent object cache).' );
+		}
+
+		$rest_api_security = new RestAPISecurity();
+
+		$method = new \ReflectionMethod( RestAPISecurity::class, 'atomic_increment' );
+		$method->setAccessible( true );
+
+		$window_key    = 'silver_assist_rest_window_test_expiry';
+		$count_key     = 'silver_assist_rest_limit_test_expiry';
+		$count_timeout = "_transient_timeout_{$count_key}";
+		$count_option  = "_transient_{$count_key}";
+		$now           = 1_000_000;
+
+		\delete_transient( $window_key );
+		\delete_transient( $count_key );
+
+		// First three requests inside the same window increment normally.
+		$this->assertSame( 1, $method->invoke( $rest_api_security, $window_key, $count_key, $now ) );
+		$this->assertSame( 2, $method->invoke( $rest_api_security, $window_key, $count_key, $now + 1 ) );
+		$this->assertSame( 3, $method->invoke( $rest_api_security, $window_key, $count_key, $now + 2 ) );
+
+		// Simulate an expired window by rewinding the count_timeout row to the past.
+		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s", (string) ( $now - 1 ), $count_timeout ) );
+
+		// The very next call must observe expiry, reset the counter to 1, and push the timeout forward.
+		$after_reset_now = $now + 120;
+		$this->assertSame(
+			1,
+			$method->invoke( $rest_api_security, $window_key, $count_key, $after_reset_now ),
+			'Expired window must reset the counter to 1 instead of incrementing forever.'
+		);
+
+		$stored_expiry = (int) $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $count_timeout ) );
+		$this->assertGreaterThan(
+			$after_reset_now,
+			$stored_expiry,
+			'The count_timeout row must be advanced to a future timestamp on reset.'
+		);
+
+		$stored_counter = (int) $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $count_option ) );
+		$this->assertSame( 1, $stored_counter, 'The counter row must be reset to 1 after expiry.' );
+
+		// A subsequent request in the new window increments normally.
+		$this->assertSame( 2, $method->invoke( $rest_api_security, $window_key, $count_key, $after_reset_now + 1 ) );
+
+		\delete_transient( $window_key );
+		\delete_transient( $count_key );
+	}
 }

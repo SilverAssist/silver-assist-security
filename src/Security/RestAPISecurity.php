@@ -253,7 +253,27 @@ class RestAPISecurity {
 			return 1;
 		}
 
-		// Someone else already initialized the window — atomically increment.
+		// Rows already exist. Detect an expired window: WordPress does not sweep
+		// `_transient_timeout_*` rows unless someone reads the transient, but we hit
+		// the options table directly, so we must expire and reset the window ourselves.
+		// The count_timeout row doubles as the atomic reset lock: exactly one caller
+		// transitions its value from "<= now" to the new expiry via the WHERE clause.
+		$reset_won = (int) $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND CAST(option_value AS UNSIGNED) <= %d",
+				(string) $expiry,
+				$count_timeout,
+				$current_time
+			)
+		);
+		if ( 1 === $reset_won ) {
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s", (string) $current_time, $window_option ) );
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s", (string) $expiry, $window_timeout ) );
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s", '1', $count_option ) );
+			return 1;
+		}
+
+		// Window is still active (or another caller just reset it) — atomically increment.
 		$updated = (int) $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$wpdb->options} SET option_value = CAST(option_value AS UNSIGNED) + 1 WHERE option_name = %s",
