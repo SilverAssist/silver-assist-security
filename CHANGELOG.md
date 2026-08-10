@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-08-09
+
+### 🔒 Security
+
+- **REST API Batch Endpoint Protection**: Block unauthenticated requests to `/batch/v1` endpoint with 403 Forbidden response, preventing WP2Shell pre-auth RCE entry point (CVE-2026-60137 + CVE-2026-63030)
+- **REST API Rate Limiting**: Limit unauthenticated REST API requests to 100 per 60 seconds per IP address using WordPress transients for stateless, scalable protection
+- **Proxy-Aware IP Detection**: Support CloudFlare (`HTTP_CF_CONNECTING_IP`), X-Forwarded-For, and direct client connections for accurate IP detection in CDN/load balancer environments
+
+### ✨ Added
+
+- New `RestAPISecurity` class for centralized REST API batch endpoint and rate limiting protection
+- Configuration options in `DefaultConfig`:
+  - `silver_assist_rest_batch_endpoint_protection` (enabled by default)
+  - `silver_assist_rest_rate_limiting_enabled` (enabled by default)
+  - `silver_assist_rest_rate_limit_requests` (default: 100 requests per window)
+  - `silver_assist_rest_rate_limit_window` (default: 60 seconds)
+- Features independently toggleable via plugin settings
+- Lazy initialization in Plugin singleton with `get_rest_api_security()` getter
+
+### ✅ Tests
+
+- Unit tests for batch endpoint restriction: unauthenticated blocking, authenticated pass-through, non-batch endpoints regression
+- Unit tests for rate limiting: transient counting, authenticated bypass, configuration validation, feature disable
+- Integration tests for REST API security: plugin initialization, real WordPress REST API blocking, GraphQL endpoint non-interference, partial feature initialization, CloudFlare IP detection
+
+### 🛡️ Defense-in-Depth
+
+- Recommended for all WordPress 7.0.2 sites pending core update to 7.0.3
+- Protects against WP2Shell variant exploits even after core patches deployed
+- Authenticated users (admin/editor) bypass restrictions for legitimate API operations
+- No performance impact: 2 lightweight filters + transient-based rate limiting (no database queries per request)
+
 ## [1.4.0] - 2026-06-03
 
 ### ✨ Added
