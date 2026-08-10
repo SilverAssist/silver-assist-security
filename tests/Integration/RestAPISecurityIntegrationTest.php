@@ -262,12 +262,13 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		$request = new WP_REST_Request( 'GET', '/wp/v2/posts' );
 
 		// Calculate expected transient key based on client IP (extracted from CF header)
-		$client_ip_hash = \hash( 'sha256', $client_ip );
+		// Use the same SecurityHelper method as the implementation
+		$client_ip_hash = \hash( 'md5', $client_ip );
 		$cf_window_key = "silver_assist_rest_window_{$client_ip_hash}";
 		$cf_limit_key = "silver_assist_rest_limit_{$client_ip_hash}";
 
 		// Also calculate key for edge IP (should NOT be used)
-		$edge_ip_hash = \hash( 'sha256', $cloudflare_edge_ip );
+		$edge_ip_hash = \hash( 'md5', $cloudflare_edge_ip );
 		$edge_window_key = "silver_assist_rest_window_{$edge_ip_hash}";
 		$edge_limit_key = "silver_assist_rest_limit_{$edge_ip_hash}";
 

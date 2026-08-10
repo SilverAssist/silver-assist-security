@@ -163,10 +163,9 @@ class RestAPISecurity {
 		}
 
 		// Use fixed-window rate limiting with explicit timestamp
-		// Generate consistent transient keys using IP hash
-		$client_ip_hash = \hash( 'sha256', $client_ip );
-		$window_key     = "silver_assist_rest_window_{$client_ip_hash}";
-		$count_key      = "silver_assist_rest_limit_{$client_ip_hash}";
+		// Generate consistent transient keys using established SecurityHelper path
+		$window_key = SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_window', $client_ip );
+		$count_key  = SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_limit', $client_ip );
 
 		// Get or create window start time
 		$window_start = (int) \get_transient( $window_key );
