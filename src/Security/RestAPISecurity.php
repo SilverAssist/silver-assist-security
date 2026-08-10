@@ -188,12 +188,32 @@ class RestAPISecurity {
 			$request_count = \wp_cache_incr( $count_key, 1, '' );
 
 			if ( false === $request_count ) {
-				// Persistent cache not available (common on shared hosting)
-				// Fall back to get/set but accept race condition risk
-				// This is acceptable for rate-limit enforcement (temporary overages are acceptable)
-				$current_count = (int) \get_transient( $count_key );
-				$request_count = $current_count + 1;
-				\set_transient( $count_key, $request_count, $this->rate_limit_window );
+				// Persistent cache not available (common on shared hosting).
+				// Use MySQL atomic UPDATE on the underlying transient option row.
+				// InnoDB row-level locking makes this safe against concurrent floods.
+				// The transient TTL lives in a separate _transient_timeout_* option,
+				// so this UPDATE does not reset the fixed window expiration.
+				global $wpdb;
+				$option_name = "_transient_{$count_key}";
+				$updated     = $wpdb->query(
+					$wpdb->prepare(
+						"UPDATE {$wpdb->options} SET option_value = CAST(option_value AS UNSIGNED) + 1 WHERE option_name = %s",
+						$option_name
+					)
+				);
+
+				if ( 1 === (int) $updated ) {
+					$request_count = (int) $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+							$option_name
+						)
+					);
+				} else {
+					// Row missing (transient expired between checks) — reinitialize.
+					\set_transient( $count_key, 1, $this->rate_limit_window );
+					$request_count = 1;
+				}
 			}
 		}
 
