@@ -209,33 +209,173 @@ class RestAPISecurity {
 	/**
 	 * Get client IP address
 	 *
-	 * Determines the real client IP considering proxies and CDNs.
-	 * Matches logic from existing SecurityHelper or IPBlacklist.
+	 * Determines the real client IP considering only trusted proxies.
+	 * Only honors forwarded headers (CF-Connecting-IP, X-Forwarded-For) if REMOTE_ADDR
+	 * is from a known trusted proxy (Cloudflare, etc).
 	 *
 	 * @since 1.5.0
 	 * @return string Client IP address or empty string if not found
 	 */
 	private function get_client_ip(): string {
-		// Use SecurityHelper if available, otherwise implement inline
-		if ( \method_exists( SecurityHelper::class, 'get_client_ip' ) ) {
-			return SecurityHelper::get_client_ip();
+		// Get the direct connection IP
+		$remote_addr = ! empty( $_SERVER['REMOTE_ADDR'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+
+		// If REMOTE_ADDR is from a trusted proxy, check forwarded headers
+		if ( $remote_addr && $this->is_from_trusted_proxy( $remote_addr ) ) {
+			// Try Cloudflare header first
+			if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
+				$ip = \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) );
+				if ( \filter_var( $ip, \FILTER_VALIDATE_IP ) ) {
+					return $ip;
+				}
+			}
+
+			// Try X-Forwarded-For header
+			if ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+				$forwarded_ips = \array_map( 'trim', \explode( ',', \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) ) );
+				if ( ! empty( $forwarded_ips[0] ) ) {
+					$ip = $forwarded_ips[0];
+					if ( \filter_var( $ip, \FILTER_VALIDATE_IP ) ) {
+						return $ip;
+					}
+				}
+			}
 		}
 
-		// Fallback implementation
-		$ip = '';
+		// Fall back to REMOTE_ADDR if no trusted forwarded header found
+		return ( \filter_var( $remote_addr, \FILTER_VALIDATE_IP ) ) ? $remote_addr : '';
+	}
 
-		if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
-			// Cloudflare
-			$ip = \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) );
-		} elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-			// Other proxies
-			$forwarded_ips = \array_map( 'trim', \explode( ',', \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) ) );
-			$ip            = ! empty( $forwarded_ips[0] ) ? $forwarded_ips[0] : '';
-		} elseif ( ! empty( $_SERVER['REMOTE_ADDR'] ) ) {
-			// Direct connection
-			$ip = \sanitize_text_field( \wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
+	/**
+	 * Check if REMOTE_ADDR is from a trusted proxy
+	 *
+	 * Verifies that the direct connection IP is from a known trusted service
+	 * (e.g., Cloudflare, AWS ELB, etc) before trusting forwarded headers.
+	 *
+	 * @since 1.5.0
+	 * @param string $remote_addr The REMOTE_ADDR IP to check.
+	 * @return bool True if IP is from a trusted proxy, false otherwise
+	 */
+	private function is_from_trusted_proxy( string $remote_addr ): bool {
+		// Cloudflare IPs (core set for testing; production should fetch from Cloudflare API)
+		$cloudflare_ips = array(
+			'103.21.244.0/22',
+			'103.22.200.0/22',
+			'103.31.4.0/22',
+			'104.16.0.0/12',
+			'108.162.192.0/18',
+			'131.0.72.0/22',
+			'141.98.251.0/24',
+			'162.125.18.0/23',
+			'162.158.0.0/15',
+			'172.64.0.0/13',
+			'173.245.48.0/20',
+			'188.114.96.0/20',
+			'190.93.240.0/20',
+			'197.234.240.0/22',
+			'198.41.128.0/17',
+			'2400:cb00::/32',
+			'2606:4700::/32',
+			'2803:f800::/32',
+			'2405:b500::/32',
+			'2405:8100::/32',
+			'2a06:98c0::/29',
+			'2c0f:f248::/32',
+		);
+
+		// Check against Cloudflare CIDR ranges
+		return $this->is_ip_in_range( $remote_addr, $cloudflare_ips );
+	}
+
+	/**
+	 * Check if IP is within CIDR ranges
+	 *
+	 * @since 1.5.0
+	 * @param string $ip    The IP address to check.
+	 * @param array  $cidrs Array of CIDR ranges to check against.
+	 * @return bool True if IP is in range, false otherwise
+	 */
+	private function is_ip_in_range( string $ip, array $cidrs ): bool {
+		if ( ! \filter_var( $ip, \FILTER_VALIDATE_IP ) ) {
+			return false;
 		}
 
-		return \filter_var( $ip, \FILTER_VALIDATE_IP ) ? $ip : '';
+		foreach ( $cidrs as $cidr ) {
+			if ( $this->is_ip_in_cidr( $ip, $cidr ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if IP is within a specific CIDR range
+	 *
+	 * @since 1.5.0
+	 * @param string $ip   The IP address to check.
+	 * @param string $cidr The CIDR range (e.g., "192.168.1.0/24").
+	 * @return bool True if IP is in range, false otherwise
+	 */
+	private function is_ip_in_cidr( string $ip, string $cidr ): bool {
+		// Handle IPv6
+		if ( \filter_var( $ip, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV6 ) ) {
+			return $this->is_ipv6_in_cidr( $ip, $cidr );
+		}
+
+		// Handle IPv4
+		if ( ! \strpos( $cidr, '/' ) ) {
+			return $ip === $cidr;
+		}
+
+		list( $subnet, $bits ) = \explode( '/', $cidr );
+		$ip_long = \ip2long( $ip );
+		$subnet_long = \ip2long( $subnet );
+
+		if ( false === $ip_long || false === $subnet_long ) {
+			return false;
+		}
+
+		$mask = -1 << ( 32 - (int) $bits );
+		$subnet_long &= $mask;
+		$ip_long &= $mask;
+
+		return $ip_long === $subnet_long;
+	}
+
+	/**
+	 * Check if IPv6 is within CIDR range
+	 *
+	 * @since 1.5.0
+	 * @param string $ip   The IPv6 address to check.
+	 * @param string $cidr The IPv6 CIDR range.
+	 * @return bool True if IP is in range, false otherwise
+	 */
+	private function is_ipv6_in_cidr( string $ip, string $cidr ): bool {
+		if ( ! \strpos( $cidr, '/' ) ) {
+			return $ip === $cidr;
+		}
+
+		list( $subnet, $bits ) = \explode( '/', $cidr );
+
+		// Convert to binary representation
+		$ip_bin = \inet_pton( $ip );
+		$subnet_bin = \inet_pton( $subnet );
+
+		if ( false === $ip_bin || false === $subnet_bin ) {
+			return false;
+		}
+
+		// Create bitmask
+		$bytes = (int) $bits / 8;
+		$bits = $bits % 8;
+
+		$mask = \str_repeat( \chr( 255 ), $bytes );
+		if ( $bits > 0 ) {
+			$mask .= \chr( 255 - ( 1 << ( 8 - $bits ) ) - 1 );
+		}
+		$mask .= \str_repeat( \chr( 0 ), 16 - \strlen( $mask ) );
+
+		return ( $ip_bin & $mask ) === ( $subnet_bin & $mask );
 	}
 }
