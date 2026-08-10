@@ -267,4 +267,45 @@ class RestAPISecurityTest extends WP_UnitTestCase {
 			'Rate limiting filter should not be registered when disabled'
 		);
 	}
+
+	/**
+	 * Test invalid CIDR prefixes cannot leak trust
+	 *
+	 * A typo such as `192.0.2.0/foo` or an out-of-range prefix (`/33`, `/200`) must NOT
+	 * cause the trusted-proxy check to accept every IP; those inputs must be rejected.
+	 * Valid boundaries (`/0`, `/32`, `/128`) must keep working.
+	 *
+	 * @since 1.5.0
+	 * @return void
+	 */
+	public function test_invalid_cidr_prefix_is_rejected(): void {
+		\update_option( 'silver_assist_rest_rate_limiting_enabled', 0 );
+
+		$rest_api_security = new RestAPISecurity();
+
+		$method = new \ReflectionMethod( RestAPISecurity::class, 'is_ip_in_cidr' );
+		$method->setAccessible( true );
+
+		// IPv4 — malformed / out-of-range prefixes must never match.
+		$this->assertFalse( $method->invoke( $rest_api_security, '203.0.113.5', '192.0.2.0/foo' ), 'Non-numeric IPv4 prefix must be rejected' );
+		$this->assertFalse( $method->invoke( $rest_api_security, '203.0.113.5', '192.0.2.0/33' ), 'IPv4 prefix above 32 must be rejected' );
+		$this->assertFalse( $method->invoke( $rest_api_security, '203.0.113.5', '192.0.2.0/-1' ), 'Negative IPv4 prefix must be rejected' );
+		$this->assertFalse( $method->invoke( $rest_api_security, '203.0.113.5', '192.0.2.0/' ), 'Empty IPv4 prefix must be rejected' );
+
+		// IPv4 — valid boundaries still work.
+		$this->assertTrue( $method->invoke( $rest_api_security, '203.0.113.5', '0.0.0.0/0' ), 'IPv4 /0 must match every address' );
+		$this->assertTrue( $method->invoke( $rest_api_security, '10.0.1.42', '10.0.0.0/8' ), 'IPv4 in-range address must match' );
+		$this->assertFalse( $method->invoke( $rest_api_security, '203.0.113.5', '10.0.0.0/8' ), 'IPv4 out-of-range address must not match' );
+		$this->assertTrue( $method->invoke( $rest_api_security, '203.0.113.5', '203.0.113.5/32' ), 'IPv4 /32 must match exact address' );
+
+		// IPv6 — malformed / out-of-range prefixes must never match and must never raise a ValueError from str_repeat().
+		$this->assertFalse( $method->invoke( $rest_api_security, '2001:db8::1', '2001:db8::/bad' ), 'Non-numeric IPv6 prefix must be rejected' );
+		$this->assertFalse( $method->invoke( $rest_api_security, '2001:db8::1', '2001:db8::/129' ), 'IPv6 prefix above 128 must be rejected' );
+		$this->assertFalse( $method->invoke( $rest_api_security, '2001:db8::1', '2001:db8::/200' ), 'IPv6 prefix well above 128 must be rejected' );
+
+		// IPv6 — valid boundaries still work.
+		$this->assertTrue( $method->invoke( $rest_api_security, '2001:db8::1', '2001:db8::/32' ), 'IPv6 in-range address must match' );
+		$this->assertTrue( $method->invoke( $rest_api_security, '2001:db8::1', '2001:db8::1/128' ), 'IPv6 /128 must match exact address' );
+		$this->assertFalse( $method->invoke( $rest_api_security, '2001:db8::1', '2001:db9::/32' ), 'IPv6 out-of-range address must not match' );
+	}
 }

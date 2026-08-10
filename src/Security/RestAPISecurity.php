@@ -420,14 +420,28 @@ class RestAPISecurity {
 		}
 
 		list( $subnet, $bits ) = \explode( '/', $cidr );
-		$ip_long               = \ip2long( $ip );
-		$subnet_long           = \ip2long( $subnet );
+
+		// Reject non-numeric or out-of-range prefixes so a typo like "/foo" or "/99" cannot silently trust every IPv4.
+		if ( ! \ctype_digit( $bits ) ) {
+			return false;
+		}
+		$bits = (int) $bits;
+		if ( $bits < 0 || $bits > 32 ) {
+			return false;
+		}
+
+		$ip_long     = \ip2long( $ip );
+		$subnet_long = \ip2long( $subnet );
 
 		if ( false === $ip_long || false === $subnet_long ) {
 			return false;
 		}
 
-		$mask         = -1 << ( 32 - (int) $bits );
+		if ( 0 === $bits ) {
+			return true;
+		}
+
+		$mask         = -1 << ( 32 - $bits );
 		$subnet_long &= $mask;
 		$ip_long     &= $mask;
 
@@ -448,7 +462,15 @@ class RestAPISecurity {
 		}
 
 		list( $subnet, $bits ) = \explode( '/', $cidr );
-		$bits                  = (int) $bits;
+
+		// Reject non-numeric or out-of-range prefixes so a typo like "/foo" or "/200" cannot trust every IPv6 or raise a ValueError in str_repeat().
+		if ( ! \ctype_digit( $bits ) ) {
+			return false;
+		}
+		$bits = (int) $bits;
+		if ( $bits < 0 || $bits > 128 ) {
+			return false;
+		}
 
 		// Convert to binary representation
 		$ip_bin     = \inet_pton( $ip );
