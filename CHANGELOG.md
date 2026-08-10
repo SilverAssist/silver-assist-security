@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Recommended for all WordPress 7.0.2 sites pending core update to 7.0.3
 - Protects against WP2Shell variant exploits even after core patches deployed
 - Authenticated users (admin/editor) bypass restrictions for legitimate API operations
-- No performance impact: 2 lightweight filters + transient-based rate limiting (no database queries per request)
+- Minimal performance impact: 2 lightweight filters + transient-based rate limiting (leverages external object cache when available; falls back to WordPress options table)
 
 ## [1.4.0] - 2026-06-03
 
