@@ -418,7 +418,7 @@ class SettingsRenderer {
 
 						<!-- Display current GraphQL configuration -->
 						<div class="graphql-config-display">
-							<?php echo $this->config_manager->get_settings_display(); ?>
+							<?php echo $this->config_manager->get_settings_display(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_settings_display() returns HTML assembled entirely from esc_html()/esc_html__()-wrapped pieces and static markup; see GraphQLConfigManager::get_settings_display(). ?>
 						</div>
 
 						<form method="post" action="" id="graphql-settings-form">
