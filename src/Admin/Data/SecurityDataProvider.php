@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Silver Assist Security Essentials - Security Data Provider
  *
@@ -412,6 +411,7 @@ class SecurityDataProvider {
 		);
 	}
 
+	// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen,WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- WP_Filesystem only supports whole-file reads; this method's seek-from-end tail-read for large log files has no WP_Filesystem equivalent and would otherwise have to load entire multi-MB files into memory.
 	/**
 	 * Read last N lines from a file efficiently
 	 *
@@ -430,6 +430,7 @@ class SecurityDataProvider {
 
 		// For small files, just read all lines.
 		if ( filesize( $file ) < 1024 * 1024 ) { // 1MB
+			// phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition -- Standard PHP file-read idiom.
 			while ( ( $line = fgets( $handle ) ) !== false ) {
 				$result[] = $line;
 			}
@@ -456,6 +457,7 @@ class SecurityDataProvider {
 		}
 
 		// Read remaining lines.
+		// phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition -- Standard PHP file-read idiom.
 		while ( ( $line = fgets( $handle ) ) !== false ) {
 			$result[] = $line;
 		}
@@ -463,6 +465,7 @@ class SecurityDataProvider {
 		fclose( $handle );
 		return $result;
 	}
+	// phpcs:enable WordPress.WP.AlternativeFunctions.file_system_operations_fopen,WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
 	/**
 	 * Determine severity level for event type

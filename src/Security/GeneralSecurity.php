@@ -168,15 +168,16 @@ class GeneralSecurity {
 		return $src;
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WordPress filter signature.
 	/**
 	 * Remove XML-RPC methods
 	 *
 	 * @since 1.1.1
-	 * @param array $methods XML-RPC methods
+	 * @param array $methods XML-RPC methods.
 	 * @return array
 	 */
-	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WordPress filter signature.
 	public function remove_xmlrpc_methods( array $methods ): array {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		return array();
 	}
 
@@ -205,15 +206,16 @@ class GeneralSecurity {
 		}
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WordPress filter signature.
 	/**
 	 * Force secure cookies
 	 *
 	 * @since 1.1.1
-	 * @param bool $secure Current secure flag
+	 * @param bool $secure Current secure flag.
 	 * @return bool
 	 */
-	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WordPress filter signature.
 	public function force_secure_cookies( bool $secure ): bool {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		return \is_ssl();
 	}
 

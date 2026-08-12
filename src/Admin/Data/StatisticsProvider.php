@@ -261,6 +261,7 @@ class StatisticsProvider {
 		return array_filter( $paths );
 	}
 
+	// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen,WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- WP_Filesystem only supports whole-file reads; this method's bounded seek-from-end read of large log files has no WP_Filesystem equivalent and would otherwise have to load entire multi-MB files into memory.
 	/**
 	 * Count BOT_BLOCKED events in a specific log file
 	 *
@@ -273,14 +274,14 @@ class StatisticsProvider {
 		$count = 0;
 
 		try {
-			$handle = @fopen( $log_file, 'r' );
+			$handle = fopen( $log_file, 'r' );
 			if ( ! $handle ) {
 				return 0;
 			}
 
 			// Bound the read to the last 1 MB of the file to avoid scanning huge logs.
 			$max_read_bytes = 1024 * 1024; // 1 MB
-			$file_size      = @filesize( $log_file );
+			$file_size      = filesize( $log_file );
 
 			if ( $file_size && $file_size > $max_read_bytes ) {
 				fseek( $handle, -$max_read_bytes, SEEK_END );
@@ -289,6 +290,7 @@ class StatisticsProvider {
 			}
 
 			// Read file line by line to handle large files.
+			// phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition -- Standard PHP file-read idiom.
 			while ( ( $line = fgets( $handle ) ) !== false ) {
 				if ( strpos( $line, 'SILVER_ASSIST_SECURITY:' ) === false ) {
 					continue;
@@ -308,11 +310,17 @@ class StatisticsProvider {
 
 			fclose( $handle );
 		} catch ( \Exception $e ) {
-			// Silently fail - don't break statistics for log read errors.
+			// Don't break statistics for log read errors, but don't swallow them silently either.
+			SecurityHelper::log_security_event(
+				'STATS_LOG_READ_ERROR',
+				"Failed to read log file for bot block statistics: {$e->getMessage()}",
+				array( 'log_file' => $log_file )
+			);
 		}
 
 		return $count;
 	}
+	// phpcs:enable WordPress.WP.AlternativeFunctions.file_system_operations_fopen,WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
 	/**
 	 * Get count of blocked IPs

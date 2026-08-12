@@ -134,6 +134,7 @@ class RestAPISecurity {
 		return $response;
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the rest_pre_dispatch filter signature.
 	/**
 	 * Rate limit unauthenticated REST API requests
 	 *
@@ -147,6 +148,7 @@ class RestAPISecurity {
 	 * @return mixed Original response or error
 	 */
 	public function rate_limit_rest_api( $response, \WP_REST_Server $server, \WP_REST_Request $request ) {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// Preserve any pre-existing error responses from earlier filters.
 		if ( \is_wp_error( $response ) ) {
 			return $response;

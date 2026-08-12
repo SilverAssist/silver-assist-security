@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Silver Assist Security Essentials - Security AJAX Handler
  *

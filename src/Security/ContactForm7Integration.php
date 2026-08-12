@@ -88,6 +88,7 @@ class ContactForm7Integration {
 		}
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the wpcf7_validate filter signature.
 	/**
 	 * Validate CF7 form submission
 	 *
@@ -97,6 +98,7 @@ class ContactForm7Integration {
 	 * @return mixed Modified validation result
 	 */
 	public function validate_cf7_form( $result, $tags ) {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		$client_ip       = SecurityHelper::get_client_ip();
 		$submission_data = $this->get_cf7_submission_data();
 
@@ -256,6 +258,7 @@ class ContactForm7Integration {
 		return true;
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the wpcf7_before_send_mail action signature.
 	/**
 	 * Process CF7 submission before sending
 	 *
@@ -266,6 +269,7 @@ class ContactForm7Integration {
 	 * @return void
 	 */
 	public function process_cf7_submission( $contact_form, &$abort, $submission ): void {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		$client_ip = SecurityHelper::get_client_ip();
 
 		// Log successful submission for monitoring.

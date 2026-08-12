@@ -1,4 +1,14 @@
 <?php
+/**
+ * Silver Assist Security Essentials - Admin Path Validator Utility
+ *
+ * Provides centralized validation logic for admin path security.
+ * Used by both AdminHideSecurity and AdminPanel classes.
+ *
+ * @package SilverAssist\Security\Core
+ * @since   1.1.4
+ * @version 1.4.0
+ */
 
 namespace SilverAssist\Security\Core;
 

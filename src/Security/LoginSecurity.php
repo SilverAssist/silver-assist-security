@@ -471,16 +471,17 @@ class LoginSecurity {
 		\delete_transient( $lockout_key );
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress hook.
 	/**
 	 * Clear login attempts after successful password reset
 	 *
 	 * @since 1.1.9
-	 * @param WP_User $user User object
-	 * @param string  $new_pass New password
+	 * @param WP_User $user User object.
+	 * @param string  $new_pass New password.
 	 * @return void
 	 */
-	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress hook.
 	public function clear_login_attempts_on_password_change( WP_User $user, string $new_pass ): void {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// Clear any existing login attempts for the current IP.
 		$this->clear_login_attempts();
 
@@ -514,17 +515,18 @@ class LoginSecurity {
 		}
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress hook.
 	/**
 	 * Validate password strength
 	 *
 	 * @since 1.1.1
-	 * @param WP_Error          $errors Errors object
-	 * @param bool              $update Whether this is a user update
-	 * @param \stdClass|WP_User $user User object (stdClass for new users, WP_User for updates)
+	 * @param WP_Error          $errors Errors object.
+	 * @param bool              $update Whether this is a user update.
+	 * @param \stdClass|WP_User $user User object (stdClass for new users, WP_User for updates).
 	 * @return void
 	 */
-	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress hook.
 	public function validate_password_strength( WP_Error $errors, bool $update, \stdClass|WP_User $user ): void {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress handles nonce verification for user profile updates.
 		if ( isset( $_POST['pass1'] ) && ! empty( $_POST['pass1'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- WordPress handles nonce verification for user profile updates.
@@ -539,16 +541,17 @@ class LoginSecurity {
 		}
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress hook.
 	/**
 	 * Validate password strength on reset
 	 *
 	 * @since 1.1.1
-	 * @param WP_Error          $errors Errors object
-	 * @param \stdClass|WP_User $user User object (can be stdClass or WP_User depending on context)
+	 * @param WP_Error          $errors Errors object.
+	 * @param \stdClass|WP_User $user User object (can be stdClass or WP_User depending on context).
 	 * @return void
 	 */
-	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress hook.
 	public function validate_password_strength_reset( WP_Error $errors, \stdClass|WP_User $user ): void {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress handles nonce verification for password reset forms.
 		if ( isset( $_POST['pass1'] ) && ! empty( $_POST['pass1'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- WordPress handles nonce verification for password reset forms.
@@ -777,6 +780,7 @@ class LoginSecurity {
 		SecurityHelper::send_404_response( false );
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress filter signature.
 	/**
 	 * Force the auth cookie expiration to match the configured session timeout.
 	 *
@@ -789,8 +793,8 @@ class LoginSecurity {
 	 * @param bool $remember   Whether "Remember Me" was checked.
 	 * @return int Session timeout in seconds.
 	 */
-	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress filter signature.
 	public function enforce_session_cookie_lifetime( int $expiration, int $user_id, bool $remember ): int {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		return $this->session_timeout * 60;
 	}
 

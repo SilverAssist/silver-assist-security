@@ -308,6 +308,7 @@ class AdminPanel {
 		$this->settings_handler->save_security_settings();
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Parameter required by Settings Hub callback signature.
 	/**
 	 * Render update check script for Settings Hub action button
 	 *
@@ -319,8 +320,8 @@ class AdminPanel {
 	 * @param string $plugin_slug Plugin slug passed by Settings Hub.
 	 * @return void
 	 */
-	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Parameter required by Settings Hub callback signature
 	public function render_update_check_script( string $plugin_slug = '' ): void {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		$plugin  = Plugin::get_instance();
 		$updater = $plugin->get_updater();
 

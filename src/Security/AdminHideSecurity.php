@@ -533,17 +533,18 @@ class AdminHideSecurity {
 		);
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Parameters required by WordPress hook.
 	/**
 	 * Handle logout redirect to include auth token
 	 *
 	 * @since 1.1.4
-	 * @param string $redirect_to The redirect destination URL
-	 * @param string $requested_redirect_to The requested redirect destination URL
-	 * @param mixed  $user The user object
+	 * @param string $redirect_to The redirect destination URL.
+	 * @param string $requested_redirect_to The requested redirect destination URL.
+	 * @param mixed  $user The user object.
 	 * @return string Modified redirect URL
 	 */
-	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Parameters required by WordPress hook.
 	public function handle_logout_redirect( string $redirect_to, string $requested_redirect_to, $user ): string {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// Double-check if admin hiding is enabled.
 		if ( ! $this->admin_hide_enabled ) {
 			return $redirect_to;

@@ -267,6 +267,7 @@ class GraphQLSecurity {
 		\add_filter( 'graphql_connection_query_args', array( $this, 'add_complexity_hints_to_connections' ), 10, 5 );
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the graphql_connection_max_query_amount filter signature.
 	/**
 	 * Filter WPGraphQL's connection max query amount based on complexity estimation
 	 *
@@ -279,6 +280,7 @@ class GraphQLSecurity {
 	 * @return int
 	 */
 	public function filter_connection_max_query_amount( int $max_query_amount, $source = null, array $args = array(), $context = null, $info = null ): int {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// Use our complexity configuration to adjust connection limits.
 		$complexity_ratio = $this->max_query_complexity / 100; // Base ratio.
 
@@ -342,6 +344,11 @@ class GraphQLSecurity {
 	public function add_custom_validation_rules( array $validation_rules ): array {
 		// Add our enhanced complexity validation.
 		$validation_rules[] = new class($this->config_manager) {
+			/**
+			 * GraphQL configuration manager.
+			 *
+			 * @var GraphQLConfigManager
+			 */
 			private GraphQLConfigManager $config_manager;
 
 			/**
@@ -469,6 +476,7 @@ class GraphQLSecurity {
 	 * @param array $rules Existing validation rules
 	 * @return array
 	 */
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the graphql_request_data filter signature.
 	/**
 	 * Validate query before execution
 	 *
@@ -482,6 +490,7 @@ class GraphQLSecurity {
 	 * @throws UserError When introspection is attempted in production or query patterns fail validation.
 	 */
 	public function validate_query_before_execution( array $request_data, $request = null, ?string $operation_name = null, ?array $variables = null, $context = null ): array {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		if ( empty( $request_data['query'] ) ) {
 			return $request_data;
 		}
@@ -631,6 +640,7 @@ class GraphQLSecurity {
 		}
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the graphql_request_results filter signature.
 	/**
 	 * Enforce query timeout using GraphQL execution tracking
 	 *
@@ -643,6 +653,7 @@ class GraphQLSecurity {
 	 * @return mixed
 	 */
 	public function enforce_query_timeout( $response, $schema, ?string $operation, ?string $query, ?array $variables ) {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		$request_time   = isset( $_SERVER['REQUEST_TIME_FLOAT'] ) ? floatval( \wp_unslash( $_SERVER['REQUEST_TIME_FLOAT'] ) ) : microtime( true );
 		$execution_time = microtime( true ) - $request_time;
 
@@ -802,6 +813,7 @@ class GraphQLSecurity {
 		return isset( $_SERVER['REMOTE_ADDR'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the graphql_request_results filter signature.
 	/**
 	 * Log GraphQL requests for monitoring
 	 *
@@ -814,6 +826,7 @@ class GraphQLSecurity {
 	 * @return mixed
 	 */
 	public function log_graphql_requests( $response, $schema, ?string $operation, ?string $query, ?array $variables ) {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// Convert ExecutionResult to array for analysis if needed.
 		$response_array = is_object( $response ) && method_exists( $response, 'toArray' ) ?
 			$response->toArray() :
@@ -980,8 +993,9 @@ class GraphQLSecurity {
 		$current_depth = 0;
 		$in_string     = false;
 		$string_char   = null;
+		$query_length  = strlen( $query );
 
-		for ( $i = 0; $i < strlen( $query ); $i++ ) {
+		for ( $i = 0; $i < $query_length; $i++ ) {
 			$char = $query[ $i ];
 
 			// Handle string literals.
@@ -1012,6 +1026,7 @@ class GraphQLSecurity {
 		return $max_depth;
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Kept for signature consistency with the other validate_query_* methods in this class.
 	/**
 	 * Validate query complexity using hybrid approach
 	 *
@@ -1025,6 +1040,7 @@ class GraphQLSecurity {
 	 * @return array
 	 */
 	public function validate_query_complexity( $context ): array {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		// WPGraphQL doesn't have native complexity analysis
 		// Our complexity validation happens in validate_query_patterns()
 		// using enhanced heuristics combined with WPGraphQL's native features:
@@ -1443,6 +1459,7 @@ class GraphQLSecurity {
 		\add_filter( 'graphql_request_data', array( $this, 'validate_authentication' ), 0, 5 );
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the graphql_request_data filter signature.
 	/**
 	 * Validate that the current request is authenticated
 	 *
@@ -1461,6 +1478,7 @@ class GraphQLSecurity {
 	 * @throws UserError When the request is not authenticated.
 	 */
 	public function validate_authentication( array $request_data, $request = null, ?string $operation_name = null, ?array $variables = null, $context = null ): array {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// Allow unauthenticated access only in explicit local/development environments for tooling.
 		$environment = 'production';
 

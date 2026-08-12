@@ -684,6 +684,12 @@ class SecurityHelper {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Get Contact Form 7 plugin status and version info
+	 *
+	 * @since 1.1.15
+	 * @return array{active: bool, version: ?string, compatible?: bool, message: string}
+	 */
 	public static function get_contact_form_7_info(): array {
 		if ( ! self::is_contact_form_7_active() ) {
 			return array(
