@@ -55,6 +55,22 @@ class IPBlacklist {
 		return self::$instance;
 	}
 
+	// phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Deprecated camelCase alias kept for backward compatibility; see get_instance().
+	/**
+	 * Deprecated alias for get_instance()
+	 *
+	 * Kept for backward compatibility: this is a public accessor on a project
+	 * that follows Semantic Versioning, so renaming it without a compatibility
+	 * shim would break external code calling IPBlacklist::getInstance() directly.
+	 *
+	 * @deprecated 1.5.1 Use get_instance() instead.
+	 * @since 1.1.15
+	 * @return IPBlacklist
+	 */
+	public static function getInstance(): IPBlacklist {
+		return self::get_instance();
+	}
+
 	/**
 	 * Add IP to blacklist manually
 	 *

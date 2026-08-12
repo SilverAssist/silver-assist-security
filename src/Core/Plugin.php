@@ -112,6 +112,22 @@ class Plugin {
 		return self::$instance;
 	}
 
+	// phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Deprecated camelCase alias kept for backward compatibility; see get_instance().
+	/**
+	 * Deprecated alias for get_instance()
+	 *
+	 * Kept for backward compatibility: this is a public accessor on a project
+	 * that follows Semantic Versioning, so renaming it without a compatibility
+	 * shim would break external code calling Plugin::getInstance() directly.
+	 *
+	 * @deprecated 1.5.1 Use get_instance() instead.
+	 * @since 1.1.1
+	 * @return Plugin
+	 */
+	public static function getInstance(): Plugin {
+		return self::get_instance();
+	}
+
 	/**
 	 * Private constructor to enforce singleton pattern
 	 *

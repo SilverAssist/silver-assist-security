@@ -86,6 +86,23 @@ class GraphQLConfigManager {
 		return self::$instance;
 	}
 
+	// phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Deprecated camelCase alias kept for backward compatibility; see get_instance().
+	/**
+	 * Deprecated alias for get_instance()
+	 *
+	 * Kept for backward compatibility: this is a public accessor on a project
+	 * that follows Semantic Versioning, so renaming it without a compatibility
+	 * shim would break external code calling GraphQLConfigManager::getInstance()
+	 * directly.
+	 *
+	 * @deprecated 1.5.1 Use get_instance() instead.
+	 * @since 1.1.1
+	 * @return GraphQLConfigManager
+	 */
+	public static function getInstance(): GraphQLConfigManager {
+		return self::get_instance();
+	}
+
 	/**
 	 * Check if WPGraphQL is available and functional
 	 *
