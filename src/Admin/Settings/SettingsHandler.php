@@ -66,13 +66,13 @@ class SettingsHandler {
 		// Check if submission is scoped to a specific section.
 		$section = isset( $_POST['settings_section'] ) ? \sanitize_text_field( \wp_unslash( $_POST['settings_section'] ) ) : '';
 
-		if ( $section === 'graphql_auth' ) {
+		if ( 'graphql_auth' === $section ) {
 			// Only save GraphQL auth-related settings (service user ID).
 			$this->save_graphql_auth_settings();
-		} elseif ( $section === 'login_branding' ) {
+		} elseif ( 'login_branding' === $section ) {
 			// Only save login branding settings.
 			$this->save_login_branding_settings();
-		} elseif ( $section === 'rest_api' ) {
+		} elseif ( 'rest_api' === $section ) {
 			// Only save REST API security settings.
 			$this->save_rest_api_settings();
 		} else {
@@ -96,6 +96,7 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_login_security_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
 		// Login attempts validation.
 		if ( isset( $_POST['silver_assist_login_attempts'] ) ) {
 			$login_attempts = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_attempts'] ) ) );
@@ -120,6 +121,7 @@ class SettingsHandler {
 		// Boolean settings.
 		\update_option( 'silver_assist_bot_protection', (int) ( isset( $_POST['silver_assist_bot_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_bot_protection'] ) ) : 0 ) );
 		\update_option( 'silver_assist_password_strength_enforcement', (int) ( isset( $_POST['silver_assist_password_strength_enforcement'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_password_strength_enforcement'] ) ) : 0 ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -129,6 +131,7 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_rest_api_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
 		// Batch endpoint protection.
 		\update_option( 'silver_assist_rest_batch_endpoint_protection', (int) ( isset( $_POST['silver_assist_rest_batch_endpoint_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_rest_batch_endpoint_protection'] ) ) : 0 ) );
 
@@ -148,6 +151,7 @@ class SettingsHandler {
 			$rate_limit_window = \max( 30, \min( 300, $rate_limit_window ) );
 			\update_option( 'silver_assist_rest_rate_limit_window', $rate_limit_window );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -157,6 +161,7 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_login_branding_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
 		// Enable/disable login branding.
 		\update_option( 'silver_assist_login_branding_enabled', (int) ( isset( $_POST['silver_assist_login_branding_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_branding_enabled'] ) ) : 0 ) );
 
@@ -170,6 +175,7 @@ class SettingsHandler {
 		// Background color.
 		$bg_color = isset( $_POST['silver_assist_login_branding_bg_color'] ) ? \sanitize_hex_color( \wp_unslash( $_POST['silver_assist_login_branding_bg_color'] ) ) : '';
 		\update_option( 'silver_assist_login_branding_bg_color', $bg_color ?? '' );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -179,6 +185,7 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_admin_hide_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
 		// Admin Hide enable/disable.
 		$admin_hide_enabled = (int) ( isset( $_POST['silver_assist_admin_hide_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_admin_hide_enabled'] ) ) : 0 );
 		\update_option( 'silver_assist_admin_hide_enabled', $admin_hide_enabled );
@@ -195,6 +202,7 @@ class SettingsHandler {
 		if ( $admin_hide_enabled ) {
 			\flush_rewrite_rules();
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -204,6 +212,7 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_graphql_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
 		// Headless mode setting — only update when present in the form.
 		if ( isset( $_POST['silver_assist_graphql_headless_mode'] ) ) {
 			$headless_mode = (int) \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_headless_mode'] ) );
@@ -227,6 +236,7 @@ class SettingsHandler {
 			}
 			\update_option( 'silver_assist_graphql_service_user_id', $service_user_id );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -239,6 +249,7 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_graphql_auth_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
 		if ( isset( $_POST['silver_assist_graphql_service_user_id'] ) ) {
 			$service_user_id = \absint( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_service_user_id'] ) ) );
 			// Validate user exists.
@@ -247,6 +258,7 @@ class SettingsHandler {
 			}
 			\update_option( 'silver_assist_graphql_service_user_id', $service_user_id );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -261,6 +273,7 @@ class SettingsHandler {
 			return;
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
 		// CF7 Protection enable/disable.
 		\update_option( 'silver_assist_cf7_protection_enabled', (int) ( isset( $_POST['silver_assist_cf7_protection_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_protection_enabled'] ) ) : 0 ) );
 
@@ -276,6 +289,7 @@ class SettingsHandler {
 			$cf7_rate_window = \max( 30, \min( 300, $cf7_rate_window ) );
 			\update_option( 'silver_assist_cf7_rate_window', $cf7_rate_window );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -285,6 +299,7 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_ip_management_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
 		// IP Blacklist enable/disable.
 		\update_option( 'silver_assist_ip_blacklist_enabled', (int) ( isset( $_POST['silver_assist_ip_blacklist_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_enabled'] ) ) : 0 ) );
 
@@ -301,6 +316,7 @@ class SettingsHandler {
 			$ip_blacklist_duration = \max( 3600, \min( 604800, $ip_blacklist_duration ) );
 			\update_option( 'silver_assist_ip_blacklist_duration', $ip_blacklist_duration );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -310,11 +326,13 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_advanced_protection_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
 		// Advanced CF7 protection features.
 		\update_option( 'silver_assist_cf7_honeypot_enabled', (int) ( isset( $_POST['silver_assist_cf7_honeypot_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_honeypot_enabled'] ) ) : 0 ) );
 		\update_option( 'silver_assist_cf7_timing_protection', (int) ( isset( $_POST['silver_assist_cf7_timing_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_timing_protection'] ) ) : 0 ) );
 		\update_option( 'silver_assist_cf7_obsolete_browser_blocking', (int) ( isset( $_POST['silver_assist_cf7_obsolete_browser_blocking'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_obsolete_browser_blocking'] ) ) : 0 ) );
-		\update_option( 'silver_assist_cf7_sql_injection_protection', (int) ( isset( $_POST['silver_assist_cf7_sql_injection_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_sql_injection_protection'] ) ) : 0 ) );
+		\update_option( 'silver_assist_cf7_sql_injection_protection', (int) ( isset( $_POST['silver_assist_cf7_sql_injection_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_sql_injection_protection'] ) ) : 0 ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**

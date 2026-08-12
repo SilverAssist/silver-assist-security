@@ -121,9 +121,11 @@ class FormProtection {
 	 */
 	public static function has_sql_injection_attempt(): bool {
 		// Get all request data.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Read-only attack-signature scan; must inspect raw request data (including requests with no/invalid nonce) to detect SQL injection attempts.
 		$query_string = $_SERVER['QUERY_STRING'] ?? '';
 		$post_data    = http_build_query( $_POST );
-		$full_data    = $query_string . '&' . $post_data;
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		$full_data = $query_string . '&' . $post_data;
 
 		// Decode URL encoding to catch encoded attacks.
 		$full_data = urldecode( $full_data );
@@ -171,6 +173,7 @@ class FormProtection {
 						'ip'            => SecurityHelper::get_client_ip(),
 						'user_agent'    => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
 						'query_string'  => $query_string,
+						// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Same read-only attack-signature scan as above.
 						'has_post_data' => ! empty( $_POST ),
 					)
 				);

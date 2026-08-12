@@ -142,6 +142,7 @@ class ContactForm7AjaxHandler {
 			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified via SecurityHelper::validate_ajax_request() above.
 		$ip = \sanitize_text_field( \wp_unslash( $_POST['ip'] ?? '' ) );
 		if ( empty( $ip ) || ! \filter_var( $ip, FILTER_VALIDATE_IP ) ) {
 			\wp_send_json_error( array( 'error' => \__( 'Invalid IP address', 'silver-assist-security' ) ) );
@@ -190,6 +191,7 @@ class ContactForm7AjaxHandler {
 			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified via SecurityHelper::validate_ajax_request() above.
 		$ip = \sanitize_text_field( \wp_unslash( $_POST['ip'] ?? '' ) );
 		if ( empty( $ip ) ) {
 			\wp_send_json_error( array( 'error' => \__( 'IP address required', 'silver-assist-security' ) ) );
