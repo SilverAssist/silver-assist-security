@@ -232,7 +232,7 @@ class GraphQLSecurity {
 			$wpgraphql_max_depth     = \get_graphql_setting( 'query_depth_max', 10 );
 
 			// If WPGraphQL depth validation is enabled, coordinate with it.
-			if ( $wpgraphql_depth_enabled === 'on' ) {
+			if ( 'on' === $wpgraphql_depth_enabled ) {
 				// Log coordination for debugging.
 				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 					SecurityHelper::log_security_event(
@@ -445,10 +445,10 @@ class GraphQLSecurity {
 				$max_nesting   = 0;
 				$query_length  = strlen( $query_string );
 				for ( $i = 0; $i < $query_length; $i++ ) {
-					if ( $query_string[ $i ] === '{' ) {
+					if ( '{' === $query_string[ $i ] ) {
 						++$nesting_level;
 						$max_nesting = max( $max_nesting, $nesting_level );
-					} elseif ( $query_string[ $i ] === '}' ) {
+					} elseif ( '}' === $query_string[ $i ] ) {
 						--$nesting_level;
 					}
 				}
@@ -608,7 +608,7 @@ class GraphQLSecurity {
 		$timeout_config = $this->config_manager->get_timeout_config();
 
 		// Only set PHP limit if current GraphQL timeout is lower than PHP limit.
-		if ( $timeout_config['php_timeout'] === 0 || $timeout_config['current_timeout'] < $timeout_config['php_timeout'] ) {
+		if ( 0 === $timeout_config['php_timeout'] || $timeout_config['current_timeout'] < $timeout_config['php_timeout'] ) {
 			set_time_limit( $timeout_config['current_timeout'] );
 		}
 
@@ -624,7 +624,7 @@ class GraphQLSecurity {
 				array(
 					'php_timeout'     => $timeout_config['php_timeout'],
 					'graphql_timeout' => $timeout_config['current_timeout'],
-					'applied_timeout' => $timeout_config['php_timeout'] === 0 ? $timeout_config['current_timeout'] :
+					'applied_timeout' => 0 === $timeout_config['php_timeout'] ? $timeout_config['current_timeout'] :
 						min( $timeout_config['php_timeout'], $timeout_config['current_timeout'] ),
 				)
 			);
@@ -985,7 +985,7 @@ class GraphQLSecurity {
 			$char = $query[ $i ];
 
 			// Handle string literals.
-			if ( ( $char === '"' || $char === "'" ) && ( $i === 0 || $query[ $i - 1 ] !== '\\' ) ) {
+			if ( ( '"' === $char || "'" === $char ) && ( 0 === $i || '\\' !== $query[ $i - 1 ] ) ) {
 				if ( ! $in_string ) {
 					$in_string   = true;
 					$string_char = $char;
@@ -1001,10 +1001,10 @@ class GraphQLSecurity {
 			}
 
 			// Count nesting levels.
-			if ( $char === '{' ) {
+			if ( '{' === $char ) {
 				++$current_depth;
 				$max_depth = max( $max_depth, $current_depth );
-			} elseif ( $char === '}' ) {
+			} elseif ( '}' === $char ) {
 				$current_depth = max( 0, $current_depth - 1 );
 			}
 		}
@@ -1418,7 +1418,7 @@ class GraphQLSecurity {
 				'batch_limit'           => $config['batch_limit'],
 				'query_depth_enabled'   => $config['query_depth_limit'] > 0,
 				'query_depth_limit'     => $config['query_depth_limit'],
-				'auth_required'         => $config['endpoint_access'] === 'restricted',
+				'auth_required'         => 'restricted' === $config['endpoint_access'],
 			),
 			'security_status' => $integration_status['security_level'],
 			'recommendations' => $integration_status['recommendations'],

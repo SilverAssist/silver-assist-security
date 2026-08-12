@@ -123,7 +123,7 @@ class RestAPISecurity {
 		$route = $request->get_route();
 
 		// Check if this is a batch endpoint request (/batch/v1 or /batch/v1/...).
-		if ( \strpos( $route, '/batch/v1' ) === 0 && ( \strlen( $route ) === 9 || $route[9] === '/' ) ) {
+		if ( 0 === \strpos( $route, '/batch/v1' ) && ( 9 === \strlen( $route ) || '/' === $route[9] ) ) {
 			return new \WP_Error(
 				'rest_batch_disabled',
 				'Batch requests require authentication.',

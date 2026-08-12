@@ -49,7 +49,7 @@ class IPBlacklist {
 	 * @return IPBlacklist
 	 */
 	public static function get_instance(): IPBlacklist {
-		if ( self::$instance === null ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -114,7 +114,7 @@ class IPBlacklist {
 	public function record_violation( string $ip, string $type ): void {
 		$violations_key    = 'ip_violations_' . md5( $ip );
 		$stored_violations = \get_transient( $violations_key );
-		$violations        = ( $stored_violations !== false && is_array( $stored_violations ) ) ? $stored_violations : array();
+		$violations        = ( false !== $stored_violations && is_array( $stored_violations ) ) ? $stored_violations : array();
 
 		$violation_window = (int) DefaultConfig::get_option( 'silver_assist_ip_violation_window' );
 		$threshold        = (int) DefaultConfig::get_option( 'silver_assist_ip_blacklist_threshold' );
@@ -234,7 +234,7 @@ class IPBlacklist {
 	public function get_violation_count( string $ip ): int {
 		$violations_key    = 'ip_violations_' . md5( $ip );
 		$stored_violations = \get_transient( $violations_key );
-		$violations        = ( $stored_violations !== false && is_array( $stored_violations ) ) ? $stored_violations : array();
+		$violations        = ( false !== $stored_violations && is_array( $stored_violations ) ) ? $stored_violations : array();
 		return count( $violations );
 	}
 
@@ -548,7 +548,7 @@ class IPBlacklist {
 		$auto_blacklisted = array_filter(
 			$all_blacklisted,
 			function ( $item ) {
-				return isset( $item['auto'] ) && $item['auto'] === true;
+				return isset( $item['auto'] ) && true === $item['auto'];
 			}
 		);
 
@@ -642,7 +642,7 @@ class IPBlacklist {
 			'reason'     => $reason,
 			'timestamp'  => time(),
 			'duration'   => $duration,
-			'auto'       => ( $type === 'cf7_auto' ),
+			'auto'       => ( 'cf7_auto' === $type ),
 			'type'       => $type,
 			'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
 		);

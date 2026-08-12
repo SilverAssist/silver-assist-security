@@ -205,10 +205,10 @@ class AdminHideSecurity {
 
 		// Remove WordPress home path from the beginning if present.
 		$home_root = \wp_parse_url( \home_url(), PHP_URL_PATH );
-		if ( $home_root === null || $home_root === false ) {
+		if ( null === $home_root || false === $home_root ) {
 			$home_root = '/';
 		}
-		if ( $home_root !== '/' && is_string( $path ) && strpos( $path, $home_root ) === 0 ) {
+		if ( '/' !== $home_root && is_string( $path ) && 0 === strpos( $path, $home_root ) ) {
 			$path = substr( $path, strlen( $home_root ) );
 		}
 
@@ -238,8 +238,8 @@ class AdminHideSecurity {
 		) {
 			$this->handle_login_page_access();
 		} elseif (
-			$clean_request_path === 'wp-admin' || strpos( $clean_request_path, 'wp-admin/' ) === 0 ||
-			strpos( $clean_request_path, 'wp-admin' ) === 0
+			'wp-admin' === $clean_request_path || 0 === strpos( $clean_request_path, 'wp-admin/' ) ||
+			0 === strpos( $clean_request_path, 'wp-admin' )
 		) {
 			$this->handle_wp_admin_page();
 		}
@@ -361,7 +361,7 @@ class AdminHideSecurity {
 
 		[$clean_path] = explode( '?', $path );
 
-		if ( $clean_path === 'wp-login.php' ) {
+		if ( 'wp-login.php' === $clean_path ) {
 			// List of actions that should not get access tokens (they need to work normally).
 			$allowed_actions = DefaultConfig::get_admin_hide_bypass_actions(); // Exclude logout for URL tokens.
 
@@ -495,7 +495,7 @@ class AdminHideSecurity {
 	 * @return string The access token
 	 */
 	private function get_access_token( string $type ): string {
-		if ( $type === 'login' ) {
+		if ( 'login' === $type ) {
 			return $this->custom_admin_path;
 		}
 
@@ -517,7 +517,7 @@ class AdminHideSecurity {
 		$cookie_value = $this->get_access_token( $type );
 
 		$home_root = \wp_parse_url( \home_url(), PHP_URL_PATH );
-		if ( $home_root === null || $home_root === false ) {
+		if ( null === $home_root || false === $home_root ) {
 			$home_root = '/';
 		}
 		$cookie_domain = defined( 'COOKIE_DOMAIN' ) ? COOKIE_DOMAIN : '';

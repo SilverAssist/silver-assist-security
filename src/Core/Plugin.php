@@ -105,7 +105,7 @@ class Plugin {
 	 * @return Plugin
 	 */
 	public static function get_instance(): Plugin {
-		if ( self::$instance === null ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 
@@ -390,7 +390,7 @@ class Plugin {
 	 * @return bool True if CF7 integration is active
 	 */
 	public function is_cf7_integration_active(): bool {
-		return $this->cf7_integration !== null && SecurityHelper::is_contact_form_7_active();
+		return null !== $this->cf7_integration && SecurityHelper::is_contact_form_7_active();
 	}
 
 	/**

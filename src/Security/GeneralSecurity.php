@@ -155,7 +155,7 @@ class GeneralSecurity {
 			$cleaned = preg_replace( '/[\?&]ver=[^&]*/', '', $src );
 
 			// If preg_replace succeeded, use the cleaned version.
-			if ( $cleaned !== null ) {
+			if ( null !== $cleaned ) {
 				$src = rtrim( $cleaned, '?&' );
 
 				// If we have parameters but no ?, add it back.

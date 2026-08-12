@@ -444,7 +444,7 @@ class SecurityDataProvider {
 
 		while ( $pos >= 0 && $line_count < $lines ) {
 			$char = fgetc( $handle );
-			if ( $char === "\n" ) {
+			if ( "\n" === $char ) {
 				++$line_count;
 			}
 

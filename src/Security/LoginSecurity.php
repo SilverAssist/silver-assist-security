@@ -229,7 +229,7 @@ class LoginSecurity {
 	 * @return void
 	 */
 	public function setup_login_protection(): void {
-		if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || $_SERVER['REQUEST_METHOD'] !== 'POST' ) {
+		if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
 			return;
 		}
 
@@ -259,7 +259,7 @@ class LoginSecurity {
 		$key = SecurityHelper::generate_ip_transient_key( 'login_attempts', $ip );
 
 		$attempts = \get_transient( $key );
-		if ( $attempts === false ) {
+		if ( false === $attempts ) {
 			$attempts = 0;
 		}
 		++$attempts;
@@ -307,7 +307,7 @@ class LoginSecurity {
 		// Check if IP is locked out.
 		if ( \get_transient( $lockout_key ) ) {
 			$attempts = \get_transient( $attempts_key );
-			if ( $attempts === false ) {
+			if ( false === $attempts ) {
 				$attempts = 0;
 			}
 			$remaining_time = $this->get_remaining_lockout_time( $lockout_key );
@@ -413,13 +413,13 @@ class LoginSecurity {
 		global $pagenow;
 
 		// Check if we're on wp-login.php.
-		if ( $pagenow === 'wp-login.php' ) {
+		if ( 'wp-login.php' === $pagenow ) {
 			return true;
 		}
 
 		// Check if this is a login POST request.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checking if this is a login request context, not processing form data.
-		if ( isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'POST' && isset( $_POST['log'] ) ) {
+		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['log'] ) ) {
 			return true;
 		}
 
@@ -695,7 +695,7 @@ class LoginSecurity {
 			// More lenient rate limiting - allow more requests for legitimate users.
 			$access_key    = "login_access_{md5($ip)}";
 			$recent_access = \get_transient( $access_key );
-			if ( $recent_access === false ) {
+			if ( false === $recent_access ) {
 				$recent_access = 0;
 			}
 
@@ -731,7 +731,7 @@ class LoginSecurity {
 		// Log bot activity for security monitoring.
 		$bot_log_key  = "bot_activity_{md5($ip)}";
 		$bot_activity = \get_transient( $bot_log_key );
-		if ( $bot_activity === false ) {
+		if ( false === $bot_activity ) {
 			$bot_activity = array();
 		}
 

@@ -80,7 +80,7 @@ class GraphQLConfigManager {
 	 * @return GraphQLConfigManager
 	 */
 	public static function get_instance(): GraphQLConfigManager {
-		if ( self::$instance === null ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -103,7 +103,7 @@ class GraphQLConfigManager {
 	 * @return bool
 	 */
 	public function is_headless_mode(): bool {
-		if ( $this->headless_mode === null ) {
+		if ( null === $this->headless_mode ) {
 			// Initialize headless mode from configuration.
 			$this->headless_mode = (bool) DefaultConfig::get_option( 'silver_assist_graphql_headless_mode' );
 		}
@@ -134,7 +134,7 @@ class GraphQLConfigManager {
 		return array(
 			'php_timeout'          => $php_timeout,
 			'current_timeout'      => $current_timeout,
-			'is_unlimited_php'     => $php_timeout === 0,
+			'is_unlimited_php'     => 0 === $php_timeout,
 			'is_using_php_default' => ! DefaultConfig::get_option( 'silver_assist_graphql_query_timeout' ),
 			'recommended_min'      => 5,
 			'recommended_max'      => $php_timeout > 0 ? min( $php_timeout, 60 ) : 60,
@@ -164,7 +164,7 @@ class GraphQLConfigManager {
 	 * @return array Complete configuration array
 	 */
 	public function get_configuration(): array {
-		if ( $this->config_cache === null ) {
+		if ( null === $this->config_cache ) {
 			$this->load_configuration();
 		}
 		return $this->config_cache ?? array();
@@ -211,7 +211,7 @@ class GraphQLConfigManager {
 	private function load_wpgraphql_settings( array $config, bool $is_headless ): array {
 		// Query Depth.
 		$depth_enabled = $this->get_wpgraphql_setting( 'query_depth_enabled', 'off' );
-		if ( $depth_enabled === 'on' ) {
+		if ( 'on' === $depth_enabled ) {
 			$config['query_depth_limit'] = (int) $this->get_wpgraphql_setting( 'query_depth_max_depth', 10 );
 		} else {
 			// Use headless-aware defaults.
@@ -232,7 +232,7 @@ class GraphQLConfigManager {
 
 		// Endpoint Access.
 		$auth_required             = $this->get_wpgraphql_setting( 'restrict_endpoint_to_logged_in_users', 'off' );
-		$config['endpoint_access'] = $auth_required === 'on' ? 'restricted' : 'public';
+		$config['endpoint_access'] = 'on' === $auth_required ? 'restricted' : 'public';
 
 		// Batch Queries.
 		$config['batch_enabled'] = $this->get_wpgraphql_setting( 'batch_queries_enabled', 'on' ) === 'on';
@@ -265,7 +265,7 @@ class GraphQLConfigManager {
 			);
 		}
 
-		if ( $config['endpoint_access'] === 'public' ) {
+		if ( 'public' === $config['endpoint_access'] ) {
 			$recommendations[] = array(
 				'level'   => 'info',
 				'message' => \__( 'GraphQL endpoint is publicly accessible', 'silver-assist-security' ),
@@ -290,7 +290,7 @@ class GraphQLConfigManager {
 		$settings = array();
 
 		// Endpoint Access (most important for security).
-		$auth_status = $config['endpoint_access'] === 'restricted' ?
+		$auth_status = 'restricted' === $config['endpoint_access'] ?
 		'<span style="color: #d63638; font-weight: bold;">' . \esc_html__( 'RESTRICTED', 'silver-assist-security' ) . '</span>' :
 		'<span style="color: #00a32a; font-weight: bold;">' . \esc_html__( 'PUBLIC', 'silver-assist-security' ) . '</span>';
 
@@ -359,7 +359,7 @@ class GraphQLConfigManager {
 				array_filter(
 					$recommendations,
 					function ( $rec ) {
-						return $rec['level'] === 'warning';
+						return 'warning' === $rec['level'];
 					}
 				)
 			);
@@ -484,7 +484,7 @@ class GraphQLConfigManager {
 			$score += 2;
 		}
 		// Treat authentication-restricted access as a single control, even if detected via multiple signals.
-		$is_auth_restricted = ( $config['endpoint_access'] === 'restricted' ) || $this->is_authentication_required();
+		$is_auth_restricted = ( 'restricted' === $config['endpoint_access'] ) || $this->is_authentication_required();
 		if ( $is_auth_restricted ) {
 			$score += 3;
 		}

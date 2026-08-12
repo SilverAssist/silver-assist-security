@@ -223,7 +223,7 @@ class PathValidator {
 	public static function remove_forbidden_path( string $path ): void {
 		$path = strtolower( trim( $path ) );
 		$key  = array_search( $path, self::$forbidden_paths, true );
-		if ( $key !== false ) {
+		if ( false !== $key ) {
 			unset( self::$forbidden_paths[ $key ] );
 			self::$forbidden_paths = array_values( self::$forbidden_paths ); // Re-index.
 		}

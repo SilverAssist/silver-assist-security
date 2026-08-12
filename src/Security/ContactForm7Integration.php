@@ -161,7 +161,7 @@ class ContactForm7Integration {
 		}
 
 		// Check submission timing if provided.
-		if ( $form_start_time !== null ) {
+		if ( null !== $form_start_time ) {
 			$submission_time     = microtime( true ) - $form_start_time;
 			$min_submission_time = (float) DefaultConfig::get_option( 'silver_assist_cf7_submission_delay' ) / 1000; // Convert ms to seconds.
 

@@ -58,7 +58,7 @@ class SecurityHelper {
 
 		// Determine if we should use minified version
 		// Allow override for testing purposes.
-		if ( $force_debug !== null ) {
+		if ( null !== $force_debug ) {
 			$use_minified = ! $force_debug;
 		} else {
 			$use_minified = ! ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG );
@@ -475,7 +475,7 @@ class SecurityHelper {
 	 * @return string Secure transient key
 	 */
 	public static function generate_ip_transient_key( string $prefix, ?string $ip = null ): string {
-		if ( $ip === null ) {
+		if ( null === $ip ) {
 			$ip = self::get_client_ip();
 		}
 
@@ -520,7 +520,7 @@ class SecurityHelper {
 	 * @return bool True if request appears to be from a bot
 	 */
 	public static function is_bot_request( ?string $user_agent = null ): bool {
-		if ( $user_agent === null ) {
+		if ( null === $user_agent ) {
 			$user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
 		}
 
