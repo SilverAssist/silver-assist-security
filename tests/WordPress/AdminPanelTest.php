@@ -60,7 +60,7 @@ class AdminPanelTest extends WP_UnitTestCase
      */
     public function test_graphql_config_manager_integration(): void
     {
-        $config_manager = GraphQLConfigManager::getInstance();
+        $config_manager = GraphQLConfigManager::get_instance();
         
         $this->assertInstanceOf(GraphQLConfigManager::class, $config_manager);
         

@@ -118,7 +118,7 @@ class AdminPanel {
 	 */
 	public function __construct() {
 		$this->plugin_version = SILVER_ASSIST_SECURITY_VERSION;
-		$this->config_manager = GraphQLConfigManager::getInstance();
+		$this->config_manager = GraphQLConfigManager::get_instance();
 
 		// Initialize data providers.
 		$this->data_provider  = new SecurityDataProvider();
@@ -231,7 +231,7 @@ class AdminPanel {
 		$actions = array();
 
 		// Add "Check Updates" button if updater is available.
-		$plugin = Plugin::getInstance();
+		$plugin = Plugin::get_instance();
 		if ( $plugin->get_updater() ) {
 			$actions[] = array(
 				'label'    => \__( 'Check Updates', 'silver-assist-security' ),
@@ -321,7 +321,7 @@ class AdminPanel {
 	 */
 	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Parameter required by Settings Hub callback signature
 	public function render_update_check_script( string $plugin_slug = '' ): void {
-		$plugin  = Plugin::getInstance();
+		$plugin  = Plugin::get_instance();
 		$updater = $plugin->get_updater();
 
 		if ( ! $updater ) {

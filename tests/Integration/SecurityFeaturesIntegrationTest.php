@@ -48,7 +48,7 @@ class SecurityFeaturesIntegrationTest extends WP_UnitTestCase
         parent::setUp();
         
         // Initialize plugin
-        $this->plugin = Plugin::getInstance();
+        $this->plugin = Plugin::get_instance();
         \do_action('wp_loaded');
         
         // Create test user

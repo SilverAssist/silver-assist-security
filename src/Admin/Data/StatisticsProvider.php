@@ -37,7 +37,7 @@ class StatisticsProvider {
 	 * @since 1.1.15
 	 */
 	public function __construct() {
-		$this->ip_blacklist = IPBlacklist::getInstance();
+		$this->ip_blacklist = IPBlacklist::get_instance();
 	}
 
 	/**

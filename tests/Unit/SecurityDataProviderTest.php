@@ -78,7 +78,7 @@ class SecurityDataProviderTest extends WP_UnitTestCase {
 	 */
 	public function test_get_blocked_ips_includes_time_left_calculation(): void {
 		// Add a blocked IP first
-		$blacklist = \SilverAssist\Security\Security\IPBlacklist::getInstance();
+		$blacklist = \SilverAssist\Security\Security\IPBlacklist::get_instance();
 		$blacklist->add_to_blacklist( '10.99.99.1', 'Test block', 3600 );
 
 		$result = $this->provider->get_blocked_ips();

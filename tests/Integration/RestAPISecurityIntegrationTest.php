@@ -52,7 +52,7 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		parent::setUp();
 
 		// Get plugin instance
-		$this->plugin = Plugin::getInstance();
+		$this->plugin = Plugin::get_instance();
 
 		// Initialize REST API security
 		$this->rest_api_security = new RestAPISecurity();
@@ -192,7 +192,7 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		\remove_all_filters( 'rest_pre_dispatch' );
 
 		// Get fresh plugin instance and initialize
-		$plugin = Plugin::getInstance();
+		$plugin = Plugin::get_instance();
 		$plugin->init_security_components();
 
 		// Verify REST API security was not initialized

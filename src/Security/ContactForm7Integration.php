@@ -58,7 +58,7 @@ class ContactForm7Integration {
 	private function init_security_components(): void {
 		if ( DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) ) {
 			$this->form_protection = new FormProtection();
-			$this->ip_blacklist    = IPBlacklist::getInstance();
+			$this->ip_blacklist    = IPBlacklist::get_instance();
 		}
 	}
 

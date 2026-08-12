@@ -48,7 +48,7 @@ class AssetManager {
 	 * @param string $plugin_version Plugin version for cache busting.
 	 */
 	public function __construct( string $plugin_version ) {
-		$this->config_manager = GraphQLConfigManager::getInstance();
+		$this->config_manager = GraphQLConfigManager::get_instance();
 		$this->plugin_version = $plugin_version;
 	}
 

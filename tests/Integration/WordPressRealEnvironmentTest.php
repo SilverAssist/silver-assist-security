@@ -39,7 +39,7 @@ class WordPressRealEnvironmentTest extends WP_UnitTestCase
         parent::setUp();
         
         // Initialize plugin instance
-        $this->plugin = Plugin::getInstance();
+        $this->plugin = Plugin::get_instance();
         
         // Ensure WordPress is fully loaded
         \do_action('wp_loaded');

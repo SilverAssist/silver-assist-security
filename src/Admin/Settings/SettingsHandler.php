@@ -41,7 +41,7 @@ class SettingsHandler {
 	 * @since 1.1.15
 	 */
 	public function __construct() {
-		$this->config_manager = GraphQLConfigManager::getInstance();
+		$this->config_manager = GraphQLConfigManager::get_instance();
 	}
 
 	/**

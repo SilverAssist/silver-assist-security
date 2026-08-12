@@ -47,7 +47,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 		parent::setUp();
 
 		// Initialize config manager
-		$this->config_manager = GraphQLConfigManager::getInstance();
+		$this->config_manager = GraphQLConfigManager::get_instance();
 
 		// Only initialize GraphQL security if WPGraphQL is available
 		if ( \class_exists( 'WPGraphQL' ) ) {
@@ -108,7 +108,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_graphql_config_manager_integration(): void {
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$config         = $config_manager->get_configuration();
 
 		$this->assertIsArray( $config, 'Configuration should be an array' );
@@ -124,7 +124,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_query_depth_limit_configuration(): void {
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$config         = $config_manager->get_configuration();
 		$depth_limit    = $config['query_depth_limit'];
 
@@ -140,7 +140,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_query_complexity_limit_configuration(): void {
-		$config_manager   = GraphQLConfigManager::getInstance();
+		$config_manager   = GraphQLConfigManager::get_instance();
 		$config           = $config_manager->get_configuration();
 		$complexity_limit = $config['query_complexity_limit'];
 
@@ -156,7 +156,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_query_timeout_configuration(): void {
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$config         = $config_manager->get_configuration();
 		$timeout        = $config['query_timeout'];
 
@@ -172,7 +172,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_wpgraphql_plugin_detection(): void {
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$is_available   = $config_manager->is_wpgraphql_available();
 
 		$this->assertIsBool( $is_available, 'WPGraphQL detection should return boolean' );
@@ -191,7 +191,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_headless_mode_detection(): void {
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$is_headless    = $config_manager->is_headless_mode();
 
 		$this->assertIsBool( $is_headless, 'Headless mode detection should return boolean' );
@@ -207,7 +207,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 		// Ensure headless mode is disabled
 		\update_option( 'silver_assist_graphql_headless_mode', 0 );
 
-		$config_manager     = GraphQLConfigManager::getInstance();
+		$config_manager     = GraphQLConfigManager::get_instance();
 		$rate_limit_config  = $config_manager->get_rate_limiting_config();
 
 		$this->assertIsArray( $rate_limit_config, 'Rate limit config should be an array' );
@@ -225,7 +225,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 		// Enable headless mode
 		\update_option( 'silver_assist_graphql_headless_mode', 1 );
 
-		$config_manager     = GraphQLConfigManager::getInstance();
+		$config_manager     = GraphQLConfigManager::get_instance();
 		$rate_limit_config  = $config_manager->get_rate_limiting_config();
 
 		$this->assertIsArray( $rate_limit_config, 'Rate limit config should be an array' );
@@ -249,7 +249,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 		\update_option( 'graphql_general_settings', $settings );
 
 		// Clear singleton config cache so it picks up the new setting.
-		GraphQLConfigManager::getInstance()->clear_cache();
+		GraphQLConfigManager::get_instance()->clear_cache();
 
 		// If WP_ENVIRONMENT_TYPE is already defined as non-production, we can only verify
 		// the method doesn't add the filter. Constants cannot be redefined in PHP.
@@ -303,7 +303,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_safe_limit_for_aliases(): void {
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$alias_limit    = $config_manager->get_safe_limit( 'aliases' );
 
 		$this->assertIsInt( $alias_limit, 'Alias limit should be an integer' );
@@ -317,7 +317,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_safe_limit_for_directives(): void {
-		$config_manager   = GraphQLConfigManager::getInstance();
+		$config_manager   = GraphQLConfigManager::get_instance();
 		$directive_limit  = $config_manager->get_safe_limit( 'directives' );
 
 		$this->assertIsInt( $directive_limit, 'Directive limit should be an integer' );
@@ -331,7 +331,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_safe_limit_for_field_duplicates(): void {
-		$config_manager      = GraphQLConfigManager::getInstance();
+		$config_manager      = GraphQLConfigManager::get_instance();
 		$field_dup_limit     = $config_manager->get_safe_limit( 'field_duplicates' );
 
 		$this->assertIsInt( $field_dup_limit, 'Field duplicate limit should be an integer' );
@@ -348,7 +348,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 		// Enable headless mode
 		\update_option( 'silver_assist_graphql_headless_mode', 1 );
 
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$alias_limit    = $config_manager->get_safe_limit( 'aliases' );
 
 		// Headless mode should have reasonable limits (20 is the actual value)
@@ -366,7 +366,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 		// Disable headless mode
 		\update_option( 'silver_assist_graphql_headless_mode', 0 );
 
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$alias_limit    = $config_manager->get_safe_limit( 'aliases' );
 
 		// Standard mode should have conservative limits
@@ -380,7 +380,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_security_evaluation(): void {
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$status         = $config_manager->get_integration_status();
 
 		$this->assertIsArray( $status, 'Integration status should be an array' );
@@ -401,7 +401,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 		// Clear cache
 		\delete_transient( 'graphql_security_config' );
 
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 
 		// First call should create cache
 		$config1 = $config_manager->get_configuration();
@@ -423,7 +423,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 			$this->markTestSkipped( 'WPGraphQL settings function not available' );
 		}
 
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$status         = $config_manager->get_integration_status();
 
 		$this->assertIsArray( $status, 'Integration status should be an array' );
@@ -457,7 +457,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_configuration_html_generation(): void {
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$html           = $config_manager->get_settings_display();
 
 		$this->assertIsString( $html, 'Configuration HTML should be a string' );
@@ -471,7 +471,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_all_configuration_values_valid(): void {
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$config         = $config_manager->get_configuration();
 
 		$this->assertIsArray( $config, 'All configurations should be an array' );
@@ -504,7 +504,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 */
 	public function test_graceful_handling_without_wpgraphql(): void {
 		// This test verifies the plugin doesn't break when WPGraphQL is not active
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 
 		$this->assertInstanceOf( GraphQLConfigManager::class, $config_manager );
 
@@ -520,7 +520,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_security_recommendations(): void {
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$html           = $config_manager->get_settings_display();
 
 		// HTML output should always be a string

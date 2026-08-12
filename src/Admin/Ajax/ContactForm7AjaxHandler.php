@@ -69,7 +69,7 @@ class ContactForm7AjaxHandler {
 		}
 
 		try {
-			$blacklist     = IPBlacklist::getInstance();
+			$blacklist     = IPBlacklist::get_instance();
 			$blocked_ips   = $blacklist->get_cf7_blocked_ips();
 			$total_attacks = $blacklist->get_cf7_attack_count();
 
@@ -149,7 +149,7 @@ class ContactForm7AjaxHandler {
 		}
 
 		try {
-			$blacklist = IPBlacklist::getInstance();
+			$blacklist = IPBlacklist::get_instance();
 			$success   = $blacklist->add_to_cf7_blacklist(
 				$ip,
 				\__( 'Manually blocked via admin panel', 'silver-assist-security' ),
@@ -198,7 +198,7 @@ class ContactForm7AjaxHandler {
 		}
 
 		try {
-			$blacklist = IPBlacklist::getInstance();
+			$blacklist = IPBlacklist::get_instance();
 			$success   = $blacklist->remove_from_blacklist( $ip );
 
 			if ( $success ) {
@@ -237,7 +237,7 @@ class ContactForm7AjaxHandler {
 		}
 
 		try {
-			$blacklist     = IPBlacklist::getInstance();
+			$blacklist     = IPBlacklist::get_instance();
 			$cleared_count = $blacklist->clear_cf7_blacklist();
 
 			SecurityHelper::log_security_event( 'CF7_BLACKLIST_CLEARED', 'All CF7 blocked IPs cleared via admin panel', array( 'count' => $cleared_count ) );
@@ -274,7 +274,7 @@ class ContactForm7AjaxHandler {
 		}
 
 		try {
-			$blacklist   = IPBlacklist::getInstance();
+			$blacklist   = IPBlacklist::get_instance();
 			$blocked_ips = $blacklist->get_cf7_blocked_ips();
 
 			$csv_data = "IP Address,Reason,Blocked At,Violations\n";

@@ -97,7 +97,7 @@ class GraphQLSecurity {
 	 * @since 1.1.1
 	 */
 	public function __construct() {
-		$this->config_manager = GraphQLConfigManager::getInstance();
+		$this->config_manager = GraphQLConfigManager::get_instance();
 		$this->init_configuration();
 		$this->init();
 	}
@@ -344,10 +344,16 @@ class GraphQLSecurity {
 		$validation_rules[] = new class($this->config_manager) {
 			private GraphQLConfigManager $config_manager;
 
+			/**
+			 * Constructor.
+			 *
+			 * @param GraphQLConfigManager $config_manager GraphQL configuration manager.
+			 */
 			public function __construct( GraphQLConfigManager $config_manager ) {
 				$this->config_manager = $config_manager;
 			}
 
+			// phpcs:disable WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Method names below are mandated by graphql-php's ValidationRule contract this anonymous class implements; cannot be snake_case.
 			/**
 			 * Get the validation rule name
 			 *
@@ -388,6 +394,7 @@ class GraphQLSecurity {
 				);
 			}
 
+			// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.Found -- SDL visiting is unused here but $context must remain in the signature to satisfy the ValidationRule contract.
 			/**
 			 * Get SDL visitor (not used in this context)
 			 *
@@ -397,6 +404,7 @@ class GraphQLSecurity {
 			public function getSDLVisitor( $context ): array {
 				return array();
 			}
+			// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.Found, WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
 
 			/**
 			 * Estimate query complexity using enhanced proxy method

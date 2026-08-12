@@ -79,7 +79,7 @@ class GraphQLConfigManager {
 	 * @since 1.1.1
 	 * @return GraphQLConfigManager
 	 */
-	public static function getInstance(): GraphQLConfigManager {
+	public static function get_instance(): GraphQLConfigManager {
 		if ( self::$instance === null ) {
 			self::$instance = new self();
 		}

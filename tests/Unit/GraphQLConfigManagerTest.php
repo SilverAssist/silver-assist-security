@@ -46,7 +46,7 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
         $instance->setAccessible(true);
         $instance->setValue(null, null);
         
-        $this->config_manager = GraphQLConfigManager::getInstance();
+        $this->config_manager = GraphQLConfigManager::get_instance();
     }
 
     /**
@@ -56,8 +56,8 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
      */
     public function test_singleton_pattern(): void
     {
-        $instance1 = GraphQLConfigManager::getInstance();
-        $instance2 = GraphQLConfigManager::getInstance();
+        $instance1 = GraphQLConfigManager::get_instance();
+        $instance2 = GraphQLConfigManager::get_instance();
 
         $this->assertSame($instance1, $instance2);
         $this->assertInstanceOf(GraphQLConfigManager::class, $instance1);

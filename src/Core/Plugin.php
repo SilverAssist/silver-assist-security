@@ -104,7 +104,7 @@ class Plugin {
 	 * @since 1.1.1
 	 * @return Plugin
 	 */
-	public static function getInstance(): Plugin {
+	public static function get_instance(): Plugin {
 		if ( self::$instance === null ) {
 			self::$instance = new self();
 		}

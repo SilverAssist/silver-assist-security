@@ -491,7 +491,7 @@ class SecurityAjaxHandler {
 				return;
 			}
 
-			$ip_blacklist = IPBlacklist::getInstance();
+			$ip_blacklist = IPBlacklist::get_instance();
 			$removed      = $ip_blacklist->remove_from_blacklist( $ip_address );
 
 			if ( $removed ) {

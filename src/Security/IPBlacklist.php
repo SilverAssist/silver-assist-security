@@ -48,7 +48,7 @@ class IPBlacklist {
 	 * @since 1.1.15
 	 * @return IPBlacklist
 	 */
-	public static function getInstance(): IPBlacklist {
+	public static function get_instance(): IPBlacklist {
 		if ( self::$instance === null ) {
 			self::$instance = new self();
 		}

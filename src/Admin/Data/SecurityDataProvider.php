@@ -80,7 +80,7 @@ class SecurityDataProvider {
 		$this->login_security      = new LoginSecurity();
 		$this->general_security    = new GeneralSecurity();
 		$this->admin_hide_security = new AdminHideSecurity();
-		$this->ip_blacklist        = IPBlacklist::getInstance();
+		$this->ip_blacklist        = IPBlacklist::get_instance();
 		$this->stats_provider      = new StatisticsProvider();
 	}
 
@@ -102,7 +102,7 @@ class SecurityDataProvider {
 		$graphql_secure = false;
 		if ( \class_exists( 'WPGraphQL' ) ) {
 			$graphql_active   = true;
-			$config_manager   = GraphQLConfigManager::getInstance();
+			$config_manager   = GraphQLConfigManager::get_instance();
 			$introspection    = \get_graphql_setting( 'public_introspection_enabled', 'off' );
 			$query_depth      = DefaultConfig::get_option( 'silver_assist_graphql_query_depth' );
 			$query_complexity = DefaultConfig::get_option( 'silver_assist_graphql_query_complexity' );
