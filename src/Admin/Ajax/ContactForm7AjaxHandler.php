@@ -43,7 +43,7 @@ class ContactForm7AjaxHandler {
 	 * @return void
 	 */
 	private function init(): void {
-		// Only register CF7 AJAX handlers if CF7 is active
+		// Only register CF7 AJAX handlers if CF7 is active.
 		if ( SecurityHelper::is_contact_form_7_active() ) {
 			\add_action( 'wp_ajax_silver_assist_get_cf7_blocked_ips', array( $this, 'get_blocked_ips' ) );
 			\add_action( 'wp_ajax_silver_assist_block_cf7_ip', array( $this, 'block_ip' ) );

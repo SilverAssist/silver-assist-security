@@ -17,7 +17,7 @@ use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\PathValidator;
 use SilverAssist\Security\Core\SecurityHelper;
 
-// Prevent direct access
+// Prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -70,7 +70,7 @@ class AdminHideSecurity {
 	private function init_configuration(): void {
 		// Check for emergency disable constant first - this overrides all database settings
 		// Users can add define('SILVER_ASSIST_HIDE_ADMIN', false); to wp-config.php
-		// to regain admin access if they forget their custom admin path
+		// to regain admin access if they forget their custom admin path.
 		if ( \defined( 'SILVER_ASSIST_HIDE_ADMIN' ) && SILVER_ASSIST_HIDE_ADMIN === false ) {
 			$this->admin_hide_enabled = false;
 			$this->custom_admin_path  = 'silver-admin';
@@ -82,7 +82,7 @@ class AdminHideSecurity {
 		$this->custom_admin_path  = \sanitize_title( DefaultConfig::get_option( 'silver_assist_admin_hide_path' ) );
 		$this->validation_param   = 'silver_auth';
 
-		// Validate custom path using centralized validator
+		// Validate custom path using centralized validator.
 		if ( empty( $this->custom_admin_path ) || PathValidator::is_forbidden_path( $this->custom_admin_path ) ) {
 			$this->custom_admin_path = 'silver-admin';
 		}
@@ -99,16 +99,16 @@ class AdminHideSecurity {
 			return;
 		}
 
-		// Handle requests using setup_theme like professional plugin
+		// Handle requests using setup_theme like professional plugin.
 		\add_action( 'setup_theme', array( $this, 'handle_specific_page_requests' ) );
 
-		// Filter generated URLs to include access tokens
+		// Filter generated URLs to include access tokens.
 		\add_filter( 'site_url', array( $this, 'filter_generated_url' ), 100, 2 );
 		\add_filter( 'admin_url', array( $this, 'filter_admin_url' ), 100, 2 );
 		\add_filter( 'wp_redirect', array( $this, 'filter_redirect' ) );
 		\add_filter( 'logout_redirect', array( $this, 'handle_logout_redirect' ), 10, 3 );
 
-		// Remove WordPress default admin redirect behavior
+		// Remove WordPress default admin redirect behavior.
 		\remove_action( 'template_redirect', 'wp_redirect_admin_locations', 1000 );
 	}
 
@@ -129,7 +129,7 @@ class AdminHideSecurity {
 			return;
 		}
 
-		// Block access if not validated
+		// Block access if not validated.
 		$this->block_access( 'login' );
 	}
 
@@ -150,14 +150,14 @@ class AdminHideSecurity {
 	 * @return void
 	 */
 	public function handle_custom_admin_requests(): void {
-		// Skip if doing cron or AJAX
+		// Skip if doing cron or AJAX.
 		if ( \wp_doing_cron() || \wp_doing_ajax() ) {
 			return;
 		}
 
 		$request_path = $this->get_request_path();
 
-		// Check if this is our custom admin path
+		// Check if this is our custom admin path.
 		$clean_custom_path  = ltrim( $this->custom_admin_path, '/' );
 		$clean_request_path = ltrim( $request_path, '/' );
 
@@ -173,12 +173,12 @@ class AdminHideSecurity {
 	 * @return void
 	 */
 	public function handle_specific_page_requests(): void {
-		// Double-check if admin hiding is enabled
+		// Double-check if admin hiding is enabled.
 		if ( ! $this->admin_hide_enabled ) {
 			return;
 		}
 
-		// Skip if doing cron or AJAX
+		// Skip if doing cron or AJAX.
 		if ( \wp_doing_cron() || \wp_doing_ajax() ) {
 			return;
 		}
@@ -222,11 +222,11 @@ class AdminHideSecurity {
 	 * Handle determining if we need to block or redirect the request path
 	 *
 	 * @since 1.1.4
-	 * @param string $request_path The request path to handle
+	 * @param string $request_path The request path to handle.
 	 * @return void
 	 */
 	private function handle_request_path( string $request_path ): void {
-		// Check custom admin path - remove leading slash if present
+		// Check custom admin path - remove leading slash if present.
 		$clean_custom_path  = ltrim( $this->custom_admin_path, '/' );
 		$clean_request_path = ltrim( $request_path, '/' );
 
@@ -258,7 +258,7 @@ class AdminHideSecurity {
 			exit;
 		}
 
-		// Redirect to login with token
+		// Redirect to login with token.
 		$this->do_redirect_with_token( 'login', 'wp-login.php' );
 	}
 
@@ -276,7 +276,7 @@ class AdminHideSecurity {
 	 * Block access if user is not logged in and request is not validated
 	 *
 	 * @since 1.1.4
-	 * @param string $type The type of access being blocked
+	 * @param string $type The type of access being blocked.
 	 * @return void
 	 */
 	private function block_access( string $type = 'login' ): void {
@@ -288,7 +288,7 @@ class AdminHideSecurity {
 			return;
 		}
 
-		// Send 404 response
+		// Send 404 response.
 		$this->send_404_response();
 	}
 
@@ -296,25 +296,25 @@ class AdminHideSecurity {
 	 * Add or update auth token in URL query parameters
 	 *
 	 * @since 1.1.4
-	 * @param array|string $source_params Source parameters (array from $_GET or query string from URL)
-	 * @param string       $token The token to add
+	 * @param array|string $source_params Source parameters (array from $_GET or query string from URL).
+	 * @param string       $token The token to add.
 	 * @return array Clean query variables array with token
 	 */
 	private function build_query_with_token( $source_params, string $token ): array {
 		$query_vars = array();
 
 		if ( is_array( $source_params ) ) {
-			// Source is $_GET array
+			// Source is $_GET array.
 			$query_vars = $source_params;
 		} elseif ( is_string( $source_params ) && ! empty( $source_params ) ) {
-			// Source is query string from URL
+			// Source is query string from URL.
 			parse_str( $source_params, $query_vars );
 		}
 
-		// Remove existing auth token to prevent duplicates
+		// Remove existing auth token to prevent duplicates.
 		unset( $query_vars[ $this->validation_param ] );
 
-		// Add the new token
+		// Add the new token.
 		$query_vars[ $this->validation_param ] = $token;
 
 		return $query_vars;
@@ -324,21 +324,21 @@ class AdminHideSecurity {
 	 * Redirect with token to ensure access is validated
 	 *
 	 * @since 1.1.4
-	 * @param string $type The type of access token needed
-	 * @param string $path The path to redirect to
+	 * @param string $type The type of access token needed.
+	 * @param string $path The path to redirect to.
 	 * @return void
 	 */
 	private function do_redirect_with_token( string $type, string $path ): void {
-		// Set cookie for future requests
+		// Set cookie for future requests.
 		$this->set_access_cookie( $type );
 
-		// Build clean query parameters with token
+		// Build clean query parameters with token.
 		$token = $this->get_access_token( $type );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Using custom token validation system.
 		$query_vars = $this->build_query_with_token( $_GET, $token );
 		$query      = http_build_query( $query_vars, '', '&' );
 
-		// Build redirect URL
+		// Build redirect URL.
 		$url = \site_url( $path . ( strpos( $path, '?' ) === false ? '?' : '&' ) . $query );
 
 		\wp_safe_redirect( $url );
@@ -349,12 +349,12 @@ class AdminHideSecurity {
 	 * Filter generated URLs to add access tokens
 	 *
 	 * @since 1.1.4
-	 * @param string $url The complete URL
-	 * @param string $path The path submitted by the originating function
+	 * @param string $url The complete URL.
+	 * @param string $path The path submitted by the originating function.
 	 * @return string The URL with conditionally added access token
 	 */
 	public function filter_generated_url( string $url, string $path ): string {
-		// Double-check if admin hiding is enabled
+		// Double-check if admin hiding is enabled.
 		if ( ! $this->admin_hide_enabled ) {
 			return $url;
 		}
@@ -362,17 +362,17 @@ class AdminHideSecurity {
 		[$clean_path] = explode( '?', $path );
 
 		if ( $clean_path === 'wp-login.php' ) {
-			// List of actions that should not get access tokens (they need to work normally)
-			$allowed_actions = DefaultConfig::get_admin_hide_bypass_actions(); // Exclude logout for URL tokens
+			// List of actions that should not get access tokens (they need to work normally).
+			$allowed_actions = DefaultConfig::get_admin_hide_bypass_actions(); // Exclude logout for URL tokens.
 
-			// Check if this path contains any of the allowed actions
+			// Check if this path contains any of the allowed actions.
 			foreach ( $allowed_actions as $action ) {
 				if ( strpos( $path, "action={$action}" ) !== false ) {
-					return $url; // Don't add tokens to these actions
+					return $url; // Don't add tokens to these actions.
 				}
 			}
 
-			// Special handling for registration
+			// Special handling for registration.
 			$url = $this->add_token_to_url( $url, strpos( $path, 'action=register' ) !== false ? 'register' : 'login' );
 		}
 
@@ -383,17 +383,17 @@ class AdminHideSecurity {
 	 * Filter admin URLs to include tokens when necessary
 	 *
 	 * @since 1.1.4
-	 * @param string $url Complete admin URL
-	 * @param string $path Path passed to admin_url function
+	 * @param string $url Complete admin URL.
+	 * @param string $path Path passed to admin_url function.
 	 * @return string Modified URL
 	 */
 	public function filter_admin_url( string $url, string $path ): string {
-		// Double-check if admin hiding is enabled
+		// Double-check if admin hiding is enabled.
 		if ( ! $this->admin_hide_enabled ) {
 			return $url;
 		}
 
-		// Add token to profile update URLs
+		// Add token to profile update URLs.
 		if ( strpos( $path, 'profile.php?newuseremail=' ) === 0 ) {
 			$url = $this->add_token_to_url( $url, 'login' );
 		}
@@ -405,11 +405,11 @@ class AdminHideSecurity {
 	 * Filter redirect URLs to include access tokens
 	 *
 	 * @since 1.1.4
-	 * @param string $location The redirect location
+	 * @param string $location The redirect location.
 	 * @return string Modified location with access token
 	 */
 	public function filter_redirect( string $location ): string {
-		// Double-check if admin hiding is enabled
+		// Double-check if admin hiding is enabled.
 		if ( ! $this->admin_hide_enabled ) {
 			return $location;
 		}
@@ -421,23 +421,23 @@ class AdminHideSecurity {
 	 * Add access token to URL
 	 *
 	 * @since 1.1.4
-	 * @param string $url The URL to modify
-	 * @param string $type The type of access token
+	 * @param string $url The URL to modify.
+	 * @param string $type The type of access token.
 	 * @return string Modified URL with token
 	 */
 	private function add_token_to_url( string $url, string $type ): string {
 		$token = $this->get_access_token( $type );
 
-		// Parse URL to handle existing parameters properly
+		// Parse URL to handle existing parameters properly.
 		$parsed_url = \wp_parse_url( $url );
 		if ( ! is_array( $parsed_url ) || ! isset( $parsed_url['scheme'], $parsed_url['host'] ) ) {
-			return $url; // Return original URL if parsing fails
+			return $url; // Return original URL if parsing fails.
 		}
 
-		// Build clean query parameters with token using unified method
+		// Build clean query parameters with token using unified method.
 		$query_vars = $this->build_query_with_token( $parsed_url['query'] ?? '', $token );
 
-		// Build the clean URL
+		// Build the clean URL.
 		$base_url = $parsed_url['scheme'] . '://' . $parsed_url['host'];
 		if ( ! empty( $parsed_url['port'] ) ) {
 			$base_url .= ':' . $parsed_url['port'];
@@ -446,7 +446,7 @@ class AdminHideSecurity {
 			$base_url .= $parsed_url['path'];
 		}
 
-		// Add query parameters
+		// Add query parameters.
 		$query_string = http_build_query( $query_vars, '', '&' );
 		$final_url    = "{$base_url}?{$query_string}";
 
@@ -457,13 +457,13 @@ class AdminHideSecurity {
 	 * Check if current request is validated
 	 *
 	 * @since 1.1.4
-	 * @param string $type The type of validation to check
+	 * @param string $type The type of validation to check.
 	 * @return bool True if validated
 	 */
 	private function is_validated( string $type ): bool {
 		$token = $this->get_access_token( $type );
 
-		// Check query parameter
+		// Check query parameter.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Using custom token validation system.
 		if ( isset( $_REQUEST[ $this->validation_param ] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Using custom token validation system.
@@ -474,7 +474,7 @@ class AdminHideSecurity {
 			}
 		}
 
-		// Check cookie
+		// Check cookie.
 		$cookie_hash = defined( 'COOKIEHASH' ) ? COOKIEHASH : \md5( \site_url() );
 		$cookie_name = "silver_admin_session_{$type}_{$cookie_hash}";
 		if ( isset( $_COOKIE[ $cookie_name ] ) ) {
@@ -491,7 +491,7 @@ class AdminHideSecurity {
 	 * Get access token for type
 	 *
 	 * @since 1.1.4
-	 * @param string $type The type of access token
+	 * @param string $type The type of access token.
 	 * @return string The access token
 	 */
 	private function get_access_token( string $type ): string {
@@ -506,8 +506,8 @@ class AdminHideSecurity {
 	 * Set access cookie
 	 *
 	 * @since 1.1.4
-	 * @param string $type The type of access cookie
-	 * @param int    $duration Cookie duration in seconds
+	 * @param string $type The type of access cookie.
+	 * @param int    $duration Cookie duration in seconds.
 	 * @return void
 	 */
 	private function set_access_cookie( string $type, int $duration = 3600 ): void {
@@ -544,17 +544,17 @@ class AdminHideSecurity {
 	 */
 	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Parameters required by WordPress hook.
 	public function handle_logout_redirect( string $redirect_to, string $requested_redirect_to, $user ): string {
-		// Double-check if admin hiding is enabled
+		// Double-check if admin hiding is enabled.
 		if ( ! $this->admin_hide_enabled ) {
 			return $redirect_to;
 		}
 
-		// Generate validation token for the logout redirect
+		// Generate validation token for the logout redirect.
 		$validation_token = $this->get_access_token( 'login' );
 
-		// If redirecting to wp-login.php, add our auth token
+		// If redirecting to wp-login.php, add our auth token.
 		if ( strpos( $redirect_to, '/wp-login.php' ) !== false ) {
-			// Manually add the query parameter
+			// Manually add the query parameter.
 			$separator   = strpos( $redirect_to, '?' ) !== false ? '&' : '?';
 			$redirect_to = $redirect_to . $separator . $this->validation_param . '=' . rawurlencode( $validation_token );
 		}
@@ -606,7 +606,7 @@ class AdminHideSecurity {
 	 * Validate custom admin path
 	 *
 	 * @since 1.1.4
-	 * @param string $path The path to validate
+	 * @param string $path The path to validate.
 	 * @return bool True if path is valid
 	 */
 	public function validate_custom_path( string $path ): bool {

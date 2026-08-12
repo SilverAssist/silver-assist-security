@@ -46,18 +46,18 @@ class SecurityHelper {
 	 * This centralizes asset loading logic across all components.
 	 *
 	 * @since 1.1.10
-	 * @param string    $asset_path The relative path to the asset (e.g., 'assets/css/admin.css')
+	 * @param string    $asset_path The relative path to the asset (e.g., 'assets/css/admin.css').
 	 * @param bool|null $force_debug Optional. Force debug mode for testing. Defaults to SCRIPT_DEBUG constant.
 	 * @return string The full URL to the asset
 	 */
 	public static function get_asset_url( string $asset_path, ?bool $force_debug = null ): string {
-		// Initialize if not already done
+		// Initialize if not already done.
 		if ( ! isset( self::$plugin_url ) ) {
 			self::init();
 		}
 
 		// Determine if we should use minified version
-		// Allow override for testing purposes
+		// Allow override for testing purposes.
 		if ( $force_debug !== null ) {
 			$use_minified = ! $force_debug;
 		} else {
@@ -67,16 +67,16 @@ class SecurityHelper {
 		if ( $use_minified ) {
 			$file_info = pathinfo( $asset_path );
 
-			// Construct minified path: assets/css/admin.css -> assets/css/admin.min.css
+			// Construct minified path: assets/css/admin.css -> assets/css/admin.min.css.
 			$dirname       = $file_info['dirname'] ?? '';
-			$filename      = $file_info['filename']; // filename always exists
+			$filename      = $file_info['filename']; // filename always exists.
 			$extension     = $file_info['extension'] ?? '';
 			$minified_path = $dirname . '/' . $filename . '.min.' . $extension;
 
 			return self::$plugin_url . $minified_path;
 		}
 
-		// Return original path for debug mode
+		// Return original path for debug mode.
 		return self::$plugin_url . $asset_path;
 	}  /**
 		* Get client IP address with proper header detection
@@ -89,20 +89,20 @@ class SecurityHelper {
 		*/
 	public static function get_client_ip(): string {
 		$ip_keys = array(
-			'HTTP_CF_CONNECTING_IP',     // CloudFlare
-			'HTTP_CLIENT_IP',            // Proxy
-			'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
-			'HTTP_X_FORWARDED',          // Proxy
-			'HTTP_FORWARDED_FOR',        // Proxy
-			'HTTP_FORWARDED',            // Proxy
-			'REMOTE_ADDR',                // Standard
+			'HTTP_CF_CONNECTING_IP',     // CloudFlare.
+			'HTTP_CLIENT_IP',            // Proxy.
+			'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy.
+			'HTTP_X_FORWARDED',          // Proxy.
+			'HTTP_FORWARDED_FOR',        // Proxy.
+			'HTTP_FORWARDED',            // Proxy.
+			'REMOTE_ADDR',                // Standard.
 		);
 
 		foreach ( $ip_keys as $key ) {
 			if ( array_key_exists( $key, $_SERVER ) === true ) {
 				foreach ( explode( ',', \sanitize_text_field( \wp_unslash( $_SERVER[ $key ] ) ) ) as $ip ) {
 					$ip = trim( $ip );
-					// Validate IP and exclude private/reserved ranges
+					// Validate IP and exclude private/reserved ranges.
 					if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) !== false ) {
 						return $ip;
 					}
@@ -120,19 +120,19 @@ class SecurityHelper {
 	 * crawlers, and security scanners. Includes anti-indexing headers.
 	 *
 	 * @since 1.1.10
-	 * @param bool $use_wordpress_template Whether to try loading WordPress 404 template
+	 * @param bool $use_wordpress_template Whether to try loading WordPress 404 template.
 	 * @return void
 	 */
 	public static function send_404_response( bool $use_wordpress_template = true ): void {
-		// Send proper 404 headers
+		// Send proper 404 headers.
 		\status_header( 404 );
 		\nocache_headers();
 
-		// Additional security headers
+		// Additional security headers.
 		header( 'X-Robots-Tag: noindex, nofollow, noarchive, nosnippet, noimageindex', true );
 
 		if ( $use_wordpress_template ) {
-			// Try to load WordPress 404 template for better integration
+			// Try to load WordPress 404 template for better integration.
 			$template_404 = \get_404_template();
 			if ( $template_404 ) {
 				include $template_404;
@@ -140,7 +140,7 @@ class SecurityHelper {
 			}
 		}
 
-		// Fallback minimal 404 response
+		// Fallback minimal 404 response.
 		echo '<!DOCTYPE html>
 <html>
 <head>
@@ -168,31 +168,31 @@ class SecurityHelper {
 	 * - Contains special character
 	 *
 	 * @since 1.1.10
-	 * @param string $password Password to validate
+	 * @param string $password Password to validate.
 	 * @return bool True if password is strong
 	 */
 	public static function is_strong_password( string $password ): bool {
-		// At least 8 characters
+		// At least 8 characters.
 		if ( strlen( $password ) < 8 ) {
 			return false;
 		}
 
-		// Must contain uppercase letter
+		// Must contain uppercase letter.
 		if ( ! preg_match( '/[A-Z]/', $password ) ) {
 			return false;
 		}
 
-		// Must contain lowercase letter
+		// Must contain lowercase letter.
 		if ( ! preg_match( '/[a-z]/', $password ) ) {
 			return false;
 		}
 
-		// Must contain number
+		// Must contain number.
 		if ( ! preg_match( '/[0-9]/', $password ) ) {
 			return false;
 		}
 
-		// Must contain special character
+		// Must contain special character.
 		if ( ! preg_match( '/[^A-Za-z0-9]/', $password ) ) {
 			return false;
 		}
@@ -318,9 +318,9 @@ class SecurityHelper {
 	 * - In development, all severity levels are logged.
 	 *
 	 * @since 1.1.10
-	 * @param string $event_type Type of security event (e.g., 'LOGIN_FAILED', 'BOT_BLOCKED')
-	 * @param string $message Human-readable event description
-	 * @param array  $context Additional context data (optional)
+	 * @param string $event_type Type of security event (e.g., 'LOGIN_FAILED', 'BOT_BLOCKED').
+	 * @param string $message Human-readable event description.
+	 * @param array  $context Additional context data (optional).
 	 * @return void
 	 */
 	public static function log_security_event( string $event_type, string $message, array $context = array() ): void {
@@ -365,7 +365,7 @@ class SecurityHelper {
 	 * Useful for displaying lockout durations and timeouts.
 	 *
 	 * @since 1.1.10
-	 * @param int $seconds Duration in seconds
+	 * @param int $seconds Duration in seconds.
 	 * @return string Human-readable time format
 	 */
 	public static function format_time_duration( int $seconds ): string {
@@ -401,9 +401,9 @@ class SecurityHelper {
 	 * and security logging for failed attempts.
 	 *
 	 * @since 1.1.10
-	 * @param string $nonce Nonce value to verify
-	 * @param string $action Nonce action name
-	 * @param bool   $die_on_failure Whether to wp_die() on failure
+	 * @param string $nonce Nonce value to verify.
+	 * @param string $action Nonce action name.
+	 * @param bool   $die_on_failure Whether to wp_die() on failure.
 	 * @return bool True if nonce is valid
 	 */
 	public static function verify_nonce( string $nonce, string $action, bool $die_on_failure = true ): bool {
@@ -434,8 +434,8 @@ class SecurityHelper {
 	 * for unauthorized access attempts.
 	 *
 	 * @since 1.1.10
-	 * @param string $capability Required capability
-	 * @param bool   $die_on_failure Whether to wp_die() on failure
+	 * @param string $capability Required capability.
+	 * @param bool   $die_on_failure Whether to wp_die() on failure.
 	 * @return bool True if user has capability
 	 */
 	public static function check_user_capability( string $capability, bool $die_on_failure = true ): bool {
@@ -470,8 +470,8 @@ class SecurityHelper {
 	 * used in rate limiting, lockouts, and tracking.
 	 *
 	 * @since 1.1.10
-	 * @param string      $prefix Key prefix (e.g., 'login_attempts', 'lockout')
-	 * @param string|null $ip IP address (uses current IP if null)
+	 * @param string      $prefix Key prefix (e.g., 'login_attempts', 'lockout').
+	 * @param string|null $ip IP address (uses current IP if null).
 	 * @return string Secure transient key
 	 */
 	public static function generate_ip_transient_key( string $prefix, ?string $ip = null ): string {
@@ -489,19 +489,19 @@ class SecurityHelper {
 	 * with proper validation and security checks.
 	 *
 	 * @since 1.1.10
-	 * @param string $path Path to sanitize
+	 * @param string $path Path to sanitize.
 	 * @return string Sanitized path
 	 */
 	public static function sanitize_admin_path( string $path ): string {
-		// Remove any potentially dangerous characters
+		// Remove any potentially dangerous characters.
 		$path = \sanitize_title( $path );
 
-		// Ensure minimum length
+		// Ensure minimum length.
 		if ( strlen( $path ) < 3 ) {
 			$path = 'silver-admin';
 		}
 
-		// Ensure maximum length
+		// Ensure maximum length.
 		if ( strlen( $path ) > 50 ) {
 			$path = substr( $path, 0, 50 );
 		}
@@ -516,7 +516,7 @@ class SecurityHelper {
 	 * tools, security scanners, and malicious bots.
 	 *
 	 * @since 1.1.10
-	 * @param string|null $user_agent User agent string (uses current if null)
+	 * @param string|null $user_agent User agent string (uses current if null).
 	 * @return bool True if request appears to be from a bot
 	 */
 	public static function is_bot_request( ?string $user_agent = null ): bool {
@@ -524,7 +524,7 @@ class SecurityHelper {
 			$user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
 		}
 
-		// Known bot/crawler patterns
+		// Known bot/crawler patterns.
 		$bot_patterns = array(
 			'bot',
 			'crawler',
@@ -556,12 +556,12 @@ class SecurityHelper {
 			}
 		}
 
-		// Additional bot detection patterns
+		// Additional bot detection patterns.
 		if ( empty( $user_agent ) || strlen( $user_agent ) < 10 ) {
 			return true;
 		}
 
-		// Check for missing common browser headers
+		// Check for missing common browser headers.
 		if (
 		! isset( $_SERVER['HTTP_ACCEPT'] ) &&
 		! isset( $_SERVER['HTTP_ACCEPT_LANGUAGE'] ) &&
@@ -580,9 +580,9 @@ class SecurityHelper {
 	 * capability checks, and request method validation.
 	 *
 	 * @since 1.1.10
-	 * @param string $nonce_action Nonce action name
-	 * @param string $required_capability Required user capability
-	 * @param string $allowed_method Allowed HTTP method (default: POST)
+	 * @param string $nonce_action Nonce action name.
+	 * @param string $required_capability Required user capability.
+	 * @param string $allowed_method Allowed HTTP method (default: POST).
 	 * @return bool True if request is valid
 	 */
 	public static function validate_ajax_request(
@@ -611,7 +611,7 @@ class SecurityHelper {
 			return false;
 		}
 
-		// Check user capability
+		// Check user capability.
 		if ( ! self::check_user_capability( $required_capability, false ) ) {
 			return false;
 		}
@@ -629,17 +629,17 @@ class SecurityHelper {
 	 * @return bool True if CF7 is active and compatible, false otherwise
 	 */
 	public static function is_contact_form_7_active(): bool {
-		// Check if Contact Form 7 main class exists
+		// Check if Contact Form 7 main class exists.
 		if ( ! \class_exists( 'WPCF7' ) ) {
 			return false;
 		}
 
-		// Check minimum version requirement (CF7 5.0+)
+		// Check minimum version requirement (CF7 5.0+).
 		if ( \defined( 'WPCF7_VERSION' ) ) {
 			return \version_compare( WPCF7_VERSION, '5.0', '>=' );
 		}
 
-		// If version constant not defined but class exists, assume it's compatible
+		// If version constant not defined but class exists, assume it's compatible.
 		return true;
 	}
 

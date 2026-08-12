@@ -73,16 +73,16 @@ class ContactForm7Integration {
 			return;
 		}
 
-		// CF7 validation hook
+		// CF7 validation hook.
 		\add_filter( 'wpcf7_validate', array( $this, 'validate_cf7_form' ), 10, 2 );
 
-		// Before send mail hook
+		// Before send mail hook.
 		\add_action( 'wpcf7_before_send_mail', array( $this, 'process_cf7_submission' ), 10, 3 );
 
-		// Spam detection hook
+		// Spam detection hook.
 		\add_action( 'wpcf7_spam', array( $this, 'handle_cf7_spam' ), 10, 1 );
 
-		// Honeypot field injection
+		// Honeypot field injection.
 		if ( DefaultConfig::get_option( 'silver_assist_cf7_honeypot_enabled' ) ) {
 			\add_filter( 'wpcf7_form_elements', array( $this, 'inject_honeypot_field' ), 10, 1 );
 		}
@@ -92,19 +92,19 @@ class ContactForm7Integration {
 	 * Validate CF7 form submission
 	 *
 	 * @since 1.1.15
-	 * @param mixed $result CF7 validation result
-	 * @param mixed $tags Form tags
+	 * @param mixed $result CF7 validation result.
+	 * @param mixed $tags Form tags.
 	 * @return mixed Modified validation result
 	 */
 	public function validate_cf7_form( $result, $tags ) {
 		$client_ip       = SecurityHelper::get_client_ip();
 		$submission_data = $this->get_cf7_submission_data();
 
-		// Create mock contact form for validation
+		// Create mock contact form for validation.
 		$contact_form = $this->get_current_cf7_form();
 
 		if ( ! $this->validate_cf7_submission( $contact_form, $submission_data, $client_ip ) ) {
-			// Add validation error
+			// Add validation error.
 			$result->invalidate(
 				'security_validation',
 				\__( 'Security validation failed. Please try again.', 'silver-assist-security' )
@@ -118,10 +118,10 @@ class ContactForm7Integration {
 	 * Main CF7 submission validation method
 	 *
 	 * @since 1.1.15
-	 * @param object      $contact_form CF7 form object
-	 * @param array       $submission_data Form submission data
-	 * @param string|null $client_ip Client IP address (optional)
-	 * @param float|null  $form_start_time Form start time for timing validation
+	 * @param object      $contact_form CF7 form object.
+	 * @param array       $submission_data Form submission data.
+	 * @param string|null $client_ip Client IP address (optional).
+	 * @param float|null  $form_start_time Form start time for timing validation.
 	 * @return bool True if submission is valid, false otherwise
 	 */
 	public function validate_cf7_submission(
@@ -132,7 +132,7 @@ class ContactForm7Integration {
 	): bool {
 		$client_ip = $client_ip ?? SecurityHelper::get_client_ip();
 
-		// Check IP blacklist first
+		// Check IP blacklist first.
 		if ( $this->ip_blacklist && $this->ip_blacklist->is_blacklisted( $client_ip ) ) {
 			SecurityHelper::log_security_event(
 				'CF7_BLOCKED_BLACKLISTED_IP',
@@ -145,7 +145,7 @@ class ContactForm7Integration {
 			return false;
 		}
 
-		// Check honeypot field
+		// Check honeypot field.
 		if ( DefaultConfig::get_option( 'silver_assist_cf7_honeypot_enabled' ) ) {
 			if ( ! empty( $submission_data['silver_honeypot_field'] ) ) {
 				SecurityHelper::log_security_event(
@@ -160,10 +160,10 @@ class ContactForm7Integration {
 			}
 		}
 
-		// Check submission timing if provided
+		// Check submission timing if provided.
 		if ( $form_start_time !== null ) {
 			$submission_time     = microtime( true ) - $form_start_time;
-			$min_submission_time = (float) DefaultConfig::get_option( 'silver_assist_cf7_submission_delay' ) / 1000; // Convert ms to seconds
+			$min_submission_time = (float) DefaultConfig::get_option( 'silver_assist_cf7_submission_delay' ) / 1000; // Convert ms to seconds.
 
 			if ( $submission_time < $min_submission_time ) {
 				SecurityHelper::log_security_event(
@@ -178,7 +178,7 @@ class ContactForm7Integration {
 			}
 		}
 
-		// Check rate limiting first
+		// Check rate limiting first.
 		if ( $this->form_protection && ! $this->form_protection->allow_form_submission( $client_ip ) ) {
 			SecurityHelper::log_security_event(
 				'CF7_BLOCKED_RATE_LIMIT',
@@ -189,7 +189,7 @@ class ContactForm7Integration {
 				)
 			);
 
-			// Record violation for potential blacklisting
+			// Record violation for potential blacklisting.
 			if ( $this->ip_blacklist ) {
 				$this->ip_blacklist->record_violation( $client_ip, 'CF7 rate limit exceeded' );
 			}
@@ -197,7 +197,7 @@ class ContactForm7Integration {
 			return false;
 		}
 
-		// Check for obsolete browsers
+		// Check for obsolete browsers.
 		$user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
 		if ( $this->form_protection && FormProtection::is_obsolete_browser( $user_agent ) ) {
 			SecurityHelper::log_security_event(
@@ -216,7 +216,7 @@ class ContactForm7Integration {
 			return false;
 		}
 
-		// Check for SQL injection attempts
+		// Check for SQL injection attempts.
 		if ( $this->form_protection && FormProtection::has_sql_injection_attempt() ) {
 			$query_string = $_SERVER['QUERY_STRING'] ?? '';
 			SecurityHelper::log_security_event(
@@ -235,7 +235,7 @@ class ContactForm7Integration {
 			return false;
 		}
 
-		// Check for spam patterns in submission data
+		// Check for spam patterns in submission data.
 		if ( $this->contains_spam_patterns( $submission_data ) ) {
 			SecurityHelper::log_security_event(
 				'CF7_BLOCKED_SPAM_PATTERN',
@@ -260,15 +260,15 @@ class ContactForm7Integration {
 	 * Process CF7 submission before sending
 	 *
 	 * @since 1.1.15
-	 * @param object $contact_form CF7 form object
-	 * @param bool   $abort Whether to abort sending
-	 * @param object $submission CF7 submission object
+	 * @param object $contact_form CF7 form object.
+	 * @param bool   $abort Whether to abort sending.
+	 * @param object $submission CF7 submission object.
 	 * @return void
 	 */
 	public function process_cf7_submission( $contact_form, &$abort, $submission ): void {
 		$client_ip = SecurityHelper::get_client_ip();
 
-		// Log successful submission for monitoring
+		// Log successful submission for monitoring.
 		SecurityHelper::log_security_event(
 			'CF7_SUBMISSION_SUCCESS',
 			"CF7 form submitted successfully from: {$client_ip}",
@@ -283,13 +283,13 @@ class ContactForm7Integration {
 	 * Handle CF7 spam detection
 	 *
 	 * @since 1.1.15
-	 * @param object $contact_form CF7 form object
+	 * @param object $contact_form CF7 form object.
 	 * @return void
 	 */
 	public function handle_cf7_spam( $contact_form ): void {
 		$client_ip = SecurityHelper::get_client_ip();
 
-		// Record spam attempt
+		// Record spam attempt.
 		if ( $this->ip_blacklist ) {
 			$this->ip_blacklist->record_violation( $client_ip, 'CF7 marked as spam' );
 		}
@@ -308,7 +308,7 @@ class ContactForm7Integration {
 	 * Inject honeypot field into CF7 form
 	 *
 	 * @since 1.1.15
-	 * @param string $form CF7 form HTML
+	 * @param string $form CF7 form HTML.
 	 * @return string Modified form HTML with honeypot
 	 */
 	public function inject_honeypot_field( string $form ): string {
@@ -346,7 +346,7 @@ class ContactForm7Integration {
 	 */
 	private function get_current_cf7_form(): object {
 		// In a real implementation, this would get the actual CF7 form
-		// For now, return a basic object structure
+		// For now, return a basic object structure.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$form_id = isset( $_POST['_wpcf7'] ) ? (int) \sanitize_text_field( \wp_unslash( $_POST['_wpcf7'] ) ) : 0;
 
@@ -360,24 +360,24 @@ class ContactForm7Integration {
 	 * Check submission data for spam patterns
 	 *
 	 * @since 1.1.15
-	 * @param array $submission_data Form submission data
+	 * @param array $submission_data Form submission data.
 	 * @return bool True if spam patterns detected
 	 */
 	private function contains_spam_patterns( array $submission_data ): bool {
 		$spam_patterns = array(
-			// Pharmaceutical spam - only obvious spam phrases
+			// Pharmaceutical spam - only obvious spam phrases.
 			'cheap viagra',
 			'buy viagra',
 			'cialis online',
 			'pharmacy online',
 
-			// Casino/gambling spam - only obvious promotional phrases
+			// Casino/gambling spam - only obvious promotional phrases.
 			'casino winner',
 			'you won $',
 			'jackpot winner',
 			'lottery winner',
 
-			// Finance spam - only obvious promotional phrases
+			// Finance spam - only obvious promotional phrases.
 			'easy money',
 			'quick profit',
 			'get rich quick',
@@ -385,7 +385,7 @@ class ContactForm7Integration {
 			'guaranteed profit',
 			'risk-free investment',
 
-			// Generic spam indicators - only obvious promotional phrases
+			// Generic spam indicators - only obvious promotional phrases.
 			'click here now',
 			'act now!',
 			'limited time offer',
@@ -393,29 +393,29 @@ class ContactForm7Integration {
 			'100% guaranteed',
 			'no risk involved',
 
-			// Suspicious promotional patterns
+			// Suspicious promotional patterns.
 			'make $',
 			'earn $',
 			'win $',
 			'cash prize',
 		);
 
-		// Combine message and name fields only (skip email field to avoid false positives)
+		// Combine message and name fields only (skip email field to avoid false positives).
 		$text_fields = array();
 		foreach ( $submission_data as $key => $value ) {
-			// Skip email fields and honeypot fields
+			// Skip email fields and honeypot fields.
 			if ( ! in_array( $key, array( 'your-email', 'email', 'silver_honeypot_field' ), true ) ) {
 				$text_fields[] = strtolower( (string) $value );
 			}
 		}
 		$text_data = implode( ' ', $text_fields );
 
-		// Skip empty submissions
+		// Skip empty submissions.
 		if ( strlen( trim( $text_data ) ) < 5 ) {
 			return false;
 		}
 
-		// Check for spam patterns
+		// Check for spam patterns.
 		foreach ( $spam_patterns as $pattern ) {
 			if ( stripos( $text_data, $pattern ) !== false ) {
 				SecurityHelper::log_security_event(
@@ -431,16 +431,16 @@ class ContactForm7Integration {
 			}
 		}
 
-		// Check for excessive capitalization (common in spam) - more lenient threshold
+		// Check for excessive capitalization (common in spam) - more lenient threshold.
 		$uppercase_ratio = 0;
 		$total_chars     = strlen( (string) $text_data );
-		if ( $total_chars > 30 ) { // Only check longer messages
+		if ( $total_chars > 30 ) { // Only check longer messages.
 			$uppercase_result = preg_replace( '/[^A-Z]/', '', (string) $text_data );
 			$uppercase_chars  = strlen( $uppercase_result ? $uppercase_result : '' );
 			$uppercase_ratio  = $uppercase_chars / $total_chars;
 		}
 
-		// Higher threshold and longer text requirement to avoid false positives
+		// Higher threshold and longer text requirement to avoid false positives.
 		if ( $uppercase_ratio > 0.7 && $total_chars > 50 ) {
 			SecurityHelper::log_security_event(
 				'EXCESSIVE_CAPS_DETECTED',

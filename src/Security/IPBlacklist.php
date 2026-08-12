@@ -39,7 +39,7 @@ class IPBlacklist {
 	 * @since 1.1.15
 	 */
 	public function __construct() {
-		// Initialize if needed
+		// Initialize if needed.
 	}
 
 	/**
@@ -59,9 +59,9 @@ class IPBlacklist {
 	 * Add IP to blacklist manually
 	 *
 	 * @since 1.1.15
-	 * @param string $ip IP address to blacklist
-	 * @param string $reason Reason for blacklisting
-	 * @param int    $duration Duration in seconds
+	 * @param string $ip IP address to blacklist.
+	 * @param string $reason Reason for blacklisting.
+	 * @param int    $duration Duration in seconds.
 	 * @return void
 	 */
 	public function add_to_blacklist( string $ip, string $reason, int $duration ): void {
@@ -93,7 +93,7 @@ class IPBlacklist {
 	 * Check if IP is blacklisted
 	 *
 	 * @since 1.1.15
-	 * @param string $ip IP address to check
+	 * @param string $ip IP address to check.
 	 * @return bool True if blacklisted, false otherwise
 	 */
 	public function is_blacklisted( string $ip ): bool {
@@ -107,8 +107,8 @@ class IPBlacklist {
 	 * Tracks violations and automatically blacklists IP when threshold is reached.
 	 *
 	 * @since 1.1.15
-	 * @param string $ip IP address
-	 * @param string $type Type of violation
+	 * @param string $ip IP address.
+	 * @param string $type Type of violation.
 	 * @return void
 	 */
 	public function record_violation( string $ip, string $type ): void {
@@ -139,7 +139,7 @@ class IPBlacklist {
 			)
 		);
 
-		// Auto-blacklist if threshold reached
+		// Auto-blacklist if threshold reached.
 		if ( count( $violations ) >= $threshold ) {
 			$this->auto_blacklist_ip( $ip, $violations );
 		}
@@ -149,8 +149,8 @@ class IPBlacklist {
 	 * Automatically blacklist IP due to violations
 	 *
 	 * @since 1.1.15
-	 * @param string $ip IP address to blacklist
-	 * @param array  $violations Array of violations
+	 * @param string $ip IP address to blacklist.
+	 * @param array  $violations Array of violations.
 	 * @return void
 	 */
 	private function auto_blacklist_ip( string $ip, array $violations ): void {
@@ -192,7 +192,7 @@ class IPBlacklist {
 	 * Get blacklist details for IP
 	 *
 	 * @since 1.1.15
-	 * @param string $ip IP address
+	 * @param string $ip IP address.
 	 * @return array|false Blacklist details or false if not blacklisted
 	 */
 	public function get_blacklist_details( string $ip ) {
@@ -204,7 +204,7 @@ class IPBlacklist {
 	 * Remove IP from blacklist
 	 *
 	 * @since 1.1.15
-	 * @param string $ip IP address to remove
+	 * @param string $ip IP address to remove.
 	 * @return bool True if removed, false if not found
 	 */
 	public function remove_from_blacklist( string $ip ): bool {
@@ -228,7 +228,7 @@ class IPBlacklist {
 	 * Get violation count for IP
 	 *
 	 * @since 1.1.15
-	 * @param string $ip IP address
+	 * @param string $ip IP address.
 	 * @return int Number of violations
 	 */
 	public function get_violation_count( string $ip ): int {
@@ -251,10 +251,10 @@ class IPBlacklist {
 		global $wpdb;
 
 		// Query all transients that match our blacklist pattern
-		// This is simplified - in production you'd want a more efficient approach
+		// This is simplified - in production you'd want a more efficient approach.
 		$blacklisted_ips = array();
 
-		// Get transients from database that match our pattern
+		// Get transients from database that match our pattern.
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT option_name, option_value FROM {$wpdb->options} 
@@ -290,19 +290,19 @@ class IPBlacklist {
 		try {
 			$cleaned_count = 0;
 
-			// Clean expired lockout transients
+			// Clean expired lockout transients.
 			$cleaned_count += $this->clean_expired_lockouts();
 
-			// Clean expired violation count transients
+			// Clean expired violation count transients.
 			$cleaned_count += $this->clean_expired_violation_counts();
 
-			// Clean expired rate limit transients
+			// Clean expired rate limit transients.
 			$cleaned_count += $this->clean_expired_rate_limits();
 
-			// Clean expired bot detection transients
+			// Clean expired bot detection transients.
 			$cleaned_count += $this->clean_expired_bot_blocks();
 
-			// Log cleanup results
+			// Log cleanup results.
 			SecurityHelper::log_security_event(
 				'IP_CLEANUP_SUCCESS',
 				"Successfully cleaned {$cleaned_count} expired IP violations",
@@ -312,7 +312,7 @@ class IPBlacklist {
 				)
 			);
 
-			// Schedule next cleanup if not already scheduled
+			// Schedule next cleanup if not already scheduled.
 			$this->schedule_next_cleanup();
 
 			return $cleaned_count;
@@ -340,7 +340,7 @@ class IPBlacklist {
 		$current_time = time();
 		$cleaned      = 0;
 
-		// Get all lockout transients
+		// Get all lockout transients.
 		$lockout_transients = $wpdb->get_results(
 			"SELECT option_name, option_value 
 			 FROM {$wpdb->options} 
@@ -350,11 +350,11 @@ class IPBlacklist {
 		foreach ( $lockout_transients as $transient ) {
 			$expiry_time = (int) $transient->option_value;
 
-			// If transient has expired, clean it up
+			// If transient has expired, clean it up.
 			if ( $expiry_time < $current_time ) {
 				$transient_name = str_replace( '_transient_timeout_', '', $transient->option_name );
 
-				// Delete both timeout and value transients
+				// Delete both timeout and value transients.
 				\delete_transient( $transient_name );
 				++$cleaned;
 			}
@@ -375,7 +375,7 @@ class IPBlacklist {
 		$current_time = time();
 		$cleaned      = 0;
 
-		// Get all violation count transients
+		// Get all violation count transients.
 		$violation_transients = $wpdb->get_results(
 			"SELECT option_name, option_value 
 			 FROM {$wpdb->options} 
@@ -450,7 +450,7 @@ class IPBlacklist {
 		$current_time = time();
 		$cleaned      = 0;
 
-		// Get bot blocking related transients
+		// Get bot blocking related transients.
 		$bot_transients = $wpdb->get_results(
 			"SELECT option_name, option_value 
 			 FROM {$wpdb->options} 
@@ -477,9 +477,9 @@ class IPBlacklist {
 	 * @return void
 	 */
 	private function schedule_next_cleanup(): void {
-		// Check if cleanup is already scheduled
+		// Check if cleanup is already scheduled.
 		if ( ! \wp_next_scheduled( 'silver_assist_security_cleanup' ) ) {
-			// Schedule daily cleanup at 3 AM local time
+			// Schedule daily cleanup at 3 AM local time.
 			\wp_schedule_event(
 				strtotime( 'tomorrow 3:00 AM' ),
 				'daily',
@@ -504,10 +504,10 @@ class IPBlacklist {
 	 * @return void
 	 */
 	public static function init_cron_cleanup(): void {
-		// Register the cron hook
+		// Register the cron hook.
 		\add_action( 'silver_assist_security_cleanup', array( __CLASS__, 'run_scheduled_cleanup' ) );
 
-		// Schedule initial cleanup if not already scheduled
+		// Schedule initial cleanup if not already scheduled.
 		if ( ! \wp_next_scheduled( 'silver_assist_security_cleanup' ) ) {
 			\wp_schedule_event(
 				strtotime( 'tomorrow 3:00 AM' ),
@@ -570,7 +570,7 @@ class IPBlacklist {
 		$cf7_blocked     = array();
 
 		foreach ( $all_blacklisted as $ip => $data ) {
-			// Check if this is CF7 related (by type or reason keywords)
+			// Check if this is CF7 related (by type or reason keywords).
 			$reason = $data['reason'] ?? '';
 			$type   = $data['type'] ?? '';
 
@@ -628,9 +628,9 @@ class IPBlacklist {
 	 * Add CF7-specific IP to blacklist
 	 *
 	 * @since 1.1.15
-	 * @param string $ip IP address to blacklist
-	 * @param string $reason Reason for blacklisting
-	 * @param string $type Type of block (cf7_manual, cf7_auto, etc)
+	 * @param string $ip IP address to blacklist.
+	 * @param string $reason Reason for blacklisting.
+	 * @param string $type Type of block (cf7_manual, cf7_auto, etc).
 	 * @return bool Success status
 	 */
 	public function add_to_cf7_blacklist( string $ip, string $reason, string $type = 'cf7_manual' ): bool {
@@ -650,7 +650,7 @@ class IPBlacklist {
 		$success = \set_transient( $blacklist_key, $blacklist_data, $duration );
 
 		if ( $success ) {
-			// Increment CF7 attack count
+			// Increment CF7 attack count.
 			$this->increment_cf7_attack_count();
 
 			SecurityHelper::log_security_event(
@@ -673,7 +673,7 @@ class IPBlacklist {
 	 * Check if a block reason is CF7 related
 	 *
 	 * @since 1.1.15
-	 * @param string $reason Block reason
+	 * @param string $reason Block reason.
 	 * @return bool True if CF7 related
 	 */
 	private function is_cf7_related_block( string $reason ): bool {
@@ -693,7 +693,7 @@ class IPBlacklist {
 	 * Get CF7 violation count for specific IP
 	 *
 	 * @since 1.1.15
-	 * @param string $ip IP address
+	 * @param string $ip IP address.
 	 * @return int Violation count
 	 */
 	private function get_cf7_violation_count( string $ip ): int {

@@ -34,7 +34,7 @@ class SettingsRenderer {
 	/**
 	 * Constructor
 	 *
-	 * @param GraphQLConfigManager $config_manager GraphQL configuration manager
+	 * @param GraphQLConfigManager $config_manager GraphQL configuration manager.
 	 * @since 1.1.15
 	 */
 	public function __construct( GraphQLConfigManager $config_manager ) {

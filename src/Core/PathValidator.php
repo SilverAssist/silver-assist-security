@@ -57,7 +57,7 @@ class PathValidator {
 	 * Validate admin path for security compliance
 	 *
 	 * @since 1.1.4
-	 * @param string $path The path to validate
+	 * @param string $path The path to validate.
 	 * @return array Validation result with structure: [is_valid, error_message, error_type, sanitized_path]
 	 */
 	public static function validate_admin_path( string $path ): array {
@@ -65,14 +65,14 @@ class PathValidator {
 		$original_path = $path;
 		$path          = strtolower( trim( $path ) );
 
-		// Check if path is empty
+		// Check if path is empty.
 		if ( empty( $path ) ) {
 			$result['error_message'] = \__( 'Path cannot be empty', 'silver-assist-security' );
 			$result['error_type']    = 'empty';
 			return $result;
 		}
 
-		// Check length constraints
+		// Check length constraints.
 		if ( strlen( $path ) < 3 ) {
 			$result['error_message'] = \__( 'Path must be at least 3 characters long', 'silver-assist-security' );
 			$result['error_type']    = 'too_short';
@@ -85,14 +85,14 @@ class PathValidator {
 			return $result;
 		}
 
-		// Check character constraints (alphanumeric, hyphens, underscores only)
+		// Check character constraints (alphanumeric, hyphens, underscores only).
 		if ( ! preg_match( '/^[a-zA-Z0-9-_]+$/', $path ) ) {
 			$result['error_message'] = \__( 'Path can only contain letters, numbers, hyphens, and underscores', 'silver-assist-security' );
 			$result['error_type']    = 'invalid_chars';
 			return $result;
 		}
 
-		// Check forbidden paths using centralized logic
+		// Check forbidden paths using centralized logic.
 		$forbidden_check = self::check_forbidden_patterns( $path );
 		if ( ! $forbidden_check['is_valid'] ) {
 			$result['error_message'] = $forbidden_check['error_message'];
@@ -100,7 +100,7 @@ class PathValidator {
 			return $result;
 		}
 
-		// Path is valid - leave error_message empty
+		// Path is valid - leave error_message empty.
 		$result['is_valid']       = true;
 		$result['sanitized_path'] = \sanitize_title( $original_path );
 
@@ -111,13 +111,13 @@ class PathValidator {
 	 * Check if path contains forbidden patterns
 	 *
 	 * @since 1.1.4
-	 * @param string $path The path to check (should be lowercase and trimmed)
+	 * @param string $path The path to check (should be lowercase and trimmed).
 	 * @return array Result with is_valid and error_message keys
 	 */
 	private static function check_forbidden_patterns( string $path ): array {
 		foreach ( self::$forbidden_paths as $forbidden ) {
 			// Reject if:
-			// 1. Exact match with forbidden word
+			// 1. Exact match with forbidden word.
 			if ( $path === $forbidden ) {
 				return array(
 					'is_valid'      => false,
@@ -143,7 +143,7 @@ class PathValidator {
 
 			// 3. Ends with forbidden word preceded by separator, but allow any valid prefix
 			if ( preg_match( "/[-_]{$forbidden}$/", $path ) ) {
-				// Allow if it has any prefix (regardless of length)
+				// Allow if it has any prefix (regardless of length).
 				$prefix = preg_replace( "/[-_]{$forbidden}$/", '', $path );
 				// Only reject if no prefix or if prefix is also forbidden.
 				if ( empty( $prefix ) || in_array( $prefix, self::$forbidden_paths, true ) ) {
@@ -181,7 +181,7 @@ class PathValidator {
 	 * Simple boolean check if path is forbidden (for legacy compatibility)
 	 *
 	 * @since 1.1.4
-	 * @param string $path The path to check
+	 * @param string $path The path to check.
 	 * @return bool True if path is forbidden, false if allowed
 	 */
 	public static function is_forbidden_path( string $path ): bool {
@@ -203,7 +203,7 @@ class PathValidator {
 	 * Add custom forbidden path keyword
 	 *
 	 * @since 1.1.4
-	 * @param string $path The forbidden path to add
+	 * @param string $path The forbidden path to add.
 	 * @return void
 	 */
 	public static function add_forbidden_path( string $path ): void {
@@ -217,7 +217,7 @@ class PathValidator {
 	 * Remove custom forbidden path keyword
 	 *
 	 * @since 1.1.4
-	 * @param string $path The forbidden path to remove
+	 * @param string $path The forbidden path to remove.
 	 * @return void
 	 */
 	public static function remove_forbidden_path( string $path ): void {
@@ -225,7 +225,7 @@ class PathValidator {
 		$key  = array_search( $path, self::$forbidden_paths, true );
 		if ( $key !== false ) {
 			unset( self::$forbidden_paths[ $key ] );
-			self::$forbidden_paths = array_values( self::$forbidden_paths ); // Re-index
+			self::$forbidden_paths = array_values( self::$forbidden_paths ); // Re-index.
 		}
 	}
 }

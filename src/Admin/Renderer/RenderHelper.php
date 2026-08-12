@@ -91,10 +91,10 @@ class RenderHelper {
 	/**
 	 * Render a settings table row with a toggle switch (checkbox)
 	 *
-	 * @param string     $label       The row header label.
-	 * @param string     $name        The input name and id attribute.
-	 * @param int|bool   $checked     The current value (truthy = checked).
-	 * @param string     $description The description text below the toggle.
+	 * @param string   $label       The row header label.
+	 * @param string   $name        The input name and id attribute.
+	 * @param int|bool $checked     The current value (truthy = checked).
+	 * @param string   $description The description text below the toggle.
 	 *
 	 * @since 1.1.15
 	 * @return void

@@ -120,26 +120,26 @@ class AdminPanel {
 		$this->plugin_version = SILVER_ASSIST_SECURITY_VERSION;
 		$this->config_manager = GraphQLConfigManager::getInstance();
 
-		// Initialize data providers
+		// Initialize data providers.
 		$this->data_provider  = new SecurityDataProvider();
 		$this->stats_provider = new StatisticsProvider();
 
-		// Initialize AJAX handler with dependencies
+		// Initialize AJAX handler with dependencies.
 		$this->ajax_handler = new SecurityAjaxHandler( $this->data_provider, $this->stats_provider );
 
-		// Initialize page renderer
+		// Initialize page renderer.
 		$this->page_renderer = new AdminPageRenderer( $this->config_manager, $this->data_provider );
 
-		// Initialize settings handler
+		// Initialize settings handler.
 		$this->settings_handler = new SettingsHandler();
 
-		// Initialize CF7 AJAX handler
+		// Initialize CF7 AJAX handler.
 		$this->cf7_ajax_handler = new ContactForm7AjaxHandler();
 
-		// Initialize GraphQL API Key AJAX handler
+		// Initialize GraphQL API Key AJAX handler.
 		$this->graphql_api_key_handler = new GraphQLApiKeyAjaxHandler();
 
-		// Initialize asset manager
+		// Initialize asset manager.
 		$this->asset_manager = new AssetManager( $this->plugin_version );
 		$this->asset_manager->init();
 
@@ -153,15 +153,15 @@ class AdminPanel {
 	 * @return void
 	 */
 	private function init(): void {
-		// Register with Settings Hub early (priority 4) to ensure hub processes it at priority 5
+		// Register with Settings Hub early (priority 4) to ensure hub processes it at priority 5.
 		\add_action( 'admin_menu', array( $this, 'register_with_hub' ), 4 );
 		\add_action( 'admin_init', array( $this, 'register_settings' ) );
 		\add_action( 'admin_init', array( $this, 'save_security_settings' ) );
 
-		// Register asset management hook (delegated to AssetManager)
+		// Register asset management hook (delegated to AssetManager).
 		\add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
-		// Security and CF7 AJAX handlers register themselves via their constructors
+		// Security and CF7 AJAX handlers register themselves via their constructors.
 	}
 
 	/**
@@ -171,15 +171,15 @@ class AdminPanel {
 	 * @return void
 	 */
 	public function register_with_hub(): void {
-		// Check if Settings Hub is available
+		// Check if Settings Hub is available.
 		if ( ! \class_exists( SettingsHub::class ) ) {
 
-			// Fallback to standalone menu when hub is not available
+			// Fallback to standalone menu when hub is not available.
 			$this->add_admin_menu();
 			return;
 		}
 
-		// XDebug: Settings Hub available
+		// XDebug: Settings Hub available.
 		if ( \defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			SecurityHelper::log_security_event(
 				'SETTINGS_HUB_REGISTRATION',
@@ -191,10 +191,10 @@ class AdminPanel {
 		try {
 			$hub = SettingsHub::get_instance();
 
-			// Get actions array for plugin card
+			// Get actions array for plugin card.
 			$actions = $this->get_hub_actions();
 
-			// Register plugin with hub
+			// Register plugin with hub.
 			$hub->register_plugin(
 				'silver-assist-security',
 				\__( 'Security Essentials', 'silver-assist-security' ),
@@ -211,7 +211,7 @@ class AdminPanel {
 
 		} catch ( Exception $e ) {
 
-			// Log error and fallback to standalone menu
+			// Log error and fallback to standalone menu.
 			SecurityHelper::log_security_event(
 				'SETTINGS_HUB_ERROR',
 				'Failed to register with Settings Hub: ' . $e->getMessage(),
@@ -230,7 +230,7 @@ class AdminPanel {
 	private function get_hub_actions(): array {
 		$actions = array();
 
-		// Add "Check Updates" button if updater is available
+		// Add "Check Updates" button if updater is available.
 		$plugin = Plugin::getInstance();
 		if ( $plugin->get_updater() ) {
 			$actions[] = array(
@@ -266,20 +266,20 @@ class AdminPanel {
 	 * @return void
 	 */
 	public function register_settings(): void {
-		// Login Security Settings
+		// Login Security Settings.
 		\register_setting( 'silver_assist_security_login', 'silver_assist_login_attempts' );
 		\register_setting( 'silver_assist_security_login', 'silver_assist_lockout_duration' );
 		\register_setting( 'silver_assist_security_login', 'silver_assist_session_timeout' );
 		\register_setting( 'silver_assist_security_login', 'silver_assist_bot_protection' );
 
-		// Admin Hide Settings
+		// Admin Hide Settings.
 		\register_setting( 'silver_assist_security_admin_hide', 'silver_assist_admin_hide_enabled' );
 		\register_setting( 'silver_assist_security_admin_hide', 'silver_assist_admin_hide_path' );
 
-		// Password Settings
+		// Password Settings.
 		\register_setting( 'silver_assist_security_password', 'silver_assist_password_strength_enforcement' );
 
-		// GraphQL Settings
+		// GraphQL Settings.
 		\register_setting( 'silver_assist_security_graphql', 'silver_assist_graphql_headless_mode' );
 		\register_setting( 'silver_assist_security_graphql', 'silver_assist_graphql_query_timeout' );
 	}
@@ -294,7 +294,7 @@ class AdminPanel {
 	 * @return void
 	 */
 	public function render_admin_page(): void {
-		// Delegate to AdminPageRenderer for cleaner separation of concerns
+		// Delegate to AdminPageRenderer for cleaner separation of concerns.
 		$this->page_renderer->render();
 	}
 
@@ -346,7 +346,7 @@ class AdminPanel {
 	 * Asset management proxy method - delegates to AssetManager
 	 *
 	 * @since 1.1.15
-	 * @param string $hook_suffix Current admin page hook suffix
+	 * @param string $hook_suffix Current admin page hook suffix.
 	 * @return void
 	 */
 	public function enqueue_admin_scripts( string $hook_suffix ): void {

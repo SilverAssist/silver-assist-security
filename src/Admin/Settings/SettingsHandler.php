@@ -57,7 +57,7 @@ class SettingsHandler {
 			return;
 		}
 
-		// Verify nonce
+		// Verify nonce.
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce verification doesn't require unslashing or sanitization
 		if ( ! isset( $_POST['_wpnonce'] ) || ! \wp_verify_nonce( $_POST['_wpnonce'], 'silver_assist_security_settings' ) ) {
 			\wp_die( \esc_html__( 'Security check failed.', 'silver-assist-security' ) );
@@ -96,28 +96,28 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_login_security_settings(): void {
-		// Login attempts validation
+		// Login attempts validation.
 		if ( isset( $_POST['silver_assist_login_attempts'] ) ) {
 			$login_attempts = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_attempts'] ) ) );
 			$login_attempts = \max( 1, \min( 20, $login_attempts ) );
 			\update_option( 'silver_assist_login_attempts', $login_attempts );
 		}
 
-		// Lockout duration validation
+		// Lockout duration validation.
 		if ( isset( $_POST['silver_assist_lockout_duration'] ) ) {
 			$lockout_duration = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_lockout_duration'] ) ) );
 			$lockout_duration = \max( 60, \min( 3600, $lockout_duration ) );
 			\update_option( 'silver_assist_lockout_duration', $lockout_duration );
 		}
 
-		// Session timeout validation
+		// Session timeout validation.
 		if ( isset( $_POST['silver_assist_session_timeout'] ) ) {
 			$session_timeout = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_session_timeout'] ) ) );
 			$session_timeout = \max( 5, \min( 120, $session_timeout ) );
 			\update_option( 'silver_assist_session_timeout', $session_timeout );
 		}
 
-		// Boolean settings
+		// Boolean settings.
 		\update_option( 'silver_assist_bot_protection', (int) ( isset( $_POST['silver_assist_bot_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_bot_protection'] ) ) : 0 ) );
 		\update_option( 'silver_assist_password_strength_enforcement', (int) ( isset( $_POST['silver_assist_password_strength_enforcement'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_password_strength_enforcement'] ) ) : 0 ) );
 	}
@@ -129,20 +129,20 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_rest_api_settings(): void {
-		// Batch endpoint protection
+		// Batch endpoint protection.
 		\update_option( 'silver_assist_rest_batch_endpoint_protection', (int) ( isset( $_POST['silver_assist_rest_batch_endpoint_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_rest_batch_endpoint_protection'] ) ) : 0 ) );
 
-		// Rate limiting enabled
+		// Rate limiting enabled.
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', (int) ( isset( $_POST['silver_assist_rest_rate_limiting_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_rest_rate_limiting_enabled'] ) ) : 0 ) );
 
-		// Rate limit requests validation
+		// Rate limit requests validation.
 		if ( isset( $_POST['silver_assist_rest_rate_limit_requests'] ) ) {
 			$rate_limit_requests = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_rest_rate_limit_requests'] ) ) );
 			$rate_limit_requests = \max( 10, \min( 1000, $rate_limit_requests ) );
 			\update_option( 'silver_assist_rest_rate_limit_requests', $rate_limit_requests );
 		}
 
-		// Rate limit window validation
+		// Rate limit window validation.
 		if ( isset( $_POST['silver_assist_rest_rate_limit_window'] ) ) {
 			$rate_limit_window = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_rest_rate_limit_window'] ) ) );
 			$rate_limit_window = \max( 30, \min( 300, $rate_limit_window ) );
@@ -179,11 +179,11 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_admin_hide_settings(): void {
-		// Admin Hide enable/disable
+		// Admin Hide enable/disable.
 		$admin_hide_enabled = (int) ( isset( $_POST['silver_assist_admin_hide_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_admin_hide_enabled'] ) ) : 0 );
 		\update_option( 'silver_assist_admin_hide_enabled', $admin_hide_enabled );
 
-		// Admin Hide path validation
+		// Admin Hide path validation.
 		$admin_hide_path = isset( $_POST['silver_assist_admin_hide_path'] ) ? \sanitize_title( \wp_unslash( $_POST['silver_assist_admin_hide_path'] ) ) : 'silver-admin';
 		if ( ! empty( $admin_hide_path ) && $this->validate_admin_hide_path( $admin_hide_path ) ) {
 			\update_option( 'silver_assist_admin_hide_path', $admin_hide_path );
@@ -191,7 +191,7 @@ class SettingsHandler {
 			\update_option( 'silver_assist_admin_hide_path', 'silver-admin' );
 		}
 
-		// Flush rewrite rules when admin hide settings change
+		// Flush rewrite rules when admin hide settings change.
 		if ( $admin_hide_enabled ) {
 			\flush_rewrite_rules();
 		}
@@ -256,15 +256,15 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_contact_form7_settings(): void {
-		// Only save CF7 settings if CF7 is active
+		// Only save CF7 settings if CF7 is active.
 		if ( ! SecurityHelper::is_contact_form_7_active() ) {
 			return;
 		}
 
-		// CF7 Protection enable/disable
+		// CF7 Protection enable/disable.
 		\update_option( 'silver_assist_cf7_protection_enabled', (int) ( isset( $_POST['silver_assist_cf7_protection_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_protection_enabled'] ) ) : 0 ) );
 
-		// CF7 Rate limiting
+		// CF7 Rate limiting.
 		if ( isset( $_POST['silver_assist_cf7_rate_limit'] ) ) {
 			$cf7_rate_limit = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_rate_limit'] ) ) );
 			$cf7_rate_limit = \max( 1, \min( 10, $cf7_rate_limit ) );
@@ -285,17 +285,17 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_ip_management_settings(): void {
-		// IP Blacklist enable/disable
+		// IP Blacklist enable/disable.
 		\update_option( 'silver_assist_ip_blacklist_enabled', (int) ( isset( $_POST['silver_assist_ip_blacklist_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_enabled'] ) ) : 0 ) );
 
-		// IP violation threshold
+		// IP violation threshold.
 		if ( isset( $_POST['silver_assist_ip_violation_threshold'] ) ) {
 			$ip_violation_threshold = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_violation_threshold'] ) ) );
 			$ip_violation_threshold = \max( 3, \min( 20, $ip_violation_threshold ) );
 			\update_option( 'silver_assist_ip_violation_threshold', $ip_violation_threshold );
 		}
 
-		// IP blacklist duration
+		// IP blacklist duration.
 		if ( isset( $_POST['silver_assist_ip_blacklist_duration'] ) ) {
 			$ip_blacklist_duration = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_duration'] ) ) );
 			$ip_blacklist_duration = \max( 3600, \min( 604800, $ip_blacklist_duration ) );
@@ -310,7 +310,7 @@ class SettingsHandler {
 	 * @return void
 	 */
 	private function save_advanced_protection_settings(): void {
-		// Advanced CF7 protection features
+		// Advanced CF7 protection features.
 		\update_option( 'silver_assist_cf7_honeypot_enabled', (int) ( isset( $_POST['silver_assist_cf7_honeypot_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_honeypot_enabled'] ) ) : 0 ) );
 		\update_option( 'silver_assist_cf7_timing_protection', (int) ( isset( $_POST['silver_assist_cf7_timing_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_timing_protection'] ) ) : 0 ) );
 		\update_option( 'silver_assist_cf7_obsolete_browser_blocking', (int) ( isset( $_POST['silver_assist_cf7_obsolete_browser_blocking'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_obsolete_browser_blocking'] ) ) : 0 ) );
@@ -338,7 +338,7 @@ class SettingsHandler {
 	 * Validate admin hide path using centralized PathValidator
 	 *
 	 * @since 1.1.15
-	 * @param string $path The path to validate
+	 * @param string $path The path to validate.
 	 * @return bool True if path is valid
 	 */
 	private function validate_admin_hide_path( string $path ): bool {

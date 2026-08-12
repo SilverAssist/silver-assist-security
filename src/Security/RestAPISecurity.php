@@ -84,12 +84,12 @@ class RestAPISecurity {
 	 * @return void
 	 */
 	private function init(): void {
-		// Restrict batch endpoint for unauthenticated users
+		// Restrict batch endpoint for unauthenticated users.
 		if ( $this->batch_endpoint_enabled ) {
 			\add_filter( 'rest_pre_dispatch', array( $this, 'restrict_batch_endpoint' ), 10, 3 );
 		}
 
-		// Rate limiting for unauthenticated REST requests
+		// Rate limiting for unauthenticated REST requests.
 		if ( $this->rate_limiting_enabled ) {
 			\add_filter( 'rest_pre_dispatch', array( $this, 'rate_limit_rest_api' ), 11, 3 );
 		}
@@ -104,25 +104,25 @@ class RestAPISecurity {
 	 * legitimate unauthenticated use case.
 	 *
 	 * @since 1.5.0
-	 * @param mixed                     $response Response (could be WP_Error, WP_REST_Response, or pre-response).
-	 * @param \WP_REST_Server          $server   REST server instance.
-	 * @param \WP_REST_Request         $request  REST request object.
+	 * @param mixed            $response Response (could be WP_Error, WP_REST_Response, or pre-response).
+	 * @param \WP_REST_Server  $server   REST server instance.
+	 * @param \WP_REST_Request $request  REST request object.
 	 * @return mixed Original response or error
 	 */
 	public function restrict_batch_endpoint( $response, \WP_REST_Server $server, \WP_REST_Request $request ) {
-		// Preserve any pre-existing error responses from earlier filters
+		// Preserve any pre-existing error responses from earlier filters.
 		if ( \is_wp_error( $response ) ) {
 			return $response;
 		}
 
-		// Only restrict if user is not authenticated
+		// Only restrict if user is not authenticated.
 		if ( \is_user_logged_in() ) {
 			return $response;
 		}
 
 		$route = $request->get_route();
 
-		// Check if this is a batch endpoint request (/batch/v1 or /batch/v1/...)
+		// Check if this is a batch endpoint request (/batch/v1 or /batch/v1/...).
 		if ( \strpos( $route, '/batch/v1' ) === 0 && ( \strlen( $route ) === 9 || $route[9] === '/' ) ) {
 			return new \WP_Error(
 				'rest_batch_disabled',
@@ -141,18 +141,18 @@ class RestAPISecurity {
 	 * abuse and enumeration attacks via the REST API.
 	 *
 	 * @since 1.5.0
-	 * @param mixed                     $response Response (could be WP_Error, WP_REST_Response, or pre-response).
-	 * @param \WP_REST_Server          $server   REST server instance.
-	 * @param \WP_REST_Request         $request  REST request object.
+	 * @param mixed            $response Response (could be WP_Error, WP_REST_Response, or pre-response).
+	 * @param \WP_REST_Server  $server   REST server instance.
+	 * @param \WP_REST_Request $request  REST request object.
 	 * @return mixed Original response or error
 	 */
 	public function rate_limit_rest_api( $response, \WP_REST_Server $server, \WP_REST_Request $request ) {
-		// Preserve any pre-existing error responses from earlier filters
+		// Preserve any pre-existing error responses from earlier filters.
 		if ( \is_wp_error( $response ) ) {
 			return $response;
 		}
 
-		// Only apply rate limiting to unauthenticated requests
+		// Only apply rate limiting to unauthenticated requests.
 		if ( \is_user_logged_in() ) {
 			return $response;
 		}
@@ -163,15 +163,15 @@ class RestAPISecurity {
 		}
 
 		// Fixed-window rate limiting with two transients per client:
-		//   - $window_key stores the window start timestamp (also acts as the claim lock).
-		//   - $count_key  stores the request counter, incremented atomically.
+		// - $window_key stores the window start timestamp (also acts as the claim lock).
+		// - $count_key  stores the request counter, incremented atomically.
 		$window_key = SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_window', $client_ip );
 		$count_key  = SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_limit', $client_ip );
 
 		$current_time  = \time();
 		$request_count = $this->atomic_increment( $window_key, $count_key, $current_time );
 
-		// Return 429 if limit exceeded
+		// Return 429 if limit exceeded.
 		if ( $request_count > $this->rate_limit_requests ) {
 			return new \WP_Error(
 				'rest_rate_limit_exceeded',
@@ -437,12 +437,12 @@ class RestAPISecurity {
 	 * @return bool True if IP is in range, false otherwise
 	 */
 	private function is_ip_in_cidr( string $ip, string $cidr ): bool {
-		// Handle IPv6
+		// Handle IPv6.
 		if ( \filter_var( $ip, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV6 ) ) {
 			return $this->is_ipv6_in_cidr( $ip, $cidr );
 		}
 
-		// Handle IPv4
+		// Handle IPv4.
 		if ( ! \strpos( $cidr, '/' ) ) {
 			return $ip === $cidr;
 		}
@@ -514,7 +514,7 @@ class RestAPISecurity {
 			return false;
 		}
 
-		// Convert to binary representation
+		// Convert to binary representation.
 		$ip_bin     = \inet_pton( $ip );
 		$subnet_bin = \inet_pton( $subnet );
 
@@ -522,13 +522,13 @@ class RestAPISecurity {
 			return false;
 		}
 
-		// Create bitmask: calculate bytes and remainder bits
-		$bytes          = (int) ( $bits / 8 );       // Full bytes
-		$remainder_bits = $bits % 8;        // Remaining bits in last byte
+		// Create bitmask: calculate bytes and remainder bits.
+		$bytes          = (int) ( $bits / 8 );       // Full bytes.
+		$remainder_bits = $bits % 8;        // Remaining bits in last byte.
 
 		$mask = \str_repeat( \chr( 255 ), $bytes );
 		if ( $remainder_bits > 0 ) {
-			// High-bit mask formula: 255 << (8 - remainder_bits)
+			// High-bit mask formula: 255 << (8 - remainder_bits).
 			$mask .= \chr( 255 << ( 8 - $remainder_bits ) );
 		}
 		$mask .= \str_repeat( \chr( 0 ), 16 - \strlen( $mask ) );
