@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Silver Assist Security Essentials - Security AJAX Handler
  *
@@ -47,15 +46,15 @@ class SecurityAjaxHandler {
 	/**
 	 * Initialize AJAX handler with data providers
 	 *
-	 * @param SecurityDataProvider $security_data Security data provider
-	 * @param StatisticsProvider   $statistics    Statistics provider
+	 * @param SecurityDataProvider $security_data Security data provider.
+	 * @param StatisticsProvider   $statistics    Statistics provider.
 	 * @since 1.1.15
 	 */
 	public function __construct( SecurityDataProvider $security_data, StatisticsProvider $statistics ) {
 		$this->security_data = $security_data;
 		$this->statistics    = $statistics;
 
-		// Auto-register AJAX handlers
+		// Auto-register AJAX handlers.
 		$this->register_ajax_handlers();
 	}
 
@@ -204,10 +203,10 @@ class SecurityAjaxHandler {
 		}
 
 		try {
+			// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified via SecurityHelper::validate_ajax_request() above.
 			$saved_settings = array();
 
-			// Auto-save login security settings
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in validate_ajax_request above
+			// Auto-save login security settings.
 			if ( isset( $_POST['silver_assist_login_attempts'] ) ) {
 				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
 				$login_attempts = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_attempts'] ) ) );
@@ -216,7 +215,6 @@ class SecurityAjaxHandler {
 				$saved_settings['login_attempts'] = $login_attempts;
 			}
 
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in validate_ajax_request above
 			if ( isset( $_POST['silver_assist_lockout_duration'] ) ) {
 				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
 				$lockout_duration = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_lockout_duration'] ) ) );
@@ -225,7 +223,6 @@ class SecurityAjaxHandler {
 				$saved_settings['lockout_duration'] = $lockout_duration;
 			}
 
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in validate_ajax_request above
 			if ( isset( $_POST['silver_assist_session_timeout'] ) ) {
 				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
 				$session_timeout = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_session_timeout'] ) ) );
@@ -234,8 +231,7 @@ class SecurityAjaxHandler {
 				$saved_settings['session_timeout'] = $session_timeout;
 			}
 
-			// Auto-save GraphQL settings
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in validate_ajax_request above
+			// Auto-save GraphQL settings.
 			if ( isset( $_POST['silver_assist_graphql_query_depth'] ) ) {
 				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
 				$query_depth = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_query_depth'] ) ) );
@@ -244,7 +240,6 @@ class SecurityAjaxHandler {
 				$saved_settings['graphql_query_depth'] = $query_depth;
 			}
 
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in validate_ajax_request above
 			if ( isset( $_POST['silver_assist_graphql_query_complexity'] ) ) {
 				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
 				$query_complexity = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_query_complexity'] ) ) );
@@ -253,7 +248,7 @@ class SecurityAjaxHandler {
 				$saved_settings['graphql_query_complexity'] = $query_complexity;
 			}
 
-			// Auto-save toggle settings (checkboxes)
+			// Auto-save toggle settings (checkboxes).
 			$toggle_settings = array(
 				'silver_assist_password_strength_enforcement',
 				'silver_assist_bot_protection',
@@ -263,7 +258,6 @@ class SecurityAjaxHandler {
 			);
 
 			foreach ( $toggle_settings as $setting ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in validate_ajax_request above
 				if ( isset( $_POST[ $setting ] ) ) {
 					// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
 					$value = \sanitize_text_field( \wp_unslash( $_POST[ $setting ] ) ) === '1' ? 1 : 0;
@@ -293,6 +287,7 @@ class SecurityAjaxHandler {
 					'timestamp'      => \current_time( 'mysql' ),
 				)
 			);
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		} catch ( \Exception $e ) {
 			SecurityHelper::log_security_event(
@@ -328,10 +323,10 @@ class SecurityAjaxHandler {
 		}
 
 		try {
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized in PathValidator
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Nonce verified in validate_ajax_request above; input sanitized in PathValidator
 			$admin_path = \wp_unslash( $_POST['admin_path'] );
 
-			// Validate using PathValidator
+			// Validate using PathValidator.
 			$validation_result = PathValidator::validate_admin_path( $admin_path );
 
 			if ( ! $validation_result['is_valid'] ) {
@@ -403,7 +398,8 @@ class SecurityAjaxHandler {
 		}
 
 		try {
-			// Get and validate IP address
+			// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified via SecurityHelper::validate_ajax_request() above.
+			// Get and validate IP address.
 			$ip_address = \sanitize_text_field( \wp_unslash( $_POST['ip_address'] ?? '' ) );
 
 			if ( empty( $ip_address ) ) {
@@ -411,19 +407,20 @@ class SecurityAjaxHandler {
 				return;
 			}
 
-			// Validate IP format
+			// Validate IP format.
 			if ( ! filter_var( $ip_address, FILTER_VALIDATE_IP ) ) {
 				\wp_send_json_error( array( 'error' => \__( 'Invalid IP address format', 'silver-assist-security' ) ) );
 				return;
 			}
 
-			// Get reason (optional)
+			// Get reason (optional).
 			$reason = \sanitize_text_field( \wp_unslash( $_POST['reason'] ?? '' ) );
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
 			if ( empty( $reason ) ) {
 				$reason = \__( 'Manually blocked by administrator', 'silver-assist-security' );
 			}
 
-			// Add IP to blacklist
+			// Add IP to blacklist.
 			$ip_blacklist = new IPBlacklist();
 			$duration     = 86400 * 30; // 30 days default
 			$ip_blacklist->add_to_blacklist( $ip_address, $reason, $duration );
@@ -480,6 +477,7 @@ class SecurityAjaxHandler {
 		}
 
 		try {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified via SecurityHelper::validate_ajax_request() above.
 			$ip_address = \sanitize_text_field( \wp_unslash( $_POST['ip_address'] ?? '' ) );
 
 			if ( empty( $ip_address ) ) {
@@ -492,7 +490,7 @@ class SecurityAjaxHandler {
 				return;
 			}
 
-			$ip_blacklist = IPBlacklist::getInstance();
+			$ip_blacklist = IPBlacklist::get_instance();
 			$removed      = $ip_blacklist->remove_from_blacklist( $ip_address );
 
 			if ( $removed ) {

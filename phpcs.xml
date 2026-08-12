@@ -14,41 +14,8 @@
 	<exclude-pattern>*/tests/*</exclude-pattern>
 	<exclude-pattern>*/languages/*</exclude-pattern>
 
-	<!-- Use WordPress-Core ruleset as base -->
-	<rule ref="WordPress-Core">
-		<!-- EXCLUDED: We use PSR-4 naming (AdminPanel.php not class-adminpanel.php) -->
-		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
-		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
-		
-		<!-- EXCLUDED: Inline comments don't require punctuation in modern code -->
-		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
-		
-		<!-- EXCLUDED: We use modern comparison style ($var === 'value') -->
-		<exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
-		
-		<!-- EXCLUDED: Function comments not required for self-documenting code -->
-		<exclude name="Squiz.Commenting.FunctionComment.Missing"/>
-		<exclude name="Squiz.Commenting.FunctionComment.MissingParamComment"/>
-		<exclude name="Squiz.Commenting.FunctionComment.ParamCommentFullStop"/>
-		
-		<!-- EXCLUDED: We use modern string interpolation -->
-		<exclude name="WordPress.WP.AlternativeFunctions.strip_tags_strip_tags"/>
-		
-		<!-- EXCLUDED: Standard design patterns (Singleton, GraphQL interfaces) -->
-		<exclude name="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid"/>
-		
-		<!-- EXCLUDED: Direct DB queries are sometimes necessary for performance -->
-		<!-- We'll review these manually -->
-		<exclude name="WordPress.DB.DirectDatabaseQuery.DirectQuery"/>
-		<exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching"/>
-		
-		<!-- EXCLUDED: File docblocks not required (we use PHPDoc for classes/methods) -->
-		<exclude name="Squiz.Commenting.FileComment.Missing"/>
-		
-		<!-- EXCLUDED: Variable naming - we use camelCase for modern PHP -->
-		<exclude name="WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase"/>
-		<exclude name="WordPress.NamingConventions.ValidVariableName.PropertyNotSnakeCase"/>
-	</rule>
+	<!-- Uses the shared SilverAssistWP ruleset from silverassist/wp-coding-standards. -->
+	<rule ref="SilverAssistWP"/>
 
 	<!-- Minimum supported PHP version -->
 	<config name="minimum_supported_wp_version" value="6.5"/>

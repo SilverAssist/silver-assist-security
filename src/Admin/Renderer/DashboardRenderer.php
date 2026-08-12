@@ -46,8 +46,8 @@ class DashboardRenderer {
 	/**
 	 * Constructor
 	 *
-	 * @param GraphQLConfigManager $config_manager GraphQL configuration manager
-	 * @param SecurityDataProvider $data_provider  Security data provider
+	 * @param GraphQLConfigManager $config_manager GraphQL configuration manager.
+	 * @param SecurityDataProvider $data_provider  Security data provider.
 	 * @since 1.1.15
 	 */
 	public function __construct( GraphQLConfigManager $config_manager, SecurityDataProvider $data_provider ) {

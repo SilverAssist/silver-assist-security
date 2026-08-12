@@ -43,7 +43,7 @@ class ContactForm7AjaxHandler {
 	 * @return void
 	 */
 	private function init(): void {
-		// Only register CF7 AJAX handlers if CF7 is active
+		// Only register CF7 AJAX handlers if CF7 is active.
 		if ( SecurityHelper::is_contact_form_7_active() ) {
 			\add_action( 'wp_ajax_silver_assist_get_cf7_blocked_ips', array( $this, 'get_blocked_ips' ) );
 			\add_action( 'wp_ajax_silver_assist_block_cf7_ip', array( $this, 'block_ip' ) );
@@ -69,7 +69,7 @@ class ContactForm7AjaxHandler {
 		}
 
 		try {
-			$blacklist     = IPBlacklist::getInstance();
+			$blacklist     = IPBlacklist::get_instance();
 			$blocked_ips   = $blacklist->get_cf7_blocked_ips();
 			$total_attacks = $blacklist->get_cf7_attack_count();
 
@@ -142,13 +142,14 @@ class ContactForm7AjaxHandler {
 			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified via SecurityHelper::validate_ajax_request() above.
 		$ip = \sanitize_text_field( \wp_unslash( $_POST['ip'] ?? '' ) );
 		if ( empty( $ip ) || ! \filter_var( $ip, FILTER_VALIDATE_IP ) ) {
 			\wp_send_json_error( array( 'error' => \__( 'Invalid IP address', 'silver-assist-security' ) ) );
 		}
 
 		try {
-			$blacklist = IPBlacklist::getInstance();
+			$blacklist = IPBlacklist::get_instance();
 			$success   = $blacklist->add_to_cf7_blacklist(
 				$ip,
 				\__( 'Manually blocked via admin panel', 'silver-assist-security' ),
@@ -190,13 +191,14 @@ class ContactForm7AjaxHandler {
 			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified via SecurityHelper::validate_ajax_request() above.
 		$ip = \sanitize_text_field( \wp_unslash( $_POST['ip'] ?? '' ) );
 		if ( empty( $ip ) ) {
 			\wp_send_json_error( array( 'error' => \__( 'IP address required', 'silver-assist-security' ) ) );
 		}
 
 		try {
-			$blacklist = IPBlacklist::getInstance();
+			$blacklist = IPBlacklist::get_instance();
 			$success   = $blacklist->remove_from_blacklist( $ip );
 
 			if ( $success ) {
@@ -235,7 +237,7 @@ class ContactForm7AjaxHandler {
 		}
 
 		try {
-			$blacklist     = IPBlacklist::getInstance();
+			$blacklist     = IPBlacklist::get_instance();
 			$cleared_count = $blacklist->clear_cf7_blacklist();
 
 			SecurityHelper::log_security_event( 'CF7_BLACKLIST_CLEARED', 'All CF7 blocked IPs cleared via admin panel', array( 'count' => $cleared_count ) );
@@ -272,7 +274,7 @@ class ContactForm7AjaxHandler {
 		}
 
 		try {
-			$blacklist   = IPBlacklist::getInstance();
+			$blacklist   = IPBlacklist::get_instance();
 			$blocked_ips = $blacklist->get_cf7_blocked_ips();
 
 			$csv_data = "IP Address,Reason,Blocked At,Violations\n";

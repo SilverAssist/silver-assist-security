@@ -156,7 +156,7 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 		\wp_set_current_user( $this->admin_user_id );
 
 		// First block the IP so we can unblock it
-		$blacklist = \SilverAssist\Security\Security\IPBlacklist::getInstance();
+		$blacklist = \SilverAssist\Security\Security\IPBlacklist::get_instance();
 		$blacklist->add_to_blacklist( '192.168.1.100', 'Test block for unblock', 3600 );
 
 		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
@@ -222,7 +222,7 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
 
 		// Clean CF7 blacklist to ensure empty state
-		$blacklist = \SilverAssist\Security\Security\IPBlacklist::getInstance();
+		$blacklist = \SilverAssist\Security\Security\IPBlacklist::get_instance();
 		$blacklist->clear_cf7_blacklist();
 
 		$response = $this->call_ajax_handler( $this->handler, 'get_blocked_ips' );
@@ -244,7 +244,7 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 		\wp_set_current_user( $this->admin_user_id );
 		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
 
-		$blacklist = \SilverAssist\Security\Security\IPBlacklist::getInstance();
+		$blacklist = \SilverAssist\Security\Security\IPBlacklist::get_instance();
 		$blacklist->clear_cf7_blacklist();
 
 		$response = $this->call_ajax_handler( $this->handler, 'get_blocked_ips' );

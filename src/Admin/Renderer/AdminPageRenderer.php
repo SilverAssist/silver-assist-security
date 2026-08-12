@@ -39,8 +39,8 @@ class AdminPageRenderer {
 	/**
 	 * Constructor
 	 *
-	 * @param GraphQLConfigManager $config_manager GraphQL configuration manager
-	 * @param SecurityDataProvider $data_provider  Security data provider
+	 * @param GraphQLConfigManager $config_manager GraphQL configuration manager.
+	 * @param SecurityDataProvider $data_provider  Security data provider.
 	 * @since 1.1.15
 	 */
 	public function __construct( GraphQLConfigManager $config_manager, SecurityDataProvider $data_provider ) {
@@ -55,7 +55,7 @@ class AdminPageRenderer {
 	 * @return void
 	 */
 	public function render(): void {
-		// Verify user has permission to manage options
+		// Verify user has permission to manage options.
 		if ( ! \current_user_can( 'manage_options' ) ) {
 			\wp_die(
 				\esc_html__( 'You do not have sufficient permissions to access this page.', 'silver-assist-security' ),
@@ -76,7 +76,7 @@ class AdminPageRenderer {
 	 * @return void
 	 */
 	private function render_page_header(): void {
-		// Get initial security status for display
+		// Get initial security status for display.
 		$security_status = $this->data_provider->get_security_status();
 
 		?>
@@ -128,12 +128,12 @@ class AdminPageRenderer {
 
 		echo '<div class="silver-tab-content-wrapper">';
 
-		// Dashboard Tab
+		// Dashboard Tab.
 		echo '<div id="dashboard-content" class="silver-tab-content active">';
 		$dashboard_renderer->render();
 		echo '</div>';
 
-		// Settings Tabs
+		// Settings Tabs.
 		$settings_renderer->render_all_tabs();
 
 		echo '</div>';

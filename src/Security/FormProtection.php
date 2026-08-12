@@ -31,7 +31,7 @@ class FormProtection {
 	 * @since 1.1.15
 	 */
 	public function __construct() {
-		// Initialize if needed
+		// Initialize if needed.
 	}
 
 	/**
@@ -40,7 +40,7 @@ class FormProtection {
 	 * Implements rate limiting to prevent spam submissions.
 	 *
 	 * @since 1.1.15
-	 * @param string $ip The client IP address
+	 * @param string $ip The client IP address.
 	 * @return bool True if submission is allowed, false if rate limited
 	 */
 	public function allow_form_submission( string $ip ): bool {
@@ -62,7 +62,7 @@ class FormProtection {
 			return false;
 		}
 
-		// Increment counter and set expiration
+		// Increment counter and set expiration.
 		\set_transient( $rate_key, $submissions + 1, $rate_window );
 		return true;
 	}
@@ -74,16 +74,16 @@ class FormProtection {
 	 * commonly used in automated attacks.
 	 *
 	 * @since 1.1.15
-	 * @param string $user_agent User agent string to analyze
+	 * @param string $user_agent User agent string to analyze.
 	 * @return bool True if browser appears obsolete or suspicious
 	 */
 	public static function is_obsolete_browser( string $user_agent ): bool {
-		// Empty or very short user agents are suspicious
+		// Empty or very short user agents are suspicious.
 		if ( empty( $user_agent ) || strlen( $user_agent ) < 10 ) {
 			return true;
 		}
 
-		// Patterns for obsolete browsers and suspicious agents
+		// Patterns for obsolete browsers and suspicious agents.
 		$obsolete_patterns = array(
 			'MSIE 6.0',
 			'MSIE 7.0',
@@ -99,7 +99,7 @@ class FormProtection {
 			'QQBrowser',
 			'Baidu',
 			'SogouWeb',
-			'compatible; MSIE', // General old IE pattern
+			'compatible; MSIE', // General old IE pattern.
 		);
 
 		foreach ( $obsolete_patterns as $pattern ) {
@@ -120,15 +120,17 @@ class FormProtection {
 	 * @return bool True if SQL injection attempt detected
 	 */
 	public static function has_sql_injection_attempt(): bool {
-		// Get all request data
+		// Get all request data.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Read-only attack-signature scan; must inspect raw request data (including requests with no/invalid nonce) to detect SQL injection attempts.
 		$query_string = $_SERVER['QUERY_STRING'] ?? '';
 		$post_data    = http_build_query( $_POST );
-		$full_data    = $query_string . '&' . $post_data;
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		$full_data = $query_string . '&' . $post_data;
 
-		// Decode URL encoding to catch encoded attacks
+		// Decode URL encoding to catch encoded attacks.
 		$full_data = urldecode( $full_data );
 
-		// Common SQL injection patterns
+		// Common SQL injection patterns.
 		$sql_patterns = array(
 			'PG_SLEEP',
 			'SLEEP(',
@@ -171,6 +173,7 @@ class FormProtection {
 						'ip'            => SecurityHelper::get_client_ip(),
 						'user_agent'    => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
 						'query_string'  => $query_string,
+						// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Same read-only attack-signature scan as above.
 						'has_post_data' => ! empty( $_POST ),
 					)
 				);

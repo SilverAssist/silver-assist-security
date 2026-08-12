@@ -37,7 +37,7 @@ class StatisticsProvider {
 	 * @since 1.1.15
 	 */
 	public function __construct() {
-		$this->ip_blacklist = IPBlacklist::getInstance();
+		$this->ip_blacklist = IPBlacklist::get_instance();
 	}
 
 	/**
@@ -47,7 +47,7 @@ class StatisticsProvider {
 	 * @return array Login statistics data
 	 */
 	public function get_login_statistics(): array {
-		// Get statistics for the last 24 hours, 7 days, and 30 days
+		// Get statistics for the last 24 hours, 7 days, and 30 days.
 		$stats = array(
 			'24_hours' => $this->get_period_stats( DAY_IN_SECONDS ),
 			'7_days'   => $this->get_period_stats( WEEK_IN_SECONDS ),
@@ -63,20 +63,20 @@ class StatisticsProvider {
 	/**
 	 * Get statistics for a specific time period
 	 *
-	 * @param int $period_seconds Time period in seconds
+	 * @param int $period_seconds Time period in seconds.
 	 * @return array Period statistics
 	 * @since 1.1.15
 	 */
 	private function get_period_stats( int $period_seconds ): array {
 		$cutoff_time = time() - $period_seconds;
 
-		// Count failed login attempts
+		// Count failed login attempts.
 		$failed_logins = $this->count_failed_logins_since( $cutoff_time );
 
-		// Count blocked IPs
+		// Count blocked IPs.
 		$blocked_ips = $this->count_blocked_ips_since( $cutoff_time );
 
-		// Count bot blocks
+		// Count bot blocks.
 		$bot_blocks = $this->count_bot_blocks_since( $cutoff_time );
 
 		return array(
@@ -91,14 +91,14 @@ class StatisticsProvider {
 	/**
 	 * Count failed login attempts since timestamp
 	 *
-	 * @param int $since_timestamp Timestamp to count from
+	 * @param int $since_timestamp Timestamp to count from.
 	 * @return int Number of failed login attempts
 	 * @since 1.1.15
 	 */
 	private function count_failed_logins_since( int $since_timestamp ): int {
 		global $wpdb;
 
-		// Check for transient-based login attempts
+		// Check for transient-based login attempts.
 		$transient_count = 0;
 		$results         = $wpdb->get_results(
 			$wpdb->prepare(
@@ -116,7 +116,7 @@ class StatisticsProvider {
 	/**
 	 * Count blocked IPs since timestamp
 	 *
-	 * @param int $since_timestamp Timestamp to count from
+	 * @param int $since_timestamp Timestamp to count from.
 	 * @return int Number of IPs blocked
 	 * @since 1.1.15
 	 */
@@ -137,13 +137,13 @@ class StatisticsProvider {
 	/**
 	 * Count bot blocks since given timestamp
 	 *
-	 * @param int $since_timestamp Timestamp to count from
+	 * @param int $since_timestamp Timestamp to count from.
 	 * @return int Number of bot blocks
 	 * @since 1.1.15
 	 */
 	private function count_bot_blocks_since( int $since_timestamp ): int {
 		try {
-			// First check transients for recent bot blocks (performance optimization)
+			// First check transients for recent bot blocks (performance optimization).
 			$cache_key    = "bot_blocks_count_{$since_timestamp}";
 			$cached_count = \get_transient( $cache_key );
 
@@ -153,13 +153,13 @@ class StatisticsProvider {
 
 			$count = 0;
 
-			// Method 1: Check for bot blocking transients (faster)
+			// Method 1: Check for bot blocking transients (faster).
 			$count += $this->count_bot_block_transients( $since_timestamp );
 
-			// Method 2: Parse security logs for BOT_BLOCKED events (more comprehensive)
+			// Method 2: Parse security logs for BOT_BLOCKED events (more comprehensive).
 			$count += $this->count_bot_blocks_from_logs( $since_timestamp );
 
-			// Cache result for 5 minutes to avoid repeated log parsing
+			// Cache result for 5 minutes to avoid repeated log parsing.
 			\set_transient( $cache_key, $count, 300 );
 
 			return $count;
@@ -181,7 +181,7 @@ class StatisticsProvider {
 	/**
 	 * Count bot blocks from transient entries
 	 *
-	 * @param int $since_timestamp Timestamp to count from
+	 * @param int $since_timestamp Timestamp to count from.
 	 * @return int Number of bot blocks found in transients
 	 * @since 1.1.15
 	 */
@@ -189,7 +189,7 @@ class StatisticsProvider {
 		global $wpdb;
 
 		try {
-			// Look for bot-related transients created since timestamp
+			// Look for bot-related transients created since timestamp.
 			$count = $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT COUNT(*) 
@@ -206,7 +206,7 @@ class StatisticsProvider {
 			return (int) $count;
 
 		} catch ( \Exception $e ) {
-			// Fallback to simpler query if complex one fails
+			// Fallback to simpler query if complex one fails.
 			$count = $wpdb->get_var(
 				"SELECT COUNT(*) 
 				 FROM {$wpdb->options} 
@@ -220,14 +220,14 @@ class StatisticsProvider {
 	/**
 	 * Count bot blocks from security logs
 	 *
-	 * @param int $since_timestamp Timestamp to count from
+	 * @param int $since_timestamp Timestamp to count from.
 	 * @return int Number of BOT_BLOCKED events in logs
 	 * @since 1.1.15
 	 */
 	private function count_bot_blocks_from_logs( int $since_timestamp ): int {
 		$count = 0;
 
-		// Get log file paths directly to avoid circular dependency with SecurityDataProvider
+		// Get log file paths directly to avoid circular dependency with SecurityDataProvider.
 		$log_files = $this->get_log_file_paths();
 
 		foreach ( $log_files as $log_file ) {
@@ -261,18 +261,20 @@ class StatisticsProvider {
 		return array_filter( $paths );
 	}
 
+	// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen,WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- WP_Filesystem only supports whole-file reads; this method's bounded seek-from-end read of large log files has no WP_Filesystem equivalent and would otherwise have to load entire multi-MB files into memory.
 	/**
 	 * Count BOT_BLOCKED events in a specific log file
 	 *
 	 * @since 1.1.15
-	 * @param string $log_file Path to log file
-	 * @param int    $since_timestamp Only count events after this timestamp
+	 * @param string $log_file Path to log file.
+	 * @param int    $since_timestamp Only count events after this timestamp.
 	 * @return int Count of BOT_BLOCKED events
 	 */
 	private function count_bot_blocks_in_file( string $log_file, int $since_timestamp ): int {
 		$count = 0;
 
 		try {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- fopen() emits E_WARNING (not a catchable Exception) on failure; the immediately-following false-check already handles it, so un-suppressing would only leak PHP warnings into admin output/logs with no way to act on them here.
 			$handle = @fopen( $log_file, 'r' );
 			if ( ! $handle ) {
 				return 0;
@@ -280,7 +282,8 @@ class StatisticsProvider {
 
 			// Bound the read to the last 1 MB of the file to avoid scanning huge logs.
 			$max_read_bytes = 1024 * 1024; // 1 MB
-			$file_size      = @filesize( $log_file );
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- filesize() emits E_WARNING (not a catchable Exception) on failure; the falsy check on the next line already handles it.
+			$file_size = @filesize( $log_file );
 
 			if ( $file_size && $file_size > $max_read_bytes ) {
 				fseek( $handle, -$max_read_bytes, SEEK_END );
@@ -288,7 +291,8 @@ class StatisticsProvider {
 				fgets( $handle );
 			}
 
-			// Read file line by line to handle large files
+			// Read file line by line to handle large files.
+			// phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition -- Standard PHP file-read idiom.
 			while ( ( $line = fgets( $handle ) ) !== false ) {
 				if ( strpos( $line, 'SILVER_ASSIST_SECURITY:' ) === false ) {
 					continue;
@@ -297,7 +301,7 @@ class StatisticsProvider {
 					continue;
 				}
 
-				// Extract timestamp from log line: [YYYY-MM-DD HH:MM:SS]
+				// Extract timestamp from log line: [YYYY-MM-DD HH:MM:SS].
 				if ( preg_match( '/\[([^\]]+)\]/', $line, $matches ) ) {
 					$log_timestamp = strtotime( $matches[1] );
 					if ( $log_timestamp && $log_timestamp >= $since_timestamp ) {
@@ -308,11 +312,17 @@ class StatisticsProvider {
 
 			fclose( $handle );
 		} catch ( \Exception $e ) {
-			// Silently fail - don't break statistics for log read errors
+			// Don't break statistics for log read errors, but don't swallow them silently either.
+			SecurityHelper::log_security_event(
+				'STATS_LOG_READ_ERROR',
+				"Failed to read log file for bot block statistics: {$e->getMessage()}",
+				array( 'log_file' => $log_file )
+			);
 		}
 
 		return $count;
 	}
+	// phpcs:enable WordPress.WP.AlternativeFunctions.file_system_operations_fopen,WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
 	/**
 	 * Get count of blocked IPs
@@ -323,7 +333,7 @@ class StatisticsProvider {
 	public function get_blocked_ips_count(): int {
 		global $wpdb;
 
-		// Try to get from cache first
+		// Try to get from cache first.
 		$cache_key = 'silver_assist_blocked_ips_count';
 		$count     = \wp_cache_get( $cache_key, 'silver-assist-security' );
 
@@ -335,7 +345,7 @@ class StatisticsProvider {
              AND option_value = \"1\""
 			);
 
-			// Cache for 60 seconds
+			// Cache for 60 seconds.
 			\wp_cache_set( $cache_key, $count, 'silver-assist-security', 60 );
 		}
 
@@ -351,19 +361,19 @@ class StatisticsProvider {
 	public function get_recent_failed_attempts(): int {
 		global $wpdb;
 
-		// Try to get from cache first
+		// Try to get from cache first.
 		$cache_key = 'silver_assist_failed_attempts_count';
 		$count     = \wp_cache_get( $cache_key, 'silver-assist-security' );
 
 		if ( false === $count ) {
-			// Count active login attempt transients
+			// Count active login attempt transients.
 			$count = $wpdb->get_var(
 				"SELECT COUNT(*) 
              FROM {$wpdb->options} 
              WHERE option_name LIKE \"_transient_login_attempts_%\""
 			);
 
-			// Cache for 60 seconds
+			// Cache for 60 seconds.
 			\wp_cache_set( $cache_key, $count, 'silver-assist-security', 60 );
 		}
 
@@ -381,12 +391,12 @@ class StatisticsProvider {
 
 		$logs = array();
 
-		// Try to get from cache first
+		// Try to get from cache first.
 		$cache_key          = 'silver_assist_attempt_transients';
 		$attempt_transients = \wp_cache_get( $cache_key, 'silver-assist-security' );
 
 		if ( false === $attempt_transients ) {
-			// Get recent login attempts (transients)
+			// Get recent login attempts (transients).
 			$attempt_transients = $wpdb->get_results(
 				"SELECT option_name, option_value 
              FROM {$wpdb->options} 
@@ -395,7 +405,7 @@ class StatisticsProvider {
              LIMIT 10"
 			);
 
-			// Cache for 60 seconds
+			// Cache for 60 seconds.
 			\wp_cache_set( $cache_key, $attempt_transients, 'silver-assist-security', 60 );
 		}
 
@@ -412,12 +422,12 @@ class StatisticsProvider {
 			);
 		}
 
-		// Try to get from cache first
+		// Try to get from cache first.
 		$lockout_cache_key  = 'silver_assist_recent_lockouts';
 		$lockout_transients = \wp_cache_get( $lockout_cache_key, 'silver-assist-security' );
 
 		if ( false === $lockout_transients ) {
-			// Get recent lockouts
+			// Get recent lockouts.
 			$lockout_transients = $wpdb->get_results(
 				"SELECT option_name, option_value 
              FROM {$wpdb->options} 
@@ -427,7 +437,7 @@ class StatisticsProvider {
              LIMIT 5"
 			);
 
-			// Cache for 60 seconds
+			// Cache for 60 seconds.
 			\wp_cache_set( $lockout_cache_key, $lockout_transients, 'silver-assist-security', 60 );
 		}
 
@@ -443,7 +453,7 @@ class StatisticsProvider {
 			);
 		}
 
-		// Sort by timestamp (most recent first)
+		// Sort by timestamp (most recent first).
 		usort(
 			$logs,
 			function ( $a, $b ) {
@@ -451,6 +461,6 @@ class StatisticsProvider {
 			}
 		);
 
-		return array_slice( $logs, 0, 15 ); // Return max 15 recent logs
+		return array_slice( $logs, 0, 15 ); // Return max 15 recent logs.
 	}
 }

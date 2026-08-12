@@ -97,7 +97,7 @@ class GraphQLSecurity {
 	 * @since 1.1.1
 	 */
 	public function __construct() {
-		$this->config_manager = GraphQLConfigManager::getInstance();
+		$this->config_manager = GraphQLConfigManager::get_instance();
 		$this->init_configuration();
 		$this->init();
 	}
@@ -109,15 +109,15 @@ class GraphQLSecurity {
 	 * @return void
 	 */
 	private function init_configuration(): void {
-		// Get configuration from centralized manager
+		// Get configuration from centralized manager.
 		$config = $this->config_manager->get_configuration();
 
-		// Set properties from configuration
+		// Set properties from configuration.
 		$this->max_query_depth      = $config['query_depth_limit'];
 		$this->max_query_complexity = $config['query_complexity_limit'];
 		$this->query_timeout        = $config['query_timeout'];
 
-		// Set adaptive limits based on headless mode
+		// Set adaptive limits based on headless mode.
 		$this->max_aliases          = $this->config_manager->get_safe_limit( 'aliases' );
 		$this->max_directives       = $this->config_manager->get_safe_limit( 'directives' );
 		$this->max_field_duplicates = $this->config_manager->get_safe_limit( 'field_duplicates' );
@@ -130,7 +130,7 @@ class GraphQLSecurity {
 	 * @return void
 	 */
 	private function init(): void {
-		// Only initialize if WPGraphQL is active
+		// Only initialize if WPGraphQL is active.
 		if ( ! \class_exists( 'WPGraphQL' ) ) {
 			return;
 		}
@@ -163,12 +163,12 @@ class GraphQLSecurity {
 	 * @return void
 	 */
 	public function init_graphql_security(): void {
-		// Disable introspection in production
+		// Disable introspection in production.
 		if ( defined( 'WP_ENVIRONMENT_TYPE' ) && WP_ENVIRONMENT_TYPE === 'production' ) {
 			\add_filter( 'graphql_show_in_graphiql', '__return_false' );
 		}
 
-		// Add rate limiting for GraphQL endpoint
+		// Add rate limiting for GraphQL endpoint.
 		$this->setup_graphql_rate_limiting();
 	}
 
@@ -179,15 +179,15 @@ class GraphQLSecurity {
 	 * @return void
 	 */
 	public function disable_introspection_in_production(): void {
-		// Use config manager to check WPGraphQL settings
+		// Use config manager to check WPGraphQL settings.
 		$config = $this->config_manager->get_configuration();
 
-		// If WPGraphQL already has introspection disabled, respect that
+		// If WPGraphQL already has introspection disabled, respect that.
 		if ( ! $config['introspection_enabled'] ) {
 			return;
 		}
 
-		// Our additional production checks
+		// Our additional production checks.
 		if ( defined( 'WP_ENVIRONMENT_TYPE' ) && WP_ENVIRONMENT_TYPE === 'production' ) {
 			\add_filter( 'graphql_introspection_enabled', '__return_false' );
 			\add_filter( 'graphql_show_in_graphiql', '__return_false' );
@@ -209,13 +209,13 @@ class GraphQLSecurity {
 	 * @return void
 	 */
 	public function add_security_validations(): void {
-		// Add our custom validation rules
+		// Add our custom validation rules.
 		\add_filter( 'graphql_validation_rules', array( $this, 'add_custom_validation_rules' ) );
 
-		// Integrate with WPGraphQL's native depth validation
+		// Integrate with WPGraphQL's native depth validation.
 		$this->integrate_with_wpgraphql_depth_validation();
 
-		// Enhance WPGraphQL's connection limits for complexity estimation
+		// Enhance WPGraphQL's connection limits for complexity estimation.
 		$this->enhance_wpgraphql_connection_limits();
 	}
 
@@ -226,14 +226,14 @@ class GraphQLSecurity {
 	 * @return void
 	 */
 	private function integrate_with_wpgraphql_depth_validation(): void {
-		// Check if WPGraphQL depth validation is enabled
+		// Check if WPGraphQL depth validation is enabled.
 		if ( function_exists( 'get_graphql_setting' ) ) {
 			$wpgraphql_depth_enabled = \get_graphql_setting( 'query_depth_enabled', 'off' );
 			$wpgraphql_max_depth     = \get_graphql_setting( 'query_depth_max', 10 );
 
-			// If WPGraphQL depth validation is enabled, coordinate with it
-			if ( $wpgraphql_depth_enabled === 'on' ) {
-				// Log coordination for debugging
+			// If WPGraphQL depth validation is enabled, coordinate with it.
+			if ( 'on' === $wpgraphql_depth_enabled ) {
+				// Log coordination for debugging.
 				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 					SecurityHelper::log_security_event(
 						'GRAPHQL_DEPTH_COORDINATION',
@@ -245,7 +245,7 @@ class GraphQLSecurity {
 					);
 				}
 
-				// Use WPGraphQL's limit if it's more restrictive
+				// Use WPGraphQL's limit if it's more restrictive.
 				if ( $wpgraphql_max_depth < $this->max_query_depth ) {
 					$this->max_query_depth = $wpgraphql_max_depth;
 				}
@@ -260,32 +260,34 @@ class GraphQLSecurity {
 	 * @return void
 	 */
 	private function enhance_wpgraphql_connection_limits(): void {
-		// Filter WPGraphQL's max query amount for complexity estimation
+		// Filter WPGraphQL's max query amount for complexity estimation.
 		\add_filter( 'graphql_connection_max_query_amount', array( $this, 'filter_connection_max_query_amount' ), 10, 5 );
 
-		// Add complexity hints to connection resolvers
+		// Add complexity hints to connection resolvers.
 		\add_filter( 'graphql_connection_query_args', array( $this, 'add_complexity_hints_to_connections' ), 10, 5 );
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the graphql_connection_max_query_amount filter signature.
 	/**
 	 * Filter WPGraphQL's connection max query amount based on complexity estimation
 	 *
 	 * @since 1.1.1
-	 * @param int   $max_query_amount The maximum number of nodes to query
-	 * @param mixed $source The source object (optional)
-	 * @param array $args The connection arguments (optional)
-	 * @param mixed $context The GraphQL context (optional)
-	 * @param mixed $info The ResolveInfo object (optional)
+	 * @param int   $max_query_amount The maximum number of nodes to query.
+	 * @param mixed $source The source object (optional).
+	 * @param array $args The connection arguments (optional).
+	 * @param mixed $context The GraphQL context (optional).
+	 * @param mixed $info The ResolveInfo object (optional).
 	 * @return int
 	 */
 	public function filter_connection_max_query_amount( int $max_query_amount, $source = null, array $args = array(), $context = null, $info = null ): int {
-		// Use our complexity configuration to adjust connection limits
-		$complexity_ratio = $this->max_query_complexity / 100; // Base ratio
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		// Use our complexity configuration to adjust connection limits.
+		$complexity_ratio = $this->max_query_complexity / 100; // Base ratio.
 
-		// More complex queries get lower connection limits
+		// More complex queries get lower connection limits.
 		$adjusted_limit = intval( $max_query_amount / $complexity_ratio );
 
-		// Ensure we don't go below 10 or above default WPGraphQL limit (100)
+		// Ensure we don't go below 10 or above default WPGraphQL limit (100).
 		return max( 10, min( 100, $adjusted_limit ) );
 	}
 
@@ -293,15 +295,15 @@ class GraphQLSecurity {
 	 * Add complexity hints to GraphQL connections
 	 *
 	 * @since 1.1.1
-	 * @param array $query_args The query arguments
-	 * @param mixed $source The source object (optional)
-	 * @param array $args The connection arguments (optional)
-	 * @param mixed $context The GraphQL context (optional)
-	 * @param mixed $info The ResolveInfo object (optional)
+	 * @param array $query_args The query arguments.
+	 * @param mixed $source The source object (optional).
+	 * @param array $args The connection arguments (optional).
+	 * @param mixed $context The GraphQL context (optional).
+	 * @param mixed $info The ResolveInfo object (optional).
 	 * @return array
 	 */
 	public function add_complexity_hints_to_connections( array $query_args, $source = null, array $args = array(), $context = null, $info = null ): array {
-		// Add complexity metadata for monitoring
+		// Add complexity metadata for monitoring.
 		$query_args['_silver_assist_complexity_hint'] = array(
 			'max_complexity'  => $this->max_query_complexity,
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- WPGraphQL uses camelCase for properties
@@ -316,19 +318,19 @@ class GraphQLSecurity {
 	 * Estimate connection query complexity based on pagination arguments
 	 *
 	 * @since 1.1.1
-	 * @param array $args Connection arguments
+	 * @param array $args Connection arguments.
 	 * @return int Estimated complexity score
 	 */
 	private function estimate_connection_complexity( array $args ): int {
-		$base_cost = 5; // Base cost for connection queries
+		$base_cost = 5; // Base cost for connection queries.
 
-		// Extract pagination info
+		// Extract pagination info.
 		$item_count = (int) ( $args['first'] ?? $args['last'] ?? 10 );
 
-		// Higher item counts increase complexity
+		// Higher item counts increase complexity.
 		$item_complexity = (int) ceil( $item_count / 10 );
 
-		// Factor in where arguments (filtering increases complexity)
+		// Factor in where arguments (filtering increases complexity).
 		$where_complexity = ! empty( $args['where'] ) ? count( $args['where'] ) : 0;
 
 		return $base_cost + $item_complexity + $where_complexity;
@@ -336,18 +338,29 @@ class GraphQLSecurity {
 		 * Add custom validation rules with WPGraphQL integration
 		 *
 		 * @since 1.1.1
-		 * @param array $validation_rules Existing validation rules
+		 * @param array $validation_rules Existing validation rules.
 		 * @return array Modified validation rules
 		 */
 	public function add_custom_validation_rules( array $validation_rules ): array {
-		// Add our enhanced complexity validation
+		// Add our enhanced complexity validation.
 		$validation_rules[] = new class($this->config_manager) {
+			/**
+			 * GraphQL configuration manager.
+			 *
+			 * @var GraphQLConfigManager
+			 */
 			private GraphQLConfigManager $config_manager;
 
+			/**
+			 * Constructor.
+			 *
+			 * @param GraphQLConfigManager $config_manager GraphQL configuration manager.
+			 */
 			public function __construct( GraphQLConfigManager $config_manager ) {
 				$this->config_manager = $config_manager;
 			}
 
+			// phpcs:disable WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Method names below are mandated by graphql-php's ValidationRule contract this anonymous class implements; cannot be snake_case.
 			/**
 			 * Get the validation rule name
 			 *
@@ -360,16 +373,16 @@ class GraphQLSecurity {
 			/**
 			 * Get visitor function for GraphQL validation
 			 *
-			 * @param mixed $context Validation context
+			 * @param mixed $context Validation context.
 			 * @return array
 			 */
 			public function getVisitor( $context ): array {
 				return array(
 					'DocumentNode' => function ( $node ) use ( $context ) {
-						// Use our enhanced complexity validation with WPGraphQL integration
+						// Use our enhanced complexity validation with WPGraphQL integration.
 						$estimated_complexity = $this->estimate_query_complexity( $node );
 
-						// Get dynamic complexity limit based on configuration
+						// Get dynamic complexity limit based on configuration.
 						$complexity_limit = $this->config_manager->get_safe_limit( 'complexity' );
 
 						if ( $estimated_complexity > $complexity_limit ) {
@@ -388,35 +401,37 @@ class GraphQLSecurity {
 				);
 			}
 
+			// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.Found -- SDL visiting is unused here but $context must remain in the signature to satisfy the ValidationRule contract.
 			/**
 			 * Get SDL visitor (not used in this context)
 			 *
-			 * @param mixed $context SDL validation context
+			 * @param mixed $context SDL validation context.
 			 * @return array
 			 */
 			public function getSDLVisitor( $context ): array {
 				return array();
 			}
+			// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.Found, WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
 
 			/**
 			 * Estimate query complexity using enhanced proxy method
 			 *
-			 * @param mixed $node DocumentNode
+			 * @param mixed $node DocumentNode.
 			 * @return int Estimated complexity
 			 */
 			private function estimate_query_complexity( $node ): int {
-				// Convert node to string for analysis
+				// Convert node to string for analysis.
 				$query_string = $node->__toString();
 
-				// Enhanced complexity estimation
+				// Enhanced complexity estimation.
 				$base_complexity = 1;
 
-				// Field count estimation (each field adds complexity)
+				// Field count estimation (each field adds complexity).
 				$field_matches = array();
 				preg_match_all( '/\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*[{\(]/', $query_string, $field_matches );
 				$field_complexity = ! empty( $field_matches[1] ) ? count( $field_matches[1] ) : 0;
 
-				// Connection complexity (connections with arguments)
+				// Connection complexity (connections with arguments).
 				$connection_matches = array();
 				preg_match_all( '/\(\s*first:\s*(\d+)/', $query_string, $connection_matches );
 				$connection_complexity = 0;
@@ -426,21 +441,21 @@ class GraphQLSecurity {
 					}
 				}
 
-				// Where clause complexity (filtering increases complexity)
+				// Where clause complexity (filtering increases complexity).
 				$where_complexity = substr_count( strtolower( $query_string ), 'where:' );
 
-				// Fragment complexity (fragments can multiply complexity)
+				// Fragment complexity (fragments can multiply complexity).
 				$fragment_complexity = substr_count( $query_string, 'fragment' ) * 2;
 
-				// Nested query complexity (deeper nesting = higher complexity)
+				// Nested query complexity (deeper nesting = higher complexity).
 				$nesting_level = 0;
 				$max_nesting   = 0;
 				$query_length  = strlen( $query_string );
 				for ( $i = 0; $i < $query_length; $i++ ) {
-					if ( $query_string[ $i ] === '{' ) {
+					if ( '{' === $query_string[ $i ] ) {
 						++$nesting_level;
 						$max_nesting = max( $max_nesting, $nesting_level );
-					} elseif ( $query_string[ $i ] === '}' ) {
+					} elseif ( '}' === $query_string[ $i ] ) {
 						--$nesting_level;
 					}
 				}
@@ -461,33 +476,35 @@ class GraphQLSecurity {
 	 * @param array $rules Existing validation rules
 	 * @return array
 	 */
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the graphql_request_data filter signature.
 	/**
 	 * Validate query before execution
 	 *
 	 * @since 1.1.1
-	 * @param array       $request_data Request data including query
-	 * @param mixed       $request HTTP request object (optional)
-	 * @param string|null $operation_name GraphQL operation name (optional)
-	 * @param array|null  $variables Query variables (optional)
-	 * @param mixed       $context Request context (optional)
+	 * @param array       $request_data Request data including query.
+	 * @param mixed       $request HTTP request object (optional).
+	 * @param string|null $operation_name GraphQL operation name (optional).
+	 * @param array|null  $variables Query variables (optional).
+	 * @param mixed       $context Request context (optional).
 	 * @return array
 	 * @throws UserError When introspection is attempted in production or query patterns fail validation.
 	 */
 	public function validate_query_before_execution( array $request_data, $request = null, ?string $operation_name = null, ?array $variables = null, $context = null ): array {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		if ( empty( $request_data['query'] ) ) {
 			return $request_data;
 		}
 
 		$query = $request_data['query'];
 
-		// Check for introspection in production
+		// Check for introspection in production.
 		if ( defined( 'WP_ENVIRONMENT_TYPE' ) && WP_ENVIRONMENT_TYPE === 'production' ) {
 			if ( $this->is_introspection_query( $query ) ) {
 				throw new UserError( esc_html( \__( 'Introspection is disabled in production.', 'silver-assist-security' ) ) );
 			}
 		}
 
-		// Validate query patterns
+		// Validate query patterns.
 		$this->validate_query_patterns( $query );
 
 		return $request_data;
@@ -497,7 +514,7 @@ class GraphQLSecurity {
 	 * Check if query is introspection
 	 *
 	 * @since 1.1.1
-	 * @param string $query GraphQL query string
+	 * @param string $query GraphQL query string.
 	 * @return bool
 	 */
 	private function is_introspection_query( string $query ): bool {
@@ -508,12 +525,12 @@ class GraphQLSecurity {
 	 * Validate query patterns for security issues
 	 *
 	 * @since 1.1.1
-	 * @param string $query GraphQL query string
+	 * @param string $query GraphQL query string.
 	 * @return void
 	 * @throws UserError When query exceeds security limits (aliases, directives, depth, size, duplicates).
 	 */
 	private function validate_query_patterns( string $query ): void {
-		// Check for excessive aliases
+		// Check for excessive aliases.
 		$alias_count = preg_match_all( '/\w+\s*:\s*\w+/', $query );
 		if ( $alias_count > $this->max_aliases ) {
 			throw new UserError(
@@ -528,7 +545,7 @@ class GraphQLSecurity {
 			);
 		}
 
-		// Check for excessive directive usage
+		// Check for excessive directive usage.
 		$directive_count = preg_match_all( '/@\w+/', $query );
 		if ( $directive_count > $this->max_directives * 2 ) {
 			throw new UserError(
@@ -543,7 +560,7 @@ class GraphQLSecurity {
 			);
 		}
 
-		// Check for field duplication patterns
+		// Check for field duplication patterns.
 		if ( preg_match( "/(\w+)(\s*\w+\s*)*\{[^}]*\1[^}]*\1/", $query ) ) {
 			throw new UserError(
 				\esc_html(
@@ -556,7 +573,7 @@ class GraphQLSecurity {
 			);
 		}
 
-		// Check for potential circular queries using configured depth limit
+		// Check for potential circular queries using configured depth limit.
 		$depth_pattern = str_repeat( '\{[^}]*', $this->max_query_depth + 1 );
 		if ( preg_match( "/$depth_pattern/", $query ) ) {
 			throw new UserError(
@@ -570,7 +587,7 @@ class GraphQLSecurity {
 			);
 		}
 
-		// Check for excessively long queries (potential DoS)
+		// Check for excessively long queries (potential DoS).
 		$max_query_length = $this->max_query_complexity * 100;
 		if ( strlen( $query ) > $max_query_length ) {
 			throw new UserError(
@@ -593,18 +610,18 @@ class GraphQLSecurity {
 	 * @return void
 	 */
 	public function set_execution_timeout(): void {
-		// Add GraphQL-specific timeout filter
+		// Add GraphQL-specific timeout filter.
 		\add_filter( 'graphql_request_results', array( $this, 'enforce_query_timeout' ), 1, 5 );
 
-		// Get timeout configuration with PHP awareness
+		// Get timeout configuration with PHP awareness.
 		$timeout_config = $this->config_manager->get_timeout_config();
 
-		// Only set PHP limit if current GraphQL timeout is lower than PHP limit
-		if ( $timeout_config['php_timeout'] === 0 || $timeout_config['current_timeout'] < $timeout_config['php_timeout'] ) {
+		// Only set PHP limit if current GraphQL timeout is lower than PHP limit.
+		if ( 0 === $timeout_config['php_timeout'] || $timeout_config['current_timeout'] < $timeout_config['php_timeout'] ) {
 			set_time_limit( $timeout_config['current_timeout'] );
 		}
 
-		// Log timeout configuration for debugging
+		// Log timeout configuration for debugging.
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			SecurityHelper::log_security_event(
 				'GRAPHQL_TIMEOUT_CONFIG',
@@ -616,29 +633,31 @@ class GraphQLSecurity {
 				array(
 					'php_timeout'     => $timeout_config['php_timeout'],
 					'graphql_timeout' => $timeout_config['current_timeout'],
-					'applied_timeout' => $timeout_config['php_timeout'] === 0 ? $timeout_config['current_timeout'] :
+					'applied_timeout' => 0 === $timeout_config['php_timeout'] ? $timeout_config['current_timeout'] :
 						min( $timeout_config['php_timeout'], $timeout_config['current_timeout'] ),
 				)
 			);
 		}
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the graphql_request_results filter signature.
 	/**
 	 * Enforce query timeout using GraphQL execution tracking
 	 *
 	 * @since 1.1.1
-	 * @param mixed       $response GraphQL response (ExecutionResult object or array)
-	 * @param mixed       $schema GraphQL schema
-	 * @param string|null $operation Operation name
-	 * @param string|null $query Query string (can be null in some GraphQL contexts)
-	 * @param array|null  $variables Query variables
+	 * @param mixed       $response GraphQL response (ExecutionResult object or array).
+	 * @param mixed       $schema GraphQL schema.
+	 * @param string|null $operation Operation name.
+	 * @param string|null $query Query string (can be null in some GraphQL contexts).
+	 * @param array|null  $variables Query variables.
 	 * @return mixed
 	 */
 	public function enforce_query_timeout( $response, $schema, ?string $operation, ?string $query, ?array $variables ) {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		$request_time   = isset( $_SERVER['REQUEST_TIME_FLOAT'] ) ? floatval( \wp_unslash( $_SERVER['REQUEST_TIME_FLOAT'] ) ) : microtime( true );
 		$execution_time = microtime( true ) - $request_time;
 
-		// Check if query execution exceeded our timeout
+		// Check if query execution exceeded our timeout.
 		if ( $execution_time > $this->query_timeout ) {
 			$query_preview = $query ? substr( $query, 0, 100 ) . '...' : 'Unknown query';
 			SecurityHelper::log_security_event(
@@ -656,12 +675,12 @@ class GraphQLSecurity {
 				)
 			);
 
-			// Handle both ExecutionResult object and array response formats
+			// Handle both ExecutionResult object and array response formats.
 			if ( is_object( $response ) && method_exists( $response, 'toArray' ) ) {
-				// Convert ExecutionResult to array for manipulation
+				// Convert ExecutionResult to array for manipulation.
 				$response_array = $response->toArray();
 
-				// Add timeout error to response
+				// Add timeout error to response.
 				if ( ! isset( $response_array['errors'] ) ) {
 					$response_array['errors'] = array();
 				}
@@ -678,14 +697,14 @@ class GraphQLSecurity {
 					),
 				);
 
-				// Create new ExecutionResult with timeout error
+				// Create new ExecutionResult with timeout error.
 				return new ExecutionResult(
 					$response_array['data'] ?? null,
 					$response_array['errors'] ?? array(),
 					$response_array['extensions'] ?? array()
 				);
 			} elseif ( is_array( $response ) ) {
-				// Handle array response format
+				// Handle array response format.
 				if ( ! isset( $response['errors'] ) ) {
 					$response['errors'] = array();
 				}
@@ -725,17 +744,17 @@ class GraphQLSecurity {
 	 * @throws UserError When GraphQL request rate limit is exceeded for the current IP address.
 	 */
 	public function check_rate_limit(): void {
-		// Get rate limiting configuration from manager
+		// Get rate limiting configuration from manager.
 		$rate_config = $this->config_manager->get_rate_limiting_config();
 
 		$ip             = $this->get_client_ip();
 		$rate_limit_key = "graphql_rate_limit_{md5($ip)}";
-		$time_window    = 60; // seconds
+		$time_window    = 60; // seconds.
 
-		// Check if this is likely a build/development request
+		// Check if this is likely a build/development request.
 		$is_likely_build = $this->is_likely_build_process();
 
-		// Use appropriate limits based on context
+		// Use appropriate limits based on context.
 		if ( $this->config_manager->is_headless_mode() || $is_likely_build ) {
 			$max_requests = $rate_config['burst_limit'];
 		} else {
@@ -794,19 +813,21 @@ class GraphQLSecurity {
 		return isset( $_SERVER['REMOTE_ADDR'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the graphql_request_results filter signature.
 	/**
 	 * Log GraphQL requests for monitoring
 	 *
 	 * @since 1.1.1
-	 * @param mixed       $response GraphQL response (ExecutionResult object or array)
-	 * @param mixed       $schema GraphQL schema
-	 * @param string|null $operation Operation name
-	 * @param string|null $query Query string (can be null in some GraphQL contexts)
-	 * @param array|null  $variables Query variables
+	 * @param mixed       $response GraphQL response (ExecutionResult object or array).
+	 * @param mixed       $schema GraphQL schema.
+	 * @param string|null $operation Operation name.
+	 * @param string|null $query Query string (can be null in some GraphQL contexts).
+	 * @param array|null  $variables Query variables.
 	 * @return mixed
 	 */
 	public function log_graphql_requests( $response, $schema, ?string $operation, ?string $query, ?array $variables ) {
-		// Convert ExecutionResult to array for analysis if needed
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		// Convert ExecutionResult to array for analysis if needed.
 		$response_array = is_object( $response ) && method_exists( $response, 'toArray' ) ?
 			$response->toArray() :
 			( is_array( $response ) ? $response : array() );
@@ -824,7 +845,7 @@ class GraphQLSecurity {
 			'user_agent'     => $user_agent,
 		);
 
-		// Log suspicious patterns (only if query is not null)
+		// Log suspicious patterns (only if query is not null).
 		if ( $query && $this->is_suspicious_query( $query ) ) {
 			$log_data['suspicious']    = true;
 			$log_data['query_preview'] = substr( $query, 0, 200 ) . '...';
@@ -835,7 +856,7 @@ class GraphQLSecurity {
 			);
 		}
 
-		// Log all requests in debug mode
+		// Log all requests in debug mode.
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			SecurityHelper::log_security_event(
 				'GRAPHQL_REQUEST',
@@ -851,7 +872,7 @@ class GraphQLSecurity {
 	 * Check if query contains suspicious patterns
 	 *
 	 * @since 1.1.1
-	 * @param string $query The GraphQL query to analyze
+	 * @param string $query The GraphQL query to analyze.
 	 * @return bool
 	 */
 	private function is_suspicious_query( string $query ): bool {
@@ -861,11 +882,11 @@ class GraphQLSecurity {
 		$field_duplicate_threshold = max( 10, $this->max_field_duplicates * 5 );
 
 		$suspicious_patterns = array(
-			'/(__schema|__type).*\{.*\{.*\{/', // Deep introspection
-			'/(\w+:\s*\w+.*){' . $alias_threshold . ',}/', // Many aliases
-			'/(@\w+.*){' . $directive_threshold . ',}/', // Many directives
-			'/.{' . $max_query_length . ',}/', // Very long query
-			'/\{[^}]*(\w+[^}]*){' . $field_duplicate_threshold . ',}\}/', // Many field duplicates
+			'/(__schema|__type).*\{.*\{.*\{/', // Deep introspection.
+			'/(\w+:\s*\w+.*){' . $alias_threshold . ',}/', // Many aliases.
+			'/(@\w+.*){' . $directive_threshold . ',}/', // Many directives.
+			'/.{' . $max_query_length . ',}/', // Very long query.
+			'/\{[^}]*(\w+[^}]*){' . $field_duplicate_threshold . ',}\}/', // Many field duplicates.
 		);
 
 		foreach ( $suspicious_patterns as $pattern ) {
@@ -891,7 +912,7 @@ class GraphQLSecurity {
 			header( 'X-XSS-Protection: 1; mode=block' );
 			header( 'Referrer-Policy: strict-origin-when-cross-origin' );
 
-			// Disable caching for GraphQL responses
+			// Disable caching for GraphQL responses.
 			header( 'Cache-Control: no-store, no-cache, must-revalidate, max-age=0' );
 			header( 'Pragma: no-cache' );
 			header( 'Expires: Thu, 01 Jan 1970 00:00:00 GMT' );
@@ -905,7 +926,7 @@ class GraphQLSecurity {
 	 * cause performance issues or be used in DoS attacks.
 	 *
 	 * @since 1.1.1
-	 * @param mixed $context GraphQL context containing query information
+	 * @param mixed $context GraphQL context containing query information.
 	 * @return array Validation errors, empty if valid
 	 */
 	public function validate_query_depth( $context ): array {
@@ -951,7 +972,7 @@ class GraphQLSecurity {
 				array( 'error' => $e->getMessage() )
 			);
 
-			// On error, allow the query but log the issue
+			// On error, allow the query but log the issue.
 			return array();
 		}
 	}
@@ -959,12 +980,12 @@ class GraphQLSecurity {
 	/**
 	 * Calculate the maximum depth of a GraphQL query
 	 *
-	 * @param string $query GraphQL query string
+	 * @param string $query GraphQL query string.
 	 * @return int Maximum depth found
 	 * @since 1.1.1
 	 */
 	private function calculate_query_depth( string $query ): int {
-		// Remove comments and normalize whitespace
+		// Remove comments and normalize whitespace.
 		$query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
 		$query = trim( (string) preg_replace( '/\s+/', ' ', $query ) );
 
@@ -972,12 +993,13 @@ class GraphQLSecurity {
 		$current_depth = 0;
 		$in_string     = false;
 		$string_char   = null;
+		$query_length  = strlen( $query );
 
-		for ( $i = 0; $i < strlen( $query ); $i++ ) {
+		for ( $i = 0; $i < $query_length; $i++ ) {
 			$char = $query[ $i ];
 
-			// Handle string literals
-			if ( ( $char === '"' || $char === "'" ) && ( $i === 0 || $query[ $i - 1 ] !== '\\' ) ) {
+			// Handle string literals.
+			if ( ( '"' === $char || "'" === $char ) && ( 0 === $i || '\\' !== $query[ $i - 1 ] ) ) {
 				if ( ! $in_string ) {
 					$in_string   = true;
 					$string_char = $char;
@@ -992,11 +1014,11 @@ class GraphQLSecurity {
 				continue;
 			}
 
-			// Count nesting levels
-			if ( $char === '{' ) {
+			// Count nesting levels.
+			if ( '{' === $char ) {
 				++$current_depth;
 				$max_depth = max( $max_depth, $current_depth );
-			} elseif ( $char === '}' ) {
+			} elseif ( '}' === $char ) {
 				$current_depth = max( 0, $current_depth - 1 );
 			}
 		}
@@ -1004,6 +1026,7 @@ class GraphQLSecurity {
 		return $max_depth;
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Kept for signature consistency with the other validate_query_* methods in this class.
 	/**
 	 * Validate query complexity using hybrid approach
 	 *
@@ -1013,17 +1036,18 @@ class GraphQLSecurity {
 	 * 3. Integrate with WPGraphQL's connection limits and rate limiting
 	 *
 	 * @since 1.1.1
-	 * @param mixed $context GraphQL context
+	 * @param mixed $context GraphQL context.
 	 * @return array
 	 */
 	public function validate_query_complexity( $context ): array {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		// WPGraphQL doesn't have native complexity analysis
 		// Our complexity validation happens in validate_query_patterns()
 		// using enhanced heuristics combined with WPGraphQL's native features:
 		// - Query depth: Handled by WPGraphQL's QueryDepth validation rule
 		// - Connection limits: Handled by WPGraphQL's AbstractConnectionResolver
 		// - Rate limiting: Our implementation with WPGraphQL integration
-		// - Complexity estimation: Our enhanced proxy validation
+		// - Complexity estimation: Our enhanced proxy validation.
 		return array();
 	}
 
@@ -1034,7 +1058,7 @@ class GraphQLSecurity {
 	 * or cause resource exhaustion by multiplying the same expensive field.
 	 *
 	 * @since 1.1.1
-	 * @param mixed $context GraphQL context containing query information
+	 * @param mixed $context GraphQL context containing query information.
 	 * @return array Validation errors, empty if valid
 	 */
 	public function validate_aliases( $context ): array {
@@ -1087,18 +1111,18 @@ class GraphQLSecurity {
 	/**
 	 * Count the number of aliases in a GraphQL query
 	 *
-	 * @param string $query GraphQL query string
+	 * @param string $query GraphQL query string.
 	 * @return int Number of aliases found
 	 * @since 1.1.1
 	 */
 	private function count_aliases( string $query ): int {
-		// Remove comments and strings to avoid false positives
+		// Remove comments and strings to avoid false positives.
 		$cleaned_query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
 		$cleaned_query = (string) preg_replace( '/"[^"]*"/', '""', $cleaned_query );
 		$cleaned_query = (string) preg_replace( "/'[^']*'/", "''", $cleaned_query );
 
 		// Pattern to match aliases: fieldAlias: actualField
-		// This matches word characters followed by colon and space/word
+		// This matches word characters followed by colon and space/word.
 		preg_match_all( '/\b[a-zA-Z_][a-zA-Z0-9_]*\s*:\s*[a-zA-Z_]/', $cleaned_query, $matches );
 
 		return count( $matches[0] );
@@ -1111,7 +1135,7 @@ class GraphQLSecurity {
 	 * and potential security issues from excessive directive usage.
 	 *
 	 * @since 1.1.1
-	 * @param mixed $context GraphQL context containing query information
+	 * @param mixed $context GraphQL context containing query information.
 	 * @return array Validation errors, empty if valid
 	 */
 	public function validate_directives( $context ): array {
@@ -1164,17 +1188,17 @@ class GraphQLSecurity {
 	/**
 	 * Count the number of directives in a GraphQL query
 	 *
-	 * @param string $query GraphQL query string
+	 * @param string $query GraphQL query string.
 	 * @return int Number of directives found
 	 * @since 1.1.1
 	 */
 	private function count_directives( string $query ): int {
-		// Remove comments and strings to avoid false positives
+		// Remove comments and strings to avoid false positives.
 		$cleaned_query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
 		$cleaned_query = (string) preg_replace( '/"[^"]*"/', '""', $cleaned_query );
 		$cleaned_query = (string) preg_replace( "/'[^']*'/", "''", $cleaned_query );
 
-		// Pattern to match directives: @directiveName
+		// Pattern to match directives: @directiveName.
 		preg_match_all( '/@[a-zA-Z_][a-zA-Z0-9_]*/', $cleaned_query, $matches );
 
 		return count( $matches[0] );
@@ -1187,7 +1211,7 @@ class GraphQLSecurity {
 	 * in the same query to cause resource exhaustion.
 	 *
 	 * @since 1.1.1
-	 * @param mixed $context GraphQL context containing query information
+	 * @param mixed $context GraphQL context containing query information.
 	 * @return array Validation errors, empty if valid
 	 */
 	public function validate_field_duplicates( $context ): array {
@@ -1240,17 +1264,17 @@ class GraphQLSecurity {
 	/**
 	 * Count field duplicates in a GraphQL query
 	 *
-	 * @param string $query GraphQL query string
+	 * @param string $query GraphQL query string.
 	 * @return int Number of duplicate fields found
 	 * @since 1.1.1
 	 */
 	private function count_field_duplicates( string $query ): int {
-		// Remove comments and strings to avoid false positives
+		// Remove comments and strings to avoid false positives.
 		$cleaned_query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
 		$cleaned_query = (string) preg_replace( '/"[^"]*"/', '""', $cleaned_query );
 		$cleaned_query = (string) preg_replace( "/'[^']*'/", "''", $cleaned_query );
 
-		// Extract all field names (simplified pattern)
+		// Extract all field names (simplified pattern).
 		preg_match_all( '/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*[({]/', $cleaned_query, $matches );
 
 		if ( empty( $matches[1] ) ) {
@@ -1260,11 +1284,11 @@ class GraphQLSecurity {
 		$field_names  = $matches[1];
 		$field_counts = array_count_values( $field_names );
 
-		// Count how many fields appear more than once
+		// Count how many fields appear more than once.
 		$duplicate_count = 0;
 		foreach ( $field_counts as $field => $count ) {
 			if ( $count > 1 ) {
-				$duplicate_count += ( $count - 1 ); // Count excess occurrences
+				$duplicate_count += ( $count - 1 ); // Count excess occurrences.
 			}
 		}
 
@@ -1363,7 +1387,7 @@ class GraphQLSecurity {
 			),
 		);
 
-		// Add WPGraphQL-specific recommendations if available
+		// Add WPGraphQL-specific recommendations if available.
 		if ( \class_exists( 'WPGraphQL' ) && \function_exists( 'get_graphql_setting' ) ) {
 			$recommendations['wpgraphql_integration'] = array(
 				'current_introspection' => get_graphql_setting( 'public_introspection_enabled', 'off' ),
@@ -1410,7 +1434,7 @@ class GraphQLSecurity {
 				'batch_limit'           => $config['batch_limit'],
 				'query_depth_enabled'   => $config['query_depth_limit'] > 0,
 				'query_depth_limit'     => $config['query_depth_limit'],
-				'auth_required'         => $config['endpoint_access'] === 'restricted',
+				'auth_required'         => 'restricted' === $config['endpoint_access'],
 			),
 			'security_status' => $integration_status['security_level'],
 			'recommendations' => $integration_status['recommendations'],
@@ -1435,6 +1459,7 @@ class GraphQLSecurity {
 		\add_filter( 'graphql_request_data', array( $this, 'validate_authentication' ), 0, 5 );
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the graphql_request_data filter signature.
 	/**
 	 * Validate that the current request is authenticated
 	 *
@@ -1453,6 +1478,7 @@ class GraphQLSecurity {
 	 * @throws UserError When the request is not authenticated.
 	 */
 	public function validate_authentication( array $request_data, $request = null, ?string $operation_name = null, ?array $variables = null, $context = null ): array {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// Allow unauthenticated access only in explicit local/development environments for tooling.
 		$environment = 'production';
 

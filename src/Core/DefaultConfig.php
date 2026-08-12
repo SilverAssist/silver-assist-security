@@ -29,53 +29,53 @@ class DefaultConfig {
 	 */
 	public static function get_defaults(): array {
 		return array(
-			'silver_assist_login_attempts'                => 5,
-			'silver_assist_lockout_duration'              => 900, // 15 minutes
-			'silver_assist_session_timeout'               => 30, // 30 minutes
-			'silver_assist_password_strength_enforcement' => 1,
-			'silver_assist_bot_protection'                => 1,
-			'silver_assist_admin_hide_enabled'            => 0, // Admin hiding disabled by default for security.
-			'silver_assist_admin_hide_path'               => 'silver-admin', // Custom admin path.
-			'silver_assist_graphql_query_depth'           => 8,
-			'silver_assist_graphql_query_complexity'      => 100,
-			'silver_assist_graphql_query_timeout'         => 30, // Dynamic: Based on PHP timeout, capped at 30s.
-			'silver_assist_graphql_headless_mode'         => 0,
-			'silver_assist_graphql_api_key'               => '', // Hashed API key for server-to-server authentication.
-			'silver_assist_graphql_service_user_id'       => 0, // WordPress user ID for API key authentication.
+			'silver_assist_login_attempts'                 => 5,
+			'silver_assist_lockout_duration'               => 900, // 15 minutes
+			'silver_assist_session_timeout'                => 30, // 30 minutes
+			'silver_assist_password_strength_enforcement'  => 1,
+			'silver_assist_bot_protection'                 => 1,
+			'silver_assist_admin_hide_enabled'             => 0, // Admin hiding disabled by default for security.
+			'silver_assist_admin_hide_path'                => 'silver-admin', // Custom admin path.
+			'silver_assist_graphql_query_depth'            => 8,
+			'silver_assist_graphql_query_complexity'       => 100,
+			'silver_assist_graphql_query_timeout'          => 30, // Dynamic: Based on PHP timeout, capped at 30s.
+			'silver_assist_graphql_headless_mode'          => 0,
+			'silver_assist_graphql_api_key'                => '', // Hashed API key for server-to-server authentication.
+			'silver_assist_graphql_service_user_id'        => 0, // WordPress user ID for API key authentication.
 
-			// Form Protection Settings
-			'silver_assist_form_protection_enabled'       => 1, // Enable form protection by default
-			'silver_assist_form_rate_limit'               => 2, // Max forms per minute per IP
-			'silver_assist_form_rate_window'              => 60, // Rate limit window (seconds)
-			'silver_assist_obsolete_browser_detection'    => 1, // Detect old browsers
-			'silver_assist_sql_injection_detection'       => 1, // Detect SQL injection attempts
+			// Form Protection Settings.
+			'silver_assist_form_protection_enabled'        => 1, // Enable form protection by default.
+			'silver_assist_form_rate_limit'                => 2, // Max forms per minute per IP.
+			'silver_assist_form_rate_window'               => 60, // Rate limit window (seconds).
+			'silver_assist_obsolete_browser_detection'     => 1, // Detect old browsers.
+			'silver_assist_sql_injection_detection'        => 1, // Detect SQL injection attempts.
 
-			// IP Blacklist Settings
-			'silver_assist_ip_blacklist_threshold'        => 5, // Violations before auto-blacklist
-			'silver_assist_ip_blacklist_duration'         => 86400, // 24 hours blacklist duration
-			'silver_assist_ip_violation_window'           => 3600, // 1 hour violation tracking window
+			// IP Blacklist Settings.
+			'silver_assist_ip_blacklist_threshold'         => 5, // Violations before auto-blacklist.
+			'silver_assist_ip_blacklist_duration'          => 86400, // 24 hours blacklist duration
+			'silver_assist_ip_violation_window'            => 3600, // 1 hour violation tracking window
 
-			// Login Branding Settings
-			'silver_assist_login_branding_enabled'        => 1, // Enable login branding by default.
-			'silver_assist_login_branding_logo_url'       => '', // Custom logo URL (empty = built-in SVG).
-			'silver_assist_login_branding_bg_color'       => '', // Right column bg color (empty = default gradient).
+			// Login Branding Settings.
+			'silver_assist_login_branding_enabled'         => 1, // Enable login branding by default.
+			'silver_assist_login_branding_logo_url'        => '', // Custom logo URL (empty = built-in SVG).
+			'silver_assist_login_branding_bg_color'        => '', // Right column bg color (empty = default gradient).
 			'silver_assist_login_branding_show_illustration' => 1, // Show illustration panel.
 
-			// REST API Security Settings
-			'silver_assist_rest_batch_endpoint_protection' => 1, // Restrict batch endpoint for unauthenticated users
-			'silver_assist_rest_rate_limiting_enabled'     => 1, // Enable REST API rate limiting
-			'silver_assist_rest_rate_limit_requests'       => 100, // Max requests per window for unauthenticated users
-			'silver_assist_rest_rate_limit_window'         => 60, // Rate limit window in seconds
+			// REST API Security Settings.
+			'silver_assist_rest_batch_endpoint_protection' => 1, // Restrict batch endpoint for unauthenticated users.
+			'silver_assist_rest_rate_limiting_enabled'     => 1, // Enable REST API rate limiting.
+			'silver_assist_rest_rate_limit_requests'       => 100, // Max requests per window for unauthenticated users.
+			'silver_assist_rest_rate_limit_window'         => 60, // Rate limit window in seconds.
 
-			// Contact Form 7 Integration Settings
-			'silver_assist_cf7_protection_enabled'        => 1, // Enable CF7 protection by default
-			'silver_assist_cf7_rate_limit'                => 2, // Max CF7 submissions per minute per IP
-			'silver_assist_cf7_rate_window'               => 60, // CF7 rate limiting window in seconds
-			'silver_assist_cf7_spam_threshold'            => 3, // Spam attempts before IP blacklist consideration
-			'silver_assist_cf7_honeypot_enabled'          => 1, // Enable honeypot fields
-			'silver_assist_cf7_submission_delay'          => 2000, // Minimum submission time (milliseconds)
-			'silver_assist_cf7_auto_block_bots'           => 1, // Auto-block detected bots
-			'silver_assist_cf7_ip_block_duration'         => 3600, // CF7 IP block duration (1 hour)
+			// Contact Form 7 Integration Settings.
+			'silver_assist_cf7_protection_enabled'         => 1, // Enable CF7 protection by default.
+			'silver_assist_cf7_rate_limit'                 => 2, // Max CF7 submissions per minute per IP.
+			'silver_assist_cf7_rate_window'                => 60, // CF7 rate limiting window in seconds.
+			'silver_assist_cf7_spam_threshold'             => 3, // Spam attempts before IP blacklist consideration.
+			'silver_assist_cf7_honeypot_enabled'           => 1, // Enable honeypot fields.
+			'silver_assist_cf7_submission_delay'           => 2000, // Minimum submission time (milliseconds).
+			'silver_assist_cf7_auto_block_bots'            => 1, // Auto-block detected bots.
+			'silver_assist_cf7_ip_block_duration'          => 3600, // CF7 IP block duration (1 hour).
 		);
 	}
 

@@ -60,7 +60,7 @@ class RenderHelper {
 	public static function render_stat( int $value, string $label, string $suffix = '', string $id = '' ): void {
 		?>
 		<div class="stat">
-			<span class="stat-value"<?php echo '' !== $id ? ' id="' . \esc_attr( $id ) . '"' : ''; ?>><?php echo $value; ?><?php echo \esc_html( $suffix ); ?></span>
+			<span class="stat-value"<?php echo '' !== $id ? ' id="' . \esc_attr( $id ) . '"' : ''; ?>><?php echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $value is type-hinted int (see method signature); cannot carry markup or script content. ?><?php echo \esc_html( $suffix ); ?></span>
 			<span class="stat-label"><?php echo \esc_html( $label ); ?></span>
 		</div>
 		<?php
@@ -91,10 +91,10 @@ class RenderHelper {
 	/**
 	 * Render a settings table row with a toggle switch (checkbox)
 	 *
-	 * @param string     $label       The row header label.
-	 * @param string     $name        The input name and id attribute.
-	 * @param int|bool   $checked     The current value (truthy = checked).
-	 * @param string     $description The description text below the toggle.
+	 * @param string   $label       The row header label.
+	 * @param string   $name        The input name and id attribute.
+	 * @param int|bool $checked     The current value (truthy = checked).
+	 * @param string   $description The description text below the toggle.
 	 *
 	 * @since 1.1.15
 	 * @return void

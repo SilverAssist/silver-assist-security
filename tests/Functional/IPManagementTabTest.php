@@ -39,7 +39,7 @@ class IPManagementTabTest extends WP_UnitTestCase {
 		$admin_id = $this->factory()->user->create( [ 'role' => 'administrator' ] );
 		\wp_set_current_user( $admin_id );
 
-		$config_manager = GraphQLConfigManager::getInstance();
+		$config_manager = GraphQLConfigManager::get_instance();
 		$renderer       = new SettingsRenderer( $config_manager );
 
 		ob_start();

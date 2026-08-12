@@ -104,12 +104,28 @@ class Plugin {
 	 * @since 1.1.1
 	 * @return Plugin
 	 */
-	public static function getInstance(): Plugin {
-		if ( self::$instance === null ) {
+	public static function get_instance(): Plugin {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 
 		return self::$instance;
+	}
+
+	// phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Deprecated camelCase alias kept for backward compatibility; see get_instance().
+	/**
+	 * Deprecated alias for get_instance()
+	 *
+	 * Kept for backward compatibility: this is a public accessor on a project
+	 * that follows Semantic Versioning, so renaming it without a compatibility
+	 * shim would break external code calling Plugin::getInstance() directly.
+	 *
+	 * @deprecated 1.5.1 Use get_instance() instead.
+	 * @since 1.1.1
+	 * @return Plugin
+	 */
+	public static function getInstance(): Plugin {
+		return self::get_instance();
 	}
 
 	/**
@@ -212,7 +228,7 @@ class Plugin {
 
 		// Initialize RestAPISecurity.
 		if ( (bool) DefaultConfig::get_option( 'silver_assist_rest_batch_endpoint_protection' ) ||
-			 (bool) DefaultConfig::get_option( 'silver_assist_rest_rate_limiting_enabled' ) ) {
+			(bool) DefaultConfig::get_option( 'silver_assist_rest_rate_limiting_enabled' ) ) {
 			$this->rest_api_security = new RestAPISecurity();
 		}
 
@@ -353,19 +369,19 @@ class Plugin {
 	 * @return void
 	 */
 	public function init_cf7_integration(): void {
-		// Only initialize if Contact Form 7 is active
+		// Only initialize if Contact Form 7 is active.
 		if ( ! SecurityHelper::is_contact_form_7_active() ) {
 			return;
 		}
 
-		// Only initialize if CF7 protection is enabled
+		// Only initialize if CF7 protection is enabled.
 		if ( ! DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) ) {
 			return;
 		}
 
 		$this->cf7_integration = new ContactForm7Integration();
 
-		// Log CF7 integration initialization
+		// Log CF7 integration initialization.
 		SecurityHelper::log_security_event(
 			'CF7_INTEGRATION_INITIALIZED',
 			'Contact Form 7 security integration activated',
@@ -390,7 +406,7 @@ class Plugin {
 	 * @return bool True if CF7 integration is active
 	 */
 	public function is_cf7_integration_active(): bool {
-		return $this->cf7_integration !== null && SecurityHelper::is_contact_form_7_active();
+		return null !== $this->cf7_integration && SecurityHelper::is_contact_form_7_active();
 	}
 
 	/**
@@ -403,7 +419,7 @@ class Plugin {
 	 * @return void
 	 */
 	public function init_ip_cleanup_cron(): void {
-		// Initialize the cron cleanup system
+		// Initialize the cron cleanup system.
 		IPBlacklist::init_cron_cleanup();
 	}
 }

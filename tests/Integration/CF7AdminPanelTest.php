@@ -25,7 +25,7 @@ class CF7AdminPanelTest extends WP_UnitTestCase {
 	public function setUp(): void {
 		parent::setUp();
 		
-		$this->ip_blacklist = IPBlacklist::getInstance();
+		$this->ip_blacklist = IPBlacklist::get_instance();
 	}
 
 	public function tearDown(): void {

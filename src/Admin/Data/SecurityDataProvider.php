@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Silver Assist Security Essentials - Security Data Provider
  *
@@ -80,7 +79,7 @@ class SecurityDataProvider {
 		$this->login_security      = new LoginSecurity();
 		$this->general_security    = new GeneralSecurity();
 		$this->admin_hide_security = new AdminHideSecurity();
-		$this->ip_blacklist        = IPBlacklist::getInstance();
+		$this->ip_blacklist        = IPBlacklist::get_instance();
 		$this->stats_provider      = new StatisticsProvider();
 	}
 
@@ -94,15 +93,15 @@ class SecurityDataProvider {
 		$login_protection  = DefaultConfig::get_option( 'silver_assist_login_attempts' ) > 0;
 		$password_strength = DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' );
 		$bot_protection    = DefaultConfig::get_option( 'silver_assist_bot_protection' );
-		$cookie_security   = true; // Always enabled in GeneralSecurity
+		$cookie_security   = true; // Always enabled in GeneralSecurity.
 		$admin_hide        = DefaultConfig::get_option( 'silver_assist_admin_path' ) !== 'wp-admin';
 
-		// GraphQL security status
+		// GraphQL security status.
 		$graphql_active = false;
 		$graphql_secure = false;
 		if ( \class_exists( 'WPGraphQL' ) ) {
 			$graphql_active   = true;
-			$config_manager   = GraphQLConfigManager::getInstance();
+			$config_manager   = GraphQLConfigManager::get_instance();
 			$introspection    = \get_graphql_setting( 'public_introspection_enabled', 'off' );
 			$query_depth      = DefaultConfig::get_option( 'silver_assist_graphql_query_depth' );
 			$query_complexity = DefaultConfig::get_option( 'silver_assist_graphql_query_complexity' );
@@ -129,7 +128,7 @@ class SecurityDataProvider {
 			++$active_features;
 		}
 
-		$total_features = 6; // Total possible features
+		$total_features = 6; // Total possible features.
 		$security_score = round( ( $active_features / $total_features ) * 100 );
 
 		return array(
@@ -159,11 +158,11 @@ class SecurityDataProvider {
 			'general_security' => array(
 				'status'               => $cookie_security ? 'active' : 'inactive',
 				'cookie_security'      => $cookie_security,
-				'httponly_cookies'     => true, // Always enabled
+				'httponly_cookies'     => true, // Always enabled.
 				'secure_cookies'       => \is_ssl(),
 				'ssl_enabled'          => \is_ssl(),
-				'xmlrpc_disabled'      => true, // Always disabled via GeneralSecurity
-				'version_hiding'       => true, // Always enabled via GeneralSecurity
+				'xmlrpc_disabled'      => true, // Always disabled via GeneralSecurity.
+				'version_hiding'       => true, // Always enabled via GeneralSecurity.
 				'ip_blacklist_enabled' => (bool) DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' ),
 			),
 			'form_protection'  => array(
@@ -220,7 +219,7 @@ class SecurityDataProvider {
 			);
 		}
 
-		// Sort by blocked_at descending (most recent first)
+		// Sort by blocked_at descending (most recent first).
 		usort(
 			$blocked_ips,
 			function ( $a, $b ) {
@@ -229,7 +228,7 @@ class SecurityDataProvider {
 		);
 
 		return array(
-			'blocked_ips' => array_slice( $blocked_ips, 0, 50 ), // Limit to 50 most recent
+			'blocked_ips' => array_slice( $blocked_ips, 0, 50 ), // Limit to 50 most recent.
 			'total_count' => count( $raw_blocked ),
 		);
 	}
@@ -241,14 +240,14 @@ class SecurityDataProvider {
 	 * Returns the most recent security events for the dashboard.
 	 *
 	 * @since 1.1.15
-	 * @param int $limit Maximum number of logs to return (default: 50)
+	 * @param int $limit Maximum number of logs to return (default: 50).
 	 * @return array Security logs data
 	 */
 	public function get_security_logs( int $limit = 50 ): array {
 		try {
 			$logs = array();
 
-			// Try to locate WordPress error log
+			// Try to locate WordPress error log.
 			$log_files = $this->get_log_file_paths();
 
 			foreach ( $log_files as $log_file ) {
@@ -260,7 +259,7 @@ class SecurityDataProvider {
 				$logs        = array_merge( $logs, $parsed_logs );
 			}
 
-			// Sort by timestamp (most recent first) and limit
+			// Sort by timestamp (most recent first) and limit.
 			usort(
 				$logs,
 				function ( $a, $b ) {
@@ -306,22 +305,22 @@ class SecurityDataProvider {
 	private function get_log_file_paths(): array {
 		$paths = array();
 
-		// WP_DEBUG_LOG file location - can be a string path or boolean true (default location)
+		// WP_DEBUG_LOG file location - can be a string path or boolean true (default location).
 		if ( defined( 'WP_DEBUG_LOG' ) && ! \is_bool( WP_DEBUG_LOG ) && \is_string( WP_DEBUG_LOG ) && WP_DEBUG_LOG !== '' ) {
 			$paths[] = WP_DEBUG_LOG;
 		}
 
-		// Default WordPress debug.log locations
+		// Default WordPress debug.log locations.
 		$paths[] = WP_CONTENT_DIR . '/debug.log';
 		$paths[] = ABSPATH . 'wp-content/debug.log';
 
-		// Common server error log locations
+		// Common server error log locations.
 		$paths[] = ini_get( 'error_log' );
 		$paths[] = '/var/log/php_errors.log';
 		$paths[] = '/var/log/apache2/error.log';
 		$paths[] = '/var/log/nginx/error.log';
 
-		// Remove empty/false values
+		// Remove empty/false values.
 		return array_filter( $paths );
 	}
 
@@ -329,19 +328,19 @@ class SecurityDataProvider {
 	 * Parse security events from a log file
 	 *
 	 * @since 1.1.15
-	 * @param string $log_file Path to log file
-	 * @param int    $limit Maximum entries to parse
+	 * @param string $log_file Path to log file.
+	 * @param int    $limit Maximum entries to parse.
 	 * @return array Parsed security log entries
 	 */
 	private function parse_log_file( string $log_file, int $limit ): array {
 		$logs = array();
 
 		try {
-			// Read last N lines efficiently for large files
-			$lines = $this->tail_file( $log_file, $limit * 2 ); // Read more than limit to ensure we get enough Silver Assist entries
+			// Read last N lines efficiently for large files.
+			$lines = $this->tail_file( $log_file, $limit * 2 ); // Read more than limit to ensure we get enough Silver Assist entries.
 
 			foreach ( $lines as $line ) {
-				// Look for Silver Assist Security events
+				// Look for Silver Assist Security events.
 				if ( strpos( $line, 'SILVER_ASSIST_SECURITY:' ) === false ) {
 					continue;
 				}
@@ -351,13 +350,13 @@ class SecurityDataProvider {
 					$logs[] = $parsed_log;
 				}
 
-				// Stop if we have enough logs
+				// Stop if we have enough logs.
 				if ( count( $logs ) >= $limit ) {
 					break;
 				}
 			}
 		} catch ( \Exception $e ) {
-			// Log parsing error but don't break the entire function
+			// Log parsing error but don't break the entire function.
 			SecurityHelper::log_security_event(
 				'LOG_PARSE_ERROR',
 				"Failed to parse log file {$log_file}: {$e->getMessage()}",
@@ -375,11 +374,11 @@ class SecurityDataProvider {
 	 * Parse a single log line for security events
 	 *
 	 * @since 1.1.15
-	 * @param string $line Log line to parse
+	 * @param string $line Log line to parse.
 	 * @return array|null Parsed log entry or null if invalid
 	 */
 	private function parse_log_line( string $line ): ?array {
-		// Pattern: [timestamp] SILVER_ASSIST_SECURITY: EVENT_TYPE - {...JSON...}
+		// Pattern: [timestamp] SILVER_ASSIST_SECURITY: EVENT_TYPE - {...JSON...}.
 		$pattern = '/\[([^\]]+)\].*SILVER_ASSIST_SECURITY:\s*([^-]+)\s*-\s*(.+)/';
 
 		if ( ! preg_match( $pattern, $line, $matches ) ) {
@@ -390,10 +389,10 @@ class SecurityDataProvider {
 		$event_type = trim( $matches[2] );
 		$json_data  = trim( $matches[3] );
 
-		// Try to decode JSON data
+		// Try to decode JSON data.
 		$data = json_decode( $json_data, true );
 		if ( json_last_error() !== JSON_ERROR_NONE ) {
-			// If JSON parsing fails, create basic entry
+			// If JSON parsing fails, create basic entry.
 			$data = array(
 				'message' => $json_data,
 				'context' => array(),
@@ -412,12 +411,13 @@ class SecurityDataProvider {
 		);
 	}
 
+	// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen,WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- WP_Filesystem only supports whole-file reads; this method's seek-from-end tail-read for large log files has no WP_Filesystem equivalent and would otherwise have to load entire multi-MB files into memory.
 	/**
 	 * Read last N lines from a file efficiently
 	 *
 	 * @since 1.1.15
-	 * @param string $file File path
-	 * @param int    $lines Number of lines to read
+	 * @param string $file File path.
+	 * @param int    $lines Number of lines to read.
 	 * @return array Array of lines
 	 */
 	private function tail_file( string $file, int $lines ): array {
@@ -428,8 +428,9 @@ class SecurityDataProvider {
 
 		$result = array();
 
-		// For small files, just read all lines
+		// For small files, just read all lines.
 		if ( filesize( $file ) < 1024 * 1024 ) { // 1MB
+			// phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition -- Standard PHP file-read idiom.
 			while ( ( $line = fgets( $handle ) ) !== false ) {
 				$result[] = $line;
 			}
@@ -437,14 +438,14 @@ class SecurityDataProvider {
 			return array_slice( $result, -$lines );
 		}
 
-		// For large files, seek to end and read backwards
+		// For large files, seek to end and read backwards.
 		fseek( $handle, -1, SEEK_END );
 		$pos        = ftell( $handle );
 		$line_count = 0;
 
 		while ( $pos >= 0 && $line_count < $lines ) {
 			$char = fgetc( $handle );
-			if ( $char === "\n" ) {
+			if ( "\n" === $char ) {
 				++$line_count;
 			}
 
@@ -455,7 +456,8 @@ class SecurityDataProvider {
 			}
 		}
 
-		// Read remaining lines
+		// Read remaining lines.
+		// phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition -- Standard PHP file-read idiom.
 		while ( ( $line = fgets( $handle ) ) !== false ) {
 			$result[] = $line;
 		}
@@ -463,12 +465,13 @@ class SecurityDataProvider {
 		fclose( $handle );
 		return $result;
 	}
+	// phpcs:enable WordPress.WP.AlternativeFunctions.file_system_operations_fopen,WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
 	/**
 	 * Determine severity level for event type
 	 *
 	 * @since 1.1.15
-	 * @param string $event_type Event type identifier
+	 * @param string $event_type Event type identifier.
 	 * @return string Severity level (critical, warning, info)
 	 */
 	private function get_event_severity( string $event_type ): string {
@@ -517,21 +520,21 @@ class SecurityDataProvider {
 	public function count_active_features(): int {
 		$count = 0;
 
-		// Login security (always active)
+		// Login security (always active).
 		++$count;
 
-		// Password enforcement
+		// Password enforcement.
 		if ( DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' ) ) {
 			++$count;
 		}
 
-		// GraphQL security
+		// GraphQL security.
 		if ( \class_exists( 'WPGraphQL' ) ) {
 			++$count;
 		}
 
-		// General security features (always active)
-		$count += 4; // HTTPOnly cookies, XML-RPC disabled, version hiding, SSL status
+		// General security features (always active).
+		$count += 4; // HTTPOnly cookies, XML-RPC disabled, version hiding, SSL status.
 
 		return $count;
 	}
@@ -546,7 +549,7 @@ class SecurityDataProvider {
 		$password_enforcement = (bool) DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' );
 		$bot_protection       = (bool) DefaultConfig::get_option( 'silver_assist_bot_protection' );
 
-		// Return active if any admin security feature is enabled
+		// Return active if any admin security feature is enabled.
 		return ( $password_enforcement || $bot_protection ) ? 'active' : 'disabled';
 	}
 }

@@ -31,8 +31,8 @@ class Updater extends GitHubUpdater {
 	/**
 	 * Updater for Silver Assist Security Essentials
 	 *
-	 * @param string $plugin_file Full path to main plugin file
-	 * @param string $github_repo GitHub repository in format "owner/repo"
+	 * @param string $plugin_file Full path to main plugin file.
+	 * @param string $github_repo GitHub repository in format "owner/repo".
 	 */
 	public function __construct( string $plugin_file, string $github_repo ) {
 		$config = new UpdaterConfig(

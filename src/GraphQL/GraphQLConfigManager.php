@@ -69,7 +69,7 @@ class GraphQLConfigManager {
 	 * @since 1.1.1
 	 */
 	private function __construct() {
-		// Initialize configuration
+		// Initialize configuration.
 		$this->load_configuration();
 	}
 
@@ -79,11 +79,28 @@ class GraphQLConfigManager {
 	 * @since 1.1.1
 	 * @return GraphQLConfigManager
 	 */
-	public static function getInstance(): GraphQLConfigManager {
-		if ( self::$instance === null ) {
+	public static function get_instance(): GraphQLConfigManager {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
+	}
+
+	// phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Deprecated camelCase alias kept for backward compatibility; see get_instance().
+	/**
+	 * Deprecated alias for get_instance()
+	 *
+	 * Kept for backward compatibility: this is a public accessor on a project
+	 * that follows Semantic Versioning, so renaming it without a compatibility
+	 * shim would break external code calling GraphQLConfigManager::getInstance()
+	 * directly.
+	 *
+	 * @deprecated 1.5.1 Use get_instance() instead.
+	 * @since 1.1.1
+	 * @return GraphQLConfigManager
+	 */
+	public static function getInstance(): GraphQLConfigManager {
+		return self::get_instance();
 	}
 
 	/**
@@ -103,8 +120,8 @@ class GraphQLConfigManager {
 	 * @return bool
 	 */
 	public function is_headless_mode(): bool {
-		if ( $this->headless_mode === null ) {
-			// Initialize headless mode from configuration
+		if ( null === $this->headless_mode ) {
+			// Initialize headless mode from configuration.
 			$this->headless_mode = (bool) DefaultConfig::get_option( 'silver_assist_graphql_headless_mode' );
 		}
 		return $this->headless_mode;
@@ -134,7 +151,7 @@ class GraphQLConfigManager {
 		return array(
 			'php_timeout'          => $php_timeout,
 			'current_timeout'      => $current_timeout,
-			'is_unlimited_php'     => $php_timeout === 0,
+			'is_unlimited_php'     => 0 === $php_timeout,
 			'is_using_php_default' => ! DefaultConfig::get_option( 'silver_assist_graphql_query_timeout' ),
 			'recommended_min'      => 5,
 			'recommended_max'      => $php_timeout > 0 ? min( $php_timeout, 60 ) : 60,
@@ -164,7 +181,7 @@ class GraphQLConfigManager {
 	 * @return array Complete configuration array
 	 */
 	public function get_configuration(): array {
-		if ( $this->config_cache === null ) {
+		if ( null === $this->config_cache ) {
 			$this->load_configuration();
 		}
 		return $this->config_cache ?? array();
@@ -179,11 +196,11 @@ class GraphQLConfigManager {
 	private function load_configuration(): void {
 		$is_headless = $this->is_headless_mode();
 
-		// Base configuration
+		// Base configuration.
 		$config = self::DEFAULT_CONFIG;
 
 		if ( ! $this->is_wpgraphql_available() ) {
-			// Apply headless adjustments to defaults
+			// Apply headless adjustments to defaults.
 			if ( $is_headless ) {
 				$config['query_depth_limit']      = 15;
 				$config['query_complexity_limit'] = 200;
@@ -193,10 +210,10 @@ class GraphQLConfigManager {
 			return;
 		}
 
-		// Get WPGraphQL native settings
+		// Get WPGraphQL native settings.
 		$config = $this->load_wpgraphql_settings( $config, $is_headless );
 
-		// Cache the configuration
+		// Cache the configuration.
 		$this->config_cache = $config;
 	}
 
@@ -204,37 +221,37 @@ class GraphQLConfigManager {
 	 * Load WPGraphQL specific settings
 	 *
 	 * @since 1.1.1
-	 * @param array $config Base configuration
-	 * @param bool  $is_headless Whether headless mode is enabled
+	 * @param array $config Base configuration.
+	 * @param bool  $is_headless Whether headless mode is enabled.
 	 * @return array Updated configuration
 	 */
 	private function load_wpgraphql_settings( array $config, bool $is_headless ): array {
-		// Query Depth
+		// Query Depth.
 		$depth_enabled = $this->get_wpgraphql_setting( 'query_depth_enabled', 'off' );
-		if ( $depth_enabled === 'on' ) {
+		if ( 'on' === $depth_enabled ) {
 			$config['query_depth_limit'] = (int) $this->get_wpgraphql_setting( 'query_depth_max_depth', 10 );
 		} else {
-			// Use headless-aware defaults
+			// Use headless-aware defaults.
 			$config['query_depth_limit'] = $is_headless ? 15 : 10;
 		}
 
-		// Query Complexity (enhanced by our plugin)
+		// Query Complexity (enhanced by our plugin).
 		$config['query_complexity_limit'] = $is_headless ? 200 : 100;
 
-		// Query Timeout (our enhancement) - Use centralized configuration
+		// Query Timeout (our enhancement) - Use centralized configuration.
 		$config['query_timeout'] = (int) DefaultConfig::get_option( 'silver_assist_graphql_query_timeout' );
 
-		// Introspection
+		// Introspection.
 		$config['introspection_enabled'] = $this->get_wpgraphql_setting( 'public_introspection_enabled', 'off' ) === 'on';
 
-		// Debug Mode
+		// Debug Mode.
 		$config['debug_mode'] = $this->get_wpgraphql_setting( 'debug_mode_enabled', 'off' ) === 'on';
 
-		// Endpoint Access
+		// Endpoint Access.
 		$auth_required             = $this->get_wpgraphql_setting( 'restrict_endpoint_to_logged_in_users', 'off' );
-		$config['endpoint_access'] = $auth_required === 'on' ? 'restricted' : 'public';
+		$config['endpoint_access'] = 'on' === $auth_required ? 'restricted' : 'public';
 
-		// Batch Queries
+		// Batch Queries.
 		$config['batch_enabled'] = $this->get_wpgraphql_setting( 'batch_queries_enabled', 'on' ) === 'on';
 		$config['batch_limit']   = (int) $this->get_wpgraphql_setting( 'batch_limit', 10 );
 
@@ -265,7 +282,7 @@ class GraphQLConfigManager {
 			);
 		}
 
-		if ( $config['endpoint_access'] === 'public' ) {
+		if ( 'public' === $config['endpoint_access'] ) {
 			$recommendations[] = array(
 				'level'   => 'info',
 				'message' => \__( 'GraphQL endpoint is publicly accessible', 'silver-assist-security' ),
@@ -289,8 +306,8 @@ class GraphQLConfigManager {
 		$config   = $this->get_configuration();
 		$settings = array();
 
-		// Endpoint Access (most important for security)
-		$auth_status = $config['endpoint_access'] === 'restricted' ?
+		// Endpoint Access (most important for security).
+		$auth_status = 'restricted' === $config['endpoint_access'] ?
 		'<span style="color: #d63638; font-weight: bold;">' . \esc_html__( 'RESTRICTED', 'silver-assist-security' ) . '</span>' :
 		'<span style="color: #00a32a; font-weight: bold;">' . \esc_html__( 'PUBLIC', 'silver-assist-security' ) . '</span>';
 
@@ -300,7 +317,7 @@ class GraphQLConfigManager {
 			$auth_status
 		);
 
-		// Query Depth
+		// Query Depth.
 		$settings[] = sprintf(
 			'<strong>%s:</strong> %s (%s: %d)',
 			\esc_html__( 'Query Depth Limiting', 'silver-assist-security' ),
@@ -309,7 +326,7 @@ class GraphQLConfigManager {
 			$config['query_depth_limit']
 		);
 
-		// Batch Queries
+		// Batch Queries.
 		$settings[] = sprintf(
 			'<strong>%s:</strong> %s (%s: %d)',
 			\esc_html__( 'Batch Queries', 'silver-assist-security' ),
@@ -318,7 +335,7 @@ class GraphQLConfigManager {
 			$config['batch_limit']
 		);
 
-		// Introspection
+		// Introspection.
 		$settings[] = sprintf(
 			'<strong>%s:</strong> %s',
 			\esc_html__( 'Public Introspection', 'silver-assist-security' ),
@@ -327,7 +344,7 @@ class GraphQLConfigManager {
 			'<span style="color: #00a32a;">' . \esc_html__( 'Disabled', 'silver-assist-security' ) . '</span>'
 		);
 
-		// Debug Mode
+		// Debug Mode.
 		$settings[] = sprintf(
 			'<strong>%s:</strong> %s',
 			\esc_html__( 'Debug Mode', 'silver-assist-security' ),
@@ -336,7 +353,7 @@ class GraphQLConfigManager {
 			'<span style="color: #00a32a;">' . \esc_html__( 'Disabled', 'silver-assist-security' ) . '</span>'
 		);
 
-		// Security recommendations
+		// Security recommendations.
 		$recommendations = $this->get_security_recommendations();
 
 		// Authentication requirement status.
@@ -359,7 +376,7 @@ class GraphQLConfigManager {
 				array_filter(
 					$recommendations,
 					function ( $rec ) {
-						return $rec['level'] === 'warning';
+						return 'warning' === $rec['level'];
 					}
 				)
 			);
@@ -378,7 +395,7 @@ class GraphQLConfigManager {
 	 * Get safe limits for GraphQL security based on mode
 	 *
 	 * @since 1.1.1
-	 * @param string $limit_type Type of limit to get (depth|complexity|timeout|aliases|directives|field_duplicates)
+	 * @param string $limit_type Type of limit to get (depth|complexity|timeout|aliases|directives|field_duplicates).
 	 * @return int Safe limit value
 	 */
 	public function get_safe_limit( string $limit_type ): int {
@@ -406,13 +423,13 @@ class GraphQLConfigManager {
 		$config      = $this->get_configuration();
 		$is_headless = $this->is_headless_mode();
 
-		// Base rate limits (requests per minute)
+		// Base rate limits (requests per minute).
 		$base_limit = $is_headless ? 120 : 60;
 
-		// Scale based on WPGraphQL batch settings
+		// Scale based on WPGraphQL batch settings.
 		if ( $config['batch_enabled'] && $config['batch_limit'] > 1 ) {
-			// If batching is enabled, allow more requests but account for batch multiplier
-			$batch_multiplier = min( $config['batch_limit'], 10 ); // Cap multiplier at 10
+			// If batching is enabled, allow more requests but account for batch multiplier.
+			$batch_multiplier = min( $config['batch_limit'], 10 ); // Cap multiplier at 10.
 			$adjusted_limit   = $base_limit + ( $batch_multiplier * 10 );
 		} else {
 			$adjusted_limit = $base_limit;
@@ -420,7 +437,7 @@ class GraphQLConfigManager {
 
 		return array(
 			'requests_per_minute' => $adjusted_limit,
-			'burst_limit'         => (int) ( $adjusted_limit * 1.5 ), // Allow 50% burst
+			'burst_limit'         => (int) ( $adjusted_limit * 1.5 ), // Allow 50% burst.
 			'timeout_seconds'     => $config['query_timeout'],
 		);
 	}
@@ -470,13 +487,13 @@ class GraphQLConfigManager {
 	 * Calculate overall security level based on configuration
 	 *
 	 * @since 1.1.1
-	 * @param array $config Configuration array
+	 * @param array $config Configuration array.
 	 * @return string Security level (high|medium|low)
 	 */
 	private function calculate_security_level( array $config ): string {
 		$score = 0;
 
-		// Positive security points
+		// Positive security points.
 		if ( ! $config['introspection_enabled'] ) {
 			$score += 2;
 		}
@@ -484,7 +501,7 @@ class GraphQLConfigManager {
 			$score += 2;
 		}
 		// Treat authentication-restricted access as a single control, even if detected via multiple signals.
-		$is_auth_restricted = ( $config['endpoint_access'] === 'restricted' ) || $this->is_authentication_required();
+		$is_auth_restricted = ( 'restricted' === $config['endpoint_access'] ) || $this->is_authentication_required();
 		if ( $is_auth_restricted ) {
 			$score += 3;
 		}
@@ -495,7 +512,7 @@ class GraphQLConfigManager {
 			++$score;
 		}
 
-		// Determine level
+		// Determine level.
 		if ( $score >= 8 ) {
 			return 'high';
 		}

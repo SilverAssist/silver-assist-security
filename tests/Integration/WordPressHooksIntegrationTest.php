@@ -41,7 +41,7 @@ class WordPressHooksIntegrationTest extends WP_UnitTestCase
         parent::setUp();
         
         // Initialize plugin instance (singleton — hooks registered once on first call)
-        $this->plugin = Plugin::getInstance();
+        $this->plugin = Plugin::get_instance();
     }
 
     /**

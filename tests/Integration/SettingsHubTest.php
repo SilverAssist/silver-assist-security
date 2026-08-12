@@ -50,7 +50,7 @@ class SettingsHubTest extends WP_UnitTestCase
         wp_set_current_user($admin_id);
 
         // Initialize plugin instance
-        $this->plugin = Plugin::getInstance();
+        $this->plugin = Plugin::get_instance();
         
         // Initialize admin panel
         $this->admin_panel = new AdminPanel();

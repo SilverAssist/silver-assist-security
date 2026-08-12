@@ -45,10 +45,10 @@ class AssetManager {
 	 * Initialize asset manager
 	 *
 	 * @since 1.1.15
-	 * @param string $plugin_version Plugin version for cache busting
+	 * @param string $plugin_version Plugin version for cache busting.
 	 */
 	public function __construct( string $plugin_version ) {
-		$this->config_manager = GraphQLConfigManager::getInstance();
+		$this->config_manager = GraphQLConfigManager::get_instance();
 		$this->plugin_version = $plugin_version;
 	}
 
@@ -66,17 +66,17 @@ class AssetManager {
 	 * Enqueue admin scripts and styles
 	 *
 	 * @since 1.1.15
-	 * @param string $hook_suffix Current admin page hook suffix
+	 * @param string $hook_suffix Current admin page hook suffix.
 	 * @return void
 	 */
 	public function enqueue_admin_scripts( string $hook_suffix ): void {
 		// Allow loading on both standalone menu and Settings Hub submenu
 		// Settings Hub uses: "silver-assist_page_silver-assist-security"
-		// Standalone menu uses: "settings_page_silver-assist-security"
+		// Standalone menu uses: "settings_page_silver-assist-security".
 		$allowed_hooks = array(
-			'settings_page_silver-assist-security',        // Standalone fallback menu
-			'silver-assist_page_silver-assist-security',   // Settings Hub submenu
-			'toplevel_page_silver-assist-security',         // Direct top-level (if ever used)
+			'settings_page_silver-assist-security',        // Standalone fallback menu.
+			'silver-assist_page_silver-assist-security',   // Settings Hub submenu.
+			'toplevel_page_silver-assist-security',         // Direct top-level (if ever used).
 		);
 
 		if ( ! \in_array( $hook_suffix, $allowed_hooks, true ) ) {
@@ -162,7 +162,7 @@ class AssetManager {
 			'noThreats'               => \__( 'No active threats detected', 'silver-assist-security' ),
 			'refreshing'              => \__( 'Refreshing...', 'silver-assist-security' ),
 			'updateUrl'               => \admin_url( 'update-core.php' ),
-			// Version check strings
+			// Version check strings.
 			'newVersionAvailable'     =>
 				/* translators: %s: new version number */
 				\__( 'New version %s available.', 'silver-assist-security' ),
@@ -177,7 +177,7 @@ class AssetManager {
 			'checkError'              => \__( 'Error checking for updates:', 'silver-assist-security' ),
 			'unknownError'            => \__( 'Unknown error', 'silver-assist-security' ),
 			'connectivityError'       => \__( 'Connectivity error while checking for updates', 'silver-assist-security' ),
-			// Form validation error strings
+			// Form validation error strings.
 			'loginAttemptsError'      => \__( 'Login attempts must be between 1 and 20', 'silver-assist-security' ),
 			'lockoutDurationError'    => \__( 'Lockout duration must be between 60 and 3600 seconds', 'silver-assist-security' ),
 			'sessionTimeoutError'     => \__( 'Session timeout must be between 5 and 120 minutes', 'silver-assist-security' ),
@@ -190,7 +190,7 @@ class AssetManager {
 			),
 			'customUrlPatternError'   => \__( 'Custom admin URL must contain only lowercase letters, numbers, and hyphens (3-30 characters)', 'silver-assist-security' ),
 			'urlPatternError'         => \__( 'Use only lowercase letters, numbers, and hyphens (3-30 characters)', 'silver-assist-security' ),
-			// Admin path validation strings
+			// Admin path validation strings.
 			'pathValidating'          => \__( 'Validating...', 'silver-assist-security' ),
 			'pathValid'               => \__( '✓ Path is valid', 'silver-assist-security' ),
 			'pathTooShort'            => \__( 'Path must be at least 3 characters long', 'silver-assist-security' ),
@@ -198,25 +198,25 @@ class AssetManager {
 			'pathForbidden'           => \__( 'This path contains forbidden keywords', 'silver-assist-security' ),
 			'pathInvalidChars'        => \__( 'Path can only contain letters, numbers, hyphens, and underscores', 'silver-assist-security' ),
 			'pathEmpty'               => \__( 'Path cannot be empty', 'silver-assist-security' ),
-			// Auto-save strings
+			// Auto-save strings.
 			'saving'                  => \__( 'Saving...', 'silver-assist-security' ),
 			'saved'                   => \__( 'Saved!', 'silver-assist-security' ),
 			'saveFailed'              => \__( 'Save failed', 'silver-assist-security' ),
-			// AJAX error strings
+			// AJAX error strings.
 			'updateCheckFailed'       => \__( 'Failed to check for Silver Assist updates', 'silver-assist-security' ),
 			'securityStatusFailed'    => \__( 'Failed to load security essentials', 'silver-assist-security' ),
 			'loginStatsFailed'        => \__( 'Failed to load login stats', 'silver-assist-security' ),
-			// Table headers
+			// Table headers.
 			'ipHash'                  => \__( 'IP Hash', 'silver-assist-security' ),
 			'blockedTime'             => \__( 'Blocked Time', 'silver-assist-security' ),
 			'remaining'               => \__( 'Remaining', 'silver-assist-security' ),
 			'minutes'                 => \__( 'min', 'silver-assist-security' ),
-			// Dashboard dynamic values
+			// Dashboard dynamic values.
 			'enabled'                 => \__( 'Enabled', 'silver-assist-security' ),
 			'disabled'                => \__( 'Disabled', 'silver-assist-security' ),
 			'headlessCms'             => \__( 'Headless CMS', 'silver-assist-security' ),
 			'standard'                => \__( 'Standard', 'silver-assist-security' ),
-			// GraphQL API key strings
+			// GraphQL API key strings.
 			'apiKeyActive'            => \__( 'Active', 'silver-assist-security' ),
 			'apiKeyNotConfigured'     => \__( 'Not configured', 'silver-assist-security' ),
 			'apiKeyConfigured'        => \__( 'An API key is configured. Regenerate to create a new key (invalidates the current one).', 'silver-assist-security' ),

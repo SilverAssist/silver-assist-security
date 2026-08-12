@@ -42,41 +42,41 @@ class GeneralSecurity {
 	 * @return void
 	 */
 	private function init(): void {
-		// Security headers
+		// Security headers.
 		\add_action( 'send_headers', array( $this, 'add_security_headers' ) );
 
-		// Hide WordPress version
+		// Hide WordPress version.
 		\add_filter( 'the_generator', array( $this, 'remove_version' ) );
 
-		// Remove unnecessary headers
+		// Remove unnecessary headers.
 		\add_action( 'init', array( $this, 'remove_unnecessary_headers' ) );
 
-		// Remove version from scripts and styles
+		// Remove version from scripts and styles.
 		\add_filter( 'script_loader_src', array( $this, 'remove_version_query_string' ) );
 		\add_filter( 'style_loader_src', array( $this, 'remove_version_query_string' ) );
 
-		// Disable XML-RPC
+		// Disable XML-RPC.
 		\add_filter( 'xmlrpc_methods', array( $this, 'remove_xmlrpc_methods' ) );
 		\add_filter( 'xmlrpc_enabled', '__return_false' );
 
-		// Configure secure cookies
+		// Configure secure cookies.
 		\add_action( 'init', array( $this, 'configure_secure_cookies' ) );
 		\add_filter( 'secure_auth_cookie', array( $this, 'force_secure_cookies' ) );
 		\add_filter( 'secure_logged_in_cookie', array( $this, 'force_secure_cookies' ) );
 
-		// Disable user enumeration
+		// Disable user enumeration.
 		\add_action( 'init', array( $this, 'disable_user_enumeration' ) );
 
-		// Hide login errors
+		// Hide login errors.
 		\add_filter( 'login_errors', array( $this, 'hide_login_errors' ) );
 
-		// Remove admin bar for non-admins
+		// Remove admin bar for non-admins.
 		\add_action( 'after_setup_theme', array( $this, 'remove_admin_bar_for_non_admins' ) );
 
-		// Disable file editing
+		// Disable file editing.
 		$this->disable_file_editing();
 
-		// Remove WordPress branding
+		// Remove WordPress branding.
 		\add_action( 'wp_before_admin_bar_render', array( $this, 'remove_wp_logo' ) );
 		\add_filter( 'admin_footer_text', array( $this, 'change_admin_footer' ) );
 	}
@@ -89,7 +89,7 @@ class GeneralSecurity {
 	 */
 	public function add_security_headers(): void {
 		if ( ! headers_sent() ) {
-			// Content Security Policy
+			// Content Security Policy.
 			header( 'X-Content-Type-Options: nosniff' );
 			header( 'X-Frame-Options: SAMEORIGIN' );
 			header( 'X-XSS-Protection: 1; mode=block' );
@@ -97,7 +97,7 @@ class GeneralSecurity {
 			header( 'Permissions-Policy: geolocation=(), microphone=(), camera=()' );
 
 			// HSTS for HTTPS sites (only in production, not in development environments)
-			// Includes preload directive to allow submission to browser HSTS preload lists
+			// Includes preload directive to allow submission to browser HSTS preload lists.
 			if ( \is_ssl() && ! $this->is_development_environment() ) {
 				header( 'Strict-Transport-Security: max-age=31536000; includeSubDomains; preload' );
 			}
@@ -144,21 +144,21 @@ class GeneralSecurity {
 	 * like "/file.css?ver=123?ver=456" to prevent version disclosure.
 	 *
 	 * @since 1.1.1
-	 * @param string $src Source URL
+	 * @param string $src Source URL.
 	 * @return string URL with all version parameters removed
 	 */
 	public function remove_version_query_string( string $src ): string {
-		// Check if URL contains any version parameters
+		// Check if URL contains any version parameters.
 		if ( strpos( $src, 'ver=' ) !== false ) {
 			// Remove all occurrences of ver parameter using regex
-			// This handles both ?ver= and &ver= patterns
+			// This handles both ?ver= and &ver= patterns.
 			$cleaned = preg_replace( '/[\?&]ver=[^&]*/', '', $src );
 
-			// If preg_replace succeeded, use the cleaned version
-			if ( $cleaned !== null ) {
+			// If preg_replace succeeded, use the cleaned version.
+			if ( null !== $cleaned ) {
 				$src = rtrim( $cleaned, '?&' );
 
-				// If we have parameters but no ?, add it back
+				// If we have parameters but no ?, add it back.
 				if ( strpos( $src, '&' ) !== false && strpos( $src, '?' ) === false ) {
 					$src = str_replace( '&', '?', $src );
 				}
@@ -168,15 +168,16 @@ class GeneralSecurity {
 		return $src;
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WordPress filter signature.
 	/**
 	 * Remove XML-RPC methods
 	 *
 	 * @since 1.1.1
-	 * @param array $methods XML-RPC methods
+	 * @param array $methods XML-RPC methods.
 	 * @return array
 	 */
-	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WordPress filter signature.
 	public function remove_xmlrpc_methods( array $methods ): array {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		return array();
 	}
 
@@ -188,7 +189,7 @@ class GeneralSecurity {
 	 */
 	public function configure_secure_cookies(): void {
 		// Only configure session cookies if no session has started yet
-		// This prevents disrupting existing sessions during plugin activation
+		// This prevents disrupting existing sessions during plugin activation.
 		if ( ! headers_sent() && session_status() === PHP_SESSION_NONE ) {
 			$secure = \is_ssl();
 
@@ -205,15 +206,16 @@ class GeneralSecurity {
 		}
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WordPress filter signature.
 	/**
 	 * Force secure cookies
 	 *
 	 * @since 1.1.1
-	 * @param bool $secure Current secure flag
+	 * @param bool $secure Current secure flag.
 	 * @return bool
 	 */
-	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WordPress filter signature.
 	public function force_secure_cookies( bool $secure ): bool {
+		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		return \is_ssl();
 	}
 
@@ -224,7 +226,7 @@ class GeneralSecurity {
 	 * @return void
 	 */
 	public function disable_user_enumeration(): void {
-		// Disable author enumeration via REST API
+		// Disable author enumeration via REST API.
 		\add_filter(
 			'rest_endpoints',
 			function ( $endpoints ) {
@@ -238,7 +240,7 @@ class GeneralSecurity {
 			}
 		);
 
-		// Disable author enumeration via URL
+		// Disable author enumeration via URL.
 		\add_action(
 			'template_redirect',
 			function () {
@@ -251,7 +253,7 @@ class GeneralSecurity {
 			}
 		);
 
-		// Remove author links from posts
+		// Remove author links from posts.
 		\add_filter(
 			'author_link',
 			function () {
@@ -345,7 +347,7 @@ class GeneralSecurity {
 			$server_name = \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_HOST'] ) );
 		}
 
-		// Check for common development indicators
+		// Check for common development indicators.
 		$dev_patterns = array(
 			'localhost',
 			'127.0.0.1',
@@ -365,7 +367,7 @@ class GeneralSecurity {
 			}
 		}
 
-		// Check for WP_DEBUG or WP_ENVIRONMENT_TYPE
+		// Check for WP_DEBUG or WP_ENVIRONMENT_TYPE.
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true ) {
 			return true;
 		}

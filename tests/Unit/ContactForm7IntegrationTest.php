@@ -107,7 +107,7 @@ class ContactForm7IntegrationTest extends TestCase {
 	public function test_cf7_integration_conditionally_loads(): void {
 		// This test verifies the integration only loads when CF7 is active
 		// Since CF7 won't be active in test environment, integration should be null
-		$plugin = Plugin::getInstance();
+		$plugin = Plugin::get_instance();
 		$integration = $plugin->get_cf7_integration();
 		
 		// Should be null when CF7 is not active

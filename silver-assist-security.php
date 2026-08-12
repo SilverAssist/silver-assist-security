@@ -154,7 +154,7 @@ class SilverAssistSecurityBootstrap {
 	public function init_plugin(): void {
 		try {
 			// Initialize the main plugin class
-			Plugin::getInstance();
+			Plugin::get_instance();
 		} catch (Exception $e) {
 			// Log the error and show admin notice
 			SecurityHelper::log_security_event(
