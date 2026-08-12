@@ -133,6 +133,29 @@ class SettingsFormTest extends WP_UnitTestCase
     }
 
     /**
+     * Test CF7 SQL injection protection toggle saves under its own option key
+     *
+     * Regression test: save_advanced_protection_settings() previously checked
+     * isset() on 'silver_assist_cf7_sql_injection_protection' but read the value
+     * from the differently-named 'silver_assist_sql_injection_protection' key,
+     * so the option silently never saved.
+     */
+    public function test_cf7_sql_injection_protection_setting_saves(): void
+    {
+        \update_option('silver_assist_cf7_sql_injection_protection', 0);
+
+        $this->submit_settings([
+            'silver_assist_cf7_sql_injection_protection' => '1',
+        ]);
+
+        $this->assertEquals(
+            1,
+            \get_option('silver_assist_cf7_sql_injection_protection'),
+            'CF7 SQL injection protection should be enabled after form submission'
+        );
+    }
+
+    /**
      * Test auto-save AJAX action is registered
      */
     public function test_auto_save_action_registered(): void

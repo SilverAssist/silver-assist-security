@@ -274,14 +274,16 @@ class StatisticsProvider {
 		$count = 0;
 
 		try {
-			$handle = fopen( $log_file, 'r' );
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- fopen() emits E_WARNING (not a catchable Exception) on failure; the immediately-following false-check already handles it, so un-suppressing would only leak PHP warnings into admin output/logs with no way to act on them here.
+			$handle = @fopen( $log_file, 'r' );
 			if ( ! $handle ) {
 				return 0;
 			}
 
 			// Bound the read to the last 1 MB of the file to avoid scanning huge logs.
 			$max_read_bytes = 1024 * 1024; // 1 MB
-			$file_size      = filesize( $log_file );
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- filesize() emits E_WARNING (not a catchable Exception) on failure; the falsy check on the next line already handles it.
+			$file_size = @filesize( $log_file );
 
 			if ( $file_size && $file_size > $max_read_bytes ) {
 				fseek( $handle, -$max_read_bytes, SEEK_END );
