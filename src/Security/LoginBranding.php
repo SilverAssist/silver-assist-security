@@ -12,6 +12,7 @@
 
 namespace SilverAssist\Security\Security;
 
+use SilverAssist\PluginKernel\Interfaces\LoadableInterface;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\SecurityHelper;
 
@@ -23,7 +24,14 @@ use SilverAssist\Security\Core\SecurityHelper;
  *
  * @since 1.4.0
  */
-class LoginBranding {
+class LoginBranding implements LoadableInterface {
+
+	/**
+	 * Singleton instance
+	 *
+	 * @var self|null
+	 */
+	private static ?self $instance = null;
 
 	/**
 	 * Plugin version for cache busting
@@ -49,17 +57,66 @@ class LoginBranding {
 		$this->enabled        = (bool) DefaultConfig::get_option( 'silver_assist_login_branding_enabled' );
 
 		if ( $this->enabled ) {
-			$this->init();
+			$this->register_hooks();
 		}
 	}
 
 	/**
-	 * Initialize hooks
+	 * Get singleton instance
+	 *
+	 * @since 1.5.1
+	 * @return self
+	 */
+	public static function instance(): self {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * LoadableInterface entry point
+	 *
+	 * A no-op: hook registration already happens unconditionally (when
+	 * enabled) in the constructor, which instance() triggers the first
+	 * time it constructs this singleton.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	public function init(): void {
+	}
+
+	/**
+	 * Get loading priority
+	 *
+	 * @since 1.5.1
+	 * @return int
+	 */
+	public function get_priority(): int {
+		return 10;
+	}
+
+	/**
+	 * Whether this component should load
+	 *
+	 * Matches pre-kernel behavior, where Plugin::init_security_components()
+	 * only constructed LoginBranding if the setting was enabled.
+	 *
+	 * @since 1.5.1
+	 * @return bool
+	 */
+	public function should_load(): bool {
+		return $this->enabled;
+	}
+
+	/**
+	 * Register WordPress hooks for login branding
 	 *
 	 * @since 1.4.0
 	 * @return void
 	 */
-	private function init(): void {
+	private function register_hooks(): void {
 		// Enqueue custom login styles.
 		\add_action( 'login_enqueue_scripts', array( $this, 'enqueue_login_assets' ) );
 

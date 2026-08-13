@@ -94,25 +94,48 @@ class ContactForm7IntegrationTest extends TestCase {
 
 	/**
 	 * Test Plugin has CF7 integration methods
+	 *
+	 * init_cf7_integration() (the pre-kernel WordPress hook callback that
+	 * constructed ContactForm7Integration) is internal wiring, not a
+	 * back-compat-relevant accessor — it isn't part of this assertion.
+	 * ContactForm7Integration now self-gates via should_load(), invoked
+	 * directly by the plugin kernel rather than by a Plugin-owned method.
 	 */
 	public function test_plugin_has_cf7_integration_methods(): void {
-		$this->assertTrue( method_exists( Plugin::class, 'init_cf7_integration' ) );
 		$this->assertTrue( method_exists( Plugin::class, 'get_cf7_integration' ) );
 		$this->assertTrue( method_exists( Plugin::class, 'is_cf7_integration_active' ) );
 	}
 
 	/**
 	 * Test CF7 integration conditionally loads
+	 *
+	 * Disables the option explicitly, rather than relying on the WPCF7
+	 * class being absent — other test classes in this same PHPUnit process
+	 * (e.g. ContactForm7AjaxHandlerTest) permanently alias a WPCF7 class
+	 * for the rest of the run, so "CF7 not active" can't be assumed here.
 	 */
 	public function test_cf7_integration_conditionally_loads(): void {
-		// This test verifies the integration only loads when CF7 is active
-		// Since CF7 won't be active in test environment, integration should be null
-		$plugin = Plugin::get_instance();
-		$integration = $plugin->get_cf7_integration();
-		
-		// Should be null when CF7 is not active
-		$this->assertNull( $integration );
-		$this->assertFalse( $plugin->is_cf7_integration_active() );
+		\update_option( 'silver_assist_cf7_protection_enabled', 0 );
+
+		// Force a fresh instance() so it picks up the option just set.
+		$reflection = new \ReflectionClass( \SilverAssist\Security\Security\ContactForm7Integration::class );
+		$instance_property = $reflection->getProperty( 'instance' );
+		$instance_property->setAccessible( true );
+		$instance_property->setValue( null, null );
+
+		try {
+			$plugin = Plugin::get_instance();
+			$integration = $plugin->get_cf7_integration();
+
+			// Should be null when CF7 protection is disabled via option.
+			$this->assertNull( $integration );
+			$this->assertFalse( $plugin->is_cf7_integration_active() );
+		} finally {
+			// This class extends plain TestCase (no per-test DB rollback) —
+			// restore the default so later tests aren't affected.
+			\update_option( 'silver_assist_cf7_protection_enabled', 1 );
+			$instance_property->setValue( null, null );
+		}
 	}
 
 	/**

@@ -13,6 +13,7 @@
 
 namespace SilverAssist\Security\Security;
 
+use SilverAssist\PluginKernel\Interfaces\LoadableInterface;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\PathValidator;
 use SilverAssist\Security\Core\SecurityHelper;
@@ -28,7 +29,14 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 1.1.4
  */
-class AdminHideSecurity {
+class AdminHideSecurity implements LoadableInterface {
+
+	/**
+	 * Singleton instance
+	 *
+	 * @var self|null
+	 */
+	private static ?self $instance = null;
 
 	/**
 	 * Whether admin hiding is enabled
@@ -58,7 +66,57 @@ class AdminHideSecurity {
 	 */
 	public function __construct() {
 		$this->init_configuration();
-		$this->init();
+		$this->register_hooks();
+	}
+
+	/**
+	 * Get singleton instance
+	 *
+	 * @since 1.5.1
+	 * @return self
+	 */
+	public static function instance(): self {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * LoadableInterface entry point
+	 *
+	 * A no-op: hook registration already happens unconditionally in the
+	 * constructor (see register_hooks(), which self-gates on
+	 * $admin_hide_enabled), triggered the first time instance() constructs
+	 * this singleton.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	public function init(): void {
+	}
+
+	/**
+	 * Get loading priority
+	 *
+	 * @since 1.5.1
+	 * @return int
+	 */
+	public function get_priority(): int {
+		return 10;
+	}
+
+	/**
+	 * Whether this component should load
+	 *
+	 * Matches pre-kernel behavior, where Plugin::init_security_components()
+	 * only constructed AdminHideSecurity if the setting was enabled.
+	 *
+	 * @since 1.5.1
+	 * @return bool
+	 */
+	public function should_load(): bool {
+		return $this->admin_hide_enabled;
 	}
 
 	/**
@@ -89,12 +147,12 @@ class AdminHideSecurity {
 	}
 
 	/**
-	 * Initialize hooks and filters
+	 * Register WordPress hooks and filters
 	 *
 	 * @since 1.1.4
 	 * @return void
 	 */
-	private function init(): void {
+	private function register_hooks(): void {
 		if ( ! $this->admin_hide_enabled ) {
 			return;
 		}

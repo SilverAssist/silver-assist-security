@@ -15,6 +15,7 @@
 namespace SilverAssist\Security\Admin;
 
 use Exception;
+use SilverAssist\PluginKernel\Interfaces\LoadableInterface;
 use SilverAssist\Security\Core\PathValidator;
 use SilverAssist\Security\Core\Plugin;
 use SilverAssist\Security\Core\SecurityHelper;
@@ -36,7 +37,14 @@ use SilverAssist\Security\Admin\Settings\SettingsHandler;
  *
  * @since 1.1.1
  */
-class AdminPanel {
+class AdminPanel implements LoadableInterface {
+
+	/**
+	 * Singleton instance
+	 *
+	 * @var self|null
+	 */
+	private static ?self $instance = null;
 
 	/**
 	 * GraphQL Configuration Manager instance
@@ -143,16 +151,65 @@ class AdminPanel {
 		$this->asset_manager = new AssetManager( $this->plugin_version );
 		$this->asset_manager->init();
 
-		$this->init();
+		$this->register_hooks();
 	}
 
 	/**
-	 * Initialize admin panel
+	 * Get singleton instance
+	 *
+	 * @since 1.5.1
+	 * @return self
+	 */
+	public static function instance(): self {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * LoadableInterface entry point
+	 *
+	 * A no-op: hook registration already happens unconditionally in the
+	 * constructor (see register_hooks()), triggered the first time
+	 * instance() constructs this singleton.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	public function init(): void {
+	}
+
+	/**
+	 * Get loading priority
+	 *
+	 * @since 1.5.1
+	 * @return int
+	 */
+	public function get_priority(): int {
+		return 10;
+	}
+
+	/**
+	 * Whether this component should load
+	 *
+	 * Matches pre-kernel behavior, where Plugin::init_admin_panel() only
+	 * constructed AdminPanel on admin requests.
+	 *
+	 * @since 1.5.1
+	 * @return bool
+	 */
+	public function should_load(): bool {
+		return \is_admin();
+	}
+
+	/**
+	 * Register admin panel hooks
 	 *
 	 * @since 1.1.1
 	 * @return void
 	 */
-	private function init(): void {
+	private function register_hooks(): void {
 		// Register with Settings Hub early (priority 4) to ensure hub processes it at priority 5.
 		\add_action( 'admin_menu', array( $this, 'register_with_hub' ), 4 );
 		\add_action( 'admin_init', array( $this, 'register_settings' ) );

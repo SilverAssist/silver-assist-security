@@ -3,7 +3,7 @@
  * Plugin Name: Silver Assist Security Essentials
  * Plugin URI: https://github.com/SilverAssist/silver-assist-security
  * Description: Resolves critical security vulnerabilities: WordPress login protection, HTTPOnly cookie implementation, and comprehensive GraphQL security. Addresses security audit findings automatically.
- * Version: 1.5.0
+ * Version: 1.5.1
  * Author: Silver Assist
  * Author URI: http://silverassist.com/
  * Text Domain: silver-assist-security
@@ -18,265 +18,94 @@
  * @package SilverAssist\Security
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.5.0
+ * @version 1.5.1
  */
 
-// Prevent direct access
-if ( ! defined( 'ABSPATH' )) {
+// Prevent direct access.
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// PHP version check - Require PHP 8.2+
-if (version_compare( PHP_VERSION, '8.2.0', '<' )) {
+// PHP version check - Require PHP 8.2+.
+if ( version_compare( PHP_VERSION, '8.2.0', '<' ) ) {
 	add_action(
 		'admin_notices',
 		function () {
-		echo '<div class="notice notice-error"><p>';
-		echo '<strong>Silver Assist Security Essentials:</strong> This plugin requires PHP 8.2 or higher. ';
-		echo 'You are currently running PHP ' . PHP_VERSION . '. ';
-		echo 'Please contact your hosting provider to upgrade PHP.';
-		echo '</p></div>';
-	}
-		);
+			echo '<div class="notice notice-error"><p>';
+			echo '<strong>Silver Assist Security Essentials:</strong> This plugin requires PHP 8.2 or higher. ';
+			echo 'You are currently running PHP ' . PHP_VERSION . '. ';
+			echo 'Please contact your hosting provider to upgrade PHP.';
+			echo '</p></div>';
+		}
+	);
 	return;
 }
 
-// Define plugin constants
-define( 'SILVER_ASSIST_SECURITY_VERSION', '1.5.0' );
+// Define plugin constants.
+define( 'SILVER_ASSIST_SECURITY_VERSION', '1.5.1' );
 define( 'SILVER_ASSIST_SECURITY_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SILVER_ASSIST_SECURITY_URL', plugin_dir_url( __FILE__ ) );
 define( 'SILVER_ASSIST_SECURITY_BASENAME', plugin_basename( __FILE__ ) );
 
-// Load Composer autoloader for external dependencies
+// Load Composer autoloader for external dependencies and this plugin's own PSR-4-mapped classes.
 $composer_autoloader = SILVER_ASSIST_SECURITY_PATH . 'vendor/autoload.php';
-if (file_exists( $composer_autoloader )) {
+if ( file_exists( $composer_autoloader ) ) {
 	require_once $composer_autoloader;
 }
 
-/**
- * PSR-4 Autoloader for Silver Assist Security Essentials
- *
- * @param string $class_name The fully-qualified class name.
- * @return void
- */
-spl_autoload_register(
-	function ( $class_name ) {
-	// Project-specific namespace prefix
-	$prefix = 'SilverAssist\\Security\\';
-
-	// Base directory for the namespace prefix
-	$base_dir = SILVER_ASSIST_SECURITY_PATH . 'src/';
-
-	// Does the class use the namespace prefix?
-	$len = strlen( $prefix );
-	if (strncmp( $prefix, $class_name, $len ) !== 0) {
-		// no, move to the next registered autoloader
-		return;
-	}
-
-	// Get the relative class name
-	$relative_class = substr( $class_name, $len );
-
-	// Replace the namespace prefix with the base directory, replace namespace
-	// separators with directory separators in the relative class name, append
-	// with .php
-	$file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
-
-	// If the file exists, require it
-	if (file_exists( $file )) {
-			require $file;
-	}
-}
-	);
-
+use SilverAssist\Security\Core\Activator;
 use SilverAssist\Security\Core\Plugin;
-use SilverAssist\Security\Core\DefaultConfig;
+use SilverAssist\Security\Core\SecurityHelper;
+use SilverAssist\Security\Core\SecurityLoader;
+use SilverAssist\Security\GraphQL\GraphQLLoader;
+
+// Plugin lifecycle hooks.
+register_activation_hook( __FILE__, array( Activator::class, 'activate' ) );
+register_deactivation_hook( __FILE__, array( Activator::class, 'deactivate' ) );
+register_uninstall_hook( __FILE__, array( Activator::class, 'uninstall' ) );
 
 /**
- * Main Plugin Bootstrap Class
+ * Bootstrap the plugin across its three loading tiers.
  *
- * Handles plugin initialization, activation, deactivation, and uninstall hooks
+ * The kernel's AbstractPlugin::init() loads every listed component in one
+ * batch, on whichever hook triggers it — so a single bootstrap call can't
+ * serve components with genuinely different timing requirements. This
+ * plugin has three:
  *
- * @since 1.1.1
+ * - plugins_loaded priority 1 (SecurityLoader): login/brute-force
+ *   protection and other auth-adjacent hooks that wp-login.php can act on
+ *   before "init" fires.
+ * - plugins_loaded priority 5 (GraphQLLoader): GraphQL API-key
+ *   authentication, which must register its determine_current_user filter
+ *   before WordPress resolves the current user — but late enough to give
+ *   WPGraphQL a chance to define its own class first.
+ * - init (Plugin, the plugin root): everything else — admin panel, CF7
+ *   integration, updater, textdomain — matching the timing every other
+ *   Silver Assist plugin on wp-plugin-kernel uses by default.
+ *
+ * These are pre-existing timing requirements carried over unchanged from
+ * the pre-kernel bootstrap; see each loader class's docblock.
  */
-class SilverAssistSecurityBootstrap {
+add_action(
+	'plugins_loaded',
+	static function () {
+		SecurityHelper::init();
+		SecurityLoader::instance()->init();
+	},
+	1
+);
 
+add_action(
+	'plugins_loaded',
+	static function () {
+		GraphQLLoader::instance()->init();
+	},
+	5
+);
 
-	/**
-	 * Plugin instance
-	 *
-	 * @var SilverAssistSecurityBootstrap|null
-	 */
-	private static ?SilverAssistSecurityBootstrap $instance = null;
-
-	/**
-	 * Constructor
-	 *
-	 * @since 1.1.1
-	 */
-	private function __construct() {
-		$this->init_hooks();
-		$this->init_plugin();
+add_action(
+	'init',
+	static function () {
+		Plugin::instance()->init();
 	}
-
-	/**
-	 * Get singleton instance
-	 *
-	 * @since 1.1.1
-	 * @return SilverAssistSecurityBootstrap
-	 */
-	public static function getInstance(): SilverAssistSecurityBootstrap {
-		if (self::$instance === null) {
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
-
-	/**
-	 * Initialize WordPress hooks
-	 *
-	 * @since 1.1.1
-	 * @return void
-	 */
-	private function init_hooks(): void {
-		// Plugin lifecycle hooks
-		register_activation_hook( __FILE__, [ $this, 'activate' ] );
-		register_deactivation_hook( __FILE__, [ $this, 'deactivate' ] );
-		register_uninstall_hook( __FILE__, [ __CLASS__, 'uninstall' ] );
-	}
-
-	/**
-	 * Initialize the Silver Assist Security Essentials
-	 *
-	 * @since 1.1.1
-	 * @return void
-	 */
-	public function init_plugin(): void {
-		try {
-			// Initialize the main plugin class
-			Plugin::get_instance();
-		} catch (Exception $e) {
-			// Log the error and show admin notice
-			SecurityHelper::log_security_event(
-				'PLUGIN_INIT_ERROR',
-				"Silver Assist Security Essentials initialization failed: {$e->getMessage()}",
-				[ 'exception' => $e->getMessage() ]
-			);
-
-			\add_action(
-				'admin_notices',
-				function () use ( $e ) {
-				echo '<div class="notice notice-error"><p>';
-				echo '<strong>Silver Assist Security Essentials Error:</strong> ' . esc_html( $e->getMessage() );
-				echo '</p></div>';
-			}
-				);
-		}
-	}
-
-	/**
-	 * Plugin activation handler
-	 *
-	 * @since 1.1.1
-	 * @return void
-	 */
-	public function activate(): void {
-		// Set default options using centralized configuration
-		foreach (DefaultConfig::get_defaults() as $option => $value) {
-			if (\get_option( $option ) === false) {
-				\add_option( $option, $value );
-			}
-		}
-
-		// Initialize last_activity for all currently logged-in users
-		// This prevents immediate logout after plugin activation
-		$this->initialize_user_last_activity();
-
-		// Flush rewrite rules to ensure custom admin URL routing works properly
-		\flush_rewrite_rules();
-	}
-
-	/**
-	 * Initialize last_activity for all currently logged-in users
-	 *
-	 * This prevents immediate logout after plugin activation by setting
-	 * last_activity timestamp for users who are currently logged in.
-	 *
-	 * @since 1.1.1
-	 * @return void
-	 */
-	private function initialize_user_last_activity(): void {
-		// Get all currently logged-in users by checking for active sessions
-		$current_time = time();
-
-		// Query for users who have WordPress sessions (simplified check)
-		$users = \get_users(
-			[
-				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Session check on activation only, performance acceptable
-				'meta_query' => [
-					[
-						'key' => 'session_tokens',
-						'compare' => 'EXISTS',
-					],
-				],
-			]
-			);
-
-		// Initialize last_activity for each logged-in user
-		foreach ($users as $user) {
-			$existing_activity = \get_user_meta( $user->ID, 'last_activity', true );
-
-			// Only set if not already set to avoid overwriting existing data
-			if (empty( $existing_activity )) {
-				\update_user_meta( $user->ID, 'last_activity', $current_time );
-			}
-		}
-	}
-
-	/**
-	 * Plugin deactivation handler
-	 *
-	 * @since 1.1.1
-	 * @return void
-	 */
-	public function deactivate(): void {
-		// Clean up transients and temporary data
-		global $wpdb;
-
-		// Clean up rate limiting transients
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation on deactivation, caching not needed
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_graphql_rate_limit_%'" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation on deactivation, caching not needed
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_graphql_rate_limit_%'" );
-
-		// Flush rewrite rules to clean up custom admin URL routing
-		\flush_rewrite_rules();
-	}
-
-	/**
-	 * Plugin uninstall handler
-	 *
-	 * @since 1.1.1
-	 * @return void
-	 */
-	public static function uninstall(): void {
-		// Remove all plugin options using centralized configuration
-		foreach (array_keys( DefaultConfig::get_defaults() ) as $option) {
-			\delete_option( $option );
-		}
-
-		// Clean up any remaining transients
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation on uninstall, caching not needed
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_silver_assist_%'" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation on uninstall, caching not needed
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_silver_assist_%'" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation on uninstall, caching not needed
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_graphql_rate_limit_%'" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation on uninstall, caching not needed
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_graphql_rate_limit_%'" );
-	}
-}
-
-// Initialize the plugin bootstrap
-SilverAssistSecurityBootstrap::getInstance();
+);

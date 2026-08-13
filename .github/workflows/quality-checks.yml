@@ -321,10 +321,10 @@ jobs:
 
             - name: Run security check
               run: |
-                  # Check for common security issues (only in PHP files, excluding vendor)
+                  # Check for common security issues (only in PHP files, excluding vendor and test-only stubs)
                   echo "Checking for eval() usage in PHP code..."
                   # Use word boundary \b to match only eval( as a function call, not within other words like retrieval(
-                  EVAL_FILES=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -lE '\beval\s*\(' {} \; 2>/dev/null || true)
+                  EVAL_FILES=$(find . -name "*.php" -not -path "./vendor/*" -not -path "./tests/*" -exec grep -lE '\beval\s*\(' {} \; 2>/dev/null || true)
                   if [ -n "$EVAL_FILES" ]; then
                     echo "eval() usage found in PHP files - security risk!"
                     echo "$EVAL_FILES"

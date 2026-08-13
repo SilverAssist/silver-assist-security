@@ -241,6 +241,6 @@ License URI: https://polyformproject.org/licenses/noncommercial/1.0.0/
    - WordPress hardening features
    - Admin configuration capabilities
 
-9. **Bootstrap class**: The main plugin file contains `SilverAssistSecurityBootstrap` class for lifecycle management.
+9. **Bootstrap**: The main plugin file wires the plugin's three loading tiers (`Core\SecurityLoader`, `GraphQL\GraphQLLoader`, `Core\Plugin`) built on `silverassist/wp-plugin-kernel`'s `AbstractPlugin`; `Core\Activator` handles activation/deactivation/uninstall lifecycle.
 
 10. **WordPress standards**: Follow WordPress coding standards and documentation conventions throughout all headers.

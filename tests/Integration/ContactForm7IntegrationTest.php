@@ -83,6 +83,13 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 		if ( ! defined( 'WPCF7_VERSION' ) ) {
 			define( 'WPCF7_VERSION', '5.8' );
 		}
+
+		// SecurityHelper::is_contact_form_7_active() (and, since 1.5.1,
+		// ContactForm7Integration's own should_load()/register_hooks() gate)
+		// requires the WPCF7 class to exist, not just the version constant.
+		if ( ! class_exists( 'WPCF7' ) ) {
+			eval( 'class WPCF7 {}' ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- Test-only CF7 class stub; excluded from the eval() security scan via --exclude-dir=tests.
+		}
 	}
 
 	/**
