@@ -2,6 +2,7 @@
 
 namespace SilverAssist\Security\Tests\Functional;
 
+use SilverAssist\Security\Core\Activator;
 use WP_UnitTestCase;
 
 /**
@@ -36,21 +37,8 @@ class PluginInstallationTest extends WP_UnitTestCase
             \delete_option($option);
         }
 
-        // Simulate plugin activation by calling the bootstrap activation method
-        if (\class_exists('SilverAssistSecurityBootstrap')) {
-            $bootstrap = \SilverAssistSecurityBootstrap::getInstance();
-            $bootstrap->activate();
-        } else {
-            // Fallback: manually set default options as plugin would do
-            \update_option('silver_assist_login_attempts', 5);
-            \update_option('silver_assist_lockout_duration', 900);
-            \update_option('silver_assist_session_timeout', 30);
-            \update_option('silver_assist_password_strength_enforcement', 1);
-            \update_option('silver_assist_bot_protection', 1);
-            \update_option('silver_assist_graphql_query_depth', 8);
-            \update_option('silver_assist_graphql_query_complexity', 100);
-            \update_option('silver_assist_graphql_query_timeout', 5);
-        }
+        // Simulate plugin activation by calling the real activation method.
+        Activator::activate();
 
         // Verify all required options were created with defaults
         $this->assertEquals(5, \get_option('silver_assist_login_attempts'), 'Login attempts should default to 5');
@@ -108,14 +96,14 @@ class PluginInstallationTest extends WP_UnitTestCase
         \update_option('silver_assist_login_attempts', 5);
         \update_option('silver_assist_test_option', 'test_value');
 
-        // Simulate uninstall hook
-        if (function_exists('SilverAssistSecurityBootstrap::uninstall')) {
-            \SilverAssistSecurityBootstrap::uninstall();
-        }
+        // Simulate uninstall hook.
+        Activator::uninstall();
 
-        // Options should be removed (in real uninstall)
-        // Note: In test environment, we don't actually delete to avoid affecting other tests
-        $this->assertTrue(true, 'Uninstall hook should execute without errors');
+        // Options managed by DefaultConfig::get_defaults() should be removed;
+        // the ad hoc test option (not part of the plugin's known option set)
+        // is untouched, since uninstall() only deletes known options.
+        $this->assertFalse(\get_option('silver_assist_login_attempts'), 'Known plugin option should be removed after uninstall');
+        $this->assertSame('test_value', \get_option('silver_assist_test_option'), 'Unrelated option should be untouched by uninstall');
     }
 
     /**

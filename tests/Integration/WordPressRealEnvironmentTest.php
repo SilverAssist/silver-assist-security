@@ -11,6 +11,7 @@
 
 namespace SilverAssist\Security\Tests\Integration;
 
+use SilverAssist\Security\Core\Activator;
 use SilverAssist\Security\Core\Plugin;
 use SilverAssist\Security\Security\ContactForm7Integration;
 use WP_UnitTestCase;
@@ -290,8 +291,7 @@ class WordPressRealEnvironmentTest extends WP_UnitTestCase
     public function test_plugin_activation_deactivation(): void
     {
         // Manually trigger plugin activation to ensure options are set
-        $bootstrap = \SilverAssistSecurityBootstrap::getInstance();
-        $bootstrap->activate();
+        Activator::activate();
         
         // Test that default options exist (should be set during plugin activation)
         $default_options = array(

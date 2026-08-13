@@ -59,6 +59,25 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Reset RestAPISecurity's singleton so the next instance() call
+	 * re-reads options that were just changed by the test.
+	 *
+	 * RestAPISecurity::instance() caches its should_load()-relevant
+	 * properties (batch_endpoint_enabled, rate_limiting_enabled) at first
+	 * construction; without this reset, Plugin::get_rest_api_security()
+	 * would keep returning whatever the singleton first saw.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	private function reset_rest_api_security_singleton(): void {
+		$reflection = new \ReflectionClass( RestAPISecurity::class );
+		$instance_property = $reflection->getProperty( 'instance' );
+		$instance_property->setAccessible( true );
+		$instance_property->setValue( null, null );
+	}
+
+	/**
 	 * Test REST API security initializes through plugin
 	 *
 	 * @since 1.5.0
@@ -69,8 +88,8 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		\update_option( 'silver_assist_rest_batch_endpoint_protection', 1 );
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 1 );
 
-		// Trigger plugin initialization
-		$this->plugin->init_security_components();
+		// Force a fresh instance() so it picks up the options just set.
+		$this->reset_rest_api_security_singleton();
 
 		// Verify REST API security was initialized
 		$rest_api_security = $this->plugin->get_rest_api_security();
@@ -182,18 +201,14 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		\update_option( 'silver_assist_rest_batch_endpoint_protection', 0 );
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 0 );
 
-		// Reset the plugin singleton to clear previously registered hooks
-		$reflection = new \ReflectionClass( Plugin::class );
-		$instance_property = $reflection->getProperty( 'instance' );
-		$instance_property->setAccessible( true );
-		$instance_property->setValue( null, null );
+		// Force a fresh instance() so it picks up the options just set.
+		$this->reset_rest_api_security_singleton();
 
 		// Clean all REST filters
 		\remove_all_filters( 'rest_pre_dispatch' );
 
-		// Get fresh plugin instance and initialize
+		// Get fresh plugin instance
 		$plugin = Plugin::get_instance();
-		$plugin->init_security_components();
 
 		// Verify REST API security was not initialized
 		$rest_api_security = $plugin->get_rest_api_security();
@@ -224,8 +239,8 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 		\update_option( 'silver_assist_rest_batch_endpoint_protection', 1 );
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 0 );
 
-		// Plugin should initialize REST API security
-		$this->plugin->init_security_components();
+		// Force a fresh instance() so it picks up the options just set.
+		$this->reset_rest_api_security_singleton();
 
 		// Verify REST API security was initialized
 		$rest_api_security = $this->plugin->get_rest_api_security();

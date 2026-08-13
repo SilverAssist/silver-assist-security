@@ -14,6 +14,7 @@
 
 namespace SilverAssist\Security\Security;
 
+use SilverAssist\PluginKernel\Interfaces\LoadableInterface;
 use SilverAssist\Security\Core\SecurityHelper;
 
 /**
@@ -23,8 +24,15 @@ use SilverAssist\Security\Core\SecurityHelper;
  *
  * @since 1.1.1
  */
-class GeneralSecurity {
+class GeneralSecurity implements LoadableInterface {
 
+
+	/**
+	 * Singleton instance
+	 *
+	 * @var self|null
+	 */
+	private static ?self $instance = null;
 
 	/**
 	 * Constructor
@@ -32,16 +40,65 @@ class GeneralSecurity {
 	 * @since 1.1.1
 	 */
 	public function __construct() {
-		$this->init();
+		$this->register_hooks();
 	}
 
 	/**
-	 * Initialize general security features
+	 * Get singleton instance
+	 *
+	 * @since 1.5.1
+	 * @return self
+	 */
+	public static function instance(): self {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * LoadableInterface entry point
+	 *
+	 * A no-op: hook registration already happens unconditionally in the
+	 * constructor (see register_hooks()), which instance() triggers the
+	 * first time it constructs this singleton.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	public function init(): void {
+	}
+
+	/**
+	 * Get loading priority
+	 *
+	 * @since 1.5.1
+	 * @return int
+	 */
+	public function get_priority(): int {
+		return 10;
+	}
+
+	/**
+	 * Whether this component should load
+	 *
+	 * Always loads — matches pre-kernel behavior, where Plugin::init_security_components()
+	 * constructed GeneralSecurity unconditionally.
+	 *
+	 * @since 1.5.1
+	 * @return bool
+	 */
+	public function should_load(): bool {
+		return true;
+	}
+
+	/**
+	 * Register WordPress hooks for general security
 	 *
 	 * @since 1.1.1
 	 * @return void
 	 */
-	private function init(): void {
+	private function register_hooks(): void {
 		// Security headers.
 		\add_action( 'send_headers', array( $this, 'add_security_headers' ) );
 

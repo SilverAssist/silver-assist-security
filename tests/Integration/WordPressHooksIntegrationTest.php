@@ -10,6 +10,7 @@
 
 namespace SilverAssist\Security\Tests\Integration;
 
+use SilverAssist\Security\Core\Activator;
 use SilverAssist\Security\Core\Plugin;
 use SilverAssist\Security\Admin\AdminPanel;
 use SilverAssist\Security\Security\LoginSecurity;
@@ -173,10 +174,8 @@ class WordPressHooksIntegrationTest extends WP_UnitTestCase
         \delete_option('silver_assist_login_attempts');
         \delete_option('silver_assist_lockout_duration');
 
-        // Call the bootstrap activate method directly to simulate activation
-        if (\class_exists('SilverAssistSecurityBootstrap')) {
-            \SilverAssistSecurityBootstrap::getInstance()->activate();
-        }
+        // Call the real activation method directly to simulate activation.
+        Activator::activate();
         
         // Verify default options are created
         $this->assertNotEmpty(

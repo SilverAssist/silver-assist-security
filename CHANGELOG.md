@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-08-13
+
+### 🏗️ Changed
+
+- **Migrated to `silverassist/wp-plugin-kernel`**: adopted the shared `AbstractPlugin`/`LoadableInterface` bootstrap pattern used across the Silver Assist plugin portfolio. `LoginSecurity`, `GeneralSecurity`, `RestAPISecurity`, `LoginBranding`, `AdminHideSecurity`, `GraphQLSecurity`, `ContactForm7Integration`, and `AdminPanel` now implement `LoadableInterface` and expose a singleton `instance()`; existing public constructors are unchanged, so direct `new` construction (used throughout the test suite) still works exactly as before.
+- **Three loading tiers, not one**: this plugin has genuine cross-component hook-timing requirements a single bootstrap hook can't serve — brute-force/login protection needs `plugins_loaded` priority 1 (wp-login.php acts before `init`), GraphQL API-key authentication needs `plugins_loaded` priority 5 (before WordPress resolves the current user, but after WPGraphQL defines its class), and everything else loads on `init`. Introduced `Core\SecurityLoader` and `GraphQL\GraphQLLoader` — both `AbstractPlugin` subclasses — alongside the plugin root (`Core\Plugin`) to preserve these exact pre-existing timings.
+- **Extracted `Core\Activator`**: activation/deactivation/uninstall logic moved out of the main plugin file's `SilverAssistSecurityBootstrap` class (removed) into a dedicated static class, registered directly against `register_activation_hook()` / `register_deactivation_hook()` / `register_uninstall_hook()`.
+- **Removed the hand-rolled `spl_autoload_register` PSR-4 autoloader** from the main plugin file — it duplicated `composer.json`'s own `SilverAssist\Security\` → `src/` PSR-4 mapping and didn't cover the plugin's Composer dependencies anyway, so it provided no real vendor-less-distribution fallback.
+- `ContactForm7Integration` now checks `SecurityHelper::is_contact_form_7_active()` internally (not just the `silver_assist_cf7_protection_enabled` option) before registering its hooks or constructing its sub-components — previously this was only enforced by the caller (`Plugin::init_cf7_integration()`), which every other construction path skipped.
+- The main plugin file shrank from a ~280-line file with an embedded bootstrap class to a ~110-line file that only defines constants, loads the Composer autoloader, and wires the three bootstrap hooks.
+
+### ✅ Tests
+
+- Fixed three tests still referencing the removed `SilverAssistSecurityBootstrap` class to call `Core\Activator` directly.
+- Fixed singleton-reset reflection in `RestAPISecurityIntegrationTest` to target the new per-class `$instance` property (previously reflected on `Core\Plugin`, whose singleton storage now lives on `AbstractPlugin`).
+
 ## [1.5.0] - 2026-08-09
 
 ### 🔒 Security

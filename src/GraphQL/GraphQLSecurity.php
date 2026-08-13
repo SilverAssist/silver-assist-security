@@ -17,6 +17,7 @@ namespace SilverAssist\Security\GraphQL;
 use GraphQL\Error\Error;
 use GraphQL\Error\UserError;
 use GraphQL\Executor\ExecutionResult;
+use SilverAssist\PluginKernel\Interfaces\LoadableInterface;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\SecurityHelper;
 
@@ -28,7 +29,14 @@ use SilverAssist\Security\Core\SecurityHelper;
  *
  * @since 1.1.1
  */
-class GraphQLSecurity {
+class GraphQLSecurity implements LoadableInterface {
+
+	/**
+	 * Singleton instance
+	 *
+	 * @var self|null
+	 */
+	private static ?self $instance = null;
 
 	/**
 	 * Configuration manager instance
@@ -99,7 +107,57 @@ class GraphQLSecurity {
 	public function __construct() {
 		$this->config_manager = GraphQLConfigManager::get_instance();
 		$this->init_configuration();
-		$this->init();
+		$this->register_hooks();
+	}
+
+	/**
+	 * Get singleton instance
+	 *
+	 * @since 1.5.1
+	 * @return self
+	 */
+	public static function instance(): self {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * LoadableInterface entry point
+	 *
+	 * A no-op: hook registration already happens unconditionally in the
+	 * constructor (see register_hooks(), which self-gates on
+	 * class_exists('WPGraphQL')), triggered the first time instance()
+	 * constructs this singleton.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	public function init(): void {
+	}
+
+	/**
+	 * Get loading priority
+	 *
+	 * @since 1.5.1
+	 * @return int
+	 */
+	public function get_priority(): int {
+		return 10;
+	}
+
+	/**
+	 * Whether this component should load
+	 *
+	 * Matches pre-kernel behavior, where Plugin::init_graphql_security()
+	 * only constructed GraphQLSecurity if WPGraphQL was active.
+	 *
+	 * @since 1.5.1
+	 * @return bool
+	 */
+	public function should_load(): bool {
+		return \class_exists( 'WPGraphQL' );
 	}
 
 	/**
@@ -124,12 +182,12 @@ class GraphQLSecurity {
 	}
 
 	/**
-	 * Initialize GraphQL security features
+	 * Register GraphQL security hooks
 	 *
 	 * @since 1.1.1
 	 * @return void
 	 */
-	private function init(): void {
+	private function register_hooks(): void {
 		// Only initialize if WPGraphQL is active.
 		if ( ! \class_exists( 'WPGraphQL' ) ) {
 			return;

@@ -2,22 +2,22 @@
 /**
  * Silver Assist Security Suite - Core Plugin Controller
  *
- * Main plugin controller that orchestrates all security components including
- * login security, GraphQL prot    ral security features, and admin panel.
- * Implements singleton pattern for centralized management.
+ * Root plugin bootstrap, loaded on "init". Two earlier-loading sibling
+ * loaders — SecurityLoader (plugins_loaded priority 1) and
+ * GraphQLLoader (plugins_loaded priority 5) — cover the components that
+ * need to register their hooks before "init"; see those classes for why.
  *
  * @package SilverAssist\Security\Core
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.5.0
+ * @version 1.5.1
  */
 
 namespace SilverAssist\Security\Core;
 
+use SilverAssist\PluginKernel\AbstractPlugin;
 use SilverAssist\Security\Admin\AdminPanel;
-use SilverAssist\Security\Core\Updater;
 use SilverAssist\Security\GraphQL\GraphQLSecurity;
-use SilverAssist\Security\Security\AdminHideSecurity;
 use SilverAssist\Security\Security\ContactForm7Integration;
 use SilverAssist\Security\Security\GeneralSecurity;
 use SilverAssist\Security\Security\IPBlacklist;
@@ -25,64 +25,21 @@ use SilverAssist\Security\Security\LoginBranding;
 use SilverAssist\Security\Security\LoginSecurity;
 use SilverAssist\Security\Security\RestAPISecurity;
 
+// Prevent direct access.
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Main Plugin class
  *
- * Handles plugin initialization and coordination between components
+ * Singleton access (instance()) and the priority-ordered component loading
+ * loop are inherited from AbstractPlugin (silverassist/wp-plugin-kernel) —
+ * this class only declares which "init"-tier components to load
+ * (get_components()) and the plugin-specific setup that runs alongside
+ * them (init_hooks()).
  *
  * @since 1.1.1
  */
-class Plugin {
-
-
-	/**
-	 * Plugin instance
-	 *
-	 * @var Plugin|null
-	 */
-	private static ?Plugin $instance = null;
-
-	/**
-	 * Admin panel instance
-	 *
-	 * @var AdminPanel|null
-	 */
-	private ?AdminPanel $admin_panel = null;
-
-	/**
-	 * Login security instance
-	 *
-	 * @var LoginSecurity|null
-	 */
-	private ?LoginSecurity $login_security = null;
-
-	/**
-	 * Login branding instance
-	 *
-	 * @var LoginBranding|null
-	 */
-	private ?LoginBranding $login_branding = null;
-
-	/**
-	 * General security instance
-	 *
-	 * @var GeneralSecurity|null
-	 */
-	private ?GeneralSecurity $general_security = null;
-
-	/**
-	 * REST API security instance
-	 *
-	 * @var RestAPISecurity|null
-	 */
-	private ?RestAPISecurity $rest_api_security = null;
-
-	/**
-	 * GraphQL security instance
-	 *
-	 * @var GraphQLSecurity|null
-	 */
-	private ?GraphQLSecurity $graphql_security = null;
+class Plugin extends AbstractPlugin {
 
 	/**
 	 * Updater instance
@@ -91,67 +48,67 @@ class Plugin {
 	 */
 	private ?Updater $updater = null;
 
+	// phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Deprecated camelCase alias kept for backward compatibility; see instance().
 	/**
-	 * Contact Form 7 Integration instance
-	 *
-	 * @var ContactForm7Integration|null
-	 */
-	private ?ContactForm7Integration $cf7_integration = null;
-
-	/**
-	 * Get plugin instance (Singleton pattern)
-	 *
-	 * @since 1.1.1
-	 * @return Plugin
-	 */
-	public static function get_instance(): Plugin {
-		if ( null === self::$instance ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
-
-	// phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Deprecated camelCase alias kept for backward compatibility; see get_instance().
-	/**
-	 * Deprecated alias for get_instance()
+	 * Deprecated alias for instance()
 	 *
 	 * Kept for backward compatibility: this is a public accessor on a project
 	 * that follows Semantic Versioning, so renaming it without a compatibility
-	 * shim would break external code calling Plugin::getInstance() directly.
+	 * shim would break external code calling Plugin::get_instance()/getInstance()
+	 * directly.
 	 *
-	 * @deprecated 1.5.1 Use get_instance() instead.
+	 * @deprecated 1.5.1 Use instance() instead.
 	 * @since 1.1.1
-	 * @return Plugin
+	 * @return self
 	 */
-	public static function getInstance(): Plugin {
-		return self::get_instance();
+	public static function get_instance(): self {
+		return self::instance();
+	}
+
+	// phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Deprecated camelCase alias kept for backward compatibility; see instance().
+	/**
+	 * Deprecated alias for instance()
+	 *
+	 * @deprecated 1.5.1 Use instance() instead.
+	 * @since 1.1.1
+	 * @return self
+	 */
+	public static function getInstance(): self {
+		return self::instance();
 	}
 
 	/**
-	 * Private constructor to enforce singleton pattern
+	 * List the "init"-tier component classes this plugin loads
 	 *
-	 * @since 1.1.1
+	 * LoginSecurity, GeneralSecurity, RestAPISecurity, LoginBranding, and
+	 * AdminHideSecurity load earlier, via SecurityLoader (plugins_loaded
+	 * priority 1). GraphQLSecurity loads via GraphQLLoader (plugins_loaded
+	 * priority 5). See those classes for why.
+	 *
+	 * @since 1.5.1
+	 * @return array<class-string>
 	 */
-	private function __construct() {
-		// Initialize SecurityHelper first.
-		SecurityHelper::init();
+	protected function get_components(): array {
+		return array(
+			AdminPanel::class,
+			ContactForm7Integration::class,
+		);
+	}
 
-		// Initialize security components early (before setup_theme).
-		\add_action( 'plugins_loaded', array( $this, 'init_security_components' ), 1 );
+	/**
+	 * Plugin-level setup that isn't itself a LoadableInterface component
+	 *
+	 * Runs after this tier's components have loaded.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	protected function init_hooks(): void {
+		$this->load_textdomain();
+		$this->init_updater();
 
-		// Initialize GraphQL security early so determine_current_user filter
-		// is registered before WordPress resolves the current user.
-		\add_action( 'plugins_loaded', array( $this, 'init_graphql_security' ), 5 );
-
-		// Schedule load_textdomain() to run on the init hook.
-		\add_action( 'init', array( $this, 'load_textdomain' ) );
-
-		// Initialize components.
-		\add_action( 'init', array( $this, 'init_admin_panel' ) );
-		\add_action( 'init', array( $this, 'init_cf7_integration' ) );
-		\add_action( 'init', array( $this, 'init_updater' ) );
-		\add_action( 'init', array( $this, 'init_ip_cleanup_cron' ) );
+		// Initialize the IP cleanup cron system.
+		IPBlacklist::init_cron_cleanup();
 
 		// Add plugin action links.
 		\add_filter( 'plugin_action_links_' . SILVER_ASSIST_SECURITY_BASENAME, array( $this, 'add_action_links' ) );
@@ -163,7 +120,7 @@ class Plugin {
 	 * @since 1.1.1
 	 * @return void
 	 */
-	public function load_textdomain(): void {
+	private function load_textdomain(): void {
 		// Default languages directory for silver-assist-security.
 		$lang_dir = SILVER_ASSIST_SECURITY_PATH . '/languages/';
 
@@ -200,60 +157,7 @@ class Plugin {
 			\load_textdomain( 'silver-assist-security', $mofile_local );
 		} else {
 			// Load the default language files as fallback.
-			\load_plugin_textdomain( 'silver-assist-security', false, dirname( plugin_basename( SILVER_ASSIST_SECURITY_PATH . '/silver-assist-security.php' ) ) . '/languages/' );
-		}
-	}
-
-	/**
-	 * Initialize admin panel
-	 *
-	 * @since 1.1.1
-	 * @return void
-	 */
-	public function init_admin_panel(): void {
-		if ( \is_admin() ) {
-			$this->admin_panel = new AdminPanel();
-		}
-	}
-
-	/**
-	 * Initialize security components
-	 *
-	 * @since 1.0.0
-	 * @return void
-	 */
-	public function init_security_components(): void {
-		$this->login_security   = new LoginSecurity();
-		$this->general_security = new GeneralSecurity();
-
-		// Initialize RestAPISecurity.
-		if ( (bool) DefaultConfig::get_option( 'silver_assist_rest_batch_endpoint_protection' ) ||
-			(bool) DefaultConfig::get_option( 'silver_assist_rest_rate_limiting_enabled' ) ) {
-			$this->rest_api_security = new RestAPISecurity();
-		}
-
-		// Initialize LoginBranding if it's enabled.
-		if ( (bool) DefaultConfig::get_option( 'silver_assist_login_branding_enabled' ) ) {
-			$this->login_branding = new LoginBranding();
-		}
-
-		// Initialize AdminHideSecurity if it's enabled.
-		$admin_hide_enabled = (bool) DefaultConfig::get_option( 'silver_assist_admin_hide_enabled' );
-		if ( $admin_hide_enabled ) {
-			new AdminHideSecurity();
-		}
-	}
-
-	/**
-	 * Initialize GraphQL security
-	 *
-	 * @since 1.1.1
-	 * @return void
-	 */
-	public function init_graphql_security(): void {
-		// Only initialize if WPGraphQL is active.
-		if ( \class_exists( 'WPGraphQL' ) ) {
-			$this->graphql_security = new GraphQLSecurity();
+			\load_plugin_textdomain( 'silver-assist-security', false, dirname( plugin_basename( SILVER_ASSIST_SECURITY_PATH . '/silver-assist-security.php' ) ) . '/languages' );
 		}
 	}
 
@@ -263,7 +167,7 @@ class Plugin {
 	 * @since 1.1.1
 	 * @return void
 	 */
-	public function init_updater(): void {
+	private function init_updater(): void {
 		$this->updater = new Updater(
 			SILVER_ASSIST_SECURITY_PATH . 'silver-assist-security.php',
 			'SilverAssist/silver-assist-security'
@@ -292,11 +196,14 @@ class Plugin {
 	/**
 	 * Get admin panel instance
 	 *
+	 * Preserves the pre-kernel null-outside-admin contract: AdminPanel only
+	 * ever loaded (and its hooks registered) on admin requests.
+	 *
 	 * @since 1.1.1
 	 * @return AdminPanel|null
 	 */
 	public function get_admin_panel(): ?AdminPanel {
-		return $this->admin_panel;
+		return AdminPanel::instance()->should_load() ? AdminPanel::instance() : null;
 	}
 
 	/**
@@ -306,7 +213,7 @@ class Plugin {
 	 * @return LoginSecurity|null
 	 */
 	public function get_login_security(): ?LoginSecurity {
-		return $this->login_security;
+		return LoginSecurity::instance();
 	}
 
 	/**
@@ -316,7 +223,7 @@ class Plugin {
 	 * @return LoginBranding|null
 	 */
 	public function get_login_branding(): ?LoginBranding {
-		return $this->login_branding;
+		return LoginBranding::instance()->should_load() ? LoginBranding::instance() : null;
 	}
 
 	/**
@@ -326,7 +233,7 @@ class Plugin {
 	 * @return GeneralSecurity|null
 	 */
 	public function get_general_security(): ?GeneralSecurity {
-		return $this->general_security;
+		return GeneralSecurity::instance();
 	}
 
 	/**
@@ -336,7 +243,7 @@ class Plugin {
 	 * @return RestAPISecurity|null
 	 */
 	public function get_rest_api_security(): ?RestAPISecurity {
-		return $this->rest_api_security;
+		return RestAPISecurity::instance()->should_load() ? RestAPISecurity::instance() : null;
 	}
 
 	/**
@@ -346,7 +253,7 @@ class Plugin {
 	 * @return GraphQLSecurity|null
 	 */
 	public function get_graphql_security(): ?GraphQLSecurity {
-		return $this->graphql_security;
+		return GraphQLSecurity::instance()->should_load() ? GraphQLSecurity::instance() : null;
 	}
 
 	/**
@@ -360,43 +267,13 @@ class Plugin {
 	}
 
 	/**
-	 * Initialize Contact Form 7 integration
-	 *
-	 * Only initializes CF7 integration if the plugin is active and
-	 * CF7 protection is enabled in settings.
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function init_cf7_integration(): void {
-		// Only initialize if Contact Form 7 is active.
-		if ( ! SecurityHelper::is_contact_form_7_active() ) {
-			return;
-		}
-
-		// Only initialize if CF7 protection is enabled.
-		if ( ! DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) ) {
-			return;
-		}
-
-		$this->cf7_integration = new ContactForm7Integration();
-
-		// Log CF7 integration initialization.
-		SecurityHelper::log_security_event(
-			'CF7_INTEGRATION_INITIALIZED',
-			'Contact Form 7 security integration activated',
-			SecurityHelper::get_contact_form_7_info()
-		);
-	}
-
-	/**
 	 * Get Contact Form 7 integration instance
 	 *
 	 * @since 1.1.15
 	 * @return ContactForm7Integration|null
 	 */
 	public function get_cf7_integration(): ?ContactForm7Integration {
-		return $this->cf7_integration;
+		return ContactForm7Integration::instance()->should_load() ? ContactForm7Integration::instance() : null;
 	}
 
 	/**
@@ -406,20 +283,6 @@ class Plugin {
 	 * @return bool True if CF7 integration is active
 	 */
 	public function is_cf7_integration_active(): bool {
-		return null !== $this->cf7_integration && SecurityHelper::is_contact_form_7_active();
-	}
-
-	/**
-	 * Initialize IP cleanup cron job
-	 *
-	 * Sets up the scheduled cleanup of expired IP violations, lockouts,
-	 * and rate limits to prevent database bloat.
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function init_ip_cleanup_cron(): void {
-		// Initialize the cron cleanup system.
-		IPBlacklist::init_cron_cleanup();
+		return ContactForm7Integration::instance()->should_load();
 	}
 }

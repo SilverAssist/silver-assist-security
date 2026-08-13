@@ -14,6 +14,7 @@
 
 namespace SilverAssist\Security\Security;
 
+use SilverAssist\PluginKernel\Interfaces\LoadableInterface;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\SecurityHelper;
 use WP_Error;
@@ -26,8 +27,15 @@ use WP_User;
  *
  * @since 1.1.1
  */
-class LoginSecurity {
+class LoginSecurity implements LoadableInterface {
 
+
+	/**
+	 * Singleton instance
+	 *
+	 * @var self|null
+	 */
+	private static ?self $instance = null;
 
 	/**
 	 * Maximum login attempts
@@ -65,7 +73,58 @@ class LoginSecurity {
 	public function __construct() {
 		$this->plugin_version = SILVER_ASSIST_SECURITY_VERSION;
 		$this->init_configuration();
-		$this->init();
+		$this->register_hooks();
+	}
+
+	/**
+	 * Get singleton instance
+	 *
+	 * @since 1.5.1
+	 * @return self
+	 */
+	public static function instance(): self {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * LoadableInterface entry point
+	 *
+	 * A no-op: hook registration already happens unconditionally in the
+	 * constructor (see register_hooks()), which instance() triggers the
+	 * first time it constructs this singleton. Declared to satisfy
+	 * LoadableInterface without registering every hook a second time when
+	 * the plugin kernel calls this after instance().
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	public function init(): void {
+	}
+
+	/**
+	 * Get loading priority
+	 *
+	 * @since 1.5.1
+	 * @return int
+	 */
+	public function get_priority(): int {
+		return 10;
+	}
+
+	/**
+	 * Whether this component should load
+	 *
+	 * Always loads — matches pre-kernel behavior, where Plugin::init_security_components()
+	 * constructed LoginSecurity unconditionally.
+	 *
+	 * @since 1.5.1
+	 * @return bool
+	 */
+	public function should_load(): bool {
+		return true;
 	}
 
 	/**
@@ -81,12 +140,12 @@ class LoginSecurity {
 	}
 
 	/**
-	 * Initialize login security
+	 * Register WordPress hooks for login security
 	 *
 	 * @since 1.1.1
 	 * @return void
 	 */
-	private function init(): void {
+	private function register_hooks(): void {
 		// Login form hooks.
 		\add_action( 'login_form', array( $this, 'add_login_form_security' ) );
 		\add_action( 'login_init', array( $this, 'setup_login_protection' ) );

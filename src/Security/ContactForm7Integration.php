@@ -11,6 +11,7 @@
 
 namespace SilverAssist\Security\Security;
 
+use SilverAssist\PluginKernel\Interfaces\LoadableInterface;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\SecurityHelper;
 
@@ -21,7 +22,14 @@ use SilverAssist\Security\Core\SecurityHelper;
  *
  * @since 1.1.15
  */
-class ContactForm7Integration {
+class ContactForm7Integration implements LoadableInterface {
+
+	/**
+	 * Singleton instance
+	 *
+	 * @var self|null
+	 */
+	private static ?self $instance = null;
 
 	/**
 	 * Form Protection instance
@@ -46,30 +54,88 @@ class ContactForm7Integration {
 	 */
 	public function __construct() {
 		$this->init_security_components();
-		$this->init_hooks();
+		$this->register_hooks();
+	}
+
+	/**
+	 * Get singleton instance
+	 *
+	 * @since 1.5.1
+	 * @return self
+	 */
+	public static function instance(): self {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * LoadableInterface entry point
+	 *
+	 * A no-op: hook registration already happens unconditionally in the
+	 * constructor (see register_hooks(), which self-gates on the CF7
+	 * protection setting), triggered the first time instance() constructs
+	 * this singleton.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	public function init(): void {
+	}
+
+	/**
+	 * Get loading priority
+	 *
+	 * @since 1.5.1
+	 * @return int
+	 */
+	public function get_priority(): int {
+		return 10;
+	}
+
+	/**
+	 * Whether this component should load
+	 *
+	 * Matches pre-kernel behavior, where Plugin::init_cf7_integration()
+	 * only constructed ContactForm7Integration if Contact Form 7 was
+	 * active and CF7 protection was enabled.
+	 *
+	 * @since 1.5.1
+	 * @return bool
+	 */
+	public function should_load(): bool {
+		return SecurityHelper::is_contact_form_7_active()
+			&& (bool) DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' );
 	}
 
 	/**
 	 * Initialize security components
 	 *
+	 * Self-gates on the same condition as should_load(). Pre-kernel, this
+	 * only ran behind Plugin::init_cf7_integration()'s own is_contact_form_7_active()
+	 * check, so this method only re-checked the option — now that
+	 * instance() can construct this class directly (via the kernel, or any
+	 * other caller), it needs to check both conditions itself.
+	 *
 	 * @since 1.1.15
 	 * @return void
 	 */
 	private function init_security_components(): void {
-		if ( DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) ) {
+		if ( SecurityHelper::is_contact_form_7_active() && DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) ) {
 			$this->form_protection = new FormProtection();
 			$this->ip_blacklist    = IPBlacklist::get_instance();
 		}
 	}
 
 	/**
-	 * Initialize WordPress hooks
+	 * Register WordPress hooks
 	 *
 	 * @since 1.1.15
 	 * @return void
 	 */
-	private function init_hooks(): void {
-		if ( ! DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) ) {
+	private function register_hooks(): void {
+		if ( ! SecurityHelper::is_contact_form_7_active() || ! DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) ) {
 			return;
 		}
 

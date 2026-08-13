@@ -14,6 +14,7 @@
 
 namespace SilverAssist\Security\Security;
 
+use SilverAssist\PluginKernel\Interfaces\LoadableInterface;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\SecurityHelper;
 
@@ -24,7 +25,14 @@ use SilverAssist\Security\Core\SecurityHelper;
  *
  * @since 1.5.0
  */
-class RestAPISecurity {
+class RestAPISecurity implements LoadableInterface {
+
+	/**
+	 * Singleton instance
+	 *
+	 * @var self|null
+	 */
+	private static ?self $instance = null;
 
 	/**
 	 * Whether batch endpoint restriction is enabled
@@ -61,7 +69,57 @@ class RestAPISecurity {
 	 */
 	public function __construct() {
 		$this->init_configuration();
-		$this->init();
+		$this->register_hooks();
+	}
+
+	/**
+	 * Get singleton instance
+	 *
+	 * @since 1.5.1
+	 * @return self
+	 */
+	public static function instance(): self {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * LoadableInterface entry point
+	 *
+	 * A no-op: hook registration already happens unconditionally in the
+	 * constructor (see register_hooks()), which instance() triggers the
+	 * first time it constructs this singleton.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	public function init(): void {
+	}
+
+	/**
+	 * Get loading priority
+	 *
+	 * @since 1.5.1
+	 * @return int
+	 */
+	public function get_priority(): int {
+		return 10;
+	}
+
+	/**
+	 * Whether this component should load
+	 *
+	 * Matches pre-kernel behavior, where Plugin::init_security_components()
+	 * only constructed RestAPISecurity if at least one of its two
+	 * sub-features was enabled.
+	 *
+	 * @since 1.5.1
+	 * @return bool
+	 */
+	public function should_load(): bool {
+		return $this->batch_endpoint_enabled || $this->rate_limiting_enabled;
 	}
 
 	/**
@@ -78,12 +136,12 @@ class RestAPISecurity {
 	}
 
 	/**
-	 * Initialize REST API security hooks
+	 * Register REST API security hooks
 	 *
 	 * @since 1.5.0
 	 * @return void
 	 */
-	private function init(): void {
+	private function register_hooks(): void {
 		// Restrict batch endpoint for unauthenticated users.
 		if ( $this->batch_endpoint_enabled ) {
 			\add_filter( 'rest_pre_dispatch', array( $this, 'restrict_batch_endpoint' ), 10, 3 );

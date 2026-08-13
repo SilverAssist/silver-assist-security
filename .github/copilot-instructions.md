@@ -49,11 +49,35 @@ Never create standalone `.md` files (`docs/`, `CONTRIBUTING.md`, `API.md`, etc.)
 - Form submission rate limiting with IP tracking
 - Conditional "Form Protection" admin tab (appears only when CF7 detected)
 
+## Bootstrap Architecture
+
+Built on `silverassist/wp-plugin-kernel`'s `AbstractPlugin`/`LoadableInterface` pattern
+(singleton `instance()`, priority-ordered `get_components()`, per-component error
+isolation). Every security/admin component implements `LoadableInterface`
+(`init()`, `get_priority()`, `should_load()`) and exposes its own `instance()`.
+
+Split across **three loading tiers**, each its own `AbstractPlugin` subclass, because
+components have genuinely different WordPress hook-timing requirements — a single
+bootstrap hook can't serve all of them:
+
+| Tier | Class | Hook | Components | Why this timing |
+|------|-------|------|------------|------------------|
+| 1 | `Core\SecurityLoader` | `plugins_loaded` @ 1 | LoginSecurity, GeneralSecurity, RestAPISecurity, LoginBranding, AdminHideSecurity | Auth/login hooks wp-login.php can act on before `init` fires |
+| 2 | `GraphQL\GraphQLLoader` | `plugins_loaded` @ 5 | GraphQLSecurity | Must register `determine_current_user` before WP resolves the current user, but late enough for WPGraphQL to define its class |
+| 3 | `Core\Plugin` (root) | `init` | AdminPanel, ContactForm7Integration | Everything else — matches the default kernel bootstrap timing |
+
+`Core\Activator` holds the static `activate()`/`deactivate()`/`uninstall()` handlers,
+registered directly against `register_activation_hook()` etc. from the main file
+(extracted from the pre-1.5.1 `SilverAssistSecurityBootstrap` class).
+
 ## Key Classes
 
 | Class | Purpose |
 |-------|---------|
-| `Core\Plugin` | Main singleton — initializes all security components |
+| `Core\Plugin` | Root plugin singleton (`init` tier) — see Bootstrap Architecture above |
+| `Core\SecurityLoader` | `plugins_loaded`@1 tier loader |
+| `GraphQL\GraphQLLoader` | `plugins_loaded`@5 tier loader |
+| `Core\Activator` | Activation/deactivation/uninstall handlers |
 | `Core\DefaultConfig` | Centralized defaults for all plugin settings (single source of truth) |
 | `Core\SecurityHelper` | Static utilities: asset URLs, IP detection, bot detection, logging, AJAX validation, password checks |
 | `Core\Updater` | GitHub-based automatic update system |
@@ -74,12 +98,12 @@ Never create standalone `.md` files (`docs/`, `CONTRIBUTING.md`, `API.md`, etc.)
 
 ```
 silver-assist-security/
-├── silver-assist-security.php     # Bootstrap with PSR-4 autoloader
+├── silver-assist-security.php     # Thin bootstrap: constants, Composer autoload, 3-tier hook wiring
 ├── src/
 │   ├── Admin/AdminPanel.php + Renderer/ (AdminPageRenderer, SettingsRenderer, DashboardRenderer)
-│   ├── Core/ (Plugin, DefaultConfig, SecurityHelper, PathValidator, Updater)
+│   ├── Core/ (Plugin, SecurityLoader, Activator, DefaultConfig, SecurityHelper, PathValidator, Updater)
 │   ├── Security/ (LoginSecurity, GeneralSecurity, AdminHideSecurity, ContactForm7Integration, FormProtection)
-│   └── GraphQL/ (GraphQLSecurity, GraphQLConfigManager)
+│   └── GraphQL/ (GraphQLSecurity, GraphQLLoader, GraphQLConfigManager)
 ├── assets/css/ (variables.css, admin.css, password-validation.css)
 ├── assets/js/ (admin.js, password-validation.js)
 ├── languages/ (.pot, .po, .mo files)
