@@ -1,5 +1,9 @@
 # Dependabot configuration for automated dependency updates
 # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Standardized across all SilverAssist WordPress plugins — see paubox-cf7 for
+# the reference copy. Only patch/minor updates are grouped for auto-merge;
+# majors always get their own PR for manual review.
 
 version: 2
 updates:
@@ -12,18 +16,14 @@ updates:
       time: "09:00"
       timezone: "America/Mexico_City"
     open-pull-requests-limit: 5
-    reviewers:
-      - "copilot"
     labels:
       - "dependencies"
       - "composer"
       - "automated"
-      - "auto-release"
     commit-message:
-      prefix: "🔧"
-      prefix-development: "🔧"
+      prefix: "deps"
+      prefix-development: "deps"
       include: "scope"
-    # Group minor and patch updates together
     groups:
       composer-minor-patch:
         patterns:
@@ -31,16 +31,17 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    # Critical packages - always create separate PRs
     ignore:
+      # PHPUnit 10+ incompatible with WordPress Test Suite (WP_UnitTestCase);
+      # the test suite still requires PHPUnit 9.x.
+      - dependency-name: "phpunit/phpunit"
+        update-types: ["version-update:semver-major"]
+      # Internal SilverAssist packages — major bumps get manual review.
       - dependency-name: "silverassist/wp-settings-hub"
         update-types: ["version-update:semver-major"]
       - dependency-name: "silverassist/wp-github-updater"
         update-types: ["version-update:semver-major"]
-      # PHPUnit 12+ incompatible with WordPress Test Suite (WP_UnitTestCase)
-      # WordPress Test Suite still requires PHPUnit 9.x
-      # See: https://github.com/SilverAssist/silver-assist-security/pull/9
-      - dependency-name: "phpunit/phpunit"
+      - dependency-name: "silverassist/wp-plugin-kernel"
         update-types: ["version-update:semver-major"]
 
   # npm dependencies (JavaScript packages)
@@ -52,18 +53,14 @@ updates:
       time: "09:30"
       timezone: "America/Mexico_City"
     open-pull-requests-limit: 5
-    reviewers:
-      - "copilot"
     labels:
       - "dependencies"
       - "npm"
       - "automated"
-      - "auto-release"
     commit-message:
-      prefix: "🔧"
-      prefix-development: "🔧"
+      prefix: "deps"
+      prefix-development: "deps"
       include: "scope"
-    # Group minor and patch updates
     groups:
       npm-minor-patch:
         patterns:
@@ -71,12 +68,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    # Ignore major version updates that might break things
-    ignore:
-      - dependency-name: "grunt"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "postcss"
-        update-types: ["version-update:semver-major"]
 
   # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
@@ -87,13 +78,17 @@ updates:
       time: "10:00"
       timezone: "America/Mexico_City"
     open-pull-requests-limit: 3
-    reviewers:
-      - "copilot"
     labels:
       - "dependencies"
       - "github-actions"
       - "automated"
-      - "auto-release"
     commit-message:
-      prefix: "🔧"
+      prefix: "ci"
       include: "scope"
+    groups:
+      github-actions-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
