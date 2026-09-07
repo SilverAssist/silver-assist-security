@@ -31,11 +31,11 @@
   },
   "homepage": "https://github.com/SilverAssist/silver-assist-security#readme",
   "devDependencies": {
-    "baseline-browser-mapping": "^2.11.20",
+    "baseline-browser-mapping": "^2.11.21",
     "cssnano": "^8.0.5",
     "grunt": "^1.6.3",
     "grunt-contrib-uglify": "^5.2.2",
-    "postcss": "^8.5.25",
+    "postcss": "^8.5.28",
     "postcss-cli": "^11.0.1"
   },
   "engines": {
