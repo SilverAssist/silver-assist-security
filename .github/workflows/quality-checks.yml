@@ -65,6 +65,8 @@ jobs:
 
             - name: Install Composer dependencies
               run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
+              env:
+                COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
 
             - name: Verify MySQL connection
               run: |
@@ -155,6 +157,8 @@ jobs:
 
             - name: Install Composer dependencies
               run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
+              env:
+                COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
 
             - name: Setup WordPress and Run CF7 Tests
               env:
@@ -268,6 +272,8 @@ jobs:
                   echo "Installing Composer dependencies for PHP ${{ matrix.php-version }}..."
                   composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
                   echo "Composer dependencies installed"
+              env:
+                COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
 
             - name: PHP syntax validation
               run: |
@@ -318,6 +324,8 @@ jobs:
                   echo "Installing dependencies..."
                   composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
                   echo "Dependencies installed"
+              env:
+                COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
 
             - name: Run security check
               run: |
@@ -419,6 +427,8 @@ jobs:
                   echo "Installing Composer dependencies..."
                   composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
                   echo "Composer dependencies installed"
+              env:
+                COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
 
             - name: Validate test files syntax
               run: |
