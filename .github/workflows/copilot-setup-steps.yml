@@ -62,6 +62,8 @@ jobs:
                   echo "🎼 Installing Composer dependencies..."
                   composer install --no-interaction --prefer-dist --optimize-autoloader
                   echo "✅ Composer dependencies installed successfully"
+              env:
+                COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
 
             - name: ✅ Verify installation
               run: |
