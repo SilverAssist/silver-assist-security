@@ -31,7 +31,7 @@
   },
   "homepage": "https://github.com/SilverAssist/silver-assist-security#readme",
   "devDependencies": {
-    "baseline-browser-mapping": "^2.11.25",
+    "baseline-browser-mapping": "^2.11.26",
     "cssnano": "^9.0.5",
     "grunt": "^1.6.3",
     "grunt-contrib-uglify": "^5.2.2",
