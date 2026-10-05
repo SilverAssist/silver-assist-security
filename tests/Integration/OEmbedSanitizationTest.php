@@ -30,6 +30,21 @@ class OEmbedSanitizationTest extends WP_UnitTestCase
         parent::setUp();
         $general = new GeneralSecurity();
         $general->remove_unnecessary_headers();
+        $general->disable_user_enumeration();
+        $GLOBALS["wp_rest_server"] = null;
+        do_action("rest_api_init", rest_get_server());
+    }
+
+    /**
+     * Reset REST server and user
+     *
+     * @return void
+     */
+    protected function tearDown(): void
+    {
+        $GLOBALS["wp_rest_server"] = null;
+        wp_set_current_user(0);
+        parent::tearDown();
     }
 
     /**
@@ -92,5 +107,86 @@ class OEmbedSanitizationTest extends WP_UnitTestCase
         $this->assertIsString($result);
         $this->assertStringContainsString("<iframe", $result);
         $this->assertStringContainsString("youtube.com/embed/abc", $result);
+    }
+
+    /**
+     * Mock the YouTube endpoint and an unlisted provider with an iframe plus hostile markup
+     *
+     * @return callable The filter callback, so the caller can remove it.
+     */
+    private function mock_provider(): callable
+    {
+        $mock = static function ($pre, $args, $url) {
+            $ok = ["headers" => [], "response" => ["code" => 200, "message" => "OK"], "cookies" => [], "filename" => null];
+            if (0 === strpos($url, "https://unknown-provider.test/post")) {
+                // Autodiscovery page pointing at an unlisted (untrusted) provider.
+                return $ok + [
+                    "body" => '<html><head><link rel="alternate" type="application/json+oembed" href="https://unknown-provider.test/oembed?url=x" /></head></html>',
+                ];
+            }
+            if (false === strpos($url, "youtube.com/oembed") && false === strpos($url, "unknown-provider.test/oembed")) {
+                return $pre;
+            }
+            return [
+                "headers"  => [],
+                "body"     => wp_json_encode(
+                    [
+                        "version"       => "1.0",
+                        "type"          => "video",
+                        "provider_name" => "YouTube",
+                        "width"         => 560,
+                        "height"        => 315,
+                        "html"          => '<iframe src="https://www.youtube.com/embed/abc" width="560" height="315"></iframe><script>alert(1)</script>',
+                    ]
+                ),
+                "response" => ["code" => 200, "message" => "OK"],
+                "cookies"  => [],
+                "filename" => null,
+            ];
+        };
+        add_filter("pre_http_request", $mock, 10, 3);
+        return $mock;
+    }
+
+    /**
+     * Restoring the sanitizer does not touch the editor's proxy (WEB-1222)
+     *
+     * The proxy returns the provider response for the editor to render inside a
+     * sandboxed iframe; it does not go through oembed_dataparse. An editor must
+     * still get a 200 with the embed markup.
+     *
+     * @return void
+     */
+    public function test_editor_proxy_still_serves_the_embed(): void
+    {
+        wp_set_current_user(self::factory()->user->create(["role" => "editor"]));
+        $mock = $this->mock_provider();
+
+        $request = new \WP_REST_Request("GET", "/oembed/1.0/proxy");
+        $request->set_param("url", "https://www.youtube.com/watch?v=abc");
+        $response = rest_do_request($request);
+        remove_filter("pre_http_request", $mock, 10);
+
+        $this->assertSame(200, $response->get_status(), wp_json_encode($response->get_data()));
+        $this->assertStringContainsString("<iframe", $response->get_data()->html);
+    }
+
+    /**
+     * Rendering an embed in content (wp_oembed_get) sanitizes provider HTML
+     *
+     * Core leaves trusted providers (YouTube and the like) untouched and sanitizes
+     * the ones found by autodiscovery, so the provider here is not on the list.
+     *
+     * @return void
+     */
+    public function test_rendered_embed_is_sanitized_end_to_end(): void
+    {
+        $mock   = $this->mock_provider();
+        $result = wp_oembed_get("https://unknown-provider.test/post");
+        remove_filter("pre_http_request", $mock, 10);
+
+        $this->assertIsString($result);
+        $this->assertStringContainsString("<iframe", $result);
+        $this->assertStringNotContainsString("<script", $result);
     }
 }

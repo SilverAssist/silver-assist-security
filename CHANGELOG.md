@@ -9,14 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- **oEmbed provider HTML is sanitized again (#129)**: the plugin removed core's `wp_filter_oembed_result` from `oembed_dataparse`, the filter that restricts provider HTML to safe markup (iframes, blockquotes). Without it, a hostile or compromised oEmbed provider could inject `<script>` or event-handler markup into a post. No hardening goal needed the removal, so the filter is no longer removed.
+- **oEmbed provider HTML is sanitized again (#129)**: the plugin removed core's `wp_filter_oembed_result` from `oembed_dataparse`, the filter that restricts provider HTML to safe markup (iframes, blockquotes). Without it, a hostile or compromised provider (one found by autodiscovery; core leaves its built-in trusted providers untouched) could inject `<script>` or event-handler markup into a post. No hardening goal needed the removal, so the filter is no longer removed.
 - **Client IP can no longer be chosen with request headers (#128)**: `SecurityHelper::get_client_ip()` checked `HTTP_CLIENT_IP`, `X-Forwarded-For` and similar headers before `REMOTE_ADDR` and returned the first public value, so a client could rotate a forged header to escape login lockout, the IP blacklist, form protection and the GraphQL rate limit. It now starts from `REMOTE_ADDR` and reads only `X-Forwarded-For`, only from a trusted proxy, right to left. `Client-IP`, `CF-Connecting-IP` and `X-Real-IP` are never read.
 - One implementation for every component: `GraphQLSecurity` had its own copy of the vulnerable logic and `RestAPISecurity` its own trusted-proxy logic; both now delegate to `SecurityHelper`.
 - **Behavior change**: when no proxy CIDRs are declared, a connecting peer in a private or reserved range (an internal load balancer such as an ALB) is trusted and the last `X-Forwarded-For` entry (the one the balancer appended) is used; no hop is skipped in this mode, and an entry that cannot be validated (after accepting `ip:port` and `[ipv6]:port`) falls back to the peer address. Known limit: a client that reaches the origin directly from a private network can still choose its identity until CIDRs are declared. This also fixes sites behind a load balancer sharing one REST rate-limit bucket for all anonymous traffic. Declare `SILVER_ASSIST_TRUSTED_PROXY_CIDRS` for CDN setups, or return `false` from `silver_assist_trust_private_proxies` to ignore forwarded headers until you do. See the README section "Proxies, Load Balancers and CDNs".
 
 ### Added
 
-- Tests: `OEmbedSanitizationTest` (the core sanitizer stays registered, hostile provider HTML is stripped, a provider iframe is kept) and an E2E check that the editor Embed block can be inserted and reaches the oEmbed proxy.
+- Tests: `OEmbedSanitizationTest` (the core sanitizer stays registered, hostile provider HTML is stripped end to end, a provider iframe is kept, and the editor's `/oembed/1.0/proxy` still serves the embed) and an E2E check that the editor Embed block can be inserted and reaches the oEmbed proxy.
 - Tests: `ClientIpResolutionTest` (forged headers, rotation, private and configured proxies, IPv6, parity across components) and a login-lockout test that rotates forged headers.
 
 ### Fixed
