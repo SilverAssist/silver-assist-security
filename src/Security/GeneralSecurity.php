@@ -190,7 +190,17 @@ class GeneralSecurity implements LoadableInterface {
 		\remove_action( 'wp_head', 'adjacent_posts_rel_link_wp_head', 10 );
 		\remove_action( 'wp_head', 'wp_oembed_add_discovery_links' );
 		\remove_action( 'wp_head', 'wp_oembed_add_host_js' );
-		\remove_action( 'rest_api_init', 'wp_oembed_register_route' );
+		// Keep wp_oembed_register_route: it also registers /oembed/1.0/proxy, which the
+		// block editor Embed block needs. Hide only the public provider route.
+		\add_filter(
+			'rest_endpoints',
+			function ( $endpoints ) {
+				if ( ! ( \is_user_logged_in() && \current_user_can( 'edit_posts' ) ) ) {
+					unset( $endpoints['/oembed/1.0/embed'] );
+				}
+				return $endpoints;
+			}
+		);
 		\remove_filter( 'oembed_dataparse', 'wp_filter_oembed_result', 10 );
 	}
 
