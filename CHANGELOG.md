@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test suite: a full `vendor/bin/phpunit` run no longer stops early (it reported about 178 of 511 tests with exit code 0). `LoginSecurityTest::test_session_timeout_in_admin_area` now intercepts the redirect before the plugin's `exit`, and `AdminHideSecurityTest` uses the `wp_doing_ajax` filter instead of defining `DOING_AJAX`, which leaked into every later test.
 - `LoginBrandingTest::test_custom_bg_color_applied` asserted that the footer contains no `style=`, but the SVG illustration carries its own; it now asserts the configured color is not inlined.
 - `GraphQLConfigManagerTest::test_security_level_no_double_counting_auth` compared scenarios that are not equivalent (headless mode does not restrict the endpoint); it now measures the score directly. It was previously always skipped locally.
+- `UpdaterIntegrationTest::test_updater_php_requirements` required PHP 8.3 while the plugin (header and `composer.json`) and the whole CI matrix are on PHP 8.2, so it failed in CI and passed on newer local PHP. It now reads the minimum from the plugin header. CI had not noticed because failing tests did not fail `run-quality-checks.sh` (see Changed). `.github/copilot-instructions.md` listed PHP 8.3+ and now says 8.2+.
 - `LoginSecurityTest::test_session_timeout` (unit) made no assertions because the timeout was changed after the object was built; it now verifies the silent front-end logout.
 
 ### Changed

@@ -264,9 +264,14 @@ class UpdaterIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_updater_php_requirements(): void {
-		$updater             = new Updater( $this->plugin_file, $this->github_repo );
-		$required_php_version = '8.3';
+		$updater = new Updater( $this->plugin_file, $this->github_repo );
+
+		// The plugin header is the source of truth for the minimum PHP version (CI runs on it).
+		$plugin_data          = get_plugin_data( $this->plugin_file, false, false );
+		$required_php_version = $plugin_data['RequiresPHP'];
 		$current_php_version  = PHP_VERSION;
+
+		$this->assertNotEmpty( $required_php_version, 'The plugin header should declare "Requires PHP"' );
 
 		$this->assertInstanceOf( Updater::class, $updater );
 		$this->assertTrue( version_compare( $current_php_version, $required_php_version, '>=' ), 'PHP version should meet minimum requirement' );
