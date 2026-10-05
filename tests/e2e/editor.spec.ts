@@ -34,4 +34,35 @@ test.describe("Block editor with Silver Assist Security active", () => {
     expect(bundles.length).toBeGreaterThan(0);
     for (const url of bundles) expect(url, url).toMatch(/[?&]ver=/);
   });
+  test("Embed block can be inserted and resolves through the oEmbed proxy @smoke", async ({ page }) => {
+    const errors = collectErrors(page);
+    const proxyCalls: string[] = [];
+    page.on("response", async (res) => {
+      if (!/oembed(\/|%2F)1\.0(\/|%2F)proxy/.test(res.url())) return;
+      const body = await res.json().catch(() => ({}));
+      proxyCalls.push(String(body?.code ?? "ok"));
+    });
+
+    await page.goto("/wp-admin/post-new.php");
+    await page.waitForFunction(() => Boolean((window as any).wp?.data?.select("core/block-editor")));
+    await closeWelcomeGuide(page);
+
+    await page.evaluate(() => {
+      const { createBlock } = (window as any).wp.blocks;
+      (window as any).wp.data
+        .dispatch("core/block-editor")
+        .insertBlocks(createBlock("core/embed", { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }));
+    });
+
+    const names = await page.evaluate(() =>
+      (window as any).wp.data.select("core/block-editor").getBlocks().map((b: any) => b.name)
+    );
+    expect(names).toContain("core/embed");
+
+    // The block asks the proxy for the embed. Without network the provider lookup may fail
+    // (oembed_invalid_url), but the route itself must exist for an editor (rest_no_route was WEB-1222).
+    await expect.poll(() => proxyCalls.length, { timeout: 15000 }).toBeGreaterThan(0);
+    expect(proxyCalls, "proxy route must exist").not.toContain("rest_no_route");
+    expect(errors, errors.join("\n")).toEqual([]);
+  });
 });

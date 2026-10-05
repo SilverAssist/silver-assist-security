@@ -201,7 +201,8 @@ class GeneralSecurity implements LoadableInterface {
 				return $endpoints;
 			}
 		);
-		\remove_filter( 'oembed_dataparse', 'wp_filter_oembed_result', 10 );
+		// Do not remove wp_filter_oembed_result from oembed_dataparse: it restricts provider HTML
+		// to safe markup (iframes, blockquotes), so a hostile provider cannot inject scripts (#129).
 	}
 
 	/**
