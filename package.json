@@ -9,7 +9,12 @@
     "minify:css": "postcss assets/css/*.css --base assets/css --dir assets/css --ext .min.css",
     "minify:js": "grunt uglify",
     "build": "npm run clean && npm run minify",
-    "clean": "rm -f assets/css/*.min.css assets/js/*.min.js"
+    "clean": "rm -f assets/css/*.min.css assets/js/*.min.js",
+    "wp-env:start": "wp-env start",
+    "wp-env:stop": "wp-env stop",
+    "wp-env:reset": "wp-env clean all",
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test --grep @smoke"
   },
   "repository": {
     "type": "git",
@@ -31,6 +36,8 @@
   },
   "homepage": "https://github.com/SilverAssist/silver-assist-security#readme",
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@wordpress/env": "^11.16.0",
     "baseline-browser-mapping": "^2.11.27",
     "cssnano": "^9.2.0",
     "grunt": "^1.6.3",

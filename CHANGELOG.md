@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Block editor `TypeError: _ is not a function` (WEB-1222)**: `?ver=` is no longer stripped from assets in wp-admin, during AJAX requests, or from WordPress core bundles (`/wp-includes/`, `/wp-admin/`). Without the cache-buster a browser or CDN could serve a stale `data.min.js` next to a newer `editor.min.js` after a core update. Front-end theme and plugin assets keep the existing version hiding. Core assets on the front end now keep `ver=` (this exposes the WordPress version through those URLs; use the new filter below if that trade-off is not acceptable).
+- `/wp/v2/users` is now available to logged-in users who can edit posts (the block editor needs it). Anonymous and low-privilege users still get no users route.
+- The block editor Embed block works again: the plugin no longer removes `wp_oembed_register_route`, which also registers `/oembed/1.0/proxy`. Only the public `/oembed/1.0/embed` route is hidden, for users who cannot edit posts.
+
+### Added
+
+- `silver_assist_security_strip_asset_version` filter to keep (or force removal of) `ver=` per asset.
+- Behavior tests for core compatibility (`tests/Integration/AssetVersioningTest.php`, `RestUsersEndpointTest.php`, `EditorCompatibilityTest.php`).
+- Playwright E2E suite on `@wordpress/env` (`tests/e2e/`), with `npm run wp-env:start`, `npm run test:e2e` and `npm run test:e2e:smoke`, and a `.github/workflows/e2e.yml` workflow (smoke on pull requests, full nightly).
+
+### Changed
+
+- `GeneralSecurityTest::test_version_query_string_removed` now uses a plugin asset; it previously asserted that core scripts lose `ver=`.
+
 ## [1.5.2] - 2026-09-25
 
 ### Changed

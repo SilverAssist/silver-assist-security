@@ -83,7 +83,7 @@ This plugin automatically implements enterprise-level security measures without 
 - **Secure Headers**: Essential security headers (X-Frame-Options, X-XSS-Protection, etc.)
 - **File Editing Disabled**: Prevents unauthorized file modifications through admin panel
 - **XML-RPC Disabled**: Blocks XML-RPC attacks and vulnerabilities
-- **Version Hiding**: Conceals WordPress version information from potential attackers
+- **Version Hiding**: Conceals WordPress version information from potential attackers (generator tags and theme/plugin asset `?ver=` on the front end; WordPress core assets and wp-admin keep `?ver=` so the block editor and caches stay consistent, adjustable with the `silver_assist_security_strip_asset_version` filter)
 
 ### 🤖 Advanced Bot Protection *(Login Page)*
 
@@ -433,6 +433,25 @@ Run comprehensive quality checks matching CI/CD pipeline:
 # Daily: Run quality checks before committing
 ./scripts/run-quality-checks.sh
 ```
+
+#### End-to-End Tests (Playwright)
+
+Browser tests in `tests/e2e/` run the real plugin inside `@wordpress/env` and check what a user
+experiences: the block editor saves and publishes without JS errors, editor bundles keep `ver=`,
+anonymous users cannot enumerate users while editors still can, security headers are present, and
+login hardening works.
+
+```bash
+npm install && npx playwright install chromium
+npm run wp-env:start        # http://localhost:8890 (admin / password), needs Docker
+npm run test:e2e:smoke      # @smoke subset, runs on every PR
+npm run test:e2e            # full suite, runs nightly
+```
+
+- Specs log in once per role (`tests/e2e/global-setup.ts`). The plugin returns 404 for more than 15
+  login-page requests per minute from one IP, so per-test logins would trip its own bot detection.
+- Rule of thumb for new hardening features: add a test that exercises the *core feature it could
+  break* (editor, REST, assets, login), not only the hook the feature registers.
 
 #### Why Both Tests Are Required
 
