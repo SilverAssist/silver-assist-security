@@ -250,6 +250,40 @@ class LoginSecurityTest extends WP_UnitTestCase
     }
 
     /**
+     * Rotating a forged header on every attempt must not escape the lockout (#128)
+     *
+     * Before the fix the identity came from client-controlled headers, so each attempt with a new
+     * X-Forwarded-For or Client-IP counted as a different visitor and the lockout never triggered.
+     */
+    public function test_lockout_cannot_be_bypassed_by_rotating_forged_headers(): void
+    {
+        $real_ip = '198.51.100.50';
+        $_SERVER['REMOTE_ADDR'] = $real_ip;
+
+        \update_option('silver_assist_login_attempts', 3);
+        $this->login_security = new LoginSecurity();
+
+        foreach (['203.0.113.11', '203.0.113.12', '203.0.113.13'] as $forged) {
+            $_SERVER['HTTP_X_FORWARDED_FOR'] = $forged;
+            $_SERVER['HTTP_CLIENT_IP']       = $forged;
+            $this->login_security->handle_failed_login('nonexistent');
+        }
+
+        $this->assertTrue(
+            (bool) \get_transient(SecurityHelper::generate_ip_transient_key('lockout', $real_ip)),
+            'The real peer address should be locked out after 3 attempts'
+        );
+
+        // A fresh forged value does not give a clean slate.
+        $_SERVER['HTTP_X_FORWARDED_FOR'] = '203.0.113.99';
+        $result = $this->login_security->check_login_lockout(null, 'nonexistent', 'password');
+        $this->assertInstanceOf(WP_Error::class, $result, 'A new forged header must not lift the lockout');
+        $this->assertEquals('login_locked', $result->get_error_code());
+
+        unset($_SERVER['HTTP_X_FORWARDED_FOR'], $_SERVER['HTTP_CLIENT_IP']);
+    }
+
+    /**
      * Test successful login clears attempts and lockout
      */
     public function test_successful_login_clears_lockout(): void

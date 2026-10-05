@@ -106,35 +106,43 @@ class SecurityHelperTest extends WP_UnitTestCase
     }
 
     /**
-     * Test get_client_ip detects CloudFlare IP
+     * Test get_client_ip ignores CF-Connecting-IP
+     *
+     * Any client that reaches the origin can send this header, so it must not choose the identity
+     * used for lockout, blacklist and rate limits (#128).
      *
      * @since 1.1.12
+     * @since 1.5.4 The header is ignored instead of detected.
      * @return void
      */
-    public function test_get_client_ip_detects_cloudflare_ip(): void
+    public function test_get_client_ip_ignores_cloudflare_header(): void
     {
         $_SERVER["HTTP_CF_CONNECTING_IP"] = "203.0.113.5";
         $_SERVER["REMOTE_ADDR"] = "192.168.1.100";
         
         $ip = SecurityHelper::get_client_ip();
         
-        $this->assertEquals("203.0.113.5", $ip);
+        $this->assertEquals("192.168.1.100", $ip);
     }
 
     /**
-     * Test get_client_ip detects forwarded IP
+     * Test get_client_ip uses the address the proxy appended to X-Forwarded-For
+     *
+     * The peer is an internal load balancer, which appends the connecting address at the right of
+     * the chain; values to its left are client supplied and not trusted (#128).
      *
      * @since 1.1.12
+     * @since 1.5.4 Reads the chain right to left instead of taking the first value.
      * @return void
      */
-    public function test_get_client_ip_detects_forwarded_ip(): void
+    public function test_get_client_ip_uses_the_rightmost_forwarded_ip(): void
     {
         $_SERVER["HTTP_X_FORWARDED_FOR"] = "203.0.113.10, 203.0.113.11";
         $_SERVER["REMOTE_ADDR"] = "192.168.1.100";
         
         $ip = SecurityHelper::get_client_ip();
         
-        $this->assertEquals("203.0.113.10", $ip);
+        $this->assertEquals("203.0.113.11", $ip);
     }
 
     /**

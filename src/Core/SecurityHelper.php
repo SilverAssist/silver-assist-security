@@ -78,40 +78,140 @@ class SecurityHelper {
 
 		// Return original path for debug mode.
 		return self::$plugin_url . $asset_path;
-	}  /**
-		* Get client IP address with proper header detection
-		*
-		* Checks various headers for real IP address detection, especially
-		* useful behind proxies, CDNs (CloudFlare), and load balancers.
-		*
-		* @since 1.1.10
-		* @return string Client IP address
-		*/
-	public static function get_client_ip(): string {
-		$ip_keys = array(
-			'HTTP_CF_CONNECTING_IP',     // CloudFlare.
-			'HTTP_CLIENT_IP',            // Proxy.
-			'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy.
-			'HTTP_X_FORWARDED',          // Proxy.
-			'HTTP_FORWARDED_FOR',        // Proxy.
-			'HTTP_FORWARDED',            // Proxy.
-			'REMOTE_ADDR',                // Standard.
-		);
+	}
 
-		foreach ( $ip_keys as $key ) {
-			if ( array_key_exists( $key, $_SERVER ) === true ) {
-				foreach ( explode( ',', \sanitize_text_field( \wp_unslash( $_SERVER[ $key ] ) ) ) as $ip ) {
-					$ip = trim( $ip );
-					// Validate IP and exclude private/reserved ranges.
-					if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) !== false ) {
-						return $ip;
-					}
-				}
+	/**
+	 * Get the client IP address
+	 *
+	 * This address is the identity behind login lockout, the IP blacklist, form protection and the
+	 * REST and GraphQL rate limits, so a client must not be able to choose it by sending headers.
+	 *
+	 * - `REMOTE_ADDR` is the starting point and is returned as is unless it belongs to a proxy we trust.
+	 * - Only `X-Forwarded-For` is honored, and only when the peer is a trusted proxy. Single-value
+	 *   headers such as `Client-IP`, `CF-Connecting-IP` or `X-Real-IP` are never read: anything that
+	 *   reaches the origin can set them, and a proxy we trust appends to `X-Forwarded-For` instead.
+	 * - The chain is read right to left, discarding trusted hops; the first untrusted address is the
+	 *   client. A value the client placed at the left of the chain is never reached.
+	 *
+	 * Trusted proxies are the CIDRs declared with the `SILVER_ASSIST_TRUSTED_PROXY_CIDRS` constant
+	 * (comma-separated string or array) and the `silver_assist_trusted_proxy_cidrs` filter. When none
+	 * are declared, peers in private or reserved ranges (an internal load balancer such as an AWS ALB)
+	 * are trusted: an internet client cannot connect from such an address, so it cannot use it to
+	 * make the origin believe a header. Return `false` from `silver_assist_trust_private_proxies` to
+	 * ignore forwarded headers until CIDRs are declared.
+	 *
+	 * @since 1.1.10
+	 * @since 1.5.4 Single implementation for every component; forwarded headers are trusted only from proxies.
+	 * @return string Client IP address, or `0.0.0.0` when the peer address is missing or invalid.
+	 */
+	public static function get_client_ip(): string {
+		$remote_addr = isset( $_SERVER['REMOTE_ADDR'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+
+		if ( ! \filter_var( $remote_addr, \FILTER_VALIDATE_IP ) ) {
+			return '0.0.0.0';
+		}
+
+		if ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) && self::is_trusted_proxy( $remote_addr ) ) {
+			$client_ip = self::extract_forwarded_client_ip( \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) );
+			if ( '' !== $client_ip ) {
+				return $client_ip;
 			}
 		}
 
-		return isset( $_SERVER['REMOTE_ADDR'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
+		return $remote_addr;
 	}
+
+	/**
+	 * Get the trusted proxy CIDRs declared by the site
+	 *
+	 * Merges the `SILVER_ASSIST_TRUSTED_PROXY_CIDRS` constant (comma-separated string or array) and
+	 * the `silver_assist_trusted_proxy_cidrs` filter.
+	 *
+	 * @since 1.5.4
+	 * @return string[] Declared CIDRs; empty when the site declares none.
+	 */
+	private static function get_trusted_proxy_cidrs(): array {
+		$configured = array();
+
+		if ( \defined( 'SILVER_ASSIST_TRUSTED_PROXY_CIDRS' ) ) {
+			$raw = \constant( 'SILVER_ASSIST_TRUSTED_PROXY_CIDRS' );
+			if ( \is_string( $raw ) ) {
+				$configured = \array_values( \array_filter( \array_map( 'trim', \explode( ',', $raw ) ) ) );
+			} elseif ( \is_array( $raw ) ) {
+				$configured = \array_values( \array_filter( \array_map( 'strval', $raw ) ) );
+			}
+		}
+
+		/**
+		 * Filters the list of trusted proxy CIDRs.
+		 *
+		 * @since 1.5.0
+		 * @param string[] $configured CIDRs already collected from `SILVER_ASSIST_TRUSTED_PROXY_CIDRS`.
+		 */
+		$trusted = \apply_filters( 'silver_assist_trusted_proxy_cidrs', $configured );
+
+		return \array_values( \array_filter( \array_map( 'strval', (array) $trusted ) ) );
+	}
+
+	/**
+	 * Check whether an address is a proxy whose forwarded headers can be trusted
+	 *
+	 * @since 1.5.4
+	 * @param string $ip Address to check (a peer or a hop from `X-Forwarded-For`).
+	 * @return bool True when trusted.
+	 */
+	private static function is_trusted_proxy( string $ip ): bool {
+		$cidrs = self::get_trusted_proxy_cidrs();
+
+		if ( ! empty( $cidrs ) ) {
+			return self::is_ip_in_range( $ip, $cidrs );
+		}
+
+		/**
+		 * Filters whether peers in private or reserved ranges are trusted when no CIDRs are declared.
+		 *
+		 * @since 1.5.4
+		 * @param bool $trust Default true.
+		 */
+		if ( ! \apply_filters( 'silver_assist_trust_private_proxies', true ) ) {
+			return false;
+		}
+
+		return \filter_var( $ip, \FILTER_VALIDATE_IP ) && ! \filter_var( $ip, \FILTER_VALIDATE_IP, \FILTER_FLAG_NO_PRIV_RANGE | \FILTER_FLAG_NO_RES_RANGE );
+	}
+
+	/**
+	 * Extract the real client IP from an `X-Forwarded-For` chain
+	 *
+	 * Walks the chain right to left, discarding trusted proxy hops. The first untrusted address is the
+	 * client; this prevents spoofing through values a client placed at the left of the chain.
+	 *
+	 * @since 1.5.4
+	 * @param string $header Raw `X-Forwarded-For` header value.
+	 * @return string The client IP, or an empty string when the chain holds no valid untrusted address.
+	 */
+	private static function extract_forwarded_client_ip( string $header ): string {
+		$hops = \array_values(
+			\array_filter(
+				\array_map( 'trim', \explode( ',', $header ) ),
+				static fn( string $hop ): bool => '' !== $hop
+			)
+		);
+
+		for ( $i = \count( $hops ) - 1; $i >= 0; $i-- ) {
+			$hop = $hops[ $i ];
+			if ( ! \filter_var( $hop, \FILTER_VALIDATE_IP ) ) {
+				continue;
+			}
+			if ( self::is_trusted_proxy( $hop ) ) {
+				continue;
+			}
+			return $hop;
+		}
+
+		return '';
+	}
+
 
 	/**
 	 * Send 404 Not Found response with security-focused headers
@@ -718,5 +818,135 @@ class SecurityHelper {
 					$version
 				),
 		);
+	}
+
+	/**
+	 * Check if IP is within CIDR ranges
+	 *
+	 * @since 1.5.0
+	 * @param string $ip    The IP address to check.
+	 * @param array  $cidrs Array of CIDR ranges to check against.
+	 * @return bool True if IP is in range, false otherwise
+	 */
+	private static function is_ip_in_range( string $ip, array $cidrs ): bool {
+		if ( ! \filter_var( $ip, \FILTER_VALIDATE_IP ) ) {
+			return false;
+		}
+
+		foreach ( $cidrs as $cidr ) {
+			if ( self::is_ip_in_cidr( $ip, $cidr ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if IP is within a specific CIDR range
+	 *
+	 * @since 1.5.0
+	 * @param string $ip   The IP address to check.
+	 * @param string $cidr The CIDR range (e.g., "192.168.1.0/24").
+	 * @return bool True if IP is in range, false otherwise
+	 */
+	private static function is_ip_in_cidr( string $ip, string $cidr ): bool {
+		// Handle IPv6.
+		if ( \filter_var( $ip, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV6 ) ) {
+			return self::is_ipv6_in_cidr( $ip, $cidr );
+		}
+
+		// Handle IPv4.
+		if ( ! \strpos( $cidr, '/' ) ) {
+			return $ip === $cidr;
+		}
+
+		$parts = \explode( '/', $cidr );
+
+		// Reject CIDRs that contain extra slashes (e.g. "192.0.2.0/0/typo") so a
+		// stray path component cannot be dropped and silently trust every address.
+		if ( 2 !== \count( $parts ) ) {
+			return false;
+		}
+		list( $subnet, $bits ) = $parts;
+
+		// Reject non-numeric or out-of-range prefixes so a typo like "/foo" or "/99" cannot silently trust every IPv4.
+		if ( ! \ctype_digit( $bits ) ) {
+			return false;
+		}
+		$bits = (int) $bits;
+		if ( $bits < 0 || $bits > 32 ) {
+			return false;
+		}
+
+		$ip_long     = \ip2long( $ip );
+		$subnet_long = \ip2long( $subnet );
+
+		if ( false === $ip_long || false === $subnet_long ) {
+			return false;
+		}
+
+		if ( 0 === $bits ) {
+			return true;
+		}
+
+		$mask         = -1 << ( 32 - $bits );
+		$subnet_long &= $mask;
+		$ip_long     &= $mask;
+
+		return $ip_long === $subnet_long;
+	}
+
+	/**
+	 * Check if IPv6 is within CIDR range
+	 *
+	 * @since 1.5.0
+	 * @param string $ip   The IPv6 address to check.
+	 * @param string $cidr The IPv6 CIDR range.
+	 * @return bool True if IP is in range, false otherwise
+	 */
+	private static function is_ipv6_in_cidr( string $ip, string $cidr ): bool {
+		if ( ! \strpos( $cidr, '/' ) ) {
+			return $ip === $cidr;
+		}
+
+		$parts = \explode( '/', $cidr );
+
+		// Reject CIDRs with extra slashes (e.g. "2001:db8::/0/typo") so a stray
+		// path component cannot be dropped and silently trust every IPv6 sender.
+		if ( 2 !== \count( $parts ) ) {
+			return false;
+		}
+		list( $subnet, $bits ) = $parts;
+
+		// Reject non-numeric or out-of-range prefixes so a typo like "/foo" or "/200" cannot trust every IPv6 or raise a ValueError in str_repeat().
+		if ( ! \ctype_digit( $bits ) ) {
+			return false;
+		}
+		$bits = (int) $bits;
+		if ( $bits < 0 || $bits > 128 ) {
+			return false;
+		}
+
+		// Convert to binary representation.
+		$ip_bin     = \inet_pton( $ip );
+		$subnet_bin = \inet_pton( $subnet );
+
+		if ( false === $ip_bin || false === $subnet_bin ) {
+			return false;
+		}
+
+		// Create bitmask: calculate bytes and remainder bits.
+		$bytes          = (int) ( $bits / 8 );       // Full bytes.
+		$remainder_bits = $bits % 8;        // Remaining bits in last byte.
+
+		$mask = \str_repeat( \chr( 255 ), $bytes );
+		if ( $remainder_bits > 0 ) {
+			// High-bit mask formula: 255 << (8 - remainder_bits).
+			$mask .= \chr( 255 << ( 8 - $remainder_bits ) );
+		}
+		$mask .= \str_repeat( \chr( 0 ), 16 - \strlen( $mask ) );
+
+		return ( $ip_bin & $mask ) === ( $subnet_bin & $mask );
 	}
 }

@@ -217,9 +217,9 @@ class LoginSecurityTest extends WP_UnitTestCase
         $_SERVER["REMOTE_ADDR"] = "192.168.1.1";
         $this->assertEquals("192.168.1.1", $method->invoke($this->login_security));
 
-        // Test CloudFlare header
+        // CF-Connecting-IP can be sent by any client, so it must not change the identity (#128).
         $_SERVER["HTTP_CF_CONNECTING_IP"] = "203.0.113.1";
-        $this->assertEquals("203.0.113.1", $method->invoke($this->login_security));
+        $this->assertEquals("192.168.1.1", $method->invoke($this->login_security));
 
         // Test X-Forwarded-For
         unset($_SERVER["HTTP_CF_CONNECTING_IP"]);
