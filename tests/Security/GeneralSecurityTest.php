@@ -380,11 +380,6 @@ class GeneralSecurityTest extends WP_UnitTestCase
         $_SERVER['SERVER_NAME'] = 'staging.example.com';
         $_SERVER['HTTPS'] = 'on';
 
-        // Set WP_ENVIRONMENT_TYPE if not already set
-        if (!defined('WP_ENVIRONMENT_TYPE')) {
-            define('WP_ENVIRONMENT_TYPE', 'development');
-        }
-
         $security = new GeneralSecurity();
 
         ob_start();

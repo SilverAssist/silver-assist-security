@@ -152,6 +152,8 @@ This is a security plugin — **all features must be developed test-first** (Red
 - `tests/Security/` — SecurityTest (overall security validation)
 - `tests/WordPress/` — AdminPanelTest (integration examples)
 - `tests/Helpers/` — TestHelper (shared utilities)
+- `tests/Helpers/HeadlessTestSupport.php` — trait for tests that run real REST and GraphQL requests: `require_wpgraphql()` (fails instead of skipping when `CI` is set), `set_environment_type()` (never `define( 'WP_ENVIRONMENT_TYPE' )` in a test, it leaks into every later test), `resolve_current_user()`, `restore_headless_state()`
+- Headless behavior tests (`RestAPIHeadlessBehaviorTest`, `GraphQLHeadlessBehaviorTest`) send requests through `rest_do_request()` and WPGraphQL's `graphql()` and assert what a client receives; do not assert only that a hook is registered
 
 ## Quick References
 

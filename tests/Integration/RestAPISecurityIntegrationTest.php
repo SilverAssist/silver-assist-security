@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace SilverAssist\Security\Tests\Integration;
 
 use SilverAssist\Security\Core\Plugin;
-use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\Security\RestAPISecurity;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -140,60 +139,6 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 			403,
 			$result->get_error_data()['status'],
 			'HTTP status should be 403 Forbidden'
-		);
-	}
-
-	/**
-	 * Test WPGraphQL endpoints are not affected by REST API security
-	 *
-	 * @since 1.5.0
-	 * @return void
-	 */
-	public function test_graphql_endpoints_not_affected(): void {
-		$this->markTestSkipped(
-			'Quarantined (#127): the premise is wrong. WPGraphQL is not served through REST, and any '
-			. 'rest_do_request() (even to an unknown route) goes through rest_pre_dispatch and counts '
-			. 'toward the limit. The real check, a GraphQL HTTP request against the rate limit with '
-			. 'WPGraphQL installed, belongs to #132.'
-		);
-
-		// Enable all REST API security features
-		\update_option( 'silver_assist_rest_batch_endpoint_protection', 1 );
-		\update_option( 'silver_assist_rest_rate_limiting_enabled', 1 );
-
-		// Ensure user is not logged in
-		wp_set_current_user( 0 );
-
-		// Get client IP and generate keys using same method as implementation
-		$client_ip = ! empty( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '127.0.0.1';
-		$window_key = SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_window', $client_ip );
-		$count_key = SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_limit', $client_ip );
-
-		// Clean any REST transients first
-		\delete_transient( $window_key );
-		\delete_transient( $count_key );
-
-		// Make a request to /graphql via REST API
-		// This should NOT increment the REST rate limit counter because
-		// GraphQL requests use the separate graphql_request hook, not REST filters
-		$request = \rest_ensure_request(
-			new WP_REST_Request( 'POST', '/graphql' )
-		);
-
-		// Dispatch the request
-		$response = \rest_do_request( $request );
-
-		// Verify REST rate limit transient was NOT created for GraphQL
-		$window_exists = \get_transient( $window_key );
-		$count_exists = \get_transient( $count_key );
-
-		$this->assertFalse(
-			$window_exists,
-			'GraphQL request should not create REST rate limit window transient'
-		);
-		$this->assertFalse(
-			$count_exists,
-			'GraphQL request should not create REST rate limit counter transient'
 		);
 	}
 

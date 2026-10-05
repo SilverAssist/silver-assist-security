@@ -17,6 +17,9 @@ namespace SilverAssist\Security\GraphQL;
 use GraphQL\Error\Error;
 use GraphQL\Error\UserError;
 use GraphQL\Executor\ExecutionResult;
+use GraphQL\Language\Parser;
+use GraphQL\Language\Printer;
+use GraphQL\Language\Visitor;
 use SilverAssist\PluginKernel\Interfaces\LoadableInterface;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\SecurityHelper;
@@ -221,8 +224,8 @@ class GraphQLSecurity implements LoadableInterface {
 	 * @return void
 	 */
 	public function init_graphql_security(): void {
-		// Disable introspection in production.
-		if ( defined( 'WP_ENVIRONMENT_TYPE' ) && WP_ENVIRONMENT_TYPE === 'production' ) {
+		// Hide GraphiQL in production.
+		if ( $this->is_production_environment() ) {
 			\add_filter( 'graphql_show_in_graphiql', '__return_false' );
 		}
 
@@ -246,7 +249,7 @@ class GraphQLSecurity implements LoadableInterface {
 		}
 
 		// Our additional production checks.
-		if ( defined( 'WP_ENVIRONMENT_TYPE' ) && WP_ENVIRONMENT_TYPE === 'production' ) {
+		if ( $this->is_production_environment() ) {
 			\add_filter( 'graphql_introspection_enabled', '__return_false' );
 			\add_filter( 'graphql_show_in_graphiql', '__return_false' );
 
@@ -436,7 +439,9 @@ class GraphQLSecurity implements LoadableInterface {
 			 */
 			public function getVisitor( $context ): array {
 				return array(
-					'DocumentNode' => function ( $node ) use ( $context ) {
+					// Visitors are keyed by node kind (`Document`), not by class name: a `DocumentNode` key
+					// is never matched, which left this rule silent.
+					'Document' => function ( $node ) use ( $context ) {
 						// Use our enhanced complexity validation with WPGraphQL integration.
 						$estimated_complexity = $this->estimate_query_complexity( $node );
 
@@ -478,8 +483,10 @@ class GraphQLSecurity implements LoadableInterface {
 			 * @return int Estimated complexity
 			 */
 			private function estimate_query_complexity( $node ): int {
-				// Convert node to string for analysis.
-				$query_string = $node->__toString();
+				// Print the document back to GraphQL text for analysis. `Node::__toString()` returns the
+				// AST as JSON, where none of the patterns below (fields, `first:` arguments, `where:`)
+				// appear, so the estimate would only measure how deep the JSON nests.
+				$query_string = Printer::doPrint( $node );
 
 				// Enhanced complexity estimation.
 				$base_complexity = 1;
@@ -538,8 +545,13 @@ class GraphQLSecurity implements LoadableInterface {
 	/**
 	 * Validate query before execution
 	 *
+	 * WPGraphQL accepts either one operation (`array( 'query' => ... )`) or a batch (a list of
+	 * operations). Every operation of a batch is validated, otherwise wrapping an abusive query in a
+	 * batch would skip these checks.
+	 *
 	 * @since 1.1.1
-	 * @param array       $request_data Request data including query.
+	 * @since 1.5.4 Validates every operation of a batched request.
+	 * @param array       $request_data Request data including query, or a list of operations for a batch.
 	 * @param mixed       $request HTTP request object (optional).
 	 * @param string|null $operation_name GraphQL operation name (optional).
 	 * @param array|null  $variables Query variables (optional).
@@ -549,34 +561,81 @@ class GraphQLSecurity implements LoadableInterface {
 	 */
 	public function validate_query_before_execution( array $request_data, $request = null, ?string $operation_name = null, ?array $variables = null, $context = null ): array {
 		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
-		if ( empty( $request_data['query'] ) ) {
+		if ( \array_is_list( $request_data ) ) {
+			foreach ( $request_data as $operation ) {
+				if ( \is_array( $operation ) ) {
+					$this->validate_single_operation( $operation );
+				}
+			}
+
 			return $request_data;
 		}
 
-		$query = $request_data['query'];
-
-		// Check for introspection in production.
-		if ( defined( 'WP_ENVIRONMENT_TYPE' ) && WP_ENVIRONMENT_TYPE === 'production' ) {
-			if ( $this->is_introspection_query( $query ) ) {
-				throw new UserError( esc_html( \__( 'Introspection is disabled in production.', 'silver-assist-security' ) ) );
-			}
-		}
-
-		// Validate query patterns.
-		$this->validate_query_patterns( $query );
+		$this->validate_single_operation( $request_data );
 
 		return $request_data;
 	}
 
 	/**
+	 * Validate the query of one GraphQL operation
+	 *
+	 * @since 1.5.4
+	 * @param array $operation Operation data, with the document under `query`.
+	 * @return void
+	 * @throws UserError When introspection is attempted in production or query patterns fail validation.
+	 */
+	private function validate_single_operation( array $operation ): void {
+		if ( empty( $operation['query'] ) || ! \is_string( $operation['query'] ) ) {
+			return;
+		}
+
+		$query = $operation['query'];
+
+		// Check for introspection in production.
+		if ( $this->is_production_environment() && $this->is_introspection_query( $query ) ) {
+			throw new UserError( esc_html( \__( 'Introspection is disabled in production.', 'silver-assist-security' ) ) );
+		}
+
+		// Validate query patterns.
+		$this->validate_query_patterns( $query );
+	}
+
+	/**
 	 * Check if query is introspection
 	 *
+	 * Only `__schema` and `__type` field selections are introspection, found by parsing the query so
+	 * the same text inside a string argument or a comment does not count. `__typename` is a meta field
+	 * that Apollo Client, urql and Relay add to ordinary queries, so it must stay allowed.
+	 *
 	 * @since 1.1.1
+	 * @since 1.5.4 `__typename` is no longer treated as introspection.
 	 * @param string $query GraphQL query string.
 	 * @return bool
 	 */
 	private function is_introspection_query( string $query ): bool {
-		return (bool) preg_match( '/(__schema|__type|__typename|__directive)/i', $query );
+		try {
+			$document = Parser::parse( $query, array( 'noLocation' => true ) );
+		} catch ( \Throwable $e ) {
+			// Not a valid document, so it will not execute; stay conservative with a text match.
+			return (bool) \preg_match( '/\b__(?:schema|type)\b/', $query );
+		}
+
+		$found = false;
+		Visitor::visit(
+			$document,
+			array(
+				'Field' => static function ( $node ) use ( &$found ) {
+					if ( \in_array( $node->name->value, array( '__schema', '__type' ), true ) ) {
+						$found = true;
+						return Visitor::stop();
+					}
+
+					return null;
+				},
+			)
+		);
+
+		return $found;
 	}
 
 	/**
@@ -791,23 +850,40 @@ class GraphQLSecurity implements LoadableInterface {
 	 * @return void
 	 */
 	private function setup_graphql_rate_limiting(): void {
-		\add_action( 'graphql_request', array( $this, 'check_rate_limit' ) );
+		// `do_graphql_request` is the action WPGraphQL fires before it executes each operation. The
+		// `graphql_request` action this used to hook is never fired by WPGraphQL, so the limiter
+		// never ran.
+		\add_action( 'do_graphql_request', array( $this, 'check_rate_limit' ) );
 	}
 
 	/**
 	 * Check rate limit for GraphQL requests using ConfigManager
 	 *
+	 * Throttles anonymous operations per client IP. Authenticated requests (API key, application
+	 * password, session) are not counted, like the REST limiter: a headless server calls from one IP
+	 * on behalf of every visitor, so a per-IP cap on its authenticated traffic would take the site
+	 * down. Each operation of a batched request counts once.
+	 *
 	 * @since 1.1.1
+	 * @since 1.5.4 Runs on `do_graphql_request`, skips authenticated requests and hashes the IP in the key.
 	 * @return void
 	 * @throws UserError When GraphQL request rate limit is exceeded for the current IP address.
 	 */
 	public function check_rate_limit(): void {
+		if ( \is_user_logged_in() ) {
+			return;
+		}
+
+		$ip = $this->get_client_ip();
+		if ( '' === $ip || '0.0.0.0' === $ip ) {
+			// No peer address (internal or CLI call): nothing to key the limit on.
+			return;
+		}
+
 		// Get rate limiting configuration from manager.
 		$rate_config = $this->config_manager->get_rate_limiting_config();
 
-		$ip             = $this->get_client_ip();
-		$rate_limit_key = "graphql_rate_limit_{md5($ip)}";
-		$time_window    = 60; // seconds.
+		$time_window = 60; // seconds.
 
 		// Check if this is likely a build/development request.
 		$is_likely_build = $this->is_likely_build_process();
@@ -819,13 +895,18 @@ class GraphQLSecurity implements LoadableInterface {
 			$max_requests = $rate_config['requests_per_minute'];
 		}
 
-		$current_requests = \get_transient( $rate_limit_key ) ? \get_transient( $rate_limit_key ) : 0;
+		// Fixed-window counter shared with the REST limiter: atomic under concurrent requests and
+		// never extended by accepted requests.
+		$current_requests = SecurityHelper::increment_rate_window(
+			SecurityHelper::generate_ip_transient_key( 'graphql_rate_window', $ip ),
+			SecurityHelper::generate_ip_transient_key( 'graphql_rate_limit', $ip ),
+			\time(),
+			$time_window
+		);
 
-		if ( $current_requests >= $max_requests ) {
+		if ( $current_requests > $max_requests ) {
 			throw new UserError( \esc_html( \__( 'Rate limit exceeded. Please try again later.', 'silver-assist-security' ) ) );
 		}
-
-		\set_transient( $rate_limit_key, $current_requests + 1, $time_window );
 	}
 
 	/**
@@ -1516,15 +1597,7 @@ class GraphQLSecurity implements LoadableInterface {
 	public function validate_authentication( array $request_data, $request = null, ?string $operation_name = null, ?array $variables = null, $context = null ): array {
 		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// Allow unauthenticated access only in explicit local/development environments for tooling.
-		$environment = 'production';
-
-		if ( \function_exists( 'wp_get_environment_type' ) ) {
-			$environment = \wp_get_environment_type();
-		} elseif ( \defined( 'WP_ENVIRONMENT_TYPE' ) ) {
-			$environment = WP_ENVIRONMENT_TYPE;
-		}
-
-		if ( \in_array( $environment, array( 'local', 'development' ), true ) ) {
+		if ( \in_array( $this->get_environment_type(), array( 'local', 'development' ), true ) ) {
 			return $request_data;
 		}
 
@@ -1551,7 +1624,7 @@ class GraphQLSecurity implements LoadableInterface {
 	/**
 	 * Authenticate GraphQL requests using a plugin-managed API key
 	 *
-	 * Hooks into determine_current_user at priority 5 to authenticate
+	 * Hooks into determine_current_user at priority 30 to authenticate
 	 * server-to-server requests before is_user_logged_in() is checked.
 	 * Supports X-API-Key header and Authorization: Bearer token.
 	 *
@@ -1632,17 +1705,60 @@ class GraphQLSecurity implements LoadableInterface {
 	}
 
 	/**
+	 * Get the environment type the GraphQL protections follow
+	 *
+	 * Uses `wp_get_environment_type()`, which is `production` when the site declares nothing, so
+	 * every environment-dependent protection (introspection, unauthenticated access) agrees with
+	 * WordPress about what production is.
+	 *
+	 * @since 1.5.4
+	 * @return string One of local, development, staging or production.
+	 */
+	private function get_environment_type(): string {
+		/**
+		 * Filters the environment type used by the GraphQL protections
+		 *
+		 * `wp_get_environment_type()` has no filter and caches its first answer, so this is the way to
+		 * override it, for example in tests.
+		 *
+		 * @since 1.5.4
+		 * @param string $environment Environment type reported by WordPress.
+		 */
+		return (string) \apply_filters( 'silver_assist_security_environment_type', \wp_get_environment_type() );
+	}
+
+	/**
+	 * Whether the site runs in the production environment
+	 *
+	 * @since 1.5.4
+	 * @return bool
+	 */
+	private function is_production_environment(): bool {
+		return 'production' === $this->get_environment_type();
+	}
+
+	/**
 	 * Check if the current request is a GraphQL request
 	 *
+	 * Asks WPGraphQL, which knows the configured endpoint (the default `/graphql` or a custom one) and
+	 * matches the request path exactly. A plain substring search for `/graphql` would also match
+	 * other URLs (`/wp-json/wp/v2/users/me?next=/graphql`) and miss a custom endpoint.
+	 *
 	 * @since 1.3.0
+	 * @since 1.5.4 Follows WPGraphQL's endpoint detection instead of a substring search.
 	 * @return bool True if the current request targets the GraphQL endpoint.
 	 */
 	private function is_graphql_request(): bool {
+		if ( \is_callable( array( '\\WPGraphQL\\Router', 'is_graphql_http_request' ) ) ) {
+			return (bool) \WPGraphQL\Router::is_graphql_http_request();
+		}
+
 		$request_uri = isset( $_SERVER['REQUEST_URI'] )
 			? \sanitize_text_field( \wp_unslash( $_SERVER['REQUEST_URI'] ) )
 			: '';
+		$path        = (string) \wp_parse_url( $request_uri, \PHP_URL_PATH );
 
-		return strpos( $request_uri, '/graphql' ) !== false;
+		return '/graphql' === \rtrim( $path, '/' );
 	}
 
 	/**

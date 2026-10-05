@@ -52,7 +52,7 @@ This plugin automatically implements enterprise-level security measures without 
 - **Query Depth Limits**: Configurable limits (1-20 levels, default: 8)
 - **Query Complexity Control**: Prevents resource exhaustion (10-1000 points, default: 100)
 - **Query Timeout Protection**: Configurable timeouts (1-30 seconds, default: 5)
-- **Rate Limiting**: 30 requests per minute per IP to prevent DoS attacks
+- **Rate Limiting**: 60 anonymous requests per minute per IP (120 in headless mode), see "Headless Clients: REST and GraphQL"
 - **Alias & Field Duplication Protection**: Prevents excessive aliases and field repetition
 
 ### 📧 Contact Form 7 Integration & Form Protection
@@ -423,6 +423,56 @@ define( 'SILVER_ASSIST_TRUSTED_PROXY_CIDRS', '10.0.0.0/8,52.84.0.0/15' ); // VPC
   `$_SERVER['HTTPS'] = 'on'` in `wp-config.php` when the request comes from your trusted proxy and carries
   `X-Forwarded-Proto: https`; otherwise the cookies are issued without the Secure flag.
 
+### 🔌 Headless Clients: REST and GraphQL
+
+Next.js and other headless front ends call WordPress through REST and WPGraphQL. This is what the plugin
+does to those requests (all of it is covered by `RestAPIHeadlessBehaviorTest` and `GraphQLHeadlessBehaviorTest`).
+
+**REST rate limit** (Settings → Security Essentials → REST API)
+
+| Setting | Option | Default | Range |
+|---------|--------|---------|-------|
+| Enable Rate Limiting | `silver_assist_rest_rate_limiting_enabled` | on | on/off |
+| Rate Limit (requests) | `silver_assist_rest_rate_limit_requests` | 100 | 10-1000 |
+| Rate Limit Window (seconds) | `silver_assist_rest_rate_limit_window` | 60 | 30-300 |
+| Batch Endpoint Protection | `silver_assist_rest_batch_endpoint_protection` | on | on/off |
+
+- Only anonymous requests count, per client IP (see "Proxies, Load Balancers and CDNs"). Logged-in users,
+  application password clients and the block editor are never throttled.
+- Request number 100 in the window passes, number 101 gets HTTP `429` with the REST error
+  `rest_rate_limit_exceeded`. The window is fixed: it starts with the first request of a client and the
+  counter resets when it ends. There is no `Retry-After` header.
+- Every anonymous REST call counts, including public form routes such as Contact Form 7 submissions and
+  server-side calls from a Next.js server. Visitors behind one IP (an office, a school, a headless server
+  that proxies visitors without a trusted forwarded address) share a single budget. Raise the requests
+  and the window for such sites, declare your proxies, or turn the limiter off.
+- `/batch/v1` returns `403` (`rest_batch_disabled`) to anonymous clients. Logged-in users (the block editor
+  saves with it) can batch normally.
+- GraphQL requests do not use the REST server and never consume this budget.
+
+**GraphQL**
+
+- The endpoint is public by default, like WPGraphQL. Enable "Restrict Endpoint to Logged In Users" in the
+  WPGraphQL settings to require authentication; then session cookies, application passwords and the plugin API
+  key are accepted. The plugin's own check is skipped in `local` and `development` environments, but WPGraphQL's
+  setting still applies there, so an endpoint you restrict stays restricted.
+- API key: create it in the GraphQL Security tab and send it as `X-API-Key: <key>` or
+  `Authorization: Bearer <key>`. It only authenticates requests to the GraphQL endpoint (the default
+  `/graphql` or the endpoint configured in WPGraphQL) as the configured service user.
+- Introspection (`__schema`, `__type`) is rejected in the `production` environment for every client, API key
+  included; `staging`, `development` and `local` allow it. The environment is the one WordPress reports
+  (`WP_ENVIRONMENT_TYPE` constant or environment variable), and it is `production` when nothing is set, so
+  set it on staging and local sites that need GraphiQL or code generation. `__typename`, which Apollo Client
+  adds to every query, is not introspection and is always allowed.
+- Limits apply to every query of a batched request: aliases (20, headless 50), query depth (10, headless 15),
+  directives and length, and complexity (100, headless 200). Complexity adds one point per field with
+  arguments or sub-fields, one per ten items of each `first:` argument, two per fragment and two per
+  nesting level, so a page of 100 items costs about 10 on its own.
+- Rate limit: anonymous operations are throttled per client IP, 60 per minute (120 in headless mode), plus
+  10 for each batch slot WPGraphQL allows (at most 100 extra). Headless mode and build tools (user agents
+  containing `next`, `node`, `fetch` and similar) get 1.5 times that. Authenticated requests, API key
+  included, are not counted. Each operation of a batch counts once.
+
 ## 🧪 Development & Testing
 
 ### Quality Assurance Script
@@ -482,7 +532,8 @@ bash scripts/run-phpunit-complete.sh
 instead of being skipped. Contact Form 7 is installed but deliberately not loaded by the shared test bootstrap:
 loading it makes the CF7 admin tab appear, which several functional tests assume is hidden, so the CF7 tests
 define what they need themselves and one real-environment test is skipped when the class is missing. The other
-remaining skips (multisite, Settings Hub fallback, local-environment only) each state their reason.
+remaining skips (multisite, Settings Hub fallback) each state their reason. When the `CI` environment variable
+is set, a missing WPGraphQL fails the GraphQL tests instead of skipping them.
 
 #### End-to-End Tests (Playwright)
 
