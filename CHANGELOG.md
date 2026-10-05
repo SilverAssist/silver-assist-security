@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.3] - 2026-10-05
+
 ### Fixed
 
 - **Block editor `TypeError: _ is not a function` (WEB-1222)**: `?ver=` is no longer stripped from assets in wp-admin, during AJAX requests, or from WordPress core bundles (`/wp-includes/`, `/wp-admin/`). Without the cache-buster a browser or CDN could serve a stale `data.min.js` next to a newer `editor.min.js` after a core update. Front-end theme and plugin assets keep the existing version hiding. Core assets on the front end now keep `ver=` (this exposes the WordPress version through those URLs; use the new filter below if that trade-off is not acceptable).
