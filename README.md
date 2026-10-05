@@ -68,6 +68,7 @@ This plugin automatically implements enterprise-level security measures without 
 - **CSRF Protection**: Enhanced nonce validation for form security
 - **Real-time Monitoring**: Track blocked form submissions and suspicious IPs
 - **Conditional Interface**: Form Protection tab appears automatically when CF7 is detected
+- **Tunable Detection**: Spam phrases and SQL signatures can be adjusted with the `silver_assist_security_cf7_spam_patterns` and `silver_assist_security_sql_injection_patterns` filters. The default limit is 2 submissions per minute per IP, and an attempt counts once it reaches the rate-limit check, including one that CF7's own validation later rejects (blacklisted IPs, a filled honeypot and too-fast submissions are rejected before it)
 
 ## ✨ Additional Security Features
 
@@ -80,9 +81,11 @@ This plugin automatically implements enterprise-level security measures without 
 
 ### 🔒 WordPress Hardening *(Automatic)*
 
-- **Secure Headers**: Essential security headers (X-Frame-Options, X-XSS-Protection, etc.)
+- **Secure Headers**: Essential security headers (X-Frame-Options, X-XSS-Protection, etc.) on the front end, wp-admin, the login screen and REST responses. `Permissions-Policy` disables geolocation, microphone and camera, which breaks a store locator or recorder; adjust any header with the `silver_assist_security_headers` filter (HSTS is sent only on SSL outside development, see `silver_assist_security_is_development_environment`)
 - **File Editing Disabled**: Prevents unauthorized file modifications through admin panel
-- **XML-RPC Disabled**: Blocks XML-RPC attacks and vulnerabilities
+- **XML-RPC Disabled**: Blocks XML-RPC attacks and vulnerabilities, including pingbacks and apps that use it (Jetpack, the WordPress mobile apps); return `false` from `silver_assist_security_disable_xmlrpc` to keep it
+- **Discovery Tags Removed**: RSS feed autodiscovery, oEmbed discovery, shortlink and RSD tags are removed from `wp_head` (feeds still work at their URLs; keep the autodiscovery tags with `silver_assist_security_remove_feed_links`). REST API discovery stays
+- **Login Messages**: The login and lost-password screens show one generic message so they do not reveal whether an account exists; lockout and password-reset messages are shown as WordPress writes them
 - **Version Hiding**: Conceals WordPress version information from potential attackers (generator tags and theme/plugin asset `?ver=` on the front end; WordPress core assets and wp-admin keep `?ver=` so the block editor and caches stay consistent, adjustable with the `silver_assist_security_strip_asset_version` filter)
 
 ### 🤖 Advanced Bot Protection *(Login Page)*
@@ -414,6 +417,11 @@ define( 'SILVER_ASSIST_TRUSTED_PROXY_CIDRS', '10.0.0.0/8,52.84.0.0/15' ); // VPC
   until you do (behind a load balancer every visitor then shares the balancer's address).
 - Behind a CDN that sits in front of the load balancer, declare the CDN ranges too; otherwise the CDN
   edge address is taken as the visitor.
+- Cookies: the auth and logged-in cookies are Secure only when WordPress sees an HTTPS request
+  (`is_ssl()`, which reads `$_SERVER['HTTPS']` or port 443). The plugin does not trust
+  `X-Forwarded-Proto` on its own, since any client can send it. If TLS ends at your proxy, set
+  `$_SERVER['HTTPS'] = 'on'` in `wp-config.php` when the request comes from your trusted proxy and carries
+  `X-Forwarded-Proto: https`; otherwise the cookies are issued without the Secure flag.
 
 ## 🧪 Development & Testing
 

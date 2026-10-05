@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Tests: `OEmbedSanitizationTest` (the core sanitizer stays registered, hostile provider HTML is stripped end to end, a provider iframe is kept, and the editor's `/oembed/1.0/proxy` still serves the embed) and an E2E check that the editor Embed block can be inserted and reaches the oEmbed proxy.
 - Tests: `ClientIpResolutionTest` (forged headers, rotation, private and configured proxies, IPv6, parity across components) and a login-lockout test that rotates forged headers.
+- General hardening and forms audit (#133): `GeneralHardeningBehaviorTest` (headers per request context, HSTS, cookies, `wp_head`, XML-RPC, login messages, admin bar) and `FormSubmissionBehaviorTest` (real CF7 submit passes, bot, flood and injection are blocked, realistic enquiries are not).
+- Filters: `silver_assist_security_headers`, `silver_assist_security_is_development_environment`, `silver_assist_security_disable_xmlrpc`, `silver_assist_security_remove_feed_links`, `silver_assist_security_cf7_spam_patterns` and `silver_assist_security_sql_injection_patterns`, so a site can keep a header, XML-RPC or feed discovery that an integration needs. Documented in the README.
 
 ### Fixed
 
@@ -26,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GraphQLConfigManagerTest::test_security_level_no_double_counting_auth` compared scenarios that are not equivalent (headless mode does not restrict the endpoint); it now measures the score directly. It was previously always skipped locally.
 - `UpdaterIntegrationTest::test_updater_php_requirements` required PHP 8.3 while the plugin (header and `composer.json`) and the whole CI matrix are on PHP 8.2, so it failed in CI and passed on newer local PHP. It now reads the minimum from the plugin header. CI had not noticed because failing tests did not fail `run-quality-checks.sh` (see Changed). `.github/copilot-instructions.md` listed PHP 8.3+ and now says 8.2+.
 - `LoginSecurityTest::test_session_timeout` (unit) made no assertions because the timeout was changed after the object was built; it now verifies the silent front-end logout.
+- **Security headers were missing outside the front end (#133)**: they were sent only on `send_headers`, which wp-admin, `wp-login.php` and REST responses never fire, so `Referrer-Policy`, `Permissions-Policy` and HSTS were absent there. They are now sent from `admin_init`, `login_init` and before a REST response is served.
+- **A locked-out visitor was told the credentials were invalid (#133)**: the `login_errors` filter replaced every message on every `wp-login.php` screen with "Invalid login credentials.", hiding the lockout notice and core's password reset messages ("passwords do not match", "link expired"). Only the login and lost-password screens are generic now, and not during a lockout.
+- **Logged-in cookie dropped on a site with an http home URL (#133)**: `secure_logged_in_cookie` was forced to Secure whenever the request was SSL, ignoring core's rule that it is Secure only when the home URL is https. The core value is now respected (still never Secure over plain HTTP).
+- **Real enquiries rejected by the form filters (#133)**: a bare `--` or `/*` counted as SQL injection, and `make $`, `earn $` and `win $` counted as spam, so a family writing "we make $3,200 a month" was blocked and counted toward an IP blacklist. SQL comment markers now count only after a quote and the three money patterns are gone. Contact Form 7 checkbox fields (arrays) no longer raise "Array to string conversion". The excessive-capitals rule lowercased the text before counting capitals, so it never fired; it now works as documented (more than 70% capitals in text over 50 characters), which means shouting in all caps can now be rejected.
 
 ### Changed
 

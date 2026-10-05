@@ -101,6 +101,11 @@ class GeneralSecurity implements LoadableInterface {
 	private function register_hooks(): void {
 		// Security headers.
 		\add_action( 'send_headers', array( $this, 'add_security_headers' ) );
+		// send_headers only fires for front-end requests; wp-admin, the login screen
+		// and REST responses skip it, so send the same headers from their own hooks.
+		\add_action( 'admin_init', array( $this, 'add_security_headers' ) );
+		\add_action( 'login_init', array( $this, 'add_security_headers' ) );
+		\add_filter( 'rest_pre_serve_request', array( $this, 'add_rest_security_headers' ) );
 
 		// Hide WordPress version.
 		\add_filter( 'the_generator', array( $this, 'remove_version' ) );
@@ -114,12 +119,12 @@ class GeneralSecurity implements LoadableInterface {
 
 		// Disable XML-RPC.
 		\add_filter( 'xmlrpc_methods', array( $this, 'remove_xmlrpc_methods' ) );
-		\add_filter( 'xmlrpc_enabled', '__return_false' );
+		\add_filter( 'xmlrpc_enabled', array( $this, 'filter_xmlrpc_enabled' ) );
 
 		// Configure secure cookies.
 		\add_action( 'init', array( $this, 'configure_secure_cookies' ) );
 		\add_filter( 'secure_auth_cookie', array( $this, 'force_secure_cookies' ) );
-		\add_filter( 'secure_logged_in_cookie', array( $this, 'force_secure_cookies' ) );
+		\add_filter( 'secure_logged_in_cookie', array( $this, 'force_secure_logged_in_cookie' ) );
 
 		// Disable user enumeration.
 		\add_action( 'init', array( $this, 'disable_user_enumeration' ) );
@@ -139,25 +144,81 @@ class GeneralSecurity implements LoadableInterface {
 	}
 
 	/**
+	 * Get the security headers for the current request
+	 *
+	 * @since 1.5.4
+	 * @return array<string, string> Header name => value.
+	 */
+	public function get_security_headers(): array {
+		$headers = array(
+			'X-Content-Type-Options' => 'nosniff',
+			'X-Frame-Options'        => 'SAMEORIGIN',
+			'X-XSS-Protection'       => '1; mode=block',
+			'Referrer-Policy'        => 'strict-origin-when-cross-origin',
+			'Permissions-Policy'     => 'geolocation=(), microphone=(), camera=()',
+		);
+
+		// HSTS for HTTPS sites (only in production, not in development environments)
+		// Includes preload directive to allow submission to browser HSTS preload lists.
+		if ( \is_ssl() && ! $this->is_development_environment() ) {
+			$headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload';
+		}
+
+		/**
+		 * Filters the security headers sent with every response.
+		 *
+		 * Use it to relax a header an integration needs (for example
+		 * `Permissions-Policy: geolocation=(self)` for a store locator) or to
+		 * remove one by unsetting its key.
+		 *
+		 * @since 1.5.4
+		 * @param array<string, string> $headers Header name => value.
+		 */
+		$headers = \apply_filters( 'silver_assist_security_headers', $headers );
+
+		return $headers;
+	}
+
+	/**
 	 * Add security headers
 	 *
+	 * Runs on `send_headers` (front end), `admin_init` (wp-admin, admin-ajax),
+	 * `login_init` (wp-login.php) and before a REST response is served.
+	 *
 	 * @since 1.1.1
+	 * @since 1.5.4 Also sent in wp-admin, on the login screen and for REST responses.
 	 * @return void
 	 */
 	public function add_security_headers(): void {
-		if ( ! headers_sent() ) {
-			// Content Security Policy.
-			header( 'X-Content-Type-Options: nosniff' );
-			header( 'X-Frame-Options: SAMEORIGIN' );
-			header( 'X-XSS-Protection: 1; mode=block' );
-			header( 'Referrer-Policy: strict-origin-when-cross-origin' );
-			header( 'Permissions-Policy: geolocation=(), microphone=(), camera=()' );
+		$this->send_headers_now( $this->get_security_headers() );
+	}
 
-			// HSTS for HTTPS sites (only in production, not in development environments)
-			// Includes preload directive to allow submission to browser HSTS preload lists.
-			if ( \is_ssl() && ! $this->is_development_environment() ) {
-				header( 'Strict-Transport-Security: max-age=31536000; includeSubDomains; preload' );
-			}
+	/**
+	 * Send the security headers before a REST response and pass the flag through
+	 *
+	 * @since 1.5.4
+	 * @param mixed $served Whether the request has already been served.
+	 * @return mixed The unchanged flag.
+	 */
+	public function add_rest_security_headers( $served ) {
+		$this->add_security_headers();
+		return $served;
+	}
+
+	/**
+	 * Send header lines
+	 *
+	 * @since 1.5.4
+	 * @param array<string, string> $headers Header name => value.
+	 * @return void
+	 */
+	protected function send_headers_now( array $headers ): void {
+		if ( headers_sent() ) {
+			return;
+		}
+
+		foreach ( $headers as $name => $value ) {
+			header( $name . ': ' . $value );
 		}
 	}
 
@@ -182,8 +243,21 @@ class GeneralSecurity implements LoadableInterface {
 		\remove_action( 'wp_head', 'wlwmanifest_link' );
 		\remove_action( 'wp_head', 'wp_shortlink_wp_head' );
 		\remove_action( 'wp_head', 'wp_generator' );
-		\remove_action( 'wp_head', 'feed_links_extra', 3 );
-		\remove_action( 'wp_head', 'feed_links', 2 );
+		/**
+		 * Filters whether the RSS feed autodiscovery tags are removed from wp_head.
+		 *
+		 * The feeds themselves keep working at their URLs; only the
+		 * `<link rel="alternate" type="application/rss+xml">` tags go. Return
+		 * false to keep them for sites whose readers or aggregators rely on
+		 * autodiscovery.
+		 *
+		 * @since 1.5.4
+		 * @param bool $remove Whether to remove the feed links. Default true.
+		 */
+		if ( \apply_filters( 'silver_assist_security_remove_feed_links', true ) ) {
+			\remove_action( 'wp_head', 'feed_links_extra', 3 );
+			\remove_action( 'wp_head', 'feed_links', 2 );
+		}
 		\remove_action( 'wp_head', 'index_rel_link' );
 		\remove_action( 'wp_head', 'parent_post_rel_link', 10 );
 		\remove_action( 'wp_head', 'start_post_rel_link', 10 );
@@ -273,7 +347,36 @@ class GeneralSecurity implements LoadableInterface {
 		return (bool) \apply_filters( 'silver_assist_security_strip_asset_version', $strip, $src, $handle );
 	}
 
-	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WordPress filter signature.
+	/**
+	 * Whether XML-RPC is disabled
+	 *
+	 * @since 1.5.4
+	 * @return bool
+	 */
+	private function is_xmlrpc_disabled(): bool {
+		/**
+		 * Filters whether XML-RPC is disabled.
+		 *
+		 * Return false for sites that need it (Jetpack, the WordPress mobile
+		 * apps, inbound pingbacks). Nothing in this plugin uses XML-RPC.
+		 *
+		 * @since 1.5.4
+		 * @param bool $disabled Whether to disable XML-RPC. Default true.
+		 */
+		return (bool) \apply_filters( 'silver_assist_security_disable_xmlrpc', true );
+	}
+
+	/**
+	 * Filter the xmlrpc_enabled flag
+	 *
+	 * @since 1.5.4
+	 * @param bool $enabled Whether XML-RPC is enabled.
+	 * @return bool
+	 */
+	public function filter_xmlrpc_enabled( bool $enabled ): bool {
+		return $this->is_xmlrpc_disabled() ? false : $enabled;
+	}
+
 	/**
 	 * Remove XML-RPC methods
 	 *
@@ -282,8 +385,7 @@ class GeneralSecurity implements LoadableInterface {
 	 * @return array
 	 */
 	public function remove_xmlrpc_methods( array $methods ): array {
-		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.Found
-		return array();
+		return $this->is_xmlrpc_disabled() ? array() : $methods;
 	}
 
 	/**
@@ -322,6 +424,22 @@ class GeneralSecurity implements LoadableInterface {
 	public function force_secure_cookies( bool $secure ): bool {
 		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		return \is_ssl();
+	}
+
+	/**
+	 * Mark the logged-in cookie Secure the way core decides, but never over plain HTTP
+	 *
+	 * Core marks it Secure only when the home URL is https, so a site whose
+	 * wp-admin is https and whose public home is http can still read it on the
+	 * public pages. Forcing Secure whenever the request is SSL dropped the cookie
+	 * there (admin bar and previews disappeared for logged-in users).
+	 *
+	 * @since 1.5.4
+	 * @param bool $secure Whether the cookie is Secure according to core.
+	 * @return bool
+	 */
+	public function force_secure_logged_in_cookie( bool $secure ): bool {
+		return $secure && \is_ssl();
 	}
 
 	/**
@@ -373,12 +491,33 @@ class GeneralSecurity implements LoadableInterface {
 	}
 
 	/**
-	 * Hide login errors
+	 * Hide login errors that reveal whether an account exists
+	 *
+	 * Only the login and lost-password screens are generic, and not while the
+	 * visitor is locked out: the lockout message is the only explanation for a
+	 * rejected login in that case. Password reset and other screens keep core's
+	 * messages ("passwords do not match", "link expired"), which reveal nothing
+	 * about accounts and are the only guidance the user gets.
 	 *
 	 * @since 1.1.1
+	 * @since 1.5.4 Leaves the lockout message and non-credential screens alone.
+	 * @param string $errors Error markup built by wp-login.php.
 	 * @return string
 	 */
-	public function hide_login_errors(): string {
+	public function hide_login_errors( $errors = '' ): string {
+		$errors = (string) $errors;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only screen detection, no form data is used.
+		$action = isset( $_REQUEST['action'] ) ? \sanitize_key( \wp_unslash( $_REQUEST['action'] ) ) : 'login';
+
+		if ( ! in_array( $action, array( 'login', 'lostpassword', 'retrievepassword' ), true ) ) {
+			return $errors;
+		}
+
+		$lockout_key = SecurityHelper::generate_ip_transient_key( 'lockout', SecurityHelper::get_client_ip() );
+		if ( \get_transient( $lockout_key ) ) {
+			return $errors;
+		}
+
 		return \__( 'Invalid login credentials.', 'silver-assist-security' );
 	}
 
@@ -451,6 +590,21 @@ class GeneralSecurity implements LoadableInterface {
 	 * @return bool True if development environment, false otherwise
 	 */
 	private function is_development_environment(): bool {
+		/**
+		 * Filters whether the site counts as a development environment.
+		 *
+		 * HSTS is skipped in development. A true or false value short-circuits
+		 * the detection (host name patterns, WP_DEBUG and the environment type);
+		 * null runs it. Note that WP_DEBUG on a production site disables HSTS.
+		 *
+		 * @since 1.5.4
+		 * @param bool|null $is_development Override, or null to auto-detect.
+		 */
+		$override = \apply_filters( 'silver_assist_security_is_development_environment', null );
+		if ( is_bool( $override ) ) {
+			return $override;
+		}
+
 		// Get server name.
 		$server_name = isset( $_SERVER['SERVER_NAME'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '';
 		if ( empty( $server_name ) && isset( $_SERVER['HTTP_HOST'] ) ) {
