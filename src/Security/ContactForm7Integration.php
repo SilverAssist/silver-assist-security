@@ -464,21 +464,32 @@ class ContactForm7Integration implements LoadableInterface {
 			'no risk involved',
 
 			// Suspicious promotional patterns.
-			'make $',
-			'earn $',
-			'win $',
 			'cash prize',
 		);
+
+		/**
+		 * Filters the spam phrases that block a Contact Form 7 submission.
+		 *
+		 * Phrases are matched case-insensitively anywhere in the submitted text. Keep
+		 * them specific: a family describing income ("we make $3,000 a month") is a
+		 * real enquiry, which is why bare "make $", "earn $" and "win $" are not listed.
+		 *
+		 * @since 1.5.4
+		 * @param string[] $spam_patterns Spam phrases.
+		 */
+		$spam_patterns = \apply_filters( 'silver_assist_security_cf7_spam_patterns', $spam_patterns );
 
 		// Combine message and name fields only (skip email field to avoid false positives).
 		$text_fields = array();
 		foreach ( $submission_data as $key => $value ) {
-			// Skip email fields and honeypot fields.
+			// Skip email fields and honeypot fields; array values (checkboxes) are joined.
 			if ( ! in_array( $key, array( 'your-email', 'email', 'silver_honeypot_field' ), true ) ) {
-				$text_fields[] = strtolower( (string) $value );
+				$text_fields[] = is_array( $value ) ? implode( ' ', array_map( 'strval', $value ) ) : (string) $value;
 			}
 		}
-		$text_data = implode( ' ', $text_fields );
+		// Keep the text as typed: the capitals check below needs the original case.
+		$raw_text  = implode( ' ', $text_fields );
+		$text_data = strtolower( $raw_text );
 
 		// Skip empty submissions.
 		if ( strlen( trim( $text_data ) ) < 5 ) {
@@ -503,9 +514,9 @@ class ContactForm7Integration implements LoadableInterface {
 
 		// Check for excessive capitalization (common in spam) - more lenient threshold.
 		$uppercase_ratio = 0;
-		$total_chars     = strlen( (string) $text_data );
+		$total_chars     = strlen( $raw_text );
 		if ( $total_chars > 30 ) { // Only check longer messages.
-			$uppercase_result = preg_replace( '/[^A-Z]/', '', (string) $text_data );
+			$uppercase_result = preg_replace( '/[^A-Z]/', '', $raw_text );
 			$uppercase_chars  = strlen( $uppercase_result ? $uppercase_result : '' );
 			$uppercase_ratio  = $uppercase_chars / $total_chars;
 		}

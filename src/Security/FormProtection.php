@@ -158,30 +158,48 @@ class FormProtection {
 			"'; DROP",
 			'\' OR \'',
 			'" OR "',
-			'--',
-			'/*',
-			'*/',
 		);
 
+		// Comment markers only count right after a quote (the classic way to cut off the
+		// rest of a query). A bare "--" or "/*" is ordinary text: a dash in a message.
+		$comment_pattern = '/[\'"`]\s*(?:--|\/\*)/';
+
+		/**
+		 * Filters the SQL injection signatures scanned for in form submissions.
+		 *
+		 * @since 1.5.4
+		 * @param string[] $sql_patterns Case-insensitive substrings.
+		 */
+		$sql_patterns = \apply_filters( 'silver_assist_security_sql_injection_patterns', $sql_patterns );
+
+		$matched = null;
 		foreach ( $sql_patterns as $pattern ) {
-			if ( stripos( $full_data, $pattern ) !== false ) {
-				SecurityHelper::log_security_event(
-					'SQL_INJECTION_DETECTED',
-					'SQL injection pattern detected in request',
-					array(
-						'pattern'       => $pattern,
-						'ip'            => SecurityHelper::get_client_ip(),
-						'user_agent'    => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
-						'query_string'  => $query_string,
-						// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Same read-only attack-signature scan as above.
-						'has_post_data' => ! empty( $_POST ),
-					)
-				);
-				return true;
+			if ( false !== stripos( $full_data, $pattern ) ) {
+				$matched = $pattern;
+				break;
 			}
 		}
+		if ( null === $matched && 1 === preg_match( $comment_pattern, $full_data ) ) {
+			$matched = 'quoted SQL comment';
+		}
 
-		return false;
+		if ( null === $matched ) {
+			return false;
+		}
+
+		SecurityHelper::log_security_event(
+			'SQL_INJECTION_DETECTED',
+			'SQL injection pattern detected in request',
+			array(
+				'pattern'       => $matched,
+				'ip'            => SecurityHelper::get_client_ip(),
+				'user_agent'    => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
+				'query_string'  => $query_string,
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Same read-only attack-signature scan as above.
+				'has_post_data' => ! empty( $_POST ),
+			)
+		);
+		return true;
 	}
 
 	/**

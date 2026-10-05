@@ -154,7 +154,7 @@ class GeneralSecurityTest extends WP_UnitTestCase
 
         // Test secure logged in cookie filter (has_filter returns priority when registered)
         $this->assertNotFalse(
-            has_filter("secure_logged_in_cookie", [$this->general_security, "force_secure_cookies"]),
+            has_filter("secure_logged_in_cookie", [$this->general_security, "force_secure_logged_in_cookie"]),
             "Secure logged in cookie filter should be registered"
         );
     }
