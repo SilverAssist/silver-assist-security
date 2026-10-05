@@ -70,8 +70,8 @@ classes. E2E runs the real plugin inside `@wordpress/env` with Playwright.
 
 **B. `/wp/v2/users` endpoint (priority 1)**
 
-- Remove the two routes only when `! is_user_logged_in()` (or, stricter, when the current
-  user lacks `list_users`). Evaluate inside the `rest_endpoints` callback, never at
+- Remove the two routes unless the user is logged in and has `edit_posts` (the editor sends
+  `who=authors`, which core allows for post editors; `list_users` would still block them). Evaluate inside the `rest_endpoints` callback, never at
   registration time, since the user is resolved after `init`.
 - Keep author archive redirect and `author_link` rewrite as is; verify they do not fire in
   admin/REST contexts used by the editor (`template_redirect` is front-end only, so low
@@ -219,3 +219,24 @@ the previous version. As an emergency mitigation on a site, add a mu-plugin that
 - Access to OSA STG/PRD (via `aws-ecs` tools) for Phase 1 data and final verification
 - WEB-1193 and WEB-1194 own the updater fix; this work does not depend on them because delivery is by manual zip
 - Coordination with Mauricio Gomez (ticket assignee) so findings land in WEB-1222
+
+## Execution Notes (2026-10-05)
+
+- **Phase 1**: partial. SSH to STG/PRD timed out (VPN?), so no server-side bisect. Evidence
+  gathered from outside: STG serves `wp-includes/js/dist/*.js` with `cache-control: max-age=31536000`
+  and `/wp-json/wp/v2/users` returns 404. Login on STG is hidden by this plugin (AdminHideSecurity),
+  reachable only through `/silver-admin`; the second hop (`wp-login.php?silver_auth=silver-admin`)
+  still returned 404 to an unauthenticated curl. The exact TypeError is **not** reproduced locally
+  (it needs a stale cached bundle after a core update).
+- **Phase 2**: done. Also found and fixed a second regression: the plugin removed
+  `wp_oembed_register_route`, which also drops `/oembed/1.0/proxy` used by the Embed block.
+- **Phase 3**: partial (editor-critical routes, assets per context, users per role, generator tag,
+  author link). Remaining areas are listed in the audit issue.
+- **Phase 4**: done (11 specs). Reverting the Phase 2 fix makes 2 fail.
+- **Phase 5**: not started: no push, no release, no deploy. Pending `core-review` re-run before push
+  and a manual zip install on OSA STG then PRD.
+- Finding for the audit: `LoginSecurity` returns 404 on wp-login.php for more than 15 requests per
+  minute from one IP, which can lock out legitimate users behind a shared IP.
+- Pre-existing failures observed (unchanged by this work): `LoginBrandingTest::test_custom_bg_color_applied`,
+  `RestAPISecurityIntegrationTest::test_graphql_endpoints_not_affected`, and a full-suite run that stops
+  early (178 of 501 tests reported) because of an earlier test.

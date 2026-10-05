@@ -83,7 +83,7 @@ This plugin automatically implements enterprise-level security measures without 
 - **Secure Headers**: Essential security headers (X-Frame-Options, X-XSS-Protection, etc.)
 - **File Editing Disabled**: Prevents unauthorized file modifications through admin panel
 - **XML-RPC Disabled**: Blocks XML-RPC attacks and vulnerabilities
-- **Version Hiding**: Conceals WordPress version information from potential attackers
+- **Version Hiding**: Conceals WordPress version information from potential attackers (generator tags and theme/plugin asset `?ver=` on the front end; WordPress core assets and wp-admin keep `?ver=` so the block editor and caches stay consistent, adjustable with the `silver_assist_security_strip_asset_version` filter)
 
 ### 🤖 Advanced Bot Protection *(Login Page)*
 
