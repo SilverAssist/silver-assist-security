@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 #
-# Run the full PHPUnit suite and fail if it did not run every declared test.
+# Run the PHPUnit suite and fail if it did not run to the end.
 #
 # A test (or the code it calls) that ends the PHP process with exit 0 stops the run early while
-# PHPUnit itself reports success. This compares the tests PHPUnit declares (--list-tests) with the
-# total written to the JUnit log, which is only produced when the run reaches the end.
+# PHPUnit itself reports success. The JUnit log is only written completely when the run reaches the
+# end, so this checks it was produced and is well formed. For a full run (no arguments) it also
+# compares the total with the tests PHPUnit declares (--list-tests). `--list-tests` does not honor
+# `--filter`, so with extra arguments only the completeness of the log is checked.
 #
 # Usage: bash scripts/run-phpunit-complete.sh [extra phpunit args]
 #
@@ -17,25 +19,34 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
 
 JUNIT="tests/results/junit.xml"
+EXPECTED=""
 
-EXPECTED=$(vendor/bin/phpunit --list-tests 2>/dev/null | grep -c '^ - ' || true)
-if [ "$EXPECTED" -eq 0 ]; then
-    echo "ERROR: could not determine the number of declared tests (is the WordPress Test Suite installed?)" >&2
-    exit 1
+if [ "$#" -eq 0 ]; then
+    EXPECTED=$(vendor/bin/phpunit --list-tests 2>/dev/null | grep -c '^ - ' || true)
+    if [ "$EXPECTED" -eq 0 ]; then
+        echo "ERROR: could not determine the number of declared tests (is the WordPress Test Suite installed?)" >&2
+        exit 1
+    fi
 fi
 
 rm -f "$JUNIT"
 vendor/bin/phpunit --testdox "$@"
 
 if [ ! -f "$JUNIT" ]; then
-    echo "ERROR: PHPUnit exited without writing $JUNIT; the run stopped early (expected $EXPECTED tests)." >&2
+    echo "ERROR: PHPUnit exited without writing $JUNIT; the run stopped early." >&2
     exit 1
 fi
 
-RAN=$(php -r '$x = @simplexml_load_file($argv[1]); echo $x ? (int) $x->testsuite["tests"] : 0;' "$JUNIT")
-if [ "$RAN" -ne "$EXPECTED" ]; then
+# Prints the number of tests, or -1 when the log is missing its closing tags (a cut run).
+RAN=$(php -r '$x = @simplexml_load_file($argv[1]); echo $x ? (int) $x->testsuite["tests"] : -1;' "$JUNIT")
+if [ "$RAN" -lt 0 ]; then
+    echo "ERROR: $JUNIT is incomplete; the run stopped early." >&2
+    exit 1
+fi
+
+if [ -n "$EXPECTED" ] && [ "$RAN" -ne "$EXPECTED" ]; then
     echo "ERROR: PHPUnit ran $RAN of $EXPECTED declared tests; the run stopped early." >&2
     exit 1
 fi
 
-echo "OK: all $RAN declared tests ran."
+echo "OK: the run completed ($RAN tests)."

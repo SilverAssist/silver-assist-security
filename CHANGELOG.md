@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `scripts/run-quality-checks.sh` runs PHPUnit through the new `scripts/run-phpunit-complete.sh`, which fails when fewer tests ran than PHPUnit declares.
+- `scripts/run-quality-checks.sh` runs PHPUnit through the new `scripts/run-phpunit-complete.sh`, which fails when the run stops early (JUnit log missing or incomplete; for a full run, fewer tests than PHPUnit declares). It also fixes a blind spot: `run_phpunit` runs on the left of `||`, where bash disables `set -e`, so a failing test left the script at exit 0 and CI could not fail on broken tests; the status is now returned explicitly.
 - `RestAPISecurityIntegrationTest::test_graphql_endpoints_not_affected` is quarantined with its reason: WPGraphQL is not served through REST, so the premise was wrong. The real check is tracked in #132.
 - README: local setup now lists the WPGraphQL and Contact Form 7 installers used by CI.
 

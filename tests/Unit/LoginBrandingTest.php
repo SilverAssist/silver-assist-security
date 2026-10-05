@@ -216,15 +216,23 @@ class LoginBrandingTest extends WP_UnitTestCase {
 		update_option( 'silver_assist_login_branding_bg_color', '#1a2b3c' );
 		update_option( 'silver_assist_login_branding_show_illustration', 1 );
 
+		// Start from a clean style queue so earlier tests cannot leak inline CSS into this one.
+		$GLOBALS['wp_styles'] = null;
+
 		$branding = new LoginBranding();
 
-		// Footer no longer contains inline style; bg color is in wp_add_inline_style.
+		// The color is registered as inline CSS on the branding stylesheet...
+		$branding->enqueue_login_assets();
+		$inline_css = implode( '', (array) wp_styles()->get_data( 'silver-assist-login-branding', 'after' ) );
+		$this->assertStringContainsString( '.silver-login-illustration-panel', $inline_css );
+		$this->assertStringContainsString( 'background: #1a2b3c', $inline_css );
+
+		// ...and the footer keeps the panel markup without inlining that color.
 		ob_start();
 		$branding->inject_login_footer();
 		$output = ob_get_clean();
 
-		// Footer should have the panel markup but NOT the configured color inline. The SVG
-		// illustration legitimately carries its own style attributes, so check for the color.
+		// The SVG illustration legitimately carries its own style attributes, so check for the color.
 		$this->assertStringContainsString( 'silver-login-illustration-panel', $output );
 		$this->assertStringNotContainsString( '#1a2b3c', $output );
 	}
