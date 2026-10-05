@@ -125,6 +125,123 @@ class SecurityHelper {
 	}
 
 	/**
+	 * Atomically increment a fixed-window rate-limit counter
+	 *
+	 * Uses `INSERT IGNORE` (persistent-cache path uses `wp_cache_add`) to claim the first request in a
+	 * new window, guaranteeing that exactly one caller initializes the window while every other caller is
+	 * routed through the atomic increment path. This closes the flood-bypass window that opens at every
+	 * window boundary when initialization is done via a non-atomic read-then-write sequence. The window
+	 * is fixed: accepted requests never extend it.
+	 *
+	 * @since 1.5.4 Moved from `RestAPISecurity` so the GraphQL limiter shares it.
+	 * @param string $window_key   Transient key for the window start timestamp.
+	 * @param string $count_key    Transient key for the request counter.
+	 * @param int    $current_time Current Unix timestamp.
+	 * @param int    $ttl          Window length in seconds.
+	 * @return int Request count for this window (>= 1).
+	 */
+	public static function increment_rate_window( string $window_key, string $count_key, int $current_time, int $ttl ): int {
+		// Persistent object cache: `wp_cache_add` is atomic across processes.
+		// We claim the window by adding the *counter* key (not the window key) so
+		// that any loser is guaranteed to find a valid counter to increment — no
+		// gap between claim and counter-seeding for concurrent losers to slip into.
+		if ( \wp_using_ext_object_cache() ) {
+			if ( \wp_cache_add( $count_key, 1, '', $ttl ) ) {
+				\wp_cache_set( $window_key, $current_time, '', $ttl );
+				\set_transient( $count_key, 1, $ttl );
+				\set_transient( $window_key, $current_time, $ttl );
+				return 1;
+			}
+
+			$count = \wp_cache_incr( $count_key, 1, '' );
+			if ( false !== $count ) {
+				return (int) $count;
+			}
+			// Cache evicted the counter mid-window. Reclaim atomically so that if
+			// several requests observe the miss simultaneously, only one caller
+			// wins the `wp_cache_add` and returns 1; every loser is guaranteed to
+			// find the reseeded counter and increment it instead of also returning 1.
+			if ( \wp_cache_add( $count_key, 1, '', $ttl ) ) {
+				\set_transient( $count_key, 1, $ttl );
+				return 1;
+			}
+			$count = \wp_cache_incr( $count_key, 1, '' );
+			return false === $count ? 1 : (int) $count;
+		}
+
+		// No persistent cache: rely on the UNIQUE index of `wp_options.option_name`
+		// (`INSERT IGNORE`) and InnoDB row-level locking (`UPDATE ... value = value + 1`).
+		global $wpdb;
+
+		$count_option   = "_transient_{$count_key}";
+		$count_timeout  = "_transient_timeout_{$count_key}";
+		$window_option  = "_transient_{$window_key}";
+		$window_timeout = "_transient_timeout_{$window_key}";
+		$expiry         = $current_time + $ttl;
+
+		$inserted = (int) $wpdb->query(
+			$wpdb->prepare(
+				"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no'), (%s, %s, 'no'), (%s, %s, 'no'), (%s, %s, 'no')",
+				$window_option,
+				(string) $current_time,
+				$window_timeout,
+				(string) $expiry,
+				$count_option,
+				'1',
+				$count_timeout,
+				(string) $expiry
+			)
+		);
+
+		if ( $inserted > 0 ) {
+			// We won the claim (at least one row was newly inserted).
+			return 1;
+		}
+
+		// Rows already exist. Detect an expired window: WordPress does not sweep
+		// `_transient_timeout_*` rows unless someone reads the transient, but we hit
+		// the options table directly, so we must expire and reset the window ourselves.
+		// The count_timeout row doubles as the atomic reset lock: exactly one caller
+		// transitions its value from "<= now" to the new expiry via the WHERE clause.
+		$reset_won = (int) $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND CAST(option_value AS UNSIGNED) <= %d",
+				(string) $expiry,
+				$count_timeout,
+				$current_time
+			)
+		);
+		if ( 1 === $reset_won ) {
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s", (string) $current_time, $window_option ) );
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s", (string) $expiry, $window_timeout ) );
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s", '1', $count_option ) );
+			return 1;
+		}
+
+		// Window is still active (or another caller just reset it) — atomically increment.
+		$updated = (int) $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_value = CAST(option_value AS UNSIGNED) + 1 WHERE option_name = %s",
+				$count_option
+			)
+		);
+
+		if ( 1 === $updated ) {
+			return (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+					$count_option
+				)
+			);
+		}
+
+		// Row vanished (transient GC between claim and increment) — reseed.
+		\set_transient( $window_key, $current_time, $ttl );
+		\set_transient( $count_key, 1, $ttl );
+		return 1;
+	}
+
+	/**
 	 * Get the trusted proxy CIDRs declared by the site
 	 *
 	 * Merges the `SILVER_ASSIST_TRUSTED_PROXY_CIDRS` constant (comma-separated string or array) and

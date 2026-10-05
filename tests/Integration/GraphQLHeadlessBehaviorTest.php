@@ -410,6 +410,53 @@ class GraphQLHeadlessBehaviorTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Only real `__schema` and `__type` selections are introspection
+	 *
+	 * The text `__schema` inside a string argument is ordinary data (a search term, for example).
+	 *
+	 * @return void
+	 */
+	public function test_introspection_words_inside_string_literals_are_allowed_in_production(): void {
+		$this->set_environment_type( 'production' );
+
+		$result = $this->run_query( '{ posts(where: {search: "__schema __type"}) { nodes { id } } } # __schema' );
+
+		$this->assertArrayNotHasKey( 'errors', $result, 'A search term is not introspection: ' . $this->error_messages( $result ) );
+	}
+
+	/**
+	 * Introspection is rejected however it is written
+	 *
+	 * @dataProvider introspection_queries
+	 *
+	 * @param string $query Query using an introspection entry point.
+	 * @return void
+	 */
+	public function test_introspection_forms_are_rejected_in_production( string $query ): void {
+		$this->set_environment_type( 'production' );
+
+		$this->expectException( UserError::class );
+		$this->expectExceptionMessage( 'Introspection is disabled in production' );
+
+		$this->run_query( $query );
+	}
+
+	/**
+	 * Ways to reach introspection
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function introspection_queries(): array {
+		return array(
+			'__schema'           => array( '{ __schema { queryType { name } } }' ),
+			'__type'             => array( '{ __type(name: "Post") { name } }' ),
+			'aliased __schema'   => array( '{ s: __schema { queryType { name } } }' ),
+			'inside a fragment'  => array( 'query { ...Intro } fragment Intro on RootQuery { __schema { queryType { name } } }' ),
+			'named operation'    => array( 'query Intro { __type(name: "Post") { name } }' ),
+		);
+	}
+
+	/**
 	 * `__typename` is not introspection, and clients add it to every query
 	 *
 	 * Apollo Client and urql append `__typename` automatically. Blocking it in production breaks every
@@ -584,6 +631,41 @@ class GraphQLHeadlessBehaviorTest extends WP_UnitTestCase {
 		$this->assertSame( 0, (int) $raw, 'The raw IP should not be part of the option name' );
 
 		$this->assertNotFalse( \get_transient( 'graphql_rate_limit_' . \md5( '203.0.113.9' ) ), 'The counter should be keyed by the md5 of the IP' );
+	}
+
+	/**
+	 * The rate limit is a fixed window: accepted requests do not extend it
+	 *
+	 * A counter whose lifetime is renewed by every request turns "N per minute" into "N until a
+	 * full minute of silence", so sparse but steady traffic would be locked out for good.
+	 *
+	 * @return void
+	 */
+	public function test_rate_limit_window_is_fixed_and_resets_when_it_ends(): void {
+		global $wpdb;
+
+		if ( \wp_using_ext_object_cache() ) {
+			$this->markTestSkipped( 'This test targets the options-table counter (no persistent object cache).' );
+		}
+
+		$key     = 'graphql_rate_limit_' . \md5( '203.0.113.9' );
+		$timeout = "_transient_timeout_{$key}";
+
+		$this->run_query( '{ generalSettings { title } }' );
+		$wpdb->update( $wpdb->options, array( 'option_value' => (string) ( \time() + 10 ) ), array( 'option_name' => $timeout ) );
+
+		$this->run_query( '{ generalSettings { title } }' );
+
+		\wp_cache_flush(); // The rows were changed with direct queries.
+		$this->assertEqualsWithDelta( \time() + 10, (int) \get_option( $timeout ), 2, 'A later request must not renew the window' );
+		$this->assertSame( 2, (int) \get_transient( $key ), 'Both requests in the window are counted' );
+
+		$wpdb->update( $wpdb->options, array( 'option_value' => (string) ( \time() - 1 ) ), array( 'option_name' => $timeout ) );
+		\wp_cache_flush();
+		$this->run_query( '{ generalSettings { title } }' );
+
+		\wp_cache_flush();
+		$this->assertSame( 1, (int) \get_transient( $key ), 'The first request after the window starts a new count' );
 	}
 
 	/**

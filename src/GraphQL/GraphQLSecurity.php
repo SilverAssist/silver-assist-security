@@ -17,7 +17,9 @@ namespace SilverAssist\Security\GraphQL;
 use GraphQL\Error\Error;
 use GraphQL\Error\UserError;
 use GraphQL\Executor\ExecutionResult;
+use GraphQL\Language\Parser;
 use GraphQL\Language\Printer;
+use GraphQL\Language\Visitor;
 use SilverAssist\PluginKernel\Interfaces\LoadableInterface;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\SecurityHelper;
@@ -601,7 +603,8 @@ class GraphQLSecurity implements LoadableInterface {
 	/**
 	 * Check if query is introspection
 	 *
-	 * Only the `__schema` and `__type` entry points are introspection. `__typename` is a meta field
+	 * Only `__schema` and `__type` field selections are introspection, found by parsing the query so
+	 * the same text inside a string argument or a comment does not count. `__typename` is a meta field
 	 * that Apollo Client, urql and Relay add to ordinary queries, so it must stay allowed.
 	 *
 	 * @since 1.1.1
@@ -610,7 +613,29 @@ class GraphQLSecurity implements LoadableInterface {
 	 * @return bool
 	 */
 	private function is_introspection_query( string $query ): bool {
-		return (bool) preg_match( '/\b__(?:schema|type)\b/', $query );
+		try {
+			$document = Parser::parse( $query, array( 'noLocation' => true ) );
+		} catch ( \Throwable $e ) {
+			// Not a valid document, so it will not execute; stay conservative with a text match.
+			return (bool) \preg_match( '/\b__(?:schema|type)\b/', $query );
+		}
+
+		$found = false;
+		Visitor::visit(
+			$document,
+			array(
+				'Field' => static function ( $node ) use ( &$found ) {
+					if ( \in_array( $node->name->value, array( '__schema', '__type' ), true ) ) {
+						$found = true;
+						return Visitor::stop();
+					}
+
+					return null;
+				},
+			)
+		);
+
+		return $found;
 	}
 
 	/**
@@ -858,8 +883,7 @@ class GraphQLSecurity implements LoadableInterface {
 		// Get rate limiting configuration from manager.
 		$rate_config = $this->config_manager->get_rate_limiting_config();
 
-		$rate_limit_key = 'graphql_rate_limit_' . \md5( $ip );
-		$time_window    = 60; // seconds.
+		$time_window = 60; // seconds.
 
 		// Check if this is likely a build/development request.
 		$is_likely_build = $this->is_likely_build_process();
@@ -871,13 +895,18 @@ class GraphQLSecurity implements LoadableInterface {
 			$max_requests = $rate_config['requests_per_minute'];
 		}
 
-		$current_requests = \get_transient( $rate_limit_key ) ? \get_transient( $rate_limit_key ) : 0;
+		// Fixed-window counter shared with the REST limiter: atomic under concurrent requests and
+		// never extended by accepted requests.
+		$current_requests = SecurityHelper::increment_rate_window(
+			SecurityHelper::generate_ip_transient_key( 'graphql_rate_window', $ip ),
+			SecurityHelper::generate_ip_transient_key( 'graphql_rate_limit', $ip ),
+			\time(),
+			$time_window
+		);
 
-		if ( $current_requests >= $max_requests ) {
+		if ( $current_requests > $max_requests ) {
 			throw new UserError( \esc_html( \__( 'Rate limit exceeded. Please try again later.', 'silver-assist-security' ) ) );
 		}
-
-		\set_transient( $rate_limit_key, $current_requests + 1, $time_window );
 	}
 
 	/**
