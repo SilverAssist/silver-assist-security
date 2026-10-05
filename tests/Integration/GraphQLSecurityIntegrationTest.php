@@ -14,6 +14,7 @@ namespace SilverAssist\Security\Tests\Integration;
 use WP_UnitTestCase;
 use SilverAssist\Security\GraphQL\GraphQLSecurity;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
+use SilverAssist\Security\Tests\Helpers\HeadlessTestSupport;
 
 /**
  * Class GraphQLSecurityIntegrationTest
@@ -23,6 +24,8 @@ use SilverAssist\Security\GraphQL\GraphQLConfigManager;
  * @since 1.1.14
  */
 class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
+
+	use HeadlessTestSupport;
 
 	/**
 	 * GraphQL Security instance
@@ -64,6 +67,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 		// Clean up transients
 		\delete_transient( 'graphql_security_config' );
 		\delete_transient( 'wpgraphql_config_cache' );
+		$this->restore_headless_state();
 
 		parent::tearDown();
 	}
@@ -75,9 +79,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_graphql_security_initializes_with_wpgraphql(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		$security = new GraphQLSecurity();
 		$this->assertInstanceOf( GraphQLSecurity::class, $security );
@@ -90,9 +92,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_graphql_security_registers_wordpress_hooks(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		$security = new GraphQLSecurity();
 
@@ -239,9 +239,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_introspection_disabled_in_production(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		// Enable introspection in WPGraphQL settings so the method doesn't early-return.
 		$settings                                  = \get_option( 'graphql_general_settings', array() );
@@ -251,29 +249,28 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 		// Clear singleton config cache so it picks up the new setting.
 		GraphQLConfigManager::get_instance()->clear_cache();
 
-		// If WP_ENVIRONMENT_TYPE is already defined as non-production, we can only verify
-		// the method doesn't add the filter. Constants cannot be redefined in PHP.
-		if ( defined( 'WP_ENVIRONMENT_TYPE' ) && WP_ENVIRONMENT_TYPE !== 'production' ) {
-			$security = new GraphQLSecurity();
-			$security->disable_introspection_in_production();
-			$this->assertFalse(
-				\has_filter( 'graphql_introspection_enabled' ) !== false,
-				'Introspection filter should not be registered in non-production environment'
-			);
-		} else {
-			// Define production environment if not already defined.
-			if ( ! defined( 'WP_ENVIRONMENT_TYPE' ) ) {
-				define( 'WP_ENVIRONMENT_TYPE', 'production' );
-			}
+		// Production: the plugin switches introspection off.
+		$this->set_environment_type( 'production' );
+		\remove_all_filters( 'graphql_introspection_enabled' );
 
-			$security = new GraphQLSecurity();
-			$security->disable_introspection_in_production();
+		$security = new GraphQLSecurity();
+		$security->disable_introspection_in_production();
 
-			$this->assertTrue(
-				\has_filter( 'graphql_introspection_enabled' ) !== false,
-				'Introspection filter should be registered in production'
-			);
-		}
+		$this->assertNotFalse(
+			\has_filter( 'graphql_introspection_enabled' ),
+			'Introspection filter should be registered in production'
+		);
+
+		// Any other environment: it does not.
+		$this->set_environment_type( 'staging' );
+		\remove_all_filters( 'graphql_introspection_enabled' );
+
+		$security->disable_introspection_in_production();
+
+		$this->assertFalse(
+			\has_filter( 'graphql_introspection_enabled' ),
+			'Introspection filter should not be registered outside production'
+		);
 
 		// Cleanup.
 		\delete_option( 'graphql_general_settings' );
@@ -286,9 +283,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_graphql_security_headers(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		$security = new GraphQLSecurity();
 
@@ -419,9 +414,8 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_wpgraphql_native_settings_integration(): void {
-		if ( ! \function_exists( 'get_graphql_setting' ) ) {
-			$this->markTestSkipped( 'WPGraphQL settings function not available' );
-		}
+		$this->require_wpgraphql();
+		$this->assertTrue( \function_exists( 'get_graphql_setting' ), 'WPGraphQL should provide get_graphql_setting()' );
 
 		$config_manager = GraphQLConfigManager::get_instance();
 		$status         = $config_manager->get_integration_status();
@@ -438,9 +432,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_multiple_security_instances(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		$security1 = new GraphQLSecurity();
 		$security2 = new GraphQLSecurity();
@@ -545,9 +537,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_enforce_auth_skips_when_not_required(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		$settings = \get_option( 'graphql_general_settings', array() );
 		$settings['restrict_endpoint_to_logged_in_users'] = 'off';
@@ -570,9 +560,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_enforce_auth_registers_filter_when_required(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		$settings = \get_option( 'graphql_general_settings', array() );
 		$settings['restrict_endpoint_to_logged_in_users'] = 'on';
@@ -595,9 +583,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_validate_auth_allows_logged_in_user(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		$user_id = $this->factory()->user->create( array( 'role' => 'editor' ) );
 		\wp_set_current_user( $user_id );
@@ -617,15 +603,10 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_validate_auth_blocks_unauthenticated(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
-		// Skip if env is local/development — auth bypass is expected there.
-		$env = \function_exists( 'wp_get_environment_type' ) ? \wp_get_environment_type() : 'production';
-		if ( \in_array( $env, array( 'local', 'development' ), true ) ) {
-			$this->markTestSkipped( 'Auth bypass is expected in local/development environments' );
-		}
+		// Auth bypass is expected in local/development only, so pin the environment.
+		$this->set_environment_type( 'production' );
 
 		\wp_set_current_user( 0 );
 
@@ -645,14 +626,9 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_validate_auth_allows_local_environment(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
-		$env = \function_exists( 'wp_get_environment_type' ) ? \wp_get_environment_type() : 'production';
-		if ( ! \in_array( $env, array( 'local', 'development' ), true ) ) {
-			$this->markTestSkipped( 'This test requires local/development environment' );
-		}
+		$this->set_environment_type( 'local' );
 
 		\wp_set_current_user( 0 );
 
@@ -675,9 +651,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_api_key_auth_skips_authenticated_user(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		$security = new GraphQLSecurity();
 		$result   = $security->authenticate_api_key( 42 );
@@ -692,9 +666,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_api_key_auth_skips_non_graphql_request(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		// Ensure REQUEST_URI does not contain /graphql.
 		$_SERVER['REQUEST_URI'] = '/wp-admin/options.php';
@@ -712,9 +684,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_api_key_auth_returns_false_without_key(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		$_SERVER['REQUEST_URI'] = '/graphql';
 		unset( $_SERVER['HTTP_X_API_KEY'], $_SERVER['HTTP_AUTHORIZATION'] );
@@ -732,9 +702,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_api_key_auth_rejects_invalid_key(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		// Store a hashed key.
 		$valid_key = 'test-valid-key-12345';
@@ -761,9 +729,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_api_key_auth_succeeds_with_valid_key(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		// Create a service user.
 		$service_user_id = $this->factory()->user->create( array( 'role' => 'editor' ) );
@@ -799,9 +765,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_api_key_auth_supports_bearer_token(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		// Create a service user.
 		$service_user_id = $this->factory()->user->create( array( 'role' => 'editor' ) );
@@ -837,9 +801,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_preserve_auth_returns_false_after_api_key_success(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		// Set up a valid API key auth scenario.
 		$service_user_id = $this->factory()->user->create( array( 'role' => 'editor' ) );
@@ -875,9 +837,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_preserve_auth_passes_through_without_api_key_auth(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		$security = new GraphQLSecurity();
 
@@ -896,9 +856,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_preserve_auth_does_not_bypass_csrf_for_invalid_key(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		// Store a valid key hash but send the wrong key.
 		\update_option( 'silver_assist_graphql_api_key', \wp_hash_password( 'correct-key' ) );
@@ -932,9 +890,7 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_preserve_auth_does_not_bypass_csrf_for_cookie_user_with_header(): void {
-		if ( ! \class_exists( 'WPGraphQL' ) ) {
-			$this->markTestSkipped( 'WPGraphQL plugin not available' );
-		}
+		$this->require_wpgraphql();
 
 		// User is logged in via cookie (simulate already-authenticated user).
 		$admin_user = $this->factory()->user->create( array( 'role' => 'administrator' ) );

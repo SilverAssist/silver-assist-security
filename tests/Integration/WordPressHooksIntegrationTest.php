@@ -15,6 +15,7 @@ use SilverAssist\Security\Core\Plugin;
 use SilverAssist\Security\Admin\AdminPanel;
 use SilverAssist\Security\Security\LoginSecurity;
 use SilverAssist\Security\Security\GeneralSecurity;
+use SilverAssist\Security\Tests\Helpers\HeadlessTestSupport;
 use WP_UnitTestCase;
 
 /**
@@ -25,6 +26,8 @@ use WP_UnitTestCase;
  */
 class WordPressHooksIntegrationTest extends WP_UnitTestCase
 {
+    use HeadlessTestSupport;
+
     /**
      * Plugin instance
      *
@@ -205,9 +208,7 @@ class WordPressHooksIntegrationTest extends WP_UnitTestCase
      */
     public function test_graphql_hooks_integration(): void
     {
-        if (!\class_exists('WPGraphQL')) {
-            $this->markTestSkipped('WPGraphQL not available for GraphQL hooks testing');
-        }
+        $this->require_wpgraphql();
         
         // Test GraphQL specific hooks
         $this->assertTrue(

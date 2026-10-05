@@ -79,3 +79,9 @@ parameters:
         -
             message: '#Instantiated class GraphQL\\Executor\\ExecutionResult not found#'
             path: src/GraphQL/GraphQLSecurity.php
+        -
+            message: '#Call to static method doPrint\(\) on an unknown class GraphQL\\Language\\Printer#'
+            path: src/GraphQL/GraphQLSecurity.php
+        -
+            message: '#Call to static method is_graphql_http_request\(\) on an unknown class WPGraphQL\\Router#'
+            path: src/GraphQL/GraphQLSecurity.php

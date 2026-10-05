@@ -12,6 +12,7 @@
 namespace SilverAssist\Security\Tests\Unit;
 
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
+use SilverAssist\Security\Tests\Helpers\HeadlessTestSupport;
 
 /**
  * Test GraphQLConfigManager functionality
@@ -20,6 +21,8 @@ use SilverAssist\Security\GraphQL\GraphQLConfigManager;
  */
 class GraphQLConfigManagerTest extends \WP_UnitTestCase
 {
+    use HeadlessTestSupport;
+
     /**
      * GraphQLConfigManager instance
      *
@@ -290,9 +293,7 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
      */
     public function test_authentication_required_wpgraphql_on(): void
     {
-        if (! \class_exists('WPGraphQL')) {
-            $this->markTestSkipped('WPGraphQL plugin not available');
-        }
+        $this->require_wpgraphql();
 
         $settings = get_option('graphql_general_settings', array());
         $settings['restrict_endpoint_to_logged_in_users'] = 'on';
@@ -337,9 +338,7 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
      */
     public function test_security_level_no_double_counting_auth(): void
     {
-        if (! \class_exists('WPGraphQL')) {
-            $this->markTestSkipped('WPGraphQL plugin not available');
-        }
+        $this->require_wpgraphql();
 
         update_option('graphql_general_settings', array('restrict_endpoint_to_logged_in_users' => 'on'));
         $this->config_manager->clear_cache();
