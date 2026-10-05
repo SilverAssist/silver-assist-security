@@ -223,8 +223,9 @@ class LoginBrandingTest extends WP_UnitTestCase {
 		$branding->inject_login_footer();
 		$output = ob_get_clean();
 
-		// Footer should have the panel markup but NOT the color inline.
+		// Footer should have the panel markup but NOT the configured color inline. The SVG
+		// illustration legitimately carries its own style attributes, so check for the color.
 		$this->assertStringContainsString( 'silver-login-illustration-panel', $output );
-		$this->assertStringNotContainsString( 'style=', $output );
+		$this->assertStringNotContainsString( '#1a2b3c', $output );
 	}
 }

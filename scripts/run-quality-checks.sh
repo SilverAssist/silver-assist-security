@@ -122,8 +122,8 @@ run_phpunit() {
         setup_wordpress_test_suite
     fi
     
-    # Run all tests with detailed output
-    vendor/bin/phpunit --testdox
+    # Run all tests with detailed output; fails if the run stops before every declared test ran.
+    bash scripts/run-phpunit-complete.sh
     
     print_header "📊 Test Summary"
     

@@ -28,7 +28,7 @@ class AssetVersioningTest extends WP_UnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        // Other tests define DOING_AJAX globally; pin the context for isolation.
+        // Pin the context (not AJAX) so these tests never depend on state left by other tests.
         add_filter("wp_doing_ajax", "__return_false");
         new GeneralSecurity();
     }

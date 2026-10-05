@@ -430,9 +430,23 @@ Run comprehensive quality checks matching CI/CD pipeline:
 # One-time: Install WordPress Test Suite
 ./scripts/install-wp-tests.sh wordpress_test root '' localhost latest
 
+# One-time: Install the same optional plugins CI uses (otherwise their tests are skipped)
+./scripts/install-wpgraphql-for-tests.sh
+./scripts/install-cf7-for-tests.sh
+
 # Daily: Run quality checks before committing
 ./scripts/run-quality-checks.sh
+
+# Or only the PHPUnit suite, failing if it stops before every declared test ran
+bash scripts/run-phpunit-complete.sh
 ```
+
+`install-wpgraphql-for-tests.sh` and `install-cf7-for-tests.sh` expect the WordPress core directory next to
+`WP_TESTS_DIR` (`$(dirname "$WP_TESTS_DIR")/wordpress`). With WPGraphQL installed, the GraphQL tests run
+instead of being skipped. Contact Form 7 is installed but deliberately not loaded by the shared test bootstrap:
+loading it makes the CF7 admin tab appear, which several functional tests assume is hidden, so the CF7 tests
+define what they need themselves and one real-environment test is skipped when the class is missing. The other
+remaining skips (multisite, Settings Hub fallback, local-environment only) each state their reason.
 
 #### End-to-End Tests (Playwright)
 

@@ -415,14 +415,16 @@ class AdminHideSecurityTest extends WP_UnitTestCase
 
         // Simulate AJAX request
         $_SERVER['REQUEST_URI'] = '/wp-admin/admin-ajax.php';
-        \define('DOING_AJAX', true);
+        // Do not define() DOING_AJAX: a constant can never be undefined and would make
+        // wp_doing_ajax() true for every later test in the run. Use the filter instead.
+        \add_filter('wp_doing_ajax', '__return_true');
 
         $this->admin_hide_security = new AdminHideSecurity();
 
         // Verify feature doesn't interfere with AJAX
         $this->assertTrue(
-            \defined('DOING_AJAX'),
-            'AJAX constant should be defined'
+            \wp_doing_ajax(),
+            'Request should be treated as AJAX'
         );
 
         // AJAX URLs should still work

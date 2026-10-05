@@ -150,6 +150,13 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_graphql_endpoints_not_affected(): void {
+		$this->markTestSkipped(
+			'Quarantined (#127): the premise is wrong. WPGraphQL is not served through REST, and any '
+			. 'rest_do_request() (even to an unknown route) goes through rest_pre_dispatch and counts '
+			. 'toward the limit. The real check, a GraphQL HTTP request against the rate limit with '
+			. 'WPGraphQL installed, belongs to #132.'
+		);
+
 		// Enable all REST API security features
 		\update_option( 'silver_assist_rest_batch_endpoint_protection', 1 );
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 1 );
