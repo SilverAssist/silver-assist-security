@@ -228,32 +228,25 @@ class LoginSecurityTest extends WP_UnitTestCase
     }
 
     /**
-     * Test session timeout functionality
+     * An expired session on the front end logs the user out silently (no redirect)
      */
     public function test_session_timeout(): void
     {
-        // Create logged in user using WordPress factory
         $user_id = $this->factory()->user->create();
         wp_set_current_user($user_id);
 
-        // Set short session timeout for testing
+        // The timeout is read when the object is built, so set the option first.
         update_option("silver_assist_session_timeout", 1); // 1 minute
+        $security = new LoginSecurity();
 
-        // Set old last activity
-        update_user_meta($user_id, "last_activity", time() - 120); // 2 minutes ago
+        // Last activity 2 minutes ago exceeds the 1 minute timeout.
+        update_user_meta($user_id, "last_activity", time() - 120);
 
-        // Capture redirect attempt
-        ob_start();
+        // Front end context: is_admin() is false, so no redirect and no exit.
+        unset($GLOBALS["current_screen"]);
+        $security->setup_session_timeout();
 
-        try {
-            $this->login_security->setup_session_timeout();
-        } catch (\Exception $e) {
-            // Expected to redirect and exit
-        }
-
-        ob_get_clean();
-
-        // Clean up
-        wp_set_current_user(0);
+        $this->assertSame(0, get_current_user_id(), "Expired session should be logged out");
+        $this->assertSame("", get_user_meta($user_id, "last_activity", true), "Last activity should be cleared");
     }
 }

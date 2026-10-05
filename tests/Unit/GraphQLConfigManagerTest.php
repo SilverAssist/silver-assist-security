@@ -327,8 +327,10 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
     /**
      * Test security level does not double-count authentication restriction
      *
-     * When both endpoint_access is restricted and authentication is required,
-     * the score should only get +3 once, not +6.
+     * `endpoint_access` and `is_authentication_required()` both come from WPGraphQL's
+     * restrict_endpoint_to_logged_in_users setting. When both signals are true the score must
+     * get +3 once, not +6. Every other control is switched off so the baseline score is 0:
+     * a single count gives 3 ("low"), a double count would give 6 ("medium").
      *
      * @since 1.3.0
      * @return void
@@ -339,25 +341,25 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
             $this->markTestSkipped('WPGraphQL plugin not available');
         }
 
-        // Scenario 1: Endpoint access restricted via headless mode only.
-        update_option('silver_assist_graphql_headless_mode', 1);
-        delete_option('graphql_general_settings');
-
+        update_option('graphql_general_settings', array('restrict_endpoint_to_logged_in_users' => 'on'));
         $this->config_manager->clear_cache();
-        $status_headless_only = $this->config_manager->get_integration_status();
+        $this->assertTrue($this->config_manager->is_authentication_required(), 'Both auth signals must be on for this test');
 
-        // Scenario 2: Both endpoint access restriction and WPGraphQL auth are enabled.
-        $settings = get_option('graphql_general_settings', array());
-        $settings['restrict_endpoint_to_logged_in_users'] = 'on';
-        update_option('graphql_general_settings', $settings);
+        $config = array(
+            'introspection_enabled' => true,   // No introspection point.
+            'debug_mode'            => true,   // No debug point.
+            'endpoint_access'       => 'restricted',
+            'query_depth_limit'     => 0,      // No depth point.
+            'batch_limit'           => 100,    // No batch point.
+        );
 
-        $this->config_manager->clear_cache();
-        $status_both = $this->config_manager->get_integration_status();
+        $method = new \ReflectionMethod($this->config_manager, 'calculate_security_level');
+        $method->setAccessible(true);
 
         $this->assertSame(
-            $status_headless_only['security_level'],
-            $status_both['security_level'],
-            'Security level should not increase when both endpoint access restriction and authentication requirement are enabled (no double-counting of auth).'
+            'low',
+            $method->invoke($this->config_manager, $config),
+            'Authentication restriction must count once (+3), not twice (+6), in the security score.'
         );
     }
 }

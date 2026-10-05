@@ -534,19 +534,31 @@ class LoginSecurityTest extends WP_UnitTestCase
         // Simulate admin area
         \set_current_screen('dashboard');
 
+        // The production code redirects and then calls exit, which would kill the whole PHPUnit
+        // process. Throw from the wp_redirect filter so the exit is never reached.
+        \add_filter(
+            'wp_redirect',
+            static function ( $location ) {
+                throw new \RuntimeException( 'redirect:' . $location );
+            }
+        );
+
         // Capture output
         ob_start();
 
+        $redirect = null;
         try {
             $this->login_security->setup_session_timeout();
-            // If no redirect happened, verify behavior
-        } catch (\Exception $e) {
-            // Expected to redirect in real environment
+        } catch (\RuntimeException $e) {
+            $redirect = $e->getMessage();
         }
 
         ob_end_clean();
 
-        // In test environment, redirect may not work, but last_activity metadata should be cleared
+        $this->assertNotNull($redirect, 'An expired admin session should redirect to the login page');
+        $this->assertStringContainsString('session_expired=1', $redirect);
+
+        // The expired session metadata is cleared before the redirect
         $last_activity_after = \get_user_meta($this->test_user_id, 'last_activity', true);
         
         // Either user is logged out OR last_activity was cleared (timeout processing occurred)

@@ -7,7 +7,7 @@ Silver Assist Security Essentials is a WordPress plugin that resolves critical s
 | **Namespace** | `SilverAssist\Security` |
 | **Text Domain** | `silver-assist-security` |
 | **Version** | See `SILVER_ASSIST_SECURITY_VERSION` constant |
-| **PHP** | 8.3+ |
+| **PHP** | 8.2+ |
 | **WordPress** | 6.5+ |
 
 ## Documentation Rule

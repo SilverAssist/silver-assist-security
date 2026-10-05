@@ -122,8 +122,11 @@ run_phpunit() {
         setup_wordpress_test_suite
     fi
     
-    # Run all tests with detailed output
-    vendor/bin/phpunit --testdox
+    # Run all tests with detailed output; fails if the run stops before every declared test ran.
+    # run_phpunit is called on the left of `||`, where bash disables `set -e` inside the whole
+    # function, so remember the status and return it explicitly after the summary.
+    local phpunit_status=0
+    bash scripts/run-phpunit-complete.sh || phpunit_status=$?
     
     print_header "📊 Test Summary"
     
@@ -163,6 +166,11 @@ run_phpunit() {
         echo "GraphQL integration tests will be skipped"
     fi
     
+    if [ "$phpunit_status" -ne 0 ]; then
+        print_error "PHPUnit failed or did not run every declared test (exit $phpunit_status)"
+        return "$phpunit_status"
+    fi
+
     print_success "All tests completed"
 }
 
