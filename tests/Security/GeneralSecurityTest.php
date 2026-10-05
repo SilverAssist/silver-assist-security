@@ -70,13 +70,14 @@ class GeneralSecurityTest extends WP_UnitTestCase
     }
 
     /**
-     * Test version query strings are removed from scripts and styles
+     * Test version query strings are removed from front-end plugin/theme scripts and styles
+     * (core and admin assets keep ver=, see AssetVersioningTest)
      *
      * @since 1.1.10
      */
     public function test_version_query_string_removed(): void
     {
-        $script_url = "https://example.com/wp-includes/js/jquery/jquery.min.js?ver=3.7.1";
+        $script_url = "https://example.com/wp-content/plugins/myplugin/app.min.js?ver=3.7.1";
         $filtered_url = apply_filters("script_loader_src", $script_url, "jquery");
         
         $this->assertStringNotContainsString(

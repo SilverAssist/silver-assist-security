@@ -109,8 +109,8 @@ class GeneralSecurity implements LoadableInterface {
 		\add_action( 'init', array( $this, 'remove_unnecessary_headers' ) );
 
 		// Remove version from scripts and styles.
-		\add_filter( 'script_loader_src', array( $this, 'remove_version_query_string' ) );
-		\add_filter( 'style_loader_src', array( $this, 'remove_version_query_string' ) );
+		\add_filter( 'script_loader_src', array( $this, 'remove_version_query_string' ), 10, 2 );
+		\add_filter( 'style_loader_src', array( $this, 'remove_version_query_string' ), 10, 2 );
 
 		// Disable XML-RPC.
 		\add_filter( 'xmlrpc_methods', array( $this, 'remove_xmlrpc_methods' ) );
@@ -200,11 +200,23 @@ class GeneralSecurity implements LoadableInterface {
 	 * Removes all "ver" query parameters from URLs, including multiple instances
 	 * like "/file.css?ver=123?ver=456" to prevent version disclosure.
 	 *
+	 * The cache-buster is kept wherever it is needed for correctness: wp-admin,
+	 * admin-ajax, and WordPress core bundles (wp-includes / wp-admin), whose
+	 * packages (e.g. data.min.js and editor.min.js) must be served as a matching
+	 * set after a core update. Sites can override per asset with the
+	 * `silver_assist_security_strip_asset_version` filter.
+	 *
 	 * @since 1.1.1
-	 * @param string $src Source URL.
+	 * @since 1.5.3 Skips admin, AJAX and core assets; adds the strip filter.
+	 * @param string $src    Source URL.
+	 * @param string $handle Optional asset handle.
 	 * @return string URL with all version parameters removed
 	 */
-	public function remove_version_query_string( string $src ): string {
+	public function remove_version_query_string( string $src, string $handle = '' ): string {
+		if ( ! $this->should_strip_asset_version( $src, $handle ) ) {
+			return $src;
+		}
+
 		// Check if URL contains any version parameters.
 		if ( strpos( $src, 'ver=' ) !== false ) {
 			// Remove all occurrences of ver parameter using regex
@@ -223,6 +235,31 @@ class GeneralSecurity implements LoadableInterface {
 		}
 
 		return $src;
+	}
+
+	/**
+	 * Decide whether the ver= parameter may be removed from an asset URL
+	 *
+	 * @since 1.5.3
+	 * @param string $src    Source URL.
+	 * @param string $handle Asset handle.
+	 * @return bool True when the version may be stripped.
+	 */
+	private function should_strip_asset_version( string $src, string $handle ): bool {
+		$strip = ! \is_admin()
+			&& ! \wp_doing_ajax()
+			&& false === strpos( $src, '/wp-includes/' )
+			&& false === strpos( $src, '/wp-admin/' );
+
+		/**
+		 * Filters whether the ver= query parameter is removed from an asset URL.
+		 *
+		 * @since 1.5.3
+		 * @param bool   $strip  Whether to strip the version.
+		 * @param string $src    Asset URL.
+		 * @param string $handle Asset handle.
+		 */
+		return (bool) \apply_filters( 'silver_assist_security_strip_asset_version', $strip, $src, $handle );
 	}
 
 	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WordPress filter signature.
@@ -287,6 +324,11 @@ class GeneralSecurity implements LoadableInterface {
 		\add_filter(
 			'rest_endpoints',
 			function ( $endpoints ) {
+				// The block editor needs these routes (author selector, mentions) for
+				// users who can edit content; only hide them from everyone else.
+				if ( \is_user_logged_in() && \current_user_can( 'edit_posts' ) ) {
+					return $endpoints;
+				}
 				if ( isset( $endpoints['/wp/v2/users'] ) ) {
 					unset( $endpoints['/wp/v2/users'] );
 				}
