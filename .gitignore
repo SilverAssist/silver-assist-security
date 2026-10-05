@@ -50,3 +50,8 @@ assets/js/*.min.js
 # PHPUnit test results
 /tests/results/
 .phpunit.result.cache
+# E2E
+/test-results/
+/playwright-report/
+/.wp-env/
+/tests/e2e/.auth/

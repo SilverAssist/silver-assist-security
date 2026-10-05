@@ -145,6 +145,26 @@ tests/
     └── graphql-integration-report.md          # GraphQL tests detailed report ✅
 ```
 
+## End-to-End Tests (Playwright)
+
+Browser tests in `tests/e2e/` run the real plugin inside `@wordpress/env` and check what a user
+experiences: the block editor saves and publishes without JS errors, editor bundles keep `ver=`,
+anonymous users cannot enumerate users, security headers are present, and login hardening works.
+
+```bash
+npm install && npx playwright install chromium
+npm run wp-env:start        # http://localhost:8890 (admin / password), needs Docker
+npm run test:e2e:smoke      # @smoke subset, runs on every PR
+npm run test:e2e            # full suite, runs nightly
+```
+
+Notes:
+
+- Specs log in once (`tests/e2e/global-setup.ts`). The plugin returns 404 for more than 15 login-page
+  requests per minute from one IP, so per-test logins would trip its own bot detection.
+- Rule of thumb for new hardening features: add a test that exercises the *core feature it could
+  break* (editor, REST, assets, login), not only the hook the feature registers.
+
 ## Test Framework
 
 ### WordPress Test Suite (WP_UnitTestCase)
