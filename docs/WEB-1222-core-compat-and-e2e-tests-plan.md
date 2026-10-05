@@ -117,7 +117,7 @@ Conventions:
 | E2E suite is flaky or slow in CI | Medium | Medium | Smoke subset on PRs, full suite nightly, retries=1, traces on failure, pinned WP versions |
 | Plugin is deployed across many sites, regression elsewhere | Medium | High | Release behind a patch version, run the full matrix, verify on OSA STG before PRD |
 | Private GitHub dependencies (composer repos) break CI for e2e | Medium | Medium | Reuse the `COMPOSER_AUTH` pattern from `quality-checks.yml`; build the plugin zip once and mount it in wp-env |
-| Separate bug: manual update from the plugins screen fails | Medium | Medium | Out of scope for this fix; open a follow-up ticket after checking the updater (WEB-1194, v1.5.2) |
+| Plugins-screen update does not work (private-repo updater) | High | Low | Tracked by WEB-1193 and WEB-1194, out of scope here. Not critical: deploy by uploading the release zip manually (e.g. `wp_deploy_plugin` or the plugins screen upload) |
 
 ## Phase Breakdown
 
@@ -180,8 +180,8 @@ Conventions:
 
 - [ ] Run `core-review` skill at `--budget medium` before pushing; apply all critical/warning findings and re-run until clean
 - [ ] Update CHANGELOG, bump version (patch), follow `release-management` skill
-- [ ] Update plugin on OSA STG, verify event creation, then PRD
-- [ ] Open follow-up ticket for the failing manual update (updater/WEB-1194)
+- [ ] Build the release zip and install it by **manual zip upload** on OSA STG (auto-update is not reliable, see WEB-1193 / WEB-1194), verify event creation, then PRD
+- [ ] No new ticket for the updater: it is already covered by WEB-1193 and WEB-1194
 
 **Validation**: Event create/save/publish works on OSA STG and PRD with the plugin active.
 
@@ -204,7 +204,7 @@ Conventions:
 
 ### Manual Testing
 - OSA STG: reproduce before the fix, confirm after, with cache warm and with CDN in front
-- Check the plugins screen manual update separately (out of scope for the fix)
+- Install via manual zip upload; the plugins-screen update is tracked in WEB-1193 / WEB-1194
 
 ## Rollback Plan
 
@@ -217,4 +217,5 @@ the previous version. As an emergency mitigation on a site, add a mu-plugin that
 - Node 22 and Docker for `@wordpress/env` and Playwright locally and in CI
 - `COMPOSER_AUTH` secret for private SilverAssist GitHub packages in CI
 - Access to OSA STG/PRD (via `aws-ecs` tools) for Phase 1 data and final verification
+- WEB-1193 and WEB-1194 own the updater fix; this work does not depend on them because delivery is by manual zip
 - Coordination with Mauricio Gomez (ticket assignee) so findings land in WEB-1222
