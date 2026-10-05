@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { apiFetch } from "./utils/wp";
+import { apiFetch, EDITOR_STATE } from "./utils/wp";
 
 test.describe("REST hardening vs. editor needs", () => {
   const anonymous = { storageState: { cookies: [], origins: [] } };
@@ -26,7 +26,12 @@ test.describe("REST hardening vs. editor needs", () => {
 
   });
 
+  test.describe("editor role", () => {
+  test.use({ storageState: EDITOR_STATE });
+
   test("editor can load users and use the oEmbed proxy @smoke", async ({ page }) => {
+    await page.goto("/wp-admin/");
+    expect(await page.locator("#wp-admin-bar-my-account").textContent()).toContain("e2e_editor");
     await page.goto("/wp-admin/post-new.php");
     await page.waitForFunction(() => Boolean((window as any).wp?.apiFetch));
 
@@ -35,5 +40,6 @@ test.describe("REST hardening vs. editor needs", () => {
 
     const proxy = await apiFetch(page, "/oembed/1.0/proxy?url=https%3A%2F%2Fexample.com%2F");
     expect(proxy.code, "route must exist").not.toBe("rest_no_route");
+  });
   });
 });

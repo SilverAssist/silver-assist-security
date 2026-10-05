@@ -2,6 +2,10 @@ import { expect, type Page } from "@playwright/test";
 
 export const ADMIN_USER = process.env.WP_ADMIN_USER ?? "admin";
 export const ADMIN_PASS = process.env.WP_ADMIN_PASS ?? "password";
+export const EDITOR_USER = "e2e_editor";
+export const EDITOR_PASS = process.env.WP_EDITOR_PASS ?? "e2e-editor-password";
+export const ADMIN_STATE = "tests/e2e/.auth/admin.json";
+export const EDITOR_STATE = "tests/e2e/.auth/editor.json";
 
 /** Log in through the standard login form (admin hiding is off by default). */
 export async function login(page: Page): Promise<void> {

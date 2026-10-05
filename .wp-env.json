@@ -11,5 +11,8 @@
     "SCRIPT_DEBUG": false,
     "WP_ENVIRONMENT_TYPE": "local"
   },
-  "testsEnvironment": false
+  "testsEnvironment": false,
+  "mappings": {
+    "wp-content/mu-plugins": "./tests/e2e/mu-plugins"
+  }
 }

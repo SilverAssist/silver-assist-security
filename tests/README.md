@@ -131,16 +131,12 @@ tests/
 ├── Integration/          # Integration tests
 │   ├── AdminAccessTest.php           # Admin panel access control tests
 │   ├── SettingsHubTest.php           # Settings Hub integration tests
-│   ├── AssetVersioningTest.php       # ver= handling per context (admin, AJAX, core, front end)
-│   ├── RestUsersEndpointTest.php     # /wp/v2/users per role (editor needs it, anonymous blocked)
-│   ├── EditorCompatibilityTest.php   # REST routes the block editor needs stay available
 │   ├── UpdaterIntegrationTest.php    # Updater WordPress integration (16 tests) ✅
 │   └── GraphQLSecurityIntegrationTest.php  # GraphQL security integration (25 tests) ✅
 ├── WordPress/            # WordPress integration examples
 │   └── AdminPanelTest.php           # WP_UnitTestCase example
 ├── Security/            # Security-focused tests
 │   └── SecurityTest.php             # Overall security validation
-├── e2e/                  # Playwright browser tests on wp-env (see End-to-End Tests)
 ├── Core/                 # Core functionality tests
 │   └── PathValidatorTest.php        # Path validation tests (11 tests) ✅
 └── results/             # Test results (git-ignored)
@@ -148,26 +144,6 @@ tests/
     ├── test-coverage-report.md                # Coverage analysis
     └── graphql-integration-report.md          # GraphQL tests detailed report ✅
 ```
-
-## End-to-End Tests (Playwright)
-
-Browser tests in `tests/e2e/` run the real plugin inside `@wordpress/env` and check what a user
-experiences: the block editor saves and publishes without JS errors, editor bundles keep `ver=`,
-anonymous users cannot enumerate users, security headers are present, and login hardening works.
-
-```bash
-npm install && npx playwright install chromium
-npm run wp-env:start        # http://localhost:8890 (admin / password), needs Docker
-npm run test:e2e:smoke      # @smoke subset, runs on every PR
-npm run test:e2e            # full suite, runs nightly
-```
-
-Notes:
-
-- Specs log in once (`tests/e2e/global-setup.ts`). The plugin returns 404 for more than 15 login-page
-  requests per minute from one IP, so per-test logins would trip its own bot detection.
-- Rule of thumb for new hardening features: add a test that exercises the *core feature it could
-  break* (editor, REST, assets, login), not only the hook the feature registers.
 
 ## Test Framework
 

@@ -80,7 +80,7 @@ class RestUsersEndpointTest extends WP_UnitTestCase
     }
 
     /**
-     * Editors and authors keep the routes the block editor depends on
+     * Every role with edit_posts (down to contributor) keeps the routes the block editor depends on
      *
      * @dataProvider editing_roles
      * @param string $role Role slug.
@@ -106,6 +106,7 @@ class RestUsersEndpointTest extends WP_UnitTestCase
             "administrator" => ["administrator"],
             "editor"        => ["editor"],
             "author"        => ["author"],
+            "contributor"   => ["contributor"],
         ];
     }
 

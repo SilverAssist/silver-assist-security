@@ -434,6 +434,25 @@ Run comprehensive quality checks matching CI/CD pipeline:
 ./scripts/run-quality-checks.sh
 ```
 
+#### End-to-End Tests (Playwright)
+
+Browser tests in `tests/e2e/` run the real plugin inside `@wordpress/env` and check what a user
+experiences: the block editor saves and publishes without JS errors, editor bundles keep `ver=`,
+anonymous users cannot enumerate users while editors still can, security headers are present, and
+login hardening works.
+
+```bash
+npm install && npx playwright install chromium
+npm run wp-env:start        # http://localhost:8890 (admin / password), needs Docker
+npm run test:e2e:smoke      # @smoke subset, runs on every PR
+npm run test:e2e            # full suite, runs nightly
+```
+
+- Specs log in once per role (`tests/e2e/global-setup.ts`). The plugin returns 404 for more than 15
+  login-page requests per minute from one IP, so per-test logins would trip its own bot detection.
+- Rule of thumb for new hardening features: add a test that exercises the *core feature it could
+  break* (editor, REST, assets, login), not only the hook the feature registers.
+
 #### Why Both Tests Are Required
 
 **PHPStan alone ❌**: Cannot validate WordPress hooks, database operations, or security features  
