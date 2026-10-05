@@ -115,16 +115,63 @@ class ClientIpResolutionTest extends WP_UnitTestCase
     }
 
     /**
-     * Trailing private hops are infrastructure, not the client
+     * A private client behind the proxy is the client, not infrastructure
+     *
+     * Skipping private hops would step over the real client (VPN, office network) and reach the
+     * forged value to its left.
      *
      * @return void
      */
-    public function test_trailing_private_hops_are_skipped(): void
+    public function test_private_client_behind_a_proxy_is_not_skipped(): void
     {
         $_SERVER["REMOTE_ADDR"]          = "10.0.1.42";
-        $_SERVER["HTTP_X_FORWARDED_FOR"] = "203.0.113.99, 198.51.100.20, 10.0.0.9";
+        $_SERVER["HTTP_X_FORWARDED_FOR"] = "8.8.8.8, 10.0.2.55";
 
-        $this->assertSame("198.51.100.20", SecurityHelper::get_client_ip());
+        $this->assertSame("10.0.2.55", SecurityHelper::get_client_ip());
+    }
+
+    /**
+     * A proxy that appends the client port still yields the client, not a forged value
+     *
+     * @return void
+     */
+    public function test_forwarded_address_with_a_port_is_normalized(): void
+    {
+        $_SERVER["REMOTE_ADDR"] = "10.0.1.42";
+
+        $_SERVER["HTTP_X_FORWARDED_FOR"] = "8.8.8.8, 198.51.100.20:54321";
+        $this->assertSame("198.51.100.20", SecurityHelper::get_client_ip(), "IPv4 with port");
+
+        $_SERVER["HTTP_X_FORWARDED_FOR"] = "8.8.8.8, [2606:4700:4700::1111]:443";
+        $this->assertSame("2606:4700:4700::1111", SecurityHelper::get_client_ip(), "IPv6 with port");
+    }
+
+    /**
+     * An unvalidatable appended hop must not expose the forged values to its left
+     *
+     * @return void
+     */
+    public function test_unparseable_last_hop_falls_back_to_the_peer(): void
+    {
+        $_SERVER["REMOTE_ADDR"]          = "10.0.1.42";
+        $_SERVER["HTTP_X_FORWARDED_FOR"] = "8.8.8.8, not-an-ip";
+
+        $this->assertSame("10.0.1.42", SecurityHelper::get_client_ip());
+    }
+
+    /**
+     * Opting out of the private-peer heuristic ignores forwarded headers entirely
+     *
+     * @return void
+     */
+    public function test_opting_out_of_private_proxy_trust_uses_the_peer(): void
+    {
+        \add_filter("silver_assist_trust_private_proxies", "__return_false");
+
+        $_SERVER["REMOTE_ADDR"]          = "10.0.1.42";
+        $_SERVER["HTTP_X_FORWARDED_FOR"] = "198.51.100.20";
+
+        $this->assertSame("10.0.1.42", SecurityHelper::get_client_ip());
     }
 
     /**

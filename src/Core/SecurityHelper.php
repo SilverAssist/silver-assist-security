@@ -90,15 +90,18 @@ class SecurityHelper {
 	 * - Only `X-Forwarded-For` is honored, and only when the peer is a trusted proxy. Single-value
 	 *   headers such as `Client-IP`, `CF-Connecting-IP` or `X-Real-IP` are never read: anything that
 	 *   reaches the origin can set them, and a proxy we trust appends to `X-Forwarded-For` instead.
-	 * - The chain is read right to left, discarding trusted hops; the first untrusted address is the
-	 *   client. A value the client placed at the left of the chain is never reached.
+	 * - The chain is read right to left. With declared proxy CIDRs, trusted hops are discarded and the
+	 *   first untrusted address is the client; with none declared, the last hop (the one the proxy
+	 *   appended) is the client. A value the client placed at the left of the chain is never reached,
+	 *   and a hop that cannot be validated makes the resolver fall back to the peer address.
 	 *
 	 * Trusted proxies are the CIDRs declared with the `SILVER_ASSIST_TRUSTED_PROXY_CIDRS` constant
 	 * (comma-separated string or array) and the `silver_assist_trusted_proxy_cidrs` filter. When none
-	 * are declared, peers in private or reserved ranges (an internal load balancer such as an AWS ALB)
-	 * are trusted: an internet client cannot connect from such an address, so it cannot use it to
-	 * make the origin believe a header. Return `false` from `silver_assist_trust_private_proxies` to
-	 * ignore forwarded headers until CIDRs are declared.
+	 * are declared, a peer in a private or reserved range (an internal load balancer such as an AWS ALB)
+	 * is trusted: an internet client cannot connect from such an address. Known limit: a client that
+	 * can reach the origin directly from a private network (another host in the VPC, a VPN) can still
+	 * choose its identity in this mode; declare the CIDRs, or return `false` from
+	 * `silver_assist_trust_private_proxies` to ignore forwarded headers until you do.
 	 *
 	 * @since 1.1.10
 	 * @since 1.5.4 Single implementation for every component; forwarded headers are trusted only from proxies.
@@ -111,7 +114,7 @@ class SecurityHelper {
 			return '0.0.0.0';
 		}
 
-		if ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) && self::is_trusted_proxy( $remote_addr ) ) {
+		if ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) && self::is_trusted_proxy( $remote_addr, true ) ) {
 			$client_ip = self::extract_forwarded_client_ip( \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) );
 			if ( '' !== $client_ip ) {
 				return $client_ip;
@@ -156,19 +159,29 @@ class SecurityHelper {
 	/**
 	 * Check whether an address is a proxy whose forwarded headers can be trusted
 	 *
+	 * With declared CIDRs, both the peer and the hops in the chain are matched against them. With none
+	 * declared, only the **peer** can be trusted, and only when it is in a private or reserved range;
+	 * hops are never skipped in that mode, because a private hop may be the real client (VPN, office
+	 * network) and stepping over it would reach values the client chose.
+	 *
 	 * @since 1.5.4
-	 * @param string $ip Address to check (a peer or a hop from `X-Forwarded-For`).
+	 * @param string $ip      Address to check.
+	 * @param bool   $is_peer True when checking `REMOTE_ADDR`, false for a hop from `X-Forwarded-For`.
 	 * @return bool True when trusted.
 	 */
-	private static function is_trusted_proxy( string $ip ): bool {
+	private static function is_trusted_proxy( string $ip, bool $is_peer = false ): bool {
 		$cidrs = self::get_trusted_proxy_cidrs();
 
 		if ( ! empty( $cidrs ) ) {
 			return self::is_ip_in_range( $ip, $cidrs );
 		}
 
+		if ( ! $is_peer ) {
+			return false;
+		}
+
 		/**
-		 * Filters whether peers in private or reserved ranges are trusted when no CIDRs are declared.
+		 * Filters whether a peer in a private or reserved range is trusted when no CIDRs are declared.
 		 *
 		 * @since 1.5.4
 		 * @param bool $trust Default true.
@@ -183,12 +196,13 @@ class SecurityHelper {
 	/**
 	 * Extract the real client IP from an `X-Forwarded-For` chain
 	 *
-	 * Walks the chain right to left, discarding trusted proxy hops. The first untrusted address is the
-	 * client; this prevents spoofing through values a client placed at the left of the chain.
+	 * Walks the chain right to left, discarding hops that are declared trusted proxies. The first
+	 * remaining address is the client. A hop that cannot be validated stops the walk and the caller
+	 * falls back to the peer: skipping it would reach values the client placed at the left.
 	 *
 	 * @since 1.5.4
 	 * @param string $header Raw `X-Forwarded-For` header value.
-	 * @return string The client IP, or an empty string when the chain holds no valid untrusted address.
+	 * @return string The client IP, or an empty string when it cannot be determined safely.
 	 */
 	private static function extract_forwarded_client_ip( string $header ): string {
 		$hops = \array_values(
@@ -199,9 +213,9 @@ class SecurityHelper {
 		);
 
 		for ( $i = \count( $hops ) - 1; $i >= 0; $i-- ) {
-			$hop = $hops[ $i ];
-			if ( ! \filter_var( $hop, \FILTER_VALIDATE_IP ) ) {
-				continue;
+			$hop = self::normalize_forwarded_address( $hops[ $i ] );
+			if ( '' === $hop ) {
+				return '';
 			}
 			if ( self::is_trusted_proxy( $hop ) ) {
 				continue;
@@ -210,6 +224,26 @@ class SecurityHelper {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Normalize one `X-Forwarded-For` entry to a bare IP address
+	 *
+	 * Accepts a plain IPv4 or IPv6 address and the explicit port forms some proxies append
+	 * (`203.0.113.7:54321`, `[2001:db8::1]:443`, `[2001:db8::1]`).
+	 *
+	 * @since 1.5.4
+	 * @param string $hop Entry from the header.
+	 * @return string Valid IP address, or an empty string.
+	 */
+	private static function normalize_forwarded_address( string $hop ): string {
+		if ( \preg_match( '/^\[([0-9a-fA-F:.]+)\](?::\d{1,5})?$/', $hop, $matches ) ) {
+			$hop = $matches[1];
+		} elseif ( \preg_match( '/^(\d{1,3}(?:\.\d{1,3}){3}):\d{1,5}$/', $hop, $matches ) ) {
+			$hop = $matches[1];
+		}
+
+		return \filter_var( $hop, \FILTER_VALIDATE_IP ) ? $hop : '';
 	}
 
 
