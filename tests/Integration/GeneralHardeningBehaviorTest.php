@@ -235,6 +235,28 @@ class GeneralHardeningBehaviorTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Behind a TLS-terminating proxy the forwarded protocol alone is not trusted
+	 *
+	 * Any client can send X-Forwarded-Proto, so the cookies stay non-Secure until the
+	 * site (wp-config.php) maps a trusted proxy's header to HTTPS; once it does, they
+	 * become Secure. Documented in the README section on proxies.
+	 *
+	 * @return void
+	 */
+	public function test_auth_cookies_behind_tls_terminating_proxy(): void {
+		new GeneralSecurity();
+		unset( $_SERVER['HTTPS'] );
+		$_SERVER['HTTP_X_FORWARDED_PROTO'] = 'https';
+		$_SERVER['REMOTE_ADDR']            = '10.0.0.5';
+
+		$this->assertFalse( apply_filters( 'secure_auth_cookie', false, 1 ), 'a client-supplied header must not mark cookies Secure' );
+
+		// What a site does in wp-config.php for its trusted proxy.
+		$_SERVER['HTTPS'] = 'on';
+		$this->assertTrue( apply_filters( 'secure_auth_cookie', false, 1 ) );
+	}
+
+	/**
 	 * A site whose home URL is http keeps the logged-in cookie readable on the front end
 	 *
 	 * Core marks the logged-in cookie Secure only when home is https (the

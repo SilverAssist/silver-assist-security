@@ -68,7 +68,7 @@ This plugin automatically implements enterprise-level security measures without 
 - **CSRF Protection**: Enhanced nonce validation for form security
 - **Real-time Monitoring**: Track blocked form submissions and suspicious IPs
 - **Conditional Interface**: Form Protection tab appears automatically when CF7 is detected
-- **Tunable Detection**: Spam phrases and SQL signatures can be adjusted with the `silver_assist_security_cf7_spam_patterns` and `silver_assist_security_sql_injection_patterns` filters. The default limit is 2 submissions per minute per IP, and every attempt counts, including one rejected by CF7's own validation
+- **Tunable Detection**: Spam phrases and SQL signatures can be adjusted with the `silver_assist_security_cf7_spam_patterns` and `silver_assist_security_sql_injection_patterns` filters. The default limit is 2 submissions per minute per IP, and an attempt counts once it reaches the rate-limit check, including one that CF7's own validation later rejects (blacklisted IPs, a filled honeypot and too-fast submissions are rejected before it)
 
 ## ✨ Additional Security Features
 
@@ -417,6 +417,11 @@ define( 'SILVER_ASSIST_TRUSTED_PROXY_CIDRS', '10.0.0.0/8,52.84.0.0/15' ); // VPC
   until you do (behind a load balancer every visitor then shares the balancer's address).
 - Behind a CDN that sits in front of the load balancer, declare the CDN ranges too; otherwise the CDN
   edge address is taken as the visitor.
+- Cookies: the auth and logged-in cookies are Secure only when WordPress sees an HTTPS request
+  (`is_ssl()`, which reads `$_SERVER['HTTPS']` or port 443). The plugin does not trust
+  `X-Forwarded-Proto` on its own, since any client can send it. If TLS ends at your proxy, set
+  `$_SERVER['HTTPS'] = 'on'` in `wp-config.php` when the request comes from your trusted proxy and carries
+  `X-Forwarded-Proto: https`; otherwise the cookies are issued without the Secure flag.
 
 ## 🧪 Development & Testing
 

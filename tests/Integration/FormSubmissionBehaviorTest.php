@@ -2,6 +2,11 @@
 /**
  * Form Submission Behavior Tests
  *
+ * Scope: the plugin's side of the contract. CF7 itself is not loaded (only its marker
+ * class is stubbed), so these tests drive the `wpcf7_validate` filter with a stand-in for
+ * CF7's validation object and realistic posted data; they do not cover CF7's own
+ * pipeline.
+ *
  * A real Contact Form 7 visitor submits ordinary text and must get through; a
  * bot must not. These tests drive the same `wpcf7_validate` filter CF7 calls,
  * with realistic senior-care enquiries, instead of checking that hooks exist
