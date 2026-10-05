@@ -387,6 +387,34 @@ Yes! Go to **Settings → Security Essentials** to configure login attempt limit
 - Currently optimized for single WordPress installations
 - Multisite compatibility coming in future versions
 
+### 🌐 Proxies, Load Balancers and CDNs
+
+Login lockout, the IP blacklist, form protection and the REST and GraphQL rate limits identify a visitor
+by IP address. A client must not be able to pick that address by sending headers, so the plugin resolves
+it in one place (`SecurityHelper::get_client_ip()`):
+
+- `REMOTE_ADDR` is used as is, unless it belongs to a proxy you trust.
+- Only `X-Forwarded-For` is read, and only from a trusted proxy. `Client-IP`, `CF-Connecting-IP` and
+  `X-Real-IP` are never read, because any client can send them.
+- The chain is read right to left. With declared CIDRs, trusted proxies are skipped and the first
+  remaining address is the visitor. With none declared, the last entry (the one your load balancer
+  appended) is the visitor and nothing is skipped, so a visitor on a private network is still
+  identified correctly. An entry that cannot be validated (a bare value, a port form other than
+  `ip:port` and `[ipv6]:port`) makes the plugin fall back to the connecting address.
+- Trusted proxies are the CIDRs you declare in `wp-config.php` (or with the filter of the same name):
+
+```php
+define( 'SILVER_ASSIST_TRUSTED_PROXY_CIDRS', '10.0.0.0/8,52.84.0.0/15' ); // VPC and CDN edge ranges.
+```
+
+- If you declare none, a connecting peer in a private or reserved range (an internal load balancer
+  such as an AWS ALB) is trusted. Known limit: a client that can reach your origin directly from a
+  private network (another host in the VPC, a VPN) can then choose its identity. Declare your CIDRs,
+  or return `false` from the `silver_assist_trust_private_proxies` filter to ignore forwarded headers
+  until you do (behind a load balancer every visitor then shares the balancer's address).
+- Behind a CDN that sits in front of the load balancer, declare the CDN ranges too; otherwise the CDN
+  edge address is taken as the visitor.
+
 ## 🧪 Development & Testing
 
 ### Quality Assurance Script

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Client IP can no longer be chosen with request headers (#128)**: `SecurityHelper::get_client_ip()` checked `HTTP_CLIENT_IP`, `X-Forwarded-For` and similar headers before `REMOTE_ADDR` and returned the first public value, so a client could rotate a forged header to escape login lockout, the IP blacklist, form protection and the GraphQL rate limit. It now starts from `REMOTE_ADDR` and reads only `X-Forwarded-For`, only from a trusted proxy, right to left. `Client-IP`, `CF-Connecting-IP` and `X-Real-IP` are never read.
+- One implementation for every component: `GraphQLSecurity` had its own copy of the vulnerable logic and `RestAPISecurity` its own trusted-proxy logic; both now delegate to `SecurityHelper`.
+- **Behavior change**: when no proxy CIDRs are declared, a connecting peer in a private or reserved range (an internal load balancer such as an ALB) is trusted and the last `X-Forwarded-For` entry (the one the balancer appended) is used; no hop is skipped in this mode, and an entry that cannot be validated (after accepting `ip:port` and `[ipv6]:port`) falls back to the peer address. Known limit: a client that reaches the origin directly from a private network can still choose its identity until CIDRs are declared. This also fixes sites behind a load balancer sharing one REST rate-limit bucket for all anonymous traffic. Declare `SILVER_ASSIST_TRUSTED_PROXY_CIDRS` for CDN setups, or return `false` from `silver_assist_trust_private_proxies` to ignore forwarded headers until you do. See the README section "Proxies, Load Balancers and CDNs".
+
+### Added
+
+- Tests: `ClientIpResolutionTest` (forged headers, rotation, private and configured proxies, IPv6, parity across components) and a login-lockout test that rotates forged headers.
+
 ### Fixed
 
 - Test suite: a full `vendor/bin/phpunit` run no longer stops early (it reported about 178 of 511 tests with exit code 0). `LoginSecurityTest::test_session_timeout_in_admin_area` now intercepts the redirect before the plugin's `exit`, and `AdminHideSecurityTest` uses the `wp_doing_ajax` filter instead of defining `DOING_AJAX`, which leaked into every later test.
@@ -17,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Tests that asserted the old behavior (`CF-Connecting-IP` winning, first `X-Forwarded-For` value winning) now assert the new contract.
 - `scripts/run-quality-checks.sh` runs PHPUnit through the new `scripts/run-phpunit-complete.sh`, which fails when the run stops early (JUnit log missing or incomplete; for a full run, fewer tests than PHPUnit declares). It also fixes a blind spot: `run_phpunit` runs on the left of `||`, where bash disables `set -e`, so a failing test left the script at exit 0 and CI could not fail on broken tests; the status is now returned explicitly.
 - `RestAPISecurityIntegrationTest::test_graphql_endpoints_not_affected` is quarantined with its reason: WPGraphQL is not served through REST, so the premise was wrong. The real check is tracked in #132.
 - README: local setup now lists the WPGraphQL and Contact Form 7 installers used by CI.

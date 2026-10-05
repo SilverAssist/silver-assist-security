@@ -115,7 +115,7 @@ silver-assist-security/
 ### SecurityHelper — Mandatory Usage
 All utility functions are centralized in `SecurityHelper`. **Never duplicate this logic in other classes:**
 - `get_asset_url($path)` — asset URLs with SCRIPT_DEBUG-aware minification
-- `get_client_ip()` — IP detection with proxy/CDN support
+- `get_client_ip()` — client IP from `REMOTE_ADDR`; `X-Forwarded-For` is read only from trusted proxies (see README, "Proxies, Load Balancers and CDNs")
 - `is_bot_request()` — bot and crawler detection
 - `send_404_response()` — security 404 responses
 - `log_security_event($type, $message, $context)` — structured JSON security logging
