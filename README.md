@@ -437,7 +437,7 @@ Run comprehensive quality checks matching CI/CD pipeline:
 # Daily: Run quality checks before committing
 ./scripts/run-quality-checks.sh
 
-# Or only the PHPUnit suite, failing if it stops before every declared test ran
+# Or only the PHPUnit suite, failing if the run stops early (accepts PHPUnit arguments such as --filter)
 bash scripts/run-phpunit-complete.sh
 ```
 
