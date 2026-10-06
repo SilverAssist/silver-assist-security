@@ -14,7 +14,9 @@
     "wp-env:stop": "wp-env stop",
     "wp-env:reset": "wp-env clean all",
     "test:e2e": "playwright test",
-    "test:e2e:smoke": "playwright test --grep @smoke"
+    "test:e2e:smoke": "playwright test --grep @smoke",
+    "test:e2e:admin-hide": "playwright test -c playwright.admin-hide.config.ts",
+    "test:e2e:admin-hide:smoke": "playwright test -c playwright.admin-hide.config.ts --grep @smoke"
   },
   "repository": {
     "type": "git",

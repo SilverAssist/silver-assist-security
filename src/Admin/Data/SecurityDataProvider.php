@@ -76,9 +76,11 @@ class SecurityDataProvider {
 	 * @since 1.1.15
 	 */
 	public function __construct() {
-		$this->login_security      = new LoginSecurity();
-		$this->general_security    = new GeneralSecurity();
-		$this->admin_hide_security = new AdminHideSecurity();
+		// Shared instances: a new object would register the component's hooks a second time
+		// (each failed login would count twice, forms would get duplicate fields).
+		$this->login_security      = LoginSecurity::instance();
+		$this->general_security    = GeneralSecurity::instance();
+		$this->admin_hide_security = AdminHideSecurity::instance();
 		$this->ip_blacklist        = IPBlacklist::get_instance();
 		$this->stats_provider      = new StatisticsProvider();
 	}

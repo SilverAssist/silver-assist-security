@@ -6,6 +6,8 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./tests/e2e",
+  // Admin hiding has its own config and global setup (playwright.admin-hide.config.ts).
+  testIgnore: "**/admin-hide/**",
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,

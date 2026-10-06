@@ -378,21 +378,17 @@ class LoginSecurityTest extends WP_UnitTestCase
         $this->login_security->track_bot_behavior();
         $this->login_security->track_bot_behavior();
 
-        // Verify activity logged using correct transient key format
+        // Activity is stored per IP under bot_activity_<md5(ip)>.
         $bot_log_key = "bot_activity_" . md5($ip);
         $bot_activity = \get_transient($bot_log_key);
 
-        // Bot activity may not be logged in test environment, so verify transient system works
-        // or that SecurityHelper::is_bot_request() detects the bot
-        $is_bot = SecurityHelper::is_bot_request();
-        $this->assertTrue($is_bot, 'Bot should be detected by user agent');
+        $this->assertIsArray($bot_activity, 'Bot activity should be recorded for this IP');
+        $this->assertCount(2, $bot_activity, 'Both hits should be recorded');
+        $this->assertArrayHasKey('time', $bot_activity[0]);
+        $this->assertSame('Nmap Scripting Engine', $bot_activity[0]['user_agent']);
+        $this->assertSame('/wp-login.php', $bot_activity[0]['uri']);
 
-        // If activity was logged, verify structure
-        if ($bot_activity !== false && is_array($bot_activity)) {
-            $this->assertNotEmpty($bot_activity, 'Bot activity should not be empty');
-            $this->assertArrayHasKey('timestamp', $bot_activity[0]);
-            $this->assertArrayHasKey('user_agent', $bot_activity[0]);
-        }
+        $this->assertTrue(SecurityHelper::is_bot_request(), 'Bot should be detected by user agent');
     }
 
     /**
@@ -820,26 +816,20 @@ class LoginSecurityTest extends WP_UnitTestCase
             $this->login_security->track_bot_behavior();
         }
 
-        // Verify bot activity was tracked
-        $bot_log_key = "bot_activity_" . md5($ip);
-        $bot_activity = \get_transient($bot_log_key);
+        // Verify bot activity was tracked per IP, capped at the latest ten entries.
+        $bot_activity = \get_transient("bot_activity_" . md5($ip));
+        $this->assertIsArray($bot_activity);
+        $this->assertCount(6, $bot_activity);
 
-        // Extended block requires > 3 activities
-        // Verify either extended block is set OR bot activity count exceeds threshold
-        $extended_block_key = "extended_bot_block_" . md5($ip);
-        $is_blocked = \get_transient($extended_block_key);
-        
-        // In test environment, transients may not persist, so verify bot detection works
-        $bot_detected = SecurityHelper::is_bot_request();
+        // More than 3 recorded activities set the extended block flag for this IP only.
         $this->assertTrue(
-            $bot_detected,
-            'Bot should be detected after repeated suspicious activity'
+            (bool) \get_transient("extended_bot_block_" . md5($ip)),
+            'Extended bot block should be set after repeated activity'
         );
-        
-        // If extended block was set, verify it
-        if ($is_blocked !== false) {
-            $this->assertTrue((bool) $is_blocked, 'Extended bot block should be active');
-        }
+        $this->assertFalse(
+            \get_transient("extended_bot_block_" . md5('192.168.1.211')),
+            'Another IP is not affected'
+        );
     }
 
     /**

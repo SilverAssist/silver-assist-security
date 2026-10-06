@@ -493,9 +493,9 @@ class GeneralSecurity implements LoadableInterface {
 	/**
 	 * Hide login errors that reveal whether an account exists
 	 *
-	 * Only the login and lost-password screens are generic, and not while the
-	 * visitor is locked out: the lockout message is the only explanation for a
-	 * rejected login in that case. Password reset and other screens keep core's
+	 * Only the login and lost-password screens are generic, except for the lockout
+	 * notice, which is the only explanation for a rejected login while the visitor
+	 * is locked out. Password reset and other screens keep core's
 	 * messages ("passwords do not match", "link expired"), which reveal nothing
 	 * about accounts and are the only guidance the user gets.
 	 *
@@ -513,8 +513,11 @@ class GeneralSecurity implements LoadableInterface {
 			return $errors;
 		}
 
+		// While locked out, the lockout notice itself stays readable. Other errors do not: the attempt
+		// that triggers the lockout sets it before its own error is shown, and that error (wrong
+		// password for an existing user, unknown username) must stay generic.
 		$lockout_key = SecurityHelper::generate_ip_transient_key( 'lockout', SecurityHelper::get_client_ip() );
-		if ( \get_transient( $lockout_key ) ) {
+		if ( \get_transient( $lockout_key ) && LoginSecurity::is_lockout_notice( $errors ) ) {
 			return $errors;
 		}
 

@@ -39,6 +39,17 @@ class AdminHideSecurity implements LoadableInterface {
 	private static ?self $instance = null;
 
 	/**
+	 * Files under wp-admin that WordPress serves to visitors by design
+	 *
+	 * The admin-post.php file is the target of front-end forms (admin_post_nopriv_* handlers),
+	 * as admin-ajax.php is for AJAX. WordPress itself decides who may do what inside it:
+	 * handlers for logged-out visitors exist only when a plugin registers a nopriv action.
+	 */
+	private const PUBLIC_ADMIN_FILES = array(
+		'wp-admin/admin-post.php',
+	);
+
+	/**
 	 * Whether admin hiding is enabled
 	 *
 	 * @var bool
@@ -163,6 +174,7 @@ class AdminHideSecurity implements LoadableInterface {
 		// Filter generated URLs to include access tokens.
 		\add_filter( 'site_url', array( $this, 'filter_generated_url' ), 100, 2 );
 		\add_filter( 'admin_url', array( $this, 'filter_admin_url' ), 100, 2 );
+		\add_filter( 'wp_mail', array( $this, 'fix_token_separator_in_email' ) );
 		\add_filter( 'wp_redirect', array( $this, 'filter_redirect' ) );
 		\add_filter( 'logout_redirect', array( $this, 'handle_logout_redirect' ), 10, 3 );
 
@@ -241,13 +253,7 @@ class AdminHideSecurity implements LoadableInterface {
 			return;
 		}
 
-		$request_path = $this->get_request_path();
-
-		if ( strpos( $request_path, '/' ) !== false ) {
-			[$request_path] = explode( '/', $request_path );
-		}
-
-		$this->handle_request_path( $request_path );
+		$this->handle_request_path( $this->get_request_path() );
 	}
 	/**
 	 * Get the current request path
@@ -277,6 +283,40 @@ class AdminHideSecurity implements LoadableInterface {
 	}
 
 	/**
+	 * Decide what a request path is, as far as admin hiding is concerned
+	 *
+	 * @since 1.5.4
+	 * @param string $request_path The request path relative to the home URL.
+	 * @return string One of 'custom' (the custom admin path), 'login' (wp-login.php),
+	 *                'admin' (wp-admin) or 'none' (not handled by admin hiding).
+	 */
+	public function classify_request_path( string $request_path ): string {
+		$request_path = trim( $request_path, '/' );
+
+		// Entry points WordPress serves to visitors by design, like admin-ajax.php.
+		if ( in_array( $request_path, self::PUBLIC_ADMIN_FILES, true ) ) {
+			return 'none';
+		}
+
+		// Only the first path segment decides: /wp-admin/anything is the admin area.
+		[$first_segment] = explode( '/', $request_path );
+
+		if ( ltrim( $this->custom_admin_path, '/' ) === $first_segment ) {
+			return 'custom';
+		}
+
+		if ( in_array( $first_segment, array( 'wp-login.php', 'wp-login' ), true ) ) {
+			return 'login';
+		}
+
+		if ( 'wp-admin' === $first_segment ) {
+			return 'admin';
+		}
+
+		return 'none';
+	}
+
+	/**
 	 * Handle determining if we need to block or redirect the request path
 	 *
 	 * @since 1.1.4
@@ -284,22 +324,16 @@ class AdminHideSecurity implements LoadableInterface {
 	 * @return void
 	 */
 	private function handle_request_path( string $request_path ): void {
-		// Check custom admin path - remove leading slash if present.
-		$clean_custom_path  = ltrim( $this->custom_admin_path, '/' );
-		$clean_request_path = ltrim( $request_path, '/' );
-
-		if ( $clean_request_path === $clean_custom_path ) {
-			$this->handle_custom_admin_access();
-		} elseif (
-			in_array( $clean_request_path, array( 'wp-login.php', 'wp-login' ), true ) ||
-			strpos( $clean_request_path, 'wp-login.php' ) !== false
-		) {
-			$this->handle_login_page_access();
-		} elseif (
-			'wp-admin' === $clean_request_path || 0 === strpos( $clean_request_path, 'wp-admin/' ) ||
-			0 === strpos( $clean_request_path, 'wp-admin' )
-		) {
-			$this->handle_wp_admin_page();
+		switch ( $this->classify_request_path( $request_path ) ) {
+			case 'custom':
+				$this->handle_custom_admin_access();
+				break;
+			case 'login':
+				$this->handle_login_page_access();
+				break;
+			case 'admin':
+				$this->handle_wp_admin_page();
+				break;
 		}
 	}
 
@@ -457,6 +491,35 @@ class AdminHideSecurity implements LoadableInterface {
 		}
 
 		return $url;
+	}
+
+	/**
+	 * Keep the access token usable in the email change confirmation message
+	 *
+	 * Core writes the link with esc_url(), which turns the "&" before our token into the
+	 * "&#038;" entity. The message is plain text, so the entity is shown as is and a browser
+	 * reads everything after the "#" as a fragment: the token never reaches the server and the
+	 * link ends in a 404. Core builds the link after the message filters have run, so the
+	 * message is corrected on its way out, in the wp_mail arguments.
+	 *
+	 * @since 1.5.4
+	 * @param array<string, mixed> $args wp_mail() arguments (to, subject, message, headers, attachments).
+	 * @return array<string, mixed>
+	 */
+	public function fix_token_separator_in_email( $args ) {
+		if ( ! is_array( $args ) || ! isset( $args['message'] ) || ! is_string( $args['message'] ) ) {
+			return $args;
+		}
+
+		if ( false !== strpos( $args['message'], 'profile.php?newuseremail=' ) ) {
+			$args['message'] = str_replace(
+				array( '&#038;' . $this->validation_param . '=', '&amp;' . $this->validation_param . '=' ),
+				'&' . $this->validation_param . '=',
+				$args['message']
+			);
+		}
+
+		return $args;
 	}
 
 	/**
