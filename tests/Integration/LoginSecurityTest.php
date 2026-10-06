@@ -129,7 +129,8 @@ class LoginSecurityTest extends WP_UnitTestCase
             OR option_name LIKE '%lockout_%'
             OR option_name LIKE '%bot_activity_%'
             OR option_name LIKE '%extended_bot_block_%'
-            OR option_name LIKE '%login_access_%'"
+            OR option_name LIKE '%login_access_%'
+            OR option_name LIKE '%login_window_%'"
         );
     }
 
@@ -232,6 +233,8 @@ class LoginSecurityTest extends WP_UnitTestCase
             $this->login_security->handle_failed_login($username);
 
             $attempts_key = SecurityHelper::generate_ip_transient_key('login_attempts', $ip);
+            // The atomic counter writes straight to the options table, so read it past the option cache.
+            \wp_cache_flush();
             $attempts = \get_transient($attempts_key);
             $this->assertEquals($i, $attempts, "Should track {$i} failed attempts");
         }
@@ -662,16 +665,14 @@ class LoginSecurityTest extends WP_UnitTestCase
         $_SERVER['REMOTE_ADDR'] = $ip;
         $_SERVER['HTTP_USER_AGENT'] = 'curl/7.64.1'; // Bot-like user agent
 
-        $access_key = "login_access_" . md5($ip);
-
-        // Simulate 20 rapid requests (exceeds threshold of 15)
+        // 20 rapid requests: the first 15 pass, the rest exceed the threshold.
+        $limited = [];
         for ($i = 1; $i <= 20; $i++) {
-            $current_count = \get_transient($access_key) ?: 0;
-            \set_transient($access_key, $current_count + 1, 60);
+            $limited[$i] = $this->login_security->is_login_page_rate_limited($ip);
         }
-
-        $request_count = \get_transient($access_key);
-        $this->assertGreaterThan(15, $request_count, 'Should record excessive requests');
+        $this->assertFalse($limited[15], 'The 15th request in a minute is still allowed');
+        $this->assertTrue($limited[16], 'The 16th request in a minute is limited');
+        $this->assertTrue($limited[20]);
 
         // SecurityHelper::is_bot_request() will detect this as bot due to curl user agent
         $this->assertTrue(
@@ -801,9 +802,11 @@ class LoginSecurityTest extends WP_UnitTestCase
     }
 
     /**
-     * Test extended bot blocking after repeated suspicious activity
+     * Repeated bot activity is logged (capped at ten entries) and sets no block flag
+     *
+     * An `extended_bot_block_*` flag used to be written here and never read; see LimiterRobustnessTest.
      */
-    public function test_extended_bot_blocking_after_repeated_activity(): void
+    public function test_repeated_bot_activity_is_logged_without_extended_block(): void
     {
         $ip = '192.168.1.210';
         $_SERVER['REMOTE_ADDR'] = $ip;
@@ -811,25 +814,14 @@ class LoginSecurityTest extends WP_UnitTestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/wp-login.php';
 
-        // Simulate 6 bot activities to exceed threshold (needs >3 for extended block)
-        for ($i = 0; $i < 6; $i++) {
+        for ($i = 0; $i < 12; $i++) {
             $this->login_security->track_bot_behavior();
         }
 
-        // Verify bot activity was tracked per IP, capped at the latest ten entries.
         $bot_activity = \get_transient("bot_activity_" . md5($ip));
         $this->assertIsArray($bot_activity);
-        $this->assertCount(6, $bot_activity);
-
-        // More than 3 recorded activities set the extended block flag for this IP only.
-        $this->assertTrue(
-            (bool) \get_transient("extended_bot_block_" . md5($ip)),
-            'Extended bot block should be set after repeated activity'
-        );
-        $this->assertFalse(
-            \get_transient("extended_bot_block_" . md5('192.168.1.211')),
-            'Another IP is not affected'
-        );
+        $this->assertCount(10, $bot_activity, 'Only the latest ten entries are kept');
+        $this->assertFalse(\get_transient("extended_bot_block_" . md5($ip)));
     }
 
     /**

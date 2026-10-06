@@ -245,7 +245,9 @@ class LoginLockoutBehaviorTest extends WP_UnitTestCase
             \do_action("wp_login_failed", "someone", new WP_Error("incorrect_password"));
         }
 
-        $attempts = \get_transient(SecurityHelper::generate_ip_transient_key("login_attempts", $ip));
+        // The atomic counter writes straight to the options table, so read it past the option cache.
+        \wp_cache_flush();
+        $attempts = (int) \get_transient(SecurityHelper::generate_ip_transient_key("login_attempts", $ip));
         $this->assertSame(3, $attempts, "Three failed logins are three attempts, not six");
         $this->assertFalse(
             (bool) \get_transient(SecurityHelper::generate_ip_transient_key("lockout", $ip)),

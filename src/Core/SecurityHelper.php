@@ -715,10 +715,74 @@ class SecurityHelper {
 	}
 
 	/**
+	 * Reduce an IP address to the identity the limiters count
+	 *
+	 * An IPv4 address is its own identity. An IPv6 subscriber usually controls a whole /64 (or more), so
+	 * keying on the exact address would hand an attacker 2^64 identities and make every limiter
+	 * worthless. IPv6 addresses are therefore reduced to their network prefix, `/64` by default. An
+	 * IPv4-mapped address (`::ffff:203.0.113.5`) is treated as the IPv4 address it carries.
+	 *
+	 * The prefix length is filterable with `silver_assist_security_ipv6_prefix_length`; 128 (or more)
+	 * keeps the exact address. The value is only used to build limiter keys, displays keep the full IP.
+	 *
+	 * @since 1.5.4
+	 * @param string $ip IP address.
+	 * @return string The IPv4 address, `{network}/{prefix}` for IPv6, or the input when it is not an IP.
+	 */
+	public static function normalize_ip_for_limits( string $ip ): string {
+		$packed = \filter_var( $ip, \FILTER_VALIDATE_IP ) ? \inet_pton( $ip ) : false;
+
+		if ( false === $packed || 16 !== \strlen( $packed ) ) {
+			return $ip;
+		}
+
+		// IPv4-mapped IPv6 address: ten zero bytes, then 0xffff, then the IPv4 address.
+		if ( \str_repeat( \chr( 0 ), 10 ) . \str_repeat( \chr( 255 ), 2 ) === \substr( $packed, 0, 12 ) ) {
+			return (string) \inet_ntop( \substr( $packed, 12 ) );
+		}
+
+		/**
+		 * Filters the IPv6 prefix length the limiters group addresses by.
+		 *
+		 * @since 1.5.4
+		 * @param int $prefix_length Prefix length in bits, 64 by default. 128 disables grouping.
+		 */
+		$prefix = (int) \apply_filters( 'silver_assist_security_ipv6_prefix_length', 64 );
+		if ( $prefix < 1 ) {
+			$prefix = 64;
+		}
+		$prefix = \min( $prefix, 128 );
+
+		if ( 128 === $prefix ) {
+			return (string) \inet_ntop( $packed );
+		}
+
+		$mask = \str_repeat( \chr( 255 ), \intdiv( $prefix, 8 ) );
+		if ( 0 !== $prefix % 8 ) {
+			$mask .= \chr( ( 255 << ( 8 - $prefix % 8 ) ) & 255 );
+		}
+		$mask = \str_pad( $mask, 16, \chr( 0 ) );
+
+		return \inet_ntop( $packed & $mask ) . '/' . $prefix;
+	}
+
+	/**
+	 * Hash that identifies an IP in limiter keys
+	 *
+	 * @since 1.5.4
+	 * @param string $ip IP address.
+	 * @return string MD5 of the normalized identity (see normalize_ip_for_limits()).
+	 */
+	public static function get_ip_key_hash( string $ip ): string {
+		return md5( self::normalize_ip_for_limits( $ip ) );
+	}
+
+	/**
 	 * Generate secure transient key for IP-based tracking
 	 *
 	 * Creates consistent, secure keys for IP-based transient storage
-	 * used in rate limiting, lockouts, and tracking.
+	 * used in rate limiting, lockouts, and tracking. IPv6 addresses share the
+	 * key of their network prefix (see normalize_ip_for_limits()).
 	 *
 	 * @since 1.1.10
 	 * @param string      $prefix Key prefix (e.g., 'login_attempts', 'lockout').
@@ -730,7 +794,7 @@ class SecurityHelper {
 			$ip = self::get_client_ip();
 		}
 
-		return "{$prefix}_" . md5( $ip );
+		return "{$prefix}_" . self::get_ip_key_hash( $ip );
 	}
 
 	/**
@@ -775,36 +839,8 @@ class SecurityHelper {
 			$user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
 		}
 
-		// Known bot/crawler patterns.
-		$bot_patterns = array(
-			'bot',
-			'crawler',
-			'spider',
-			'scraper',
-			'scan',
-			'probe',
-			'wget',
-			'curl',
-			'python',
-			'php',
-			'perl',
-			'java',
-			'masscan',
-			'nmap',
-			'nikto',
-			'sqlmap',
-			'gobuster',
-			'dirb',
-			'dirbuster',
-			'wpscan',
-			'nuclei',
-			'httpx',
-		);
-
-		foreach ( $bot_patterns as $pattern ) {
-			if ( stripos( $user_agent, $pattern ) !== false ) {
-				return true;
-			}
+		if ( self::matches_bot_user_agent( $user_agent ) ) {
+			return true;
 		}
 
 		// Additional bot detection patterns.
@@ -819,6 +855,39 @@ class SecurityHelper {
 		! isset( $_SERVER['HTTP_ACCEPT_ENCODING'] )
 		) {
 			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Whether a User-Agent string names a known bot, crawler, scanner or scripting client
+	 *
+	 * Short words are matched as whole words, not as substrings, so a phone brand such as CUBOT or a
+	 * device model that merely contains `bot`, `scan`, `php` or `java` is not treated as a bot, while
+	 * `Googlebot`, `AhrefsBot`, `python-requests`, `Java/17`, `PHP/8.2` and `libwww-perl` still are.
+	 *
+	 * @since 1.5.4
+	 * @param string $user_agent User-Agent string.
+	 * @return bool
+	 */
+	public static function matches_bot_user_agent( string $user_agent ): bool {
+		// Device brands whose name ends in "bot" (CUBOT phones).
+		$user_agent = \str_ireplace( 'cubot', '', $user_agent );
+
+		// Standalone or suffixed `bot`, crawler words, scanner and scripting-client names, `Java/17` (not `JavaScript`), scanner tools.
+		$patterns = array(
+			'/(?:^|[^a-z])bot(?:[^a-z]|$)|[a-z]bot\b/i',
+			'/crawler|spider|scraper/i',
+			'/\b(?:scan|scanner|probe|wget|curl|python|php|perl|ruby)\b/i',
+			'/\bjava(?:\/|\s|$)/i',
+			'/masscan|nmap|nikto|sqlmap|gobuster|dirb|wpscan|nuclei|httpx/i',
+		);
+
+		foreach ( $patterns as $pattern ) {
+			if ( 1 === \preg_match( $pattern, $user_agent ) ) {
+				return true;
+			}
 		}
 
 		return false;

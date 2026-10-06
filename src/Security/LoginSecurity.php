@@ -159,7 +159,6 @@ class LoginSecurity implements LoadableInterface {
 
 		// Bot and crawler protection.
 		\add_action( 'login_init', array( $this, 'block_suspicious_bots' ), 5 );
-		\add_action( 'wp_login_failed', array( $this, 'track_bot_behavior' ) );
 
 		// Login attempt tracking.
 		\add_action( 'wp_login_failed', array( $this, 'handle_failed_login' ) );
@@ -309,6 +308,9 @@ class LoginSecurity implements LoadableInterface {
 		if ( isset( $_POST['log'] ) && function_exists( 'wp_verify_nonce' ) ) {
 			$nonce = isset( $_POST['secure_login_nonce'] ) ? \sanitize_text_field( \wp_unslash( $_POST['secure_login_nonce'] ) ) : '';
 			if ( ! \wp_verify_nonce( $nonce, 'secure_login_action' ) ) {
+				// Log only, on purpose: login pages are often served from a page cache or CDN, so the nonce
+				// printed in the form can be stale for a real person. Enforcing it would lock out legitimate
+				// users; password guessing is stopped by the per-IP lockout instead.
 				SecurityHelper::log_security_event( 'NONCE_VERIFICATION_FAILED', 'Nonce verification failed for login attempt', array() );
 			}
 		}
@@ -333,15 +335,16 @@ class LoginSecurity implements LoadableInterface {
 
 		SecurityEventCounter::record( SecurityEventCounter::FAILED_LOGIN );
 
-		$key = SecurityHelper::generate_ip_transient_key( 'login_attempts', $ip );
-
-		$attempts = \get_transient( $key );
-		if ( false === $attempts ) {
-			$attempts = 0;
-		}
-		++$attempts;
-
-		\set_transient( $key, $attempts, $this->lockout_duration );
+		// Atomic fixed-window counter: parallel failures each get their own count, so they cannot
+		// overwrite each other and slip past the limit. The window opens at the first failure and lasts
+		// the lockout duration. The count is read from the return value (a persistent object cache keeps
+		// it outside the transient).
+		$attempts = SecurityHelper::increment_rate_window(
+			SecurityHelper::generate_ip_transient_key( 'login_window', $ip ),
+			SecurityHelper::generate_ip_transient_key( 'login_attempts', $ip ),
+			time(),
+			$this->lockout_duration
+		);
 
 		if ( $attempts >= $this->max_attempts ) {
 			// Log the lockout using centralized security logging.
@@ -356,10 +359,13 @@ class LoginSecurity implements LoadableInterface {
 				)
 			);
 
-			// Set lockout flag.
+			// Set the lockout flag. The value is the Unix time the lockout ends, so the remaining time
+			// can be read through the transient API (a persistent object cache has no timeout rows).
 			$lockout_key = SecurityHelper::generate_ip_transient_key( 'lockout', $ip );
-			\set_transient( $lockout_key, true, $this->lockout_duration );
-			SecurityEventCounter::record( SecurityEventCounter::IP_BLOCKED );
+			if ( false === \get_transient( $lockout_key ) ) {
+				\set_transient( $lockout_key, time() + $this->lockout_duration, $this->lockout_duration );
+				SecurityEventCounter::record( SecurityEventCounter::IP_BLOCKED );
+			}
 		}
 	}
 
@@ -393,24 +399,20 @@ class LoginSecurity implements LoadableInterface {
 			return $user;
 		}
 
-		$ip           = SecurityHelper::get_client_ip();
-		$lockout_key  = SecurityHelper::generate_ip_transient_key( 'lockout', $ip );
-		$attempts_key = SecurityHelper::generate_ip_transient_key( 'login_attempts', $ip );
+		$ip          = SecurityHelper::get_client_ip();
+		$lockout_key = SecurityHelper::generate_ip_transient_key( 'lockout', $ip );
 
 		// Check if IP is locked out.
-		if ( \get_transient( $lockout_key ) ) {
-			$attempts = \get_transient( $attempts_key );
-			if ( false === $attempts ) {
-				$attempts = 0;
-			}
-			$remaining_time = $this->get_remaining_lockout_time( $lockout_key );
+		$lockout = \get_transient( $lockout_key );
+		if ( $lockout ) {
+			$remaining_time = $this->get_remaining_lockout_time( $lockout );
 
 			return new WP_Error(
 				'login_locked',
 				sprintf(
 					/* translators: %d: number of minutes remaining until unlock */
 					\__( 'Too many failed login attempts. Try again in %d minutes.', 'silver-assist-security' ),
-					ceil( $remaining_time / 60 )
+					max( 1, (int) ceil( $remaining_time / 60 ) )
 				)
 			);
 		}
@@ -637,12 +639,11 @@ class LoginSecurity implements LoadableInterface {
 	 * @return void
 	 */
 	public function clear_login_attempts(): void {
-		$ip           = SecurityHelper::get_client_ip();
-		$attempts_key = SecurityHelper::generate_ip_transient_key( 'login_attempts', $ip );
-		$lockout_key  = SecurityHelper::generate_ip_transient_key( 'lockout', $ip );
+		$ip = SecurityHelper::get_client_ip();
 
-		\delete_transient( $attempts_key );
-		\delete_transient( $lockout_key );
+		\delete_transient( SecurityHelper::generate_ip_transient_key( 'login_attempts', $ip ) );
+		\delete_transient( SecurityHelper::generate_ip_transient_key( 'login_window', $ip ) );
+		\delete_transient( SecurityHelper::generate_ip_transient_key( 'lockout', $ip ) );
 	}
 
 	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress hook.
@@ -819,23 +820,17 @@ class LoginSecurity implements LoadableInterface {
 	/**
 	 * Get remaining lockout time
 	 *
+	 * The lockout transient holds the Unix time the lockout ends, which works with and without a
+	 * persistent object cache. A lockout stored by an earlier version holds `true`, so its end is
+	 * unknown and reported as zero (shown as one minute).
+	 *
 	 * @since 1.1.1
-	 * @param string $lockout_key Lockout transient key.
+	 * @param mixed $lockout Value of the lockout transient.
 	 * @return int Remaining time in seconds
 	 */
-	private function get_remaining_lockout_time( string $lockout_key ): int {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct query needed for transient timeout value.
-		$transient_timeout = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
-				"_transient_timeout_{$lockout_key}"
-			)
-		);
-
-		if ( $transient_timeout ) {
-			return (int) max( 0, $transient_timeout - time() );
+	private function get_remaining_lockout_time( $lockout ): int {
+		if ( is_numeric( $lockout ) && (int) $lockout > 1 ) {
+			return max( 0, (int) $lockout - time() );
 		}
 
 		return 0;
@@ -877,40 +872,8 @@ class LoginSecurity implements LoadableInterface {
 		$user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
 		$ip         = $this->get_client_ip();
 
-		// List of known bot/crawler patterns.
-		$bot_patterns = array(
-			'bot',
-			'crawler',
-			'spider',
-			'scraper',
-			'scan',
-			'probe',
-			'wget',
-			'curl',
-			'python',
-			'php',
-			'perl',
-			'java',
-			'masscan',
-			'nmap',
-			'nikto',
-			'sqlmap',
-			'gobuster',
-			'dirb',
-			'dirbuster',
-			'wpscan',
-			'nuclei',
-			'httpx',
-		);
-
-		// Check if user agent matches bot patterns.
-		$is_bot = false;
-		foreach ( $bot_patterns as $pattern ) {
-			if ( stripos( $user_agent, $pattern ) !== false ) {
-				$is_bot = true;
-				break;
-			}
-		}
+		// Known bot, crawler, scanner and scripting-client user agents (whole-word matching).
+		$is_bot = SecurityHelper::matches_bot_user_agent( $user_agent );
 
 		// Additional checks for suspicious behavior (but more lenient for users).
 		if ( ! $is_bot ) {
@@ -941,27 +904,36 @@ class LoginSecurity implements LoadableInterface {
 	 * Count a login page request from an IP and report whether it is over the limit
 	 *
 	 * The 16th request within a minute from one IP is the first one treated as bot
-	 * traffic (404). The counter is per IP and expires a minute after the latest
-	 * request. The threshold accommodates password changes with redirects, logout
-	 * confirmations and several login attempts by a legitimate user, but several
-	 * people sharing one IP (office, VPN) share this budget.
+	 * traffic (404). The counter is a fixed window per IP: it starts at the first
+	 * request and ends a minute later, whatever happens in between, so a monitor
+	 * hitting the page once a minute is never blocked. The threshold accommodates
+	 * password changes with redirects, logout confirmations and several login
+	 * attempts by a legitimate user, but several people sharing one IP (office,
+	 * VPN) share this budget.
 	 *
 	 * @since 1.5.4
 	 * @param string $ip Client IP address.
 	 * @return bool True when this request exceeds the limit.
 	 */
 	public function is_login_page_rate_limited( string $ip ): bool {
-		$access_key = 'login_access_' . md5( $ip );
-		$hits       = (int) \get_transient( $access_key ) + 1;
-
-		// The counter lives for a minute after the latest request.
-		\set_transient( $access_key, $hits, 60 );
+		$hits = SecurityHelper::increment_rate_window(
+			SecurityHelper::generate_ip_transient_key( 'login_access_window', $ip ),
+			SecurityHelper::generate_ip_transient_key( 'login_access', $ip ),
+			time(),
+			60
+		);
 
 		return $hits > 15;
 	}
 
 	/**
-	 * Track bot behavior for additional security measures
+	 * Record a request blocked as bot traffic, for security monitoring
+	 *
+	 * Called only for requests `block_suspicious_bots()` turned away, never for ordinary failed
+	 * logins (those are counted by the login lockout). It is a log, not a block: an earlier
+	 * `extended_bot_block_*` flag was written after four entries but nothing ever read it, so it was
+	 * removed rather than enforced, because a two-hour block on an IP shared by a whole office is a
+	 * heavier penalty than the 404 plus the per-minute limit already give.
 	 *
 	 * @since 1.1.1
 	 * @return void
@@ -971,7 +943,7 @@ class LoginSecurity implements LoadableInterface {
 		$user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : 'Unknown';
 
 		// Log bot activity for security monitoring.
-		$bot_log_key  = 'bot_activity_' . md5( $ip );
+		$bot_log_key  = SecurityHelper::generate_ip_transient_key( 'bot_activity', $ip );
 		$bot_activity = \get_transient( $bot_log_key );
 		if ( false === $bot_activity ) {
 			$bot_activity = array();
@@ -990,12 +962,6 @@ class LoginSecurity implements LoadableInterface {
 		}
 
 		\set_transient( $bot_log_key, $bot_activity, 3600 ); // Store for 1 hour.
-
-		// If too many bot activities, extend blocking.
-		if ( count( $bot_activity ) > 3 ) {
-			$extended_block_key = 'extended_bot_block_' . md5( $ip );
-			\set_transient( $extended_block_key, true, 7200 ); // Block for 2 hours.
-		}
 	}
 
 	/**

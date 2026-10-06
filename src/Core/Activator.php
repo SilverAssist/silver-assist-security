@@ -14,6 +14,8 @@
 
 namespace SilverAssist\Security\Core;
 
+use SilverAssist\Security\Security\IPBlacklist;
+
 // Prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
@@ -52,6 +54,7 @@ class Activator {
 		'ip_violations_',
 		'lockout_',
 		'login_attempts_',
+		'login_window_',
 		'login_access_',
 		'bot_activity_',
 		'extended_bot_block_',
@@ -165,6 +168,9 @@ class Activator {
 		\delete_transient( 'wp_github_updater_notice_silver-assist-security' );
 
 		\delete_metadata( 'user', 0, 'last_activity', '', true );
+
+		// Index of the IP blacklist (see IPBlacklist::INDEX_OPTION).
+		\delete_option( IPBlacklist::INDEX_OPTION );
 
 		\wp_clear_scheduled_hook( self::CLEANUP_CRON_HOOK );
 	}

@@ -35,6 +35,7 @@ class UninstallCleanupTest extends WP_UnitTestCase {
 			'ip_violations_' . $hash,
 			'lockout_' . $hash,
 			'login_attempts_' . $hash,
+			'login_window_' . $hash,
 			'login_access_' . $hash,
 			'bot_activity_' . $hash,
 			'extended_bot_block_' . $hash,
@@ -62,6 +63,8 @@ class UninstallCleanupTest extends WP_UnitTestCase {
 		}
 		// Legacy option that older versions saved and that is not in the defaults.
 		\update_option( 'silver_assist_ip_violation_threshold', 7 );
+		// Index of the IP blacklist.
+		\update_option( 'silver_assist_ip_blacklist_index', array( 'ip_blacklist_' . md5( '203.0.113.9' ) => time() + HOUR_IN_SECONDS ), false );
 
 		foreach ( $this->plugin_transient_keys() as $key ) {
 			\set_transient( $key, 'x', HOUR_IN_SECONDS );
@@ -94,7 +97,7 @@ class UninstallCleanupTest extends WP_UnitTestCase {
 			$rows = $wpdb->get_col( $wpdb->prepare( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s", $pattern ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$names = array_merge( $names, $rows );
 		}
-		$prefixes = array( 'ip_blacklist_', 'ip_violations_', 'lockout_', 'login_attempts_', 'login_access_', 'bot_activity_', 'extended_bot_block_', 'cf7_total_attacks', 'graphql_rate_', 'bot_blocks_count_', 'form_rate_', 'silver_assist_', 'silver-assist-security_', 'wp_github_updater_notice_silver-assist-security' );
+		$prefixes = array( 'ip_blacklist_', 'ip_violations_', 'lockout_', 'login_attempts_', 'login_window_', 'login_access_', 'bot_activity_', 'extended_bot_block_', 'cf7_total_attacks', 'graphql_rate_', 'bot_blocks_count_', 'form_rate_', 'silver_assist_', 'silver-assist-security_', 'wp_github_updater_notice_silver-assist-security' );
 
 		return array_values(
 			array_filter(

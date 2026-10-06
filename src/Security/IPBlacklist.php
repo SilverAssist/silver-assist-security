@@ -35,6 +35,22 @@ class IPBlacklist {
 	private static ?IPBlacklist $instance = null;
 
 	/**
+	 * Option holding the blacklist index: key => Unix time the block ends
+	 *
+	 * Blocks are transients, which a persistent object cache keeps out of the options table, so they
+	 * cannot be listed by scanning it. The index is a small, non-autoloaded option written on every
+	 * block and pruned of expired entries as it is written.
+	 */
+	public const INDEX_OPTION = 'silver_assist_ip_blacklist_index';
+
+	/**
+	 * Most entries the index keeps (the ones ending soonest are dropped first)
+	 *
+	 * A block dropped from the index still applies; it is only missing from the list.
+	 */
+	private const INDEX_LIMIT = 1000;
+
+	/**
 	 * Constructor
 	 *
 	 * @since 1.1.15
@@ -73,6 +89,117 @@ class IPBlacklist {
 	}
 
 	/**
+	 * Transient key of an IP's block (IPv6 addresses share their network prefix's key)
+	 *
+	 * @since 1.5.4
+	 * @param string $ip IP address.
+	 * @return string
+	 */
+	private function blacklist_key( string $ip ): string {
+		return SecurityHelper::generate_ip_transient_key( 'ip_blacklist', $ip );
+	}
+
+	/**
+	 * Read the blacklist index
+	 *
+	 * The first read after an upgrade, when the option does not exist yet, imports the blocks
+	 * already stored in the options table (sites without a persistent object cache).
+	 *
+	 * @since 1.5.4
+	 * @return array<string, int> Key => expiry timestamp.
+	 */
+	private function get_index(): array {
+		$index = \get_option( self::INDEX_OPTION, false );
+
+		if ( is_array( $index ) ) {
+			return $index;
+		}
+
+		$index = array();
+		if ( ! \wp_using_ext_object_cache() ) {
+			global $wpdb;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-time import of blocks stored before the index existed.
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s",
+					$wpdb->esc_like( '_transient_timeout_ip_blacklist_' ) . '%'
+				)
+			);
+			foreach ( (array) $rows as $row ) {
+				$key           = substr( (string) $row->option_name, strlen( '_transient_timeout_' ) );
+				$index[ $key ] = (int) $row->option_value;
+			}
+		}
+
+		\update_option( self::INDEX_OPTION, $index, false );
+		return $index;
+	}
+
+	/**
+	 * Record a block in the index and prune the expired ones
+	 *
+	 * @since 1.5.4
+	 * @param string $key      Transient key of the block.
+	 * @param int    $duration Block duration in seconds.
+	 * @return void
+	 */
+	private function index_add( string $key, int $duration ): void {
+		$index         = $this->get_index();
+		$index[ $key ] = time() + $duration;
+		$index         = array_filter(
+			$index,
+			static function ( int $expiry ): bool {
+				return $expiry > time();
+			}
+		);
+
+		if ( count( $index ) > self::INDEX_LIMIT ) {
+			asort( $index );
+			$index = array_slice( $index, -self::INDEX_LIMIT, null, true );
+		}
+
+		\update_option( self::INDEX_OPTION, $index, false );
+	}
+
+	/**
+	 * Remove a block from the index
+	 *
+	 * @since 1.5.4
+	 * @param string $key Transient key of the block.
+	 * @return void
+	 */
+	private function index_remove( string $key ): void {
+		$index = $this->get_index();
+		if ( isset( $index[ $key ] ) ) {
+			unset( $index[ $key ] );
+			\update_option( self::INDEX_OPTION, $index, false );
+		}
+	}
+
+	/**
+	 * Drop expired entries from the index
+	 *
+	 * @since 1.5.4
+	 * @return int Number of entries dropped.
+	 */
+	private function prune_index(): int {
+		$index  = $this->get_index();
+		$active = array_filter(
+			$index,
+			static function ( int $expiry ): bool {
+				return $expiry > time();
+			}
+		);
+
+		if ( count( $active ) !== count( $index ) ) {
+			\update_option( self::INDEX_OPTION, $active, false );
+		}
+
+		return count( $index ) - count( $active );
+	}
+
+	/**
 	 * Add IP to blacklist manually
 	 *
 	 * @since 1.1.15
@@ -82,7 +209,7 @@ class IPBlacklist {
 	 * @return void
 	 */
 	public function add_to_blacklist( string $ip, string $reason, int $duration ): void {
-		$blacklist_key  = 'ip_blacklist_' . md5( $ip );
+		$blacklist_key  = $this->blacklist_key( $ip );
 		$blacklist_data = array(
 			'ip'         => $ip,
 			'reason'     => $reason,
@@ -93,6 +220,7 @@ class IPBlacklist {
 		);
 
 		\set_transient( $blacklist_key, $blacklist_data, $duration );
+		$this->index_add( $blacklist_key, $duration );
 		SecurityEventCounter::record( SecurityEventCounter::IP_BLOCKED );
 
 		SecurityHelper::log_security_event(
@@ -115,7 +243,7 @@ class IPBlacklist {
 	 * @return bool True if blacklisted, false otherwise
 	 */
 	public function is_blacklisted( string $ip ): bool {
-		$blacklist_key = 'ip_blacklist_' . md5( $ip );
+		$blacklist_key = $this->blacklist_key( $ip );
 		return \get_transient( $blacklist_key ) !== false;
 	}
 
@@ -135,7 +263,7 @@ class IPBlacklist {
 			return;
 		}
 
-		$violations_key    = 'ip_violations_' . md5( $ip );
+		$violations_key    = SecurityHelper::generate_ip_transient_key( 'ip_violations', $ip );
 		$stored_violations = \get_transient( $violations_key );
 		$violations        = ( false !== $stored_violations && is_array( $stored_violations ) ) ? $stored_violations : array();
 
@@ -202,7 +330,7 @@ class IPBlacklist {
 			implode( ', ', $violation_types )
 		);
 
-		$blacklist_key  = 'ip_blacklist_' . md5( $ip );
+		$blacklist_key  = $this->blacklist_key( $ip );
 		$blacklist_data = array(
 			'ip'         => $ip,
 			'reason'     => $reason,
@@ -213,6 +341,7 @@ class IPBlacklist {
 		);
 
 		\set_transient( $blacklist_key, $blacklist_data, $duration );
+		$this->index_add( $blacklist_key, $duration );
 		SecurityEventCounter::record( SecurityEventCounter::IP_BLOCKED );
 
 		SecurityHelper::log_security_event(
@@ -236,7 +365,7 @@ class IPBlacklist {
 	 * @return array|false Blacklist details or false if not blacklisted
 	 */
 	public function get_blacklist_details( string $ip ) {
-		$blacklist_key = 'ip_blacklist_' . md5( $ip );
+		$blacklist_key = $this->blacklist_key( $ip );
 		return \get_transient( $blacklist_key );
 	}
 
@@ -248,11 +377,12 @@ class IPBlacklist {
 	 * @return bool True if removed, false if not found
 	 */
 	public function remove_from_blacklist( string $ip ): bool {
-		$blacklist_key   = 'ip_blacklist_' . md5( $ip );
+		$blacklist_key   = $this->blacklist_key( $ip );
 		$was_blacklisted = \get_transient( $blacklist_key ) !== false;
 
 		if ( $was_blacklisted ) {
 			\delete_transient( $blacklist_key );
+			$this->index_remove( $blacklist_key );
 
 			SecurityHelper::log_security_event(
 				'IP_REMOVED_FROM_BLACKLIST',
@@ -272,7 +402,7 @@ class IPBlacklist {
 	 * @return int Number of violations
 	 */
 	public function get_violation_count( string $ip ): int {
-		$violations_key    = 'ip_violations_' . md5( $ip );
+		$violations_key    = SecurityHelper::generate_ip_transient_key( 'ip_violations', $ip );
 		$stored_violations = \get_transient( $violations_key );
 		$violations        = ( false !== $stored_violations && is_array( $stored_violations ) ) ? $stored_violations : array();
 		return count( $violations );
@@ -281,32 +411,18 @@ class IPBlacklist {
 	/**
 	 * Get all blacklisted IPs
 	 *
-	 * Note: This is a simplified implementation. In a production environment,
-	 * you might want to store blacklist keys in a separate index for efficiency.
+	 * Reads the blocks listed in the index through the transient API, so it works with and without a
+	 * persistent object cache. Entries whose transient is gone are skipped.
 	 *
 	 * @since 1.1.15
+	 * @since 1.5.4 Reads the index instead of scanning the options table.
 	 * @return array Array of blacklisted IP data
 	 */
 	public function get_all_blacklisted_ips(): array {
-		global $wpdb;
-
-		// Query all transients that match our blacklist pattern
-		// This is simplified - in production you'd want a more efficient approach.
 		$blacklisted_ips = array();
 
-		// Get transients from database that match our pattern.
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT option_name, option_value FROM {$wpdb->options} 
-				 WHERE option_name LIKE %s 
-				 AND option_name NOT LIKE %s",
-				'_transient_ip_blacklist_%',
-				'_transient_timeout_ip_blacklist_%'
-			)
-		);
-
-		foreach ( $results as $row ) {
-			$data = maybe_unserialize( $row->option_value );
+		foreach ( array_keys( $this->get_index() ) as $key ) {
+			$data = \get_transient( $key );
 			if ( is_array( $data ) && isset( $data['ip'] ) ) {
 				$blacklisted_ips[ $data['ip'] ] = $data;
 			}
@@ -325,22 +441,18 @@ class IPBlacklist {
 	 * @return int Number of expired violations cleaned
 	 */
 	public function clean_expired_violations(): int {
-		global $wpdb;
-
 		try {
-			$cleaned_count = 0;
+			// Expired blocks drop out of the index in every setup.
+			$cleaned_count = $this->prune_index();
 
-			// Clean expired lockout transients.
-			$cleaned_count += $this->clean_expired_lockouts();
-
-			// Clean expired violation count transients.
-			$cleaned_count += $this->clean_expired_violation_counts();
-
-			// Clean expired rate limit transients.
-			$cleaned_count += $this->clean_expired_rate_limits();
-
-			// Clean expired bot detection transients.
-			$cleaned_count += $this->clean_expired_bot_blocks();
+			// Expired transient rows only exist in the options table. A persistent object cache expires
+			// its own entries, so there is nothing to scan.
+			if ( ! \wp_using_ext_object_cache() ) {
+				$cleaned_count += $this->clean_expired_lockouts();
+				$cleaned_count += $this->clean_expired_violation_counts();
+				$cleaned_count += $this->clean_expired_rate_limits();
+				$cleaned_count += $this->clean_expired_bot_blocks();
+			}
 
 			// Log cleanup results.
 			SecurityHelper::log_security_event(
@@ -450,6 +562,8 @@ class IPBlacklist {
 		// Pattern matches: login_attempts_, graphql_rate_limit_, etc.
 		$rate_limit_patterns = array(
 			'_transient_timeout_login_attempts_%',
+			'_transient_timeout_login_window_%',
+			'_transient_timeout_login_access_%',
 			'_transient_timeout_graphql_rate_limit_%',
 			'_transient_timeout_rate_limit_%',
 		);
@@ -676,7 +790,7 @@ class IPBlacklist {
 	public function add_to_cf7_blacklist( string $ip, string $reason, string $type = 'cf7_manual' ): bool {
 		$duration = DefaultConfig::get_option( 'silver_assist_cf7_ip_block_duration' ) ? DefaultConfig::get_option( 'silver_assist_cf7_ip_block_duration' ) : 3600; // 1 hour default
 
-		$blacklist_key  = 'ip_blacklist_' . md5( $ip );
+		$blacklist_key  = $this->blacklist_key( $ip );
 		$blacklist_data = array(
 			'ip'         => $ip,
 			'reason'     => $reason,
@@ -690,6 +804,8 @@ class IPBlacklist {
 		$success = \set_transient( $blacklist_key, $blacklist_data, $duration );
 
 		if ( $success ) {
+			$this->index_add( $blacklist_key, (int) $duration );
+
 			// Increment CF7 attack count.
 			$this->increment_cf7_attack_count();
 
@@ -737,7 +853,7 @@ class IPBlacklist {
 	 * @return int Violation count
 	 */
 	private function get_cf7_violation_count( string $ip ): int {
-		$violations_key = 'ip_violations_' . md5( $ip );
+		$violations_key = SecurityHelper::generate_ip_transient_key( 'ip_violations', $ip );
 		$violations     = \get_transient( $violations_key );
 
 		if ( ! is_array( $violations ) ) {
