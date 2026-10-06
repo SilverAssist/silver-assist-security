@@ -44,7 +44,7 @@ class FormProtection {
 	 * @return bool True if submission is allowed, false if rate limited
 	 */
 	public function allow_form_submission( string $ip ): bool {
-		$rate_key    = SecurityHelper::generate_ip_transient_key( $ip, 'form_rate' );
+		$rate_key    = SecurityHelper::generate_ip_transient_key( 'form_rate', $ip );
 		$submissions = (int) \get_transient( $rate_key );
 		$rate_limit  = DefaultConfig::get_option( 'silver_assist_form_rate_limit' );
 		$rate_window = DefaultConfig::get_option( 'silver_assist_form_rate_window' );

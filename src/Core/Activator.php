@@ -30,6 +30,38 @@ defined( 'ABSPATH' ) || exit;
 class Activator {
 
 	/**
+	 * Cron event scheduled by IPBlacklist
+	 */
+	private const CLEANUP_CRON_HOOK = 'silver_assist_security_cleanup';
+
+	/**
+	 * Options saved by earlier versions that are no longer in DefaultConfig
+	 *
+	 * @var array<int, string>
+	 */
+	private const LEGACY_OPTIONS = array( 'silver_assist_ip_violation_threshold' );
+
+	/**
+	 * Transient name prefixes the plugin writes (without `_transient_`)
+	 *
+	 * @var array<int, string>
+	 */
+	private const TRANSIENT_PREFIXES = array(
+		'silver_assist_',
+		'ip_blacklist_',
+		'ip_violations_',
+		'lockout_',
+		'login_attempts_',
+		'login_access_',
+		'bot_activity_',
+		'extended_bot_block_',
+		'cf7_total_attacks',
+		'graphql_rate_',
+		'bot_blocks_count_',
+		'form_rate_',
+	);
+
+	/**
 	 * Plugin activation handler
 	 *
 	 * @since 1.5.1
@@ -67,6 +99,8 @@ class Activator {
 		// Query for users who have WordPress sessions (simplified check).
 		$users = \get_users(
 			array(
+				// IDs only: the default fields would load (and cache) every user row with a session.
+				'fields'     => 'ID',
 				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Session check on activation only, performance acceptable
 				'meta_query' => array(
 					array(
@@ -78,12 +112,13 @@ class Activator {
 		);
 
 		// Initialize last_activity for each logged-in user.
-		foreach ( $users as $user ) {
-			$existing_activity = \get_user_meta( $user->ID, 'last_activity', true );
+		foreach ( $users as $user_id ) {
+			$user_id           = (int) $user_id;
+			$existing_activity = \get_user_meta( $user_id, 'last_activity', true );
 
 			// Only set if not already set to avoid overwriting existing data.
 			if ( empty( $existing_activity ) ) {
-				\update_user_meta( $user->ID, 'last_activity', $current_time );
+				\update_user_meta( $user_id, 'last_activity', $current_time );
 			}
 		}
 	}
@@ -95,14 +130,11 @@ class Activator {
 	 * @return void
 	 */
 	public static function deactivate(): void {
-		// Clean up transients and temporary data.
-		global $wpdb;
+		// Rate limiting counters are cheap to rebuild and would otherwise outlive the plugin.
+		self::delete_transients_by_prefix( array( 'graphql_rate_' ) );
 
-		// Clean up rate limiting transients.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation on deactivation, caching not needed
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_graphql_rate_limit_%'" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation on deactivation, caching not needed
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_graphql_rate_limit_%'" );
+		// The cleanup event would otherwise stay in the cron array with no callback.
+		\wp_clear_scheduled_hook( self::CLEANUP_CRON_HOOK );
 
 		// Flush rewrite rules to clean up custom admin URL routing.
 		\flush_rewrite_rules();
@@ -111,24 +143,66 @@ class Activator {
 	/**
 	 * Plugin uninstall handler
 	 *
+	 * Removes everything the plugin writes: options (the defaults plus legacy names), every transient
+	 * family, the `last_activity` user meta and the cleanup cron event. Single-site only: multisite is
+	 * not supported, so the other sites of a network are not visited.
+	 *
 	 * @since 1.5.1
 	 * @return void
 	 */
 	public static function uninstall(): void {
-		// Remove all plugin options using centralized configuration.
-		foreach ( array_keys( DefaultConfig::get_defaults() ) as $option ) {
+		foreach ( array_merge( array_keys( DefaultConfig::get_defaults() ), self::LEGACY_OPTIONS ) as $option ) {
 			\delete_option( $option );
 		}
 
-		// Clean up any remaining transients.
+		self::delete_transients_by_prefix( self::TRANSIENT_PREFIXES );
+
+		// Form rate keys written before 1.5.4 had the IP and the prefix swapped: `{ip}_{md5('form_rate')}`.
+		self::delete_transients_by_suffix( '_' . md5( 'form_rate' ) );
+
+		// Updater caches (names built by the updater package from the plugin slug).
+		\delete_transient( 'silver-assist-security_version_check' );
+		\delete_transient( 'wp_github_updater_notice_silver-assist-security' );
+
+		\delete_metadata( 'user', 0, 'last_activity', '', true );
+
+		\wp_clear_scheduled_hook( self::CLEANUP_CRON_HOOK );
+	}
+
+	/**
+	 * Delete transients (value and timeout rows) whose name starts with one of the prefixes
+	 *
+	 * Transients kept in an external object cache are not stored in the options table, so they are
+	 * left to expire on their own.
+	 *
+	 * @since 1.5.4
+	 * @param array<int, string> $prefixes Transient name prefixes, without `_transient_`.
+	 * @return void
+	 */
+	private static function delete_transients_by_prefix( array $prefixes ): void {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation on uninstall, caching not needed
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_silver_assist_%'" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation on uninstall, caching not needed
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_silver_assist_%'" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation on uninstall, caching not needed
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_graphql_rate_limit_%'" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation on uninstall, caching not needed
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_graphql_rate_limit_%'" );
+
+		foreach ( $prefixes as $prefix ) {
+			foreach ( array( '_transient_', '_transient_timeout_' ) as $row_prefix ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation, caching not needed
+				$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( $row_prefix . $prefix ) . '%' ) );
+			}
+		}
+	}
+
+	/**
+	 * Delete transients (value and timeout rows) whose name ends with the suffix
+	 *
+	 * @since 1.5.4
+	 * @param string $suffix Transient name suffix.
+	 * @return void
+	 */
+	private static function delete_transients_by_suffix( string $suffix ): void {
+		global $wpdb;
+
+		foreach ( array( '_transient_', '_transient_timeout_' ) as $row_prefix ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleanup operation, caching not needed
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( $row_prefix ) . '%' . $wpdb->esc_like( $suffix ) ) );
+		}
 	}
 }

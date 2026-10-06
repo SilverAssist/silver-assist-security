@@ -68,7 +68,7 @@ class FormProtectionTest extends WP_UnitTestCase {
 		$this->assertFalse( $form_protection->allow_form_submission( $test_ip ) );
 
 		// Simulate time passing by clearing the transient (simulating expiry)
-		$rate_key = SecurityHelper::generate_ip_transient_key( $test_ip, 'form_rate' );
+		$rate_key = SecurityHelper::generate_ip_transient_key( 'form_rate', $test_ip );
 		\delete_transient( $rate_key );
 
 		// Should be allowed again after reset
@@ -301,7 +301,7 @@ class FormProtectionTest extends WP_UnitTestCase {
 		$test_ips = [ '45.148.8.70', '192.168.1.100', '192.168.1.101' ];
 		
 		foreach ( $test_ips as $ip ) {
-			$rate_key = SecurityHelper::generate_ip_transient_key( $ip, 'form_rate' );
+			$rate_key = SecurityHelper::generate_ip_transient_key( 'form_rate', $ip );
 			\delete_transient( $rate_key );
 		}
 
