@@ -35,6 +35,16 @@ class Updater extends GitHubUpdater {
 	 * @param string $github_repo GitHub repository in format "owner/repo".
 	 */
 	public function __construct( string $plugin_file, string $github_repo ) {
+		// The plugin header is the single source of truth for the minimum versions WordPress shows
+		// and enforces for updates; hard-coded copies drifted (PHP 8.3 here while the plugin runs on 8.2).
+		$header = \get_file_data(
+			$plugin_file,
+			array(
+				'requires_php' => 'Requires PHP',
+				'requires_wp'  => 'Requires at least',
+			)
+		);
+
 		$config = new UpdaterConfig(
 			$plugin_file,
 			$github_repo,
@@ -43,8 +53,8 @@ class Updater extends GitHubUpdater {
 				'plugin_description' => 'WordPress plugin for advanced security: brute force protection, bot blocking, GraphQL security, HTTPOnly cookies, and auto-updates.',
 				'plugin_author'      => 'Silver Assist',
 				'plugin_homepage'    => 'https://github.com/SilverAssist/silver-assist-security',
-				'requires_wordpress' => '6.5',
-				'requires_php'       => '8.3',
+				'requires_wordpress' => '' !== $header['requires_wp'] ? $header['requires_wp'] : '6.5',
+				'requires_php'       => '' !== $header['requires_php'] ? $header['requires_php'] : '8.2',
 				'asset_pattern'      => 'silver-assist-security-v{version}.zip',
 				'cache_duration'     => 12 * 3600,
 				'ajax_action'        => 'silver_assist_security_check_version',
