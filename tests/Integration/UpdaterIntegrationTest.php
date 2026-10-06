@@ -13,6 +13,8 @@ namespace SilverAssist\Security\Tests\Integration;
 
 use WP_UnitTestCase;
 use SilverAssist\Security\Core\Updater;
+use SilverAssist\WpGithubUpdater\Updater as GitHubUpdater;
+use SilverAssist\WpGithubUpdater\UpdaterConfig;
 
 /**
  * Class UpdaterIntegrationTest
@@ -132,37 +134,6 @@ class UpdaterIntegrationTest extends WP_UnitTestCase {
 		$this->assertInstanceOf( Updater::class, $updater );
 		$this->assertNotEmpty( $plugin_data, 'Plugin data should be available' );
 		$this->assertArrayHasKey( 'Version', $plugin_data, 'Plugin should have Version field' );
-	}
-
-	/**
-	 * Test Updater configuration with cache duration
-	 *
-	 * Validates that cache duration is properly configured (12 hours = 43200 seconds).
-	 *
-	 * @since 1.1.14
-	 * @return void
-	 */
-	public function test_updater_cache_duration_configuration(): void {
-		$expected_cache_duration = 12 * 3600; // 12 hours
-		$updater                 = new Updater( $this->plugin_file, $this->github_repo );
-
-		$this->assertInstanceOf( Updater::class, $updater );
-		$this->assertEquals( 43200, $expected_cache_duration, 'Cache duration should be 12 hours (43200 seconds)' );
-	}
-
-	/**
-	 * Test Updater asset pattern configuration
-	 *
-	 * @since 1.1.14
-	 * @return void
-	 */
-	public function test_updater_asset_pattern_configuration(): void {
-		$updater              = new Updater( $this->plugin_file, $this->github_repo );
-		$expected_pattern     = 'silver-assist-security-v{version}.zip';
-		$example_asset_v1_0_0 = str_replace( '{version}', '1.0.0', $expected_pattern );
-
-		$this->assertInstanceOf( Updater::class, $updater );
-		$this->assertEquals( 'silver-assist-security-v1.0.0.zip', $example_asset_v1_0_0 );
 	}
 
 	/**
@@ -343,5 +314,95 @@ class UpdaterIntegrationTest extends WP_UnitTestCase {
 		$this->assertInstanceOf( Updater::class, $updater1 );
 		$this->assertInstanceOf( Updater::class, $updater2 );
 		$this->assertNotSame( $updater1, $updater2, 'Each updater instance should be independent' );
+	}
+
+	/**
+	 * Read the configuration object the plugin's updater was built with
+	 *
+	 * @return UpdaterConfig
+	 */
+	private function updater_config(): UpdaterConfig {
+		$updater  = new Updater( $this->plugin_file, $this->github_repo );
+		$property = new \ReflectionProperty( GitHubUpdater::class, 'config' );
+		$property->setAccessible( true );
+
+		return $property->getValue( $updater );
+	}
+
+	/**
+	 * The update metadata matches the plugin header (#145)
+	 *
+	 * WordPress uses it to decide whether a host may install the update and shows it in the
+	 * plugin-information modal, so it must not claim a higher PHP version than the plugin needs.
+	 *
+	 * @return void
+	 */
+	public function test_updater_metadata_matches_plugin_header(): void {
+		$plugin_data = get_plugin_data( $this->plugin_file, false, false );
+		$config      = $this->updater_config();
+
+		$this->assertSame( $plugin_data['RequiresPHP'], $config->requiresPHP, 'Updater requires_php must equal "Requires PHP" in the plugin header.' );
+		$this->assertSame( $plugin_data['RequiresWP'], $config->requiresWordPress, 'Updater requires_wordpress must equal "Requires at least" in the plugin header.' );
+	}
+
+	/**
+	 * The plugin's updater is configured with the cache window, asset name and token constant (#145)
+	 *
+	 * Replaces assertions that compared a literal with itself.
+	 *
+	 * @return void
+	 */
+	public function test_updater_config_values(): void {
+		$config = $this->updater_config();
+
+		$this->assertSame( 12 * 3600, $config->cacheDuration );
+		$this->assertSame( 'silver-assist-security-v{version}.zip', $config->assetPattern );
+		$this->assertSame( 'SILVER_GITHUB_TOKEN', $config->tokenConstant, 'Private-repo updates need the token constant (updater 1.4+).' );
+	}
+
+	/**
+	 * A configured token reaches GitHub, and only api.github.com (#145)
+	 *
+	 * Uses its own constant name so the shared SILVER_GITHUB_TOKEN stays undefined.
+	 *
+	 * @return void
+	 */
+	public function test_updater_sends_the_token_to_the_github_api(): void {
+		if ( ! defined( 'SILVER_ASSIST_TEST_GITHUB_TOKEN' ) ) {
+			define( 'SILVER_ASSIST_TEST_GITHUB_TOKEN', 'test-token-123' );
+		}
+
+		$config = new UpdaterConfig(
+			$this->plugin_file,
+			$this->github_repo,
+			array(
+				'token_constant' => 'SILVER_ASSIST_TEST_GITHUB_TOKEN',
+				'ajax_action'    => 'silver_assist_security_test_check',
+				'ajax_nonce'     => 'silver_assist_security_test_nonce',
+			)
+		);
+		$updater = new GitHubUpdater( $config );
+
+		$captured = array();
+		$mock     = static function ( $pre, $args, $url ) use ( &$captured ) {
+			$captured[] = array( $url, $args['headers'] ?? array() );
+			return array(
+				'headers'  => array(),
+				'body'     => wp_json_encode( array( 'tag_name' => 'v9.9.9' ) ),
+				'response' => array( 'code' => 200, 'message' => 'OK' ),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		};
+		add_filter( 'pre_http_request', $mock, 10, 3 );
+		delete_transient( 'silver_assist_security_update_check' );
+		$updater->getLatestVersion();
+		remove_filter( 'pre_http_request', $mock, 10 );
+
+		$this->assertNotEmpty( $captured, 'The updater should have asked GitHub for the latest release.' );
+		foreach ( $captured as $request ) {
+			$this->assertStringStartsWith( 'https://api.github.com/', $request[0] );
+			$this->assertSame( 'Bearer test-token-123', $request[1]['Authorization'] ?? null );
+		}
 	}
 }
