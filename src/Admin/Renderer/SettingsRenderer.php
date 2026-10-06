@@ -730,6 +730,16 @@ class SettingsRenderer {
 									$config['ip_blacklist_enabled'],
 									\__( 'Enable automatic IP blacklisting for repeat offenders', 'silver-assist-security' )
 								);
+								RenderHelper::render_range_row(
+									\__( 'Violations Before Blacklisting', 'silver-assist-security' ),
+									'silver_assist_ip_blacklist_threshold',
+									$config['ip_violation_threshold'],
+									3,
+									20,
+									'ip-blacklist-threshold-value',
+									(string) $config['ip_violation_threshold'],
+									\__( 'Number of security violations from one IP before it is blacklisted automatically (3-20)', 'silver-assist-security' )
+								);
 								?>
 							</tbody>
 						</table>

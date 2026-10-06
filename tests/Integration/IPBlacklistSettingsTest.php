@@ -11,7 +11,12 @@
 
 namespace SilverAssist\Security\Tests\Integration;
 
+use SilverAssist\Security\Admin\Ajax\SecurityAjaxHandler;
 use SilverAssist\Security\Admin\Data\SecurityDataProvider;
+use SilverAssist\Security\Admin\Data\StatisticsProvider;
+use SilverAssist\Security\Admin\Renderer\SettingsRenderer;
+use SilverAssist\Security\GraphQL\GraphQLConfigManager;
+use SilverAssist\Security\Tests\Helpers\AjaxTestHelper;
 use SilverAssist\Security\Admin\Settings\SettingsHandler;
 use SilverAssist\Security\Security\IPBlacklist;
 use WP_UnitTestCase;
@@ -20,6 +25,8 @@ use WP_UnitTestCase;
  * Test that the IP blacklist settings are honored
  */
 class IPBlacklistSettingsTest extends WP_UnitTestCase {
+
+	use AjaxTestHelper;
 
 	/**
 	 * IP used by the tests
@@ -48,6 +55,9 @@ class IPBlacklistSettingsTest extends WP_UnitTestCase {
 		\delete_transient( 'ip_violations_' . md5( $this->ip ) );
 		\delete_option( 'silver_assist_ip_blacklist_enabled' );
 		\delete_option( 'silver_assist_ip_blacklist_threshold' );
+		\delete_option( 'silver_assist_ip_violation_threshold' );
+		$this->setup_ajax_environment();
+		$_SERVER['REQUEST_METHOD'] = 'POST';
 	}
 
 	/**
@@ -59,6 +69,7 @@ class IPBlacklistSettingsTest extends WP_UnitTestCase {
 		\delete_transient( 'ip_blacklist_' . md5( $this->ip ) );
 		\delete_transient( 'ip_violations_' . md5( $this->ip ) );
 		$_POST = array();
+		$this->teardown_ajax_environment();
 		parent::tearDown();
 	}
 
@@ -189,5 +200,88 @@ class IPBlacklistSettingsTest extends WP_UnitTestCase {
 		$this->submit( array( 'silver_assist_login_attempts' => '5' ) );
 
 		$this->assertSame( 1, (int) \get_option( 'silver_assist_ip_blacklist_enabled' ) );
+	}
+
+	/**
+	 * Auto-save the given fields the way the admin screen does
+	 *
+	 * @param array $fields Fields to post.
+	 * @return array<string, mixed>|null JSON response.
+	 */
+	private function auto_save( array $fields ): ?array {
+		$_POST   = array_merge( $fields, array( 'nonce' => \wp_create_nonce( 'silver_assist_security_ajax' ) ) );
+		$handler = new SecurityAjaxHandler( new SecurityDataProvider(), new StatisticsProvider() );
+
+		return $this->call_ajax_handler( $handler, 'auto_save' );
+	}
+
+	/**
+	 * A threshold saved under the old option name is still honored
+	 *
+	 * Earlier versions saved it as silver_assist_ip_violation_threshold.
+	 *
+	 * @return void
+	 */
+	public function test_legacy_threshold_option_is_still_honored(): void {
+		\update_option( 'silver_assist_ip_violation_threshold', 4 );
+
+		$this->violate( 3 );
+		$this->assertFalse( ( new IPBlacklist() )->is_blacklisted( $this->ip ) );
+
+		$this->violate( 1 );
+		$this->assertTrue( ( new IPBlacklist() )->is_blacklisted( $this->ip ), 'The legacy threshold of 4 should still apply.' );
+	}
+
+	/**
+	 * The threshold is a control on the IP Management tab and auto-save persists it
+	 *
+	 * @return void
+	 */
+	public function test_threshold_can_be_changed_from_the_admin_screen(): void {
+		\wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+
+		$renderer = new SettingsRenderer( GraphQLConfigManager::get_instance() );
+		ob_start();
+		$renderer->render_all_tabs();
+		$html = (string) ob_get_clean();
+		$this->assertStringContainsString( 'name="silver_assist_ip_blacklist_threshold"', $html, 'The IP Management tab should render the threshold control.' );
+
+		$response = $this->auto_save( array( 'silver_assist_ip_blacklist_threshold' => '8' ) );
+
+		$this->assertTrue( $response['success'] ?? false );
+		$this->assertSame( 8, (int) \get_option( 'silver_assist_ip_blacklist_threshold' ) );
+	}
+
+	/**
+	 * Auto-save clamps the threshold to the supported range
+	 *
+	 * @return void
+	 */
+	public function test_auto_save_clamps_the_threshold(): void {
+		\wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+
+		$this->auto_save( array( 'silver_assist_ip_blacklist_threshold' => '1' ) );
+		$this->assertSame( 3, (int) \get_option( 'silver_assist_ip_blacklist_threshold' ) );
+
+		$this->auto_save( array( 'silver_assist_ip_blacklist_threshold' => '99' ) );
+		$this->assertSame( 20, (int) \get_option( 'silver_assist_ip_blacklist_threshold' ) );
+	}
+
+	/**
+	 * The CF7 protection toggle can be switched off and on from the admin screen
+	 *
+	 * An unchecked box is sent by auto-save as an empty string.
+	 *
+	 * @return void
+	 */
+	public function test_cf7_protection_toggle_can_be_turned_off_by_auto_save(): void {
+		\wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		\update_option( 'silver_assist_cf7_protection_enabled', 1 );
+
+		$this->auto_save( array( 'silver_assist_cf7_protection_enabled' => '' ) );
+		$this->assertSame( 0, (int) \get_option( 'silver_assist_cf7_protection_enabled' ) );
+
+		$this->auto_save( array( 'silver_assist_cf7_protection_enabled' => '1' ) );
+		$this->assertSame( 1, (int) \get_option( 'silver_assist_cf7_protection_enabled' ) );
 	}
 }
