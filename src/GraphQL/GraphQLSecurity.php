@@ -23,6 +23,7 @@ use GraphQL\Language\Visitor;
 use SilverAssist\PluginKernel\Interfaces\LoadableInterface;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\SecurityHelper;
+use SilverAssist\Security\Security\GeneralSecurity;
 
 /**
  * GraphQL Security class
@@ -198,11 +199,12 @@ class GraphQLSecurity implements LoadableInterface {
 
 		\add_action( 'init', array( $this, 'init_graphql_security' ) );
 		\add_filter( 'graphql_request_results', array( $this, 'log_graphql_requests' ), 10, 5 );
-		\add_action( 'graphql_init', array( $this, 'disable_introspection_in_production' ) );
 		\add_action( 'graphql_init', array( $this, 'add_security_validations' ) );
 		\add_filter( 'graphql_request_data', array( $this, 'validate_query_before_execution' ), 1, 5 );
 		\add_action( 'graphql_init', array( $this, 'set_execution_timeout' ) );
-		\add_action( 'send_headers', array( $this, 'add_graphql_security_headers' ) );
+		// WPGraphQL answers on parse_request and exits before send_headers, so its response headers
+		// can only be changed through this filter.
+		\add_filter( 'graphql_response_headers_to_send', array( $this, 'add_response_security_headers' ) );
 		\add_action( 'graphql_init', array( $this, 'enforce_authentication_requirement' ) );
 
 		// Hook into determine_current_user AFTER WordPress core callbacks
@@ -224,43 +226,8 @@ class GraphQLSecurity implements LoadableInterface {
 	 * @return void
 	 */
 	public function init_graphql_security(): void {
-		// Hide GraphiQL in production.
-		if ( $this->is_production_environment() ) {
-			\add_filter( 'graphql_show_in_graphiql', '__return_false' );
-		}
-
 		// Add rate limiting for GraphQL endpoint.
 		$this->setup_graphql_rate_limiting();
-	}
-
-	/**
-	 * Disable introspection in production
-	 *
-	 * @since 1.1.1
-	 * @return void
-	 */
-	public function disable_introspection_in_production(): void {
-		// Use config manager to check WPGraphQL settings.
-		$config = $this->config_manager->get_configuration();
-
-		// If WPGraphQL already has introspection disabled, respect that.
-		if ( ! $config['introspection_enabled'] ) {
-			return;
-		}
-
-		// Our additional production checks.
-		if ( $this->is_production_environment() ) {
-			\add_filter( 'graphql_introspection_enabled', '__return_false' );
-			\add_filter( 'graphql_show_in_graphiql', '__return_false' );
-
-			\add_action(
-				'graphql_register_types',
-				function () {
-					\remove_action( 'graphql_register_types', array( 'WPGraphQL\\Type\\Introspection', 'register_introspection_fields' ) );
-				},
-				1
-			);
-		}
 	}
 
 	/**
@@ -1016,24 +983,25 @@ class GraphQLSecurity implements LoadableInterface {
 	}
 
 	/**
-	 * Add GraphQL security headers
+	 * Add the baseline security headers to the GraphQL response
+	 *
+	 * WPGraphQL handles the HTTP request on `parse_request` and exits before WordPress runs
+	 * `send_headers`, so the headers the plugin sends there never reach the GraphQL response. This
+	 * runs on `graphql_response_headers_to_send`, which WPGraphQL applies only to its own HTTP
+	 * response (any endpoint path, and no other URL). Headers already present, from WPGraphQL or from
+	 * another filter, are kept.
 	 *
 	 * @since 1.1.1
-	 * @return void
+	 * @since 1.5.4 Hooked to `graphql_response_headers_to_send` (it was a `send_headers` callback that never ran for GraphQL).
+	 * @param mixed $headers Headers WPGraphQL is about to send, name => value.
+	 * @return mixed The headers with the baseline security headers added.
 	 */
-	public function add_graphql_security_headers(): void {
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-		if ( $request_uri && strpos( $request_uri, '/graphql' ) !== false ) {
-			header( 'X-Content-Type-Options: nosniff' );
-			header( 'X-Frame-Options: DENY' );
-			header( 'X-XSS-Protection: 1; mode=block' );
-			header( 'Referrer-Policy: strict-origin-when-cross-origin' );
-
-			// Disable caching for GraphQL responses.
-			header( 'Cache-Control: no-store, no-cache, must-revalidate, max-age=0' );
-			header( 'Pragma: no-cache' );
-			header( 'Expires: Thu, 01 Jan 1970 00:00:00 GMT' );
+	public function add_response_security_headers( $headers ) {
+		if ( ! \is_array( $headers ) ) {
+			return $headers;
 		}
+
+		return $headers + GeneralSecurity::instance()->get_security_headers();
 	}
 
 	/**
@@ -1082,15 +1050,15 @@ class GraphQLSecurity implements LoadableInterface {
 
 			return array();
 
-		} catch ( \Exception $e ) {
+		} catch ( \Throwable $e ) {
 			SecurityHelper::log_security_event(
 				'GRAPHQL_DEPTH_ERROR',
 				"Error calculating query depth: {$e->getMessage()}",
 				array( 'error' => $e->getMessage() )
 			);
 
-			// On error, allow the query but log the issue.
-			return array();
+			// Fail closed: a query that could not be checked is not allowed.
+			return array( new \GraphQL\Error\UserError( \__( 'The query could not be validated and was rejected.', 'silver-assist-security' ) ) );
 		}
 	}
 
@@ -1214,14 +1182,15 @@ class GraphQLSecurity implements LoadableInterface {
 
 			return array();
 
-		} catch ( \Exception $e ) {
+		} catch ( \Throwable $e ) {
 			SecurityHelper::log_security_event(
 				'GRAPHQL_ALIAS_ERROR',
 				"Error counting aliases: {$e->getMessage()}",
 				array( 'error' => $e->getMessage() )
 			);
 
-			return array();
+			// Fail closed: a query that could not be checked is not allowed.
+			return array( new \GraphQL\Error\UserError( \__( 'The query could not be validated and was rejected.', 'silver-assist-security' ) ) );
 		}
 	}
 
@@ -1291,14 +1260,15 @@ class GraphQLSecurity implements LoadableInterface {
 
 			return array();
 
-		} catch ( \Exception $e ) {
+		} catch ( \Throwable $e ) {
 			SecurityHelper::log_security_event(
 				'GRAPHQL_DIRECTIVE_ERROR',
 				"Error counting directives: {$e->getMessage()}",
 				array( 'error' => $e->getMessage() )
 			);
 
-			return array();
+			// Fail closed: a query that could not be checked is not allowed.
+			return array( new \GraphQL\Error\UserError( \__( 'The query could not be validated and was rejected.', 'silver-assist-security' ) ) );
 		}
 	}
 
@@ -1367,14 +1337,15 @@ class GraphQLSecurity implements LoadableInterface {
 
 			return array();
 
-		} catch ( \Exception $e ) {
+		} catch ( \Throwable $e ) {
 			SecurityHelper::log_security_event(
 				'GRAPHQL_FIELD_DUPLICATE_ERROR',
 				"Error counting field duplicates: {$e->getMessage()}",
 				array( 'error' => $e->getMessage() )
 			);
 
-			return array();
+			// Fail closed: a query that could not be checked is not allowed.
+			return array( new \GraphQL\Error\UserError( \__( 'The query could not be validated and was rejected.', 'silver-assist-security' ) ) );
 		}
 	}
 

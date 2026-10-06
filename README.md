@@ -81,7 +81,7 @@ This plugin automatically implements enterprise-level security measures without 
 
 ### 🔒 WordPress Hardening *(Automatic)*
 
-- **Secure Headers**: Essential security headers (X-Frame-Options, X-XSS-Protection, etc.) on the front end, wp-admin, the login screen and REST responses. `Permissions-Policy` disables geolocation, microphone and camera, which breaks a store locator or recorder; adjust any header with the `silver_assist_security_headers` filter (HSTS is sent only on SSL outside development, see `silver_assist_security_is_development_environment`)
+- **Secure Headers**: Essential security headers (X-Frame-Options, X-XSS-Protection, etc.) on the front end, wp-admin, the login screen, REST responses and GraphQL responses (added through `graphql_response_headers_to_send`, since WPGraphQL replies before `send_headers`). `Permissions-Policy` disables geolocation, microphone and camera, which breaks a store locator or recorder; adjust any header with the `silver_assist_security_headers` filter (HSTS is sent only on SSL outside development, see `silver_assist_security_is_development_environment`)
 - **File Editing Disabled**: Prevents unauthorized file modifications through admin panel
 - **XML-RPC Disabled**: Blocks XML-RPC attacks and vulnerabilities, including pingbacks and apps that use it (Jetpack, the WordPress mobile apps); return `false` from `silver_assist_security_disable_xmlrpc` to keep it
 - **Discovery Tags Removed**: RSS feed autodiscovery, oEmbed discovery, shortlink and RSD tags are removed from `wp_head` (feeds still work at their URLs; keep the autodiscovery tags with `silver_assist_security_remove_feed_links`). REST API discovery stays
