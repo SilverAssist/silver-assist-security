@@ -324,7 +324,8 @@ Tests added by the epic: #127 (suite completes), #128 (`ClientIpResolutionTest`)
 | Name | Where | Effect | Risk | Test |
 |------|-------|--------|------|------|
 | `SILVER_ASSIST_HIDE_ADMIN` (false) | `AdminHideSecurity` | Emergency off switch for admin hiding | high | `Integration/AdminHideSecurityTest::test_emergency_disable_constant_override`; `Security/AdminHideSecurityTest::test_emergency_disable_constant` |
-| `SILVER_ASSIST_TRUSTED_PROXY_CIDRS` | `SecurityHelper::get_client_ip` | Declares trusted proxies for `X-Forwarded-For` | high | `Integration/ClientIpResolutionTest::test_configured_cidrs_discard_trusted_hops`, `::test_configured_cidrs_do_not_trust_other_private_peers` (the constant stays undefined in the suite; the `silver_assist_trusted_proxy_cidrs` filter carries the value) |
+| `SILVER_ASSIST_TRUSTED_PROXY_CIDRS` constant | `SecurityHelper::get_client_ip` | Declares trusted proxies for `X-Forwarded-For` | high | none: the suite keeps the constant undefined (**GAP G14**) |
+| `silver_assist_trusted_proxy_cidrs` filter | `SecurityHelper::get_client_ip` | Same list, set from code | high | `Integration/ClientIpResolutionTest::test_configured_cidrs_discard_trusted_hops`, `::test_configured_cidrs_do_not_trust_other_private_peers` |
 | `silver_assist_trust_private_proxies` filter | `SecurityHelper` | Opt out of private-peer proxy trust | high | `Integration/ClientIpResolutionTest::test_opting_out_of_private_proxy_trust_uses_the_peer` |
 | `silver_assist_security_headers` filter | `GeneralSecurity` | Adjust headers | medium | `Integration/GeneralHardeningBehaviorTest::test_headers_can_be_adjusted_with_a_filter` |
 | `silver_assist_security_strip_asset_version` filter | `GeneralSecurity` | Keep `ver=` per asset | medium | `Integration/AssetVersioningTest::test_filter_can_keep_version` |
@@ -335,7 +336,10 @@ Tests added by the epic: #127 (suite completes), #128 (`ClientIpResolutionTest`)
 | `silver_assist_security_sql_injection_patterns` filter | `FormProtection` | Tune SQL injection patterns | medium | none (**GAP G2**) |
 | `silver_assist_security_environment_type` filter | `GraphQLSecurity` | Override the environment the GraphQL protections use | medium | used by the GraphQL tests through `Helpers/HeadlessTestSupport.php`, e.g. `Integration/GraphQLHeadlessBehaviorTest::test_introspection_is_not_blocked_by_the_plugin_outside_production` |
 | `silver_assist_security_languages_directory` filter | `Plugin::load_textdomain` | Move the translations folder | low | none (**GAP G2**) |
-| `DISALLOW_FILE_EDIT`, `WP_DEBUG`, `WP_ENVIRONMENT_TYPE`, `SCRIPT_DEBUG` | `GeneralSecurity`, `GraphQLSecurity`, `SecurityHelper` | File editor off, HSTS skipped in development, introspection per environment, minified asset choice | medium | `Integration/GeneralHardeningBehaviorTest::test_file_editing_is_disallowed_and_footer_branded`; `Security/GeneralSecurityTest::test_hsts_not_sent_when_wp_debug_enabled`; `Integration/GraphQLHeadlessBehaviorTest::test_introspection_is_rejected_in_production_even_for_administrators`; `Unit/SecurityHelperTest::test_get_asset_url_returns_non_minified_with_script_debug` |
+| `DISALLOW_FILE_EDIT` constant | `GeneralSecurity` | File editor off | medium | `Integration/GeneralHardeningBehaviorTest::test_file_editing_is_disallowed_and_footer_branded`; `Security/GeneralSecurityTest::test_file_editing_disabled` |
+| `WP_DEBUG` constant | `GeneralSecurity`, `GraphQLSecurity` | HSTS skipped in development; debug logging | low | none that asserts it: `Security/GeneralSecurityTest::test_hsts_not_sent_when_wp_debug_enabled` ends in an unconditional pass (**GAP G14**) |
+| `WP_ENVIRONMENT_TYPE` constant | `GraphQLSecurity` via `wp_get_environment_type()` | Introspection and authentication bypass per environment | high | the GraphQL tests drive the `silver_assist_security_environment_type` filter, not the constant (**GAP G14**) |
+| `SCRIPT_DEBUG` constant | `SecurityHelper::get_asset_url` | Non-minified plugin assets | low | `Unit/SecurityHelperTest::test_get_asset_url_returns_non_minified_with_script_debug` passes the force flag instead of defining the constant (**GAP G14**) |
 
 ### Gaps
 
@@ -355,6 +359,7 @@ Each gap lists the missing behavior test; filed issues are linked by the maintai
 | G10 | `Activator::deactivate` transient cleanup and flush | Create `graphql_rate_limit_` transients, run `deactivate()`, assert they are gone; also assert the cleanup cron is unscheduled (see S3). |
 | G11 | `init` `configure_secure_cookies` | Run it with no session started and assert `session_get_cookie_params()` has `httponly` and `samesite=Lax`. |
 | G12 | Small residuals: legacy `wp_head` relation links, pretty author archives, `wp_logout` trigger, `/login` and `/admin` short URLs under admin hiding | One test each: head markup has no relation links; `/author/<name>/` redirects home; `do_action( 'wp_logout' )` clears the counter; `/login` and `/admin` answer 404 with admin hiding on. |
+| G14 | Constants `SILVER_ASSIST_TRUSTED_PROXY_CIDRS`, `WP_DEBUG`, `WP_ENVIRONMENT_TYPE`, `SCRIPT_DEBUG` | Run in separate processes (`@runInSeparateProcess`) that define each constant and assert the effect: CIDR-trusted hop skipping, no HSTS under `WP_DEBUG`, introspection blocked or allowed per `WP_ENVIRONMENT_TYPE`, non-minified asset URL. |
 
 Suspected bugs (recorded, not fixed):
 
