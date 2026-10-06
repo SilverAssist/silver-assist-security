@@ -359,11 +359,13 @@ class LoginSecurity implements LoadableInterface {
 				)
 			);
 
-			// Set the lockout flag. The value is the Unix time the lockout ends, so the remaining time
-			// can be read through the transient API (a persistent object cache has no timeout rows).
+			// Set the lockout flag (its value stays `true`: the admin statistics count rows holding "1").
+			// The companion transient holds the Unix time the lockout ends, so the remaining time can be
+			// read through the transient API (a persistent object cache has no timeout rows).
 			$lockout_key = SecurityHelper::generate_ip_transient_key( 'lockout', $ip );
 			if ( false === \get_transient( $lockout_key ) ) {
-				\set_transient( $lockout_key, time() + $this->lockout_duration, $this->lockout_duration );
+				\set_transient( $lockout_key, true, $this->lockout_duration );
+				\set_transient( SecurityHelper::generate_ip_transient_key( 'lockout_until', $ip ), time() + $this->lockout_duration, $this->lockout_duration );
 				SecurityEventCounter::record( SecurityEventCounter::IP_BLOCKED );
 			}
 		}
@@ -403,9 +405,8 @@ class LoginSecurity implements LoadableInterface {
 		$lockout_key = SecurityHelper::generate_ip_transient_key( 'lockout', $ip );
 
 		// Check if IP is locked out.
-		$lockout = \get_transient( $lockout_key );
-		if ( $lockout ) {
-			$remaining_time = $this->get_remaining_lockout_time( $lockout );
+		if ( \get_transient( $lockout_key ) ) {
+			$remaining_time = $this->get_remaining_lockout_time( $ip );
 
 			return new WP_Error(
 				'login_locked',
@@ -644,6 +645,7 @@ class LoginSecurity implements LoadableInterface {
 		\delete_transient( SecurityHelper::generate_ip_transient_key( 'login_attempts', $ip ) );
 		\delete_transient( SecurityHelper::generate_ip_transient_key( 'login_window', $ip ) );
 		\delete_transient( SecurityHelper::generate_ip_transient_key( 'lockout', $ip ) );
+		\delete_transient( SecurityHelper::generate_ip_transient_key( 'lockout_until', $ip ) );
 	}
 
 	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress hook.
@@ -820,20 +822,18 @@ class LoginSecurity implements LoadableInterface {
 	/**
 	 * Get remaining lockout time
 	 *
-	 * The lockout transient holds the Unix time the lockout ends, which works with and without a
-	 * persistent object cache. A lockout stored by an earlier version holds `true`, so its end is
-	 * unknown and reported as zero (shown as one minute).
+	 * Reads the end time stored in the `lockout_until` transient, which works with and without a
+	 * persistent object cache. A lockout stored by an earlier version has no end time; it is reported
+	 * as zero (shown as one minute).
 	 *
 	 * @since 1.1.1
-	 * @param mixed $lockout Value of the lockout transient.
+	 * @param string $ip Client IP address.
 	 * @return int Remaining time in seconds
 	 */
-	private function get_remaining_lockout_time( $lockout ): int {
-		if ( is_numeric( $lockout ) && (int) $lockout > 1 ) {
-			return max( 0, (int) $lockout - time() );
-		}
+	private function get_remaining_lockout_time( string $ip ): int {
+		$until = \get_transient( SecurityHelper::generate_ip_transient_key( 'lockout_until', $ip ) );
 
-		return 0;
+		return is_numeric( $until ) ? max( 0, (int) $until - time() ) : 0;
 	}
 
 	/**

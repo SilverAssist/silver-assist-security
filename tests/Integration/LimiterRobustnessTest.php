@@ -309,6 +309,20 @@ class LimiterRobustnessTest extends WP_UnitTestCase
         $this->assertStringContainsString("Try again in 15 minutes", $error->get_error_message());
     }
 
+    /**
+     * A locked-out IP is still counted by the dashboard's blocked IPs figure
+     *
+     * @return void
+     */
+    public function test_locked_out_ip_is_counted_by_the_dashboard(): void
+    {
+        \wp_cache_delete("silver_assist_blocked_ips_count", "silver-assist-security");
+        $this->lock_out(new LoginSecurity(), "203.0.113.10");
+        \wp_cache_delete("silver_assist_blocked_ips_count", "silver-assist-security");
+
+        $this->assertSame(1, (new \SilverAssist\Security\Admin\Data\StatisticsProvider())->get_blocked_ips_count());
+    }
+
     // N15: atomic failed-login counter.
 
     /**
