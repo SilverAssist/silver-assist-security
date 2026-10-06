@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The E2E workflow builds the minified assets (`npm run build`) before starting wp-env: the plugin loads `assets/**/*.min.*` unless `SCRIPT_DEBUG` is on, those files are git-ignored, and without them the admin screens loaded no CSS or JavaScript in CI (#156).
 - Tests (#156): `SettingsTabStructureTest` (every settings card is inside one tab panel, the branding card is inside the Login Protection panel) and an E2E spec that clicks through every tab of the settings screen (`tests/e2e/admin-settings.spec.ts`).
 - Updater tests (#145): the metadata must equal the plugin header, the configured token constant is `SILVER_GITHUB_TOKEN`, and a configured token is sent to `api.github.com` (private-repo updates). Two older tests that compared a literal with itself were replaced by these.
 - Behavior-test (TDD) policy (#134) in the README and `.github/copilot-instructions.md`, with a short guide to adding an integration and an E2E behavior test, and a pull request template (`.github/pull_request_template.md`) whose checklist asks that tests assert user-visible behavior and that a bug fix test fails before the fix.

@@ -45,9 +45,11 @@ class SettingsTabStructureTest extends WP_UnitTestCase {
 		$html = (string) ob_get_clean();
 
 		$dom = new DOMDocument();
-		libxml_use_internal_errors( true );
+		// Keep libxml's warnings about HTML5 markup quiet and restore the previous mode afterwards.
+		$previous = libxml_use_internal_errors( true );
 		$dom->loadHTML( '<?xml encoding="utf-8" ?><body>' . $html . '</body>' );
 		libxml_clear_errors();
+		libxml_use_internal_errors( $previous );
 		$this->xpath = new DOMXPath( $dom );
 	}
 
