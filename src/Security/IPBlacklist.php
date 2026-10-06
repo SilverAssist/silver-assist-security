@@ -14,6 +14,7 @@
 namespace SilverAssist\Security\Security;
 
 use SilverAssist\Security\Core\DefaultConfig;
+use SilverAssist\Security\Core\SecurityEventCounter;
 use SilverAssist\Security\Core\SecurityHelper;
 
 /**
@@ -92,6 +93,7 @@ class IPBlacklist {
 		);
 
 		\set_transient( $blacklist_key, $blacklist_data, $duration );
+		SecurityEventCounter::record( SecurityEventCounter::IP_BLOCKED );
 
 		SecurityHelper::log_security_event(
 			'IP_BLACKLISTED',
@@ -211,6 +213,7 @@ class IPBlacklist {
 		);
 
 		\set_transient( $blacklist_key, $blacklist_data, $duration );
+		SecurityEventCounter::record( SecurityEventCounter::IP_BLOCKED );
 
 		SecurityHelper::log_security_event(
 			'IP_AUTO_BLACKLISTED',
