@@ -432,8 +432,15 @@ address (an office, a VPN, a mobile carrier) share the limits too. With the defa
 | Failed logins | 5 | Login Attempts (1-20) | The IP is locked out; the right password is refused from that IP too. The page says "Too many failed login attempts. Try again in N minutes." |
 | Lockout duration | 15 minutes | Lockout Duration (60-3600 s) | Counted from the failure that triggered it. Trying again while locked out does not extend it. A successful login or password reset from that IP clears the count. |
 | Login page requests | 15 per minute | not configurable | The 16th request within a minute from one IP gets a 404 (the counter expires a minute after the latest request). A login costs two requests (the form and the submit), so about seven logins a minute from one address. Lost password, password reset and logout requests are not counted. Switch off Bot Protection to disable this counter. |
-| Idle session | 30 minutes | Session Timeout (5-120) | The session ends; in wp-admin the visitor lands on the login screen with `session_expired=1`. The auth cookie lasts as long as the timeout and "Remember Me" is removed. |
+| Idle session | 30 minutes | Session Timeout (5-120) | No user activity for that long ends the session, administrators included; in wp-admin the visitor lands on the login screen with `session_expired=1`. Page views and form posts count as activity; Heartbeat, REST reads and admin-ajax reads do not, so an open tab still goes idle. The activity stamp is written at most once a minute. The auth cookie lasts as long as the timeout from the login, is not renewed by activity, and "Remember Me" is removed, so a session also ends that long after login. |
 
+- Password policy (8+ characters with upper and lower case, a number and a symbol, when enabled) is enforced
+  on the profile and new user forms, the password reset screen and the REST user routes
+  (`POST /wp/v2/users`, `/wp/v2/users/{id}`, `/wp/v2/users/me`, answered with a 400 `weak_password`). The value
+  checked is the one WordPress stores, not a sanitized copy. Limit: WP-CLI (`wp user create|update`),
+  `wp_insert_user()`, `wp_update_user()` and `wp_set_password()` called from code or other plugins are not
+  checked, because no hook sees the plain password there; code that sets passwords should call
+  `SecurityHelper::is_strong_password()` itself.
 - Wrong credentials, for an existing or an unknown username, show one message ("Invalid login
   credentials"), including on the attempt that triggers the lockout. The lockout notice and password
   reset messages are the only exceptions.

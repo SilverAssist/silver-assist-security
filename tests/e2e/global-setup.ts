@@ -34,8 +34,11 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
     headers: { "X-WP-Nonce": nonce },
     data: { username: EDITOR_USER, email: `${EDITOR_USER}@example.test`, password: EDITOR_PASS, roles: ["editor"] },
   });
-  if (!created.ok() && created.status() !== 500 && created.status() !== 400) {
-    throw new Error(`Could not create the E2E editor: ${created.status()} ${await created.text()}`);
+  // An existing editor answers 500 or 400 (existing_user_login); a password that breaks the
+  // plugin's policy answers 400 weak_password and must fail the setup, not be mistaken for it.
+  const body = created.ok() ? "" : await created.text();
+  if (!created.ok() && (body.includes("weak_password") || (created.status() !== 500 && created.status() !== 400))) {
+    throw new Error(`Could not create the E2E editor: ${created.status()} ${body}`);
   }
   await adminContext.close();
 
