@@ -30,6 +30,12 @@ use WP_User;
  */
 class LoginSecurity implements LoadableInterface {
 
+	/**
+	 * Minimum seconds between two last_activity writes for one user
+	 *
+	 * @since 1.5.4
+	 */
+	private const ACTIVITY_WRITE_INTERVAL = 60;
 
 	/**
 	 * Singleton instance
@@ -262,6 +268,7 @@ class LoginSecurity implements LoadableInterface {
 		if ( $password_strength_enforcement ) {
 			\add_action( 'user_profile_update_errors', array( $this, 'validate_password_strength' ), 10, 3 );
 			\add_action( 'validate_password_reset', array( $this, 'validate_password_strength_reset' ), 10, 2 );
+			\add_filter( 'rest_request_before_callbacks', array( $this, 'validate_rest_password_strength' ), 10, 3 );
 		}
 	}
 
@@ -433,13 +440,25 @@ class LoginSecurity implements LoadableInterface {
 	/**
 	 * Setup session timeout
 	 *
-	 * Manages automatic logout when session timeout is exceeded. Behavior differs
-	 * between admin and frontend:
-	 * - Admin area: Logs out and redirects to login with session_expired=1
-	 * - Frontend: Silently logs out without redirect to preserve user experience
+	 * Idle timeout means: no real user activity for the configured minutes. Every
+	 * logged-in request is checked, administrators included, and a request past the
+	 * limit ends the session. Only foreground requests count as activity: page views,
+	 * form posts and REST writes refresh `last_activity`; Heartbeat and other background
+	 * polling (REST reads, admin-ajax GET) do not, so an open tab goes idle like any other.
+	 * The refresh is written at most once per ACTIVITY_WRITE_INTERVAL seconds.
+	 *
+	 * Where the visitor lands: wp-admin page views redirect to login with
+	 * session_expired=1; AJAX and REST requests are only logged out (the response then
+	 * carries the usual "not logged in" answer); front end pages are logged out silently.
+	 *
+	 * Interplay with the auth cookie lifetime: the cookie lasts exactly the timeout from
+	 * the login (see enforce_session_cookie_lifetime()) and WordPress does not renew it on
+	 * activity, so in practice a session also ends that long after login. The idle check
+	 * is the sliding bound that still applies when another plugin lengthens the cookie.
 	 *
 	 * @since 1.1.1
 	 * @updated 1.1.10 Added frontend/admin differentiation
+	 * @updated 1.5.4 Administrators included, background requests are not activity, throttled writes
 	 * @return void
 	 */
 	public function setup_session_timeout(): void {
@@ -454,7 +473,7 @@ class LoginSecurity implements LoadableInterface {
 		// Skip timeout check if we're in the login process or just logged in.
 		if ( $this->is_in_login_process() ) {
 			// Initialize/update last activity for new session.
-			\update_user_meta( $user_id, 'last_activity', time() );
+			$this->touch_last_activity( $user_id, $last_activity );
 			return;
 		}
 
@@ -463,30 +482,99 @@ class LoginSecurity implements LoadableInterface {
 		if ( $last_activity && is_numeric( $last_activity ) && (int) $last_activity > 0 ) {
 			$time_since_last_activity = time() - (int) $last_activity;
 
-			// Only logout if timeout exceeded and not in admin area during plugin management.
-			if (
-				$time_since_last_activity > $timeout &&
-				( ! \is_admin() ||
-					// phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification.Missing -- Checking plugin management context, not processing form data.
-					( ! \current_user_can( 'activate_plugins' ) && ! isset( $_GET['page'] ) && ! isset( $_POST['action'] ) ) )
-			) {
+			if ( $time_since_last_activity > $timeout ) {
 				// Clear session metadata before logout to prevent loops.
 				\delete_user_meta( $user_id, 'last_activity' );
 				\wp_logout();
 
-				// Only redirect to login if user is in admin area
-				// Frontend users should stay on their current page after silent logout.
-				if ( \is_admin() ) {
+				// Only redirect page views in wp-admin; AJAX, REST and front end requests continue logged out.
+				if ( \is_admin() && ! \wp_doing_ajax() && ! $this->is_rest_request() ) {
 					\wp_safe_redirect( \add_query_arg( 'session_expired', '1', \wp_login_url() ) );
 					exit;
 				}
-				// For frontend, just return without redirect to allow normal page rendering.
 				return;
 			}
 		}
 
-		// Always update last activity for logged-in users.
-		\update_user_meta( $user_id, 'last_activity', time() );
+		if ( $this->is_background_request() ) {
+			return;
+		}
+
+		$this->touch_last_activity( $user_id, $last_activity );
+	}
+
+	/**
+	 * Record user activity, at most once per ACTIVITY_WRITE_INTERVAL seconds
+	 *
+	 * @since 1.5.4
+	 * @param int   $user_id       User ID.
+	 * @param mixed $last_activity Stored last_activity value.
+	 * @return void
+	 */
+	private function touch_last_activity( int $user_id, mixed $last_activity ): void {
+		$now = time();
+
+		if ( is_numeric( $last_activity ) && (int) $last_activity > 0 && ( $now - (int) $last_activity ) < self::ACTIVITY_WRITE_INTERVAL ) {
+			return;
+		}
+
+		\update_user_meta( $user_id, 'last_activity', $now );
+	}
+
+	/**
+	 * Whether this request is background polling rather than user activity
+	 *
+	 * Heartbeat ticks and REST or admin-ajax reads fire on their own while a tab is open.
+	 * The `silver_assist_security_is_background_request` filter can reclassify a request.
+	 *
+	 * @since 1.5.4
+	 * @return bool
+	 */
+	private function is_background_request(): bool {
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? \strtoupper( \sanitize_text_field( \wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
+		$read   = in_array( $method, array( 'GET', 'HEAD', 'OPTIONS' ), true );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification.Missing -- Classifying the request, not processing form data.
+		$action = isset( $_REQUEST['action'] ) ? \sanitize_text_field( \wp_unslash( $_REQUEST['action'] ) ) : '';
+
+		$background = false;
+		if ( \wp_doing_ajax() ) {
+			$background = 'heartbeat' === $action || $read;
+		} elseif ( $this->is_rest_request() ) {
+			$background = $read;
+		}
+
+		/**
+		 * Filters whether the current request is background polling (not user activity).
+		 *
+		 * @since 1.5.4
+		 * @param bool $background Whether the request is background polling.
+		 */
+		return (bool) \apply_filters( 'silver_assist_security_is_background_request', $background );
+	}
+
+	/**
+	 * Whether this is a REST API request
+	 *
+	 * Runs on `init`, before WordPress defines REST_REQUEST, so it reads the URL like core does.
+	 *
+	 * @since 1.5.4
+	 * @return bool
+	 */
+	private function is_rest_request(): bool {
+		if ( \wp_is_serving_rest_request() ) {
+			return true;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Classifying the request, not processing form data.
+		if ( isset( $_GET['rest_route'] ) ) {
+			return true;
+		}
+
+		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		$path = (string) \wp_parse_url( $uri, PHP_URL_PATH );
+
+		return str_contains( $path, '/' . \rest_get_url_prefix() . '/' );
 	}
 
 	/**
@@ -603,9 +691,13 @@ class LoginSecurity implements LoadableInterface {
 
 	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by WordPress hook.
 	/**
-	 * Validate password strength
+	 * Validate password strength on the profile and new user forms
+	 *
+	 * Checks the value WordPress stores (`wp_unslash( $_POST['pass1'] )`, which edit_user()
+	 * saves untouched), not a sanitized copy.
 	 *
 	 * @since 1.1.1
+	 * @updated 1.5.4 Validate the raw value
 	 * @param WP_Error          $errors Errors object.
 	 * @param bool              $update Whether this is a user update.
 	 * @param \stdClass|WP_User $user User object (stdClass for new users, WP_User for updates).
@@ -614,15 +706,12 @@ class LoginSecurity implements LoadableInterface {
 	public function validate_password_strength( WP_Error $errors, bool $update, \stdClass|WP_User $user ): void {
 		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress handles nonce verification for user profile updates.
-		if ( isset( $_POST['pass1'] ) && ! empty( $_POST['pass1'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- WordPress handles nonce verification for user profile updates.
-			$password = \sanitize_text_field( \wp_unslash( $_POST['pass1'] ) );
+		if ( isset( $_POST['pass1'] ) && is_string( $_POST['pass1'] ) && '' !== $_POST['pass1'] ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Passwords must be checked as typed; sanitizing would change them.
+			$password = \wp_unslash( $_POST['pass1'] );
 
 			if ( ! $this->is_strong_password( $password ) ) {
-				$errors->add(
-					'weak_password',
-					\__( 'Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.', 'silver-assist-security' )
-				);
+				$errors->add( 'weak_password', self::get_weak_password_message() );
 			}
 		}
 	}
@@ -631,7 +720,11 @@ class LoginSecurity implements LoadableInterface {
 	/**
 	 * Validate password strength on reset
 	 *
+	 * The reset screen (wp-login.php) passes `$_POST['pass1']` to reset_password() as it is,
+	 * so that exact string is checked.
+	 *
 	 * @since 1.1.1
+	 * @updated 1.5.4 Validate the raw value
 	 * @param WP_Error          $errors Errors object.
 	 * @param \stdClass|WP_User $user User object (can be stdClass or WP_User depending on context).
 	 * @return void
@@ -639,17 +732,67 @@ class LoginSecurity implements LoadableInterface {
 	public function validate_password_strength_reset( WP_Error $errors, \stdClass|WP_User $user ): void {
 		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress handles nonce verification for password reset forms.
-		if ( isset( $_POST['pass1'] ) && ! empty( $_POST['pass1'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- WordPress handles nonce verification for password reset forms.
-			$password = \sanitize_text_field( \wp_unslash( $_POST['pass1'] ) );
+		if ( isset( $_POST['pass1'] ) && is_string( $_POST['pass1'] ) && '' !== $_POST['pass1'] ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Passwords must be checked as submitted; sanitizing would change them.
+			$password = $_POST['pass1'];
 
 			if ( ! $this->is_strong_password( $password ) ) {
-				$errors->add(
-					'weak_password',
-					\__( 'Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.', 'silver-assist-security' )
-				);
+				$errors->add( 'weak_password', self::get_weak_password_message() );
 			}
 		}
+	}
+
+	/**
+	 * Enforce the password policy on the REST user routes
+	 *
+	 * Covers POST, PUT and PATCH on /wp/v2/users, /wp/v2/users/{id} and /wp/v2/users/me.
+	 * The `rest_pre_insert_user` filter cannot do this: the users controller does not look
+	 * at a WP_Error returned from it. Instead this runs after argument validation and before
+	 * the route callback, and the password is checked exactly as sent. Requests without a
+	 * password pass through. WP-CLI, wp_insert_user() and wp_set_password() are not covered
+	 * (see the README, "Password policy").
+	 *
+	 * @since 1.5.4
+	 * @param mixed            $response Response so far (a WP_Error stops the request).
+	 * @param array<mixed>     $handler  Route handler (unused).
+	 * @param \WP_REST_Request $request  Request object.
+	 * @return mixed The response unchanged, or a 400 WP_Error for a weak password.
+	 */
+	public function validate_rest_password_strength( $response, $handler, $request ) {
+		unset( $handler );
+
+		if ( \is_wp_error( $response ) || ! $request instanceof \WP_REST_Request ) {
+			return $response;
+		}
+
+		if ( ! in_array( $request->get_method(), array( 'POST', 'PUT', 'PATCH' ), true ) ) {
+			return $response;
+		}
+
+		if ( ! preg_match( '#^/wp/v2/users(?:/(?:me|\d+))?$#', $request->get_route() ) ) {
+			return $response;
+		}
+
+		$password = $request->get_param( 'password' );
+		if ( ! is_string( $password ) || '' === $password ) {
+			return $response;
+		}
+
+		if ( ! $this->is_strong_password( $password ) ) {
+			return new WP_Error( 'weak_password', self::get_weak_password_message(), array( 'status' => 400 ) );
+		}
+
+		return $response;
+	}
+
+	/**
+	 * The message shown for a password that breaks the policy
+	 *
+	 * @since 1.5.4
+	 * @return string
+	 */
+	private static function get_weak_password_message(): string {
+		return \__( 'Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.', 'silver-assist-security' );
 	}
 
 	/**
