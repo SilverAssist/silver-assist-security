@@ -26,9 +26,10 @@ Never create standalone `.md` files (`docs/`, `CONTRIBUTING.md`, `API.md`, etc.)
 ### Login Protection (`Security\LoginSecurity`)
 - IP-based login attempt limiting (1–20 configurable) with transient-based blocking
 - Session timeout management (5–120 minutes), user enumeration protection
-- Strong password enforcement (12+ chars, mixed case, numbers, symbols)
+- Strong password enforcement (8+ chars, mixed case, numbers, symbols)
 - Bot/crawler detection and blocking (Nmap, Nikto, WPScan, etc.)
-- 404 responses to automated reconnaissance tools
+- 404 responses to automated reconnaissance tools; the 16th login-page request per minute from one IP also gets a 404, and the 5-attempt lockout is per IP (people behind one IP share both; see the README section on shared IPs)
+- Never construct a component with `new` when a shared `::instance()` exists (the admin data provider did, and every failed login counted twice)
 
 ### Cookie Security (`Security\GeneralSecurity`)
 - Automatic HTTPOnly flag for all WordPress authentication cookies
@@ -154,6 +155,7 @@ This is a security plugin — **all features must be developed test-first** (Red
 - `tests/Helpers/` — TestHelper (shared utilities)
 - `tests/Helpers/HeadlessTestSupport.php` — trait for tests that run real REST and GraphQL requests: `require_wpgraphql()` (fails instead of skipping when `CI` is set), `set_environment_type()` (never `define( 'WP_ENVIRONMENT_TYPE' )` in a test, it leaks into every later test), `resolve_current_user()`, `restore_headless_state()`
 - Headless behavior tests (`RestAPIHeadlessBehaviorTest`, `GraphQLHeadlessBehaviorTest`) send requests through `rest_do_request()` and WPGraphQL's `graphql()` and assert what a client receives; do not assert only that a hook is registered
+- Login and admin hiding behavior: `LoginLockoutBehaviorTest`, `AdminHideRoutingTest`, plus Playwright specs in `tests/e2e/admin-hide/` (`npm run test:e2e:admin-hide`, own config `playwright.admin-hide.config.ts`; `tests/e2e/utils/wp-cli.ts` arranges state through `wp-env run cli`; give each describe block its own `X-Forwarded-For` so per-IP limits do not collide)
 
 ## Quick References
 

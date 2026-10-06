@@ -314,7 +314,15 @@ class LoginSecurity implements LoadableInterface {
 	 * @return void
 	 */
 	public function handle_failed_login( string $username ): void {
-		$ip  = SecurityHelper::get_client_ip();
+		$ip = SecurityHelper::get_client_ip();
+
+		// Core also fires wp_login_failed for the lockout error itself. Counting that
+		// attempt would renew the lockout, so a locked-out person who keeps trying (or an
+		// attacker sharing their IP) would never be let back in.
+		if ( \get_transient( SecurityHelper::generate_ip_transient_key( 'lockout', $ip ) ) ) {
+			return;
+		}
+
 		$key = SecurityHelper::generate_ip_transient_key( 'login_attempts', $ip );
 
 		$attempts = \get_transient( $key );
@@ -342,6 +350,21 @@ class LoginSecurity implements LoadableInterface {
 			$lockout_key = SecurityHelper::generate_ip_transient_key( 'lockout', $ip );
 			\set_transient( $lockout_key, true, $this->lockout_duration );
 		}
+	}
+
+	/**
+	 * Whether login screen error markup is the lockout notice
+	 *
+	 * @since 1.5.4
+	 * @param string $markup Error markup built by wp-login.php.
+	 * @return bool
+	 */
+	public static function is_lockout_notice( string $markup ): bool {
+		/* translators: %d: number of minutes remaining until unlock */
+		$template = \__( 'Too many failed login attempts. Try again in %d minutes.', 'silver-assist-security' );
+		$prefix   = trim( explode( '%d', $template, 2 )[0] );
+
+		return '' !== $prefix && false !== strpos( $markup, $prefix );
 	}
 
 	/**
@@ -450,7 +473,7 @@ class LoginSecurity implements LoadableInterface {
 				// Only redirect to login if user is in admin area
 				// Frontend users should stay on their current page after silent logout.
 				if ( \is_admin() ) {
-					\wp_safe_redirect( \wp_login_url() . '?session_expired=1' );
+					\wp_safe_redirect( \add_query_arg( 'session_expired', '1', \wp_login_url() ) );
 					exit;
 				}
 				// For frontend, just return without redirect to allow normal page rendering.
@@ -754,23 +777,10 @@ class LoginSecurity implements LoadableInterface {
 				$is_bot = true;
 			}
 
-			// More lenient rate limiting - allow more requests for legitimate users.
-			$access_key    = "login_access_{md5($ip)}";
-			$recent_access = \get_transient( $access_key );
-			if ( false === $recent_access ) {
-				$recent_access = 0;
-			}
-
-			// Increase threshold to 15 requests per minute (was 5) to accommodate:
-			// - Password changes with redirects
-			// - Logout confirmations
-			// - Multiple login attempts by legitimate users.
-			if ( $recent_access > 15 ) {
+			// Per-IP request rate limit for the login page.
+			if ( $this->is_login_page_rate_limited( $ip ) ) {
 				$is_bot = true;
 			}
-
-			// Update rate limiting counter (more lenient).
-			\set_transient( $access_key, $recent_access + 1, 60 );
 		}
 
 		// Only block if definitively identified as bot/crawler.
@@ -778,6 +788,29 @@ class LoginSecurity implements LoadableInterface {
 			$this->track_bot_behavior(); // Use existing method.
 			$this->send_404_response();
 		}
+	}
+
+	/**
+	 * Count a login page request from an IP and report whether it is over the limit
+	 *
+	 * The 16th request within a minute from one IP is the first one treated as bot
+	 * traffic (404). The counter is per IP and expires a minute after the latest
+	 * request. The threshold accommodates password changes with redirects, logout
+	 * confirmations and several login attempts by a legitimate user, but several
+	 * people sharing one IP (office, VPN) share this budget.
+	 *
+	 * @since 1.5.4
+	 * @param string $ip Client IP address.
+	 * @return bool True when this request exceeds the limit.
+	 */
+	public function is_login_page_rate_limited( string $ip ): bool {
+		$access_key = 'login_access_' . md5( $ip );
+		$hits       = (int) \get_transient( $access_key ) + 1;
+
+		// The counter lives for a minute after the latest request.
+		\set_transient( $access_key, $hits, 60 );
+
+		return $hits > 15;
 	}
 
 	/**
@@ -791,7 +824,7 @@ class LoginSecurity implements LoadableInterface {
 		$user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : 'Unknown';
 
 		// Log bot activity for security monitoring.
-		$bot_log_key  = "bot_activity_{md5($ip)}";
+		$bot_log_key  = 'bot_activity_' . md5( $ip );
 		$bot_activity = \get_transient( $bot_log_key );
 		if ( false === $bot_activity ) {
 			$bot_activity = array();
@@ -813,7 +846,7 @@ class LoginSecurity implements LoadableInterface {
 
 		// If too many bot activities, extend blocking.
 		if ( count( $bot_activity ) > 3 ) {
-			$extended_block_key = "extended_bot_block_{md5($ip)}";
+			$extended_block_key = 'extended_bot_block_' . md5( $ip );
 			\set_transient( $extended_block_key, true, 7200 ); // Block for 2 hours.
 		}
 	}

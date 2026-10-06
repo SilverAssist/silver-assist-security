@@ -53,6 +53,14 @@ jobs:
                       npm run test:e2e
                   fi
 
+            - name: Run E2E tests with admin hiding enabled
+              run: |
+                  if [ "${{ github.event_name }}" = "pull_request" ]; then
+                      npm run test:e2e:admin-hide:smoke
+                  else
+                      npm run test:e2e:admin-hide
+                  fi
+
             - name: Upload Playwright report
               if: failure()
               uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -60,5 +68,6 @@ jobs:
                   name: playwright-report
                   path: |
                       playwright-report/
+                      playwright-report-admin-hide/
                       test-results/
                   retention-days: 14

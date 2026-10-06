@@ -53,5 +53,6 @@ assets/js/*.min.js
 # E2E
 /test-results/
 /playwright-report/
+/playwright-report-admin-hide/
 /.wp-env/
 /tests/e2e/.auth/
