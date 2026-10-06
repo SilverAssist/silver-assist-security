@@ -387,8 +387,7 @@ Yes! Go to **Settings → Security Essentials** to configure login attempt limit
 **Important Notes**
 
 - Always backup your website before installing security plugins
-- Currently optimized for single WordPress installations
-- Multisite compatibility coming in future versions
+- **Multisite is not supported or tested.** Single-site installs only: activation, deactivation and uninstall act on the current site, and network activation is not handled
 
 ### 🌐 Proxies, Load Balancers and CDNs
 
