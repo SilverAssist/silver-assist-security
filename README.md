@@ -24,7 +24,7 @@ This plugin automatically implements enterprise-level security measures without 
 - **CAPTCHA Security Challenge**: Math-based CAPTCHA on login page during Under Attack Mode to block automated login attempts
 - **Remember Me Removal**: "Remember Me" checkbox removed from login form to enforce strict session timeout policies
 - **User Enumeration Protection**: Login error standardization prevents user discovery
-- **Strong Password Enforcement**: Mandatory complex passwords (12+ characters, mixed case, numbers, symbols)
+- **Strong Password Enforcement**: Mandatory complex passwords (8+ characters, mixed case, numbers, symbols)
 - **Bot and Crawler Protection**: Automatic blocking of suspicious crawlers, scanners, and automated tools
 - **Anti-Reconnaissance**: Blocks security scanning tools (Nmap, Nikto, WPScan, Nuclei, etc.)
 - **Rate Limiting**: Prevents rapid-fire login attempts from automated scripts
@@ -423,6 +423,32 @@ define( 'SILVER_ASSIST_TRUSTED_PROXY_CIDRS', '10.0.0.0/8,52.84.0.0/15' ); // VPC
   `$_SERVER['HTTPS'] = 'on'` in `wp-config.php` when the request comes from your trusted proxy and carries
   `X-Forwarded-Proto: https`; otherwise the cookies are issued without the Secure flag.
 
+### 🔐 Login Protection and Admin Hiding Behind a Shared IP
+
+Every login limit is per client IP (see "Proxies, Load Balancers and CDNs"), so people who share an
+address (an office, a VPN, a mobile carrier) share the limits too. With the defaults:
+
+| Limit | Default | Setting | Behavior |
+|-------|---------|---------|----------|
+| Failed logins | 5 | Login Attempts (1-20) | The IP is locked out; the right password is refused from that IP too. The page says "Too many failed login attempts. Try again in N minutes." |
+| Lockout duration | 15 minutes | Lockout Duration (60-3600 s) | Counted from the failure that triggered it. Trying again while locked out does not extend it. A successful login or password reset from that IP clears the count. |
+| Login page requests | 15 per minute | not configurable | The 16th request within a minute from one IP gets a 404 (the counter expires a minute after the latest request). A login costs two requests (the form and the submit), so about seven logins a minute from one address. Lost password, password reset and logout requests are not counted. Switch off Bot Protection to disable this counter. |
+| Idle session | 30 minutes | Session Timeout (5-120) | The session ends; in wp-admin the visitor lands on the login screen with `session_expired=1`. The auth cookie lasts as long as the timeout and "Remember Me" is removed. |
+
+- Wrong credentials, for an existing or an unknown username, show one message ("Invalid login
+  credentials"), including on the attempt that triggers the lockout. The lockout notice and password
+  reset messages are the only exceptions.
+- There is no allowlist: if colleagues behind one IP lock each other out, raise the number of attempts
+  (up to 20) and lower the lockout duration (down to 60 seconds).
+- With admin hiding on, `wp-login.php` and `/wp-admin/` return 404 to visitors without a session. The
+  secret path (default `/silver-admin`) sets a one-hour access cookie and leads to the login form.
+  `admin-ajax.php`, `admin-post.php` (public form handlers), `wp-cron.php`, the REST API, password reset
+  and lost-password links, and logout keep working for visitors. The email change confirmation link
+  carries the access token itself. Add `define( 'SILVER_ASSIST_HIDE_ADMIN', false );` to `wp-config.php`
+  to switch admin hiding off if the path is forgotten.
+- Covered by `LoginLockoutBehaviorTest`, `AdminHideRoutingTest` and the Playwright specs in
+  `tests/e2e/admin-hide/`.
+
 ### 🔌 Headless Clients: REST and GraphQL
 
 Next.js and other headless front ends call WordPress through REST and WPGraphQL. This is what the plugin
@@ -547,7 +573,13 @@ npm install && npx playwright install chromium
 npm run wp-env:start        # http://localhost:8890 (admin / password), needs Docker
 npm run test:e2e:smoke      # @smoke subset, runs on every PR
 npm run test:e2e            # full suite, runs nightly
+npm run test:e2e:admin-hide # the same site with admin hiding on (turns it on, restores it afterwards)
 ```
+
+- Admin hiding specs live in `tests/e2e/admin-hide/` with their own config
+  (`playwright.admin-hide.config.ts`) and `@smoke` subset (`npm run test:e2e:admin-hide:smoke`). They arrange
+  state with WP-CLI through `wp-env run cli`, so run them from the checkout that started `wp-env`, and give
+  each describe block its own `X-Forwarded-For` address so the per-IP limits do not collide.
 
 - Specs log in once per role (`tests/e2e/global-setup.ts`). The plugin returns 404 for more than 15
   login-page requests per minute from one IP, so per-test logins would trip its own bot detection.
