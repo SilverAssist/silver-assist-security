@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `EditorCompatibilityTest` now sends real REST requests as the role that uses each route and asserts the editor is not refused (it only checked that the route existed in the route table); the anonymous oEmbed check requests the route and expects `rest_no_route`. Re-adding the WEB-1222 `wp_oembed_register_route` removal makes it fail (#134).
 - Tests that asserted the old behavior (`CF-Connecting-IP` winning, first `X-Forwarded-For` value winning) now assert the new contract.
 - `scripts/run-quality-checks.sh` runs PHPUnit through the new `scripts/run-phpunit-complete.sh`, which fails when the run stops early (JUnit log missing or incomplete; for a full run, fewer tests than PHPUnit declares). It also fixes a blind spot: `run_phpunit` runs on the left of `||`, where bash disables `set -e`, so a failing test left the script at exit 0 and CI could not fail on broken tests; the status is now returned explicitly.
 - `RestAPISecurityIntegrationTest::test_graphql_endpoints_not_affected` (quarantined, wrong premise) is replaced by `RestAPIHeadlessBehaviorTest::test_graphql_requests_do_not_consume_the_rest_budget`, which sends real GraphQL requests (#132).
