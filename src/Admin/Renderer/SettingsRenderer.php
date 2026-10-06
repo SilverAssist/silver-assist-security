@@ -230,91 +230,91 @@ class SettingsRenderer {
 					</form>
 				</div>
 			</div>
-		</div>
 
-		<!-- Login Branding Section -->
-		<div class="status-card">
-			<div class="card-header">
-				<h3><?php \esc_html_e( 'Login Page Branding', 'silver-assist-security' ); ?></h3>
-			</div>
-			<div class="card-content">
-				<p class="description">
-					<?php \esc_html_e( 'Customize the WordPress login page with Silver Assist branding and a modern split-layout design.', 'silver-assist-security' ); ?>
-				</p>
-
-				<form method="post" action="" id="login-branding-form">
-					<?php \wp_nonce_field( 'silver_assist_security_settings' ); ?>
-					<input type="hidden" name="save_silver_assist_security" value="1">
-					<input type="hidden" name="settings_section" value="login_branding">
-
-					<table class="form-table">
-						<tbody>
-							<?php
-							RenderHelper::render_toggle_row(
-								\__( 'Enable Login Branding', 'silver-assist-security' ),
-								'silver_assist_login_branding_enabled',
-								$config['login_branding_enabled'],
-								\__( 'Replace the default WordPress login page with Silver Assist branded design', 'silver-assist-security' )
-							);
-							RenderHelper::render_toggle_row(
-								\__( 'Show Illustration Panel', 'silver-assist-security' ),
-								'silver_assist_login_branding_show_illustration',
-								$config['login_branding_show_illustration'],
-								\__( 'Display decorative illustration in a right-side panel (split-layout)', 'silver-assist-security' )
-							);
-							?>
-
-							<!-- Custom Logo URL -->
-							<tr>
-								<th scope="row">
-									<label for="silver_assist_login_branding_logo_url">
-										<?php \esc_html_e( 'Custom Logo URL', 'silver-assist-security' ); ?>
-									</label>
-								</th>
-								<td>
-									<input type="url"
-										id="silver_assist_login_branding_logo_url"
-										name="silver_assist_login_branding_logo_url"
-										value="<?php echo \esc_attr( $config['login_branding_logo_url'] ); ?>"
-										placeholder="https://example.com/logo.png"
-										class="regular-text">
-									<p class="description">
-										<?php \esc_html_e( 'URL to a custom logo image. Leave empty to use the built-in Silver Assist logo.', 'silver-assist-security' ); ?>
-									</p>
-								</td>
-							</tr>
-
-							<!-- Background Color -->
-							<tr>
-								<th scope="row">
-									<label for="silver_assist_login_branding_bg_color">
-										<?php \esc_html_e( 'Illustration Panel Color', 'silver-assist-security' ); ?>
-									</label>
-								</th>
-								<td>
-									<input type="text"
-										id="silver_assist_login_branding_bg_color"
-										name="silver_assist_login_branding_bg_color"
-										value="<?php echo \esc_attr( $config['login_branding_bg_color'] ); ?>"
-										placeholder="#0a1628"
-										class="small-text"
-										maxlength="7">
-									<p class="description">
-										<?php \esc_html_e( 'Hex color for the illustration panel background. Leave empty for the default gradient.', 'silver-assist-security' ); ?>
-									</p>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-
-					<p class="submit">
-						<input type="submit"
-							name="submit"
-							id="login-branding-submit"
-							class="button button-primary"
-							value="<?php \esc_attr_e( 'Save Branding Settings', 'silver-assist-security' ); ?>">
+			<!-- Login Branding Section (inside the tab panel: the tab script only toggles .silver-tab-content) -->
+			<div class="status-card">
+				<div class="card-header">
+					<h3><?php \esc_html_e( 'Login Page Branding', 'silver-assist-security' ); ?></h3>
+				</div>
+				<div class="card-content">
+					<p class="description">
+						<?php \esc_html_e( 'Customize the WordPress login page with Silver Assist branding and a modern split-layout design.', 'silver-assist-security' ); ?>
 					</p>
-				</form>
+
+					<form method="post" action="" id="login-branding-form">
+						<?php \wp_nonce_field( 'silver_assist_security_settings' ); ?>
+						<input type="hidden" name="save_silver_assist_security" value="1">
+						<input type="hidden" name="settings_section" value="login_branding">
+
+						<table class="form-table">
+							<tbody>
+								<?php
+								RenderHelper::render_toggle_row(
+									\__( 'Enable Login Branding', 'silver-assist-security' ),
+									'silver_assist_login_branding_enabled',
+									$config['login_branding_enabled'],
+									\__( 'Replace the default WordPress login page with Silver Assist branded design', 'silver-assist-security' )
+								);
+								RenderHelper::render_toggle_row(
+									\__( 'Show Illustration Panel', 'silver-assist-security' ),
+									'silver_assist_login_branding_show_illustration',
+									$config['login_branding_show_illustration'],
+									\__( 'Display decorative illustration in a right-side panel (split-layout)', 'silver-assist-security' )
+								);
+								?>
+
+								<!-- Custom Logo URL -->
+								<tr>
+									<th scope="row">
+										<label for="silver_assist_login_branding_logo_url">
+											<?php \esc_html_e( 'Custom Logo URL', 'silver-assist-security' ); ?>
+										</label>
+									</th>
+									<td>
+										<input type="url"
+											id="silver_assist_login_branding_logo_url"
+											name="silver_assist_login_branding_logo_url"
+											value="<?php echo \esc_attr( $config['login_branding_logo_url'] ); ?>"
+											placeholder="https://example.com/logo.png"
+											class="regular-text">
+										<p class="description">
+											<?php \esc_html_e( 'URL to a custom logo image. Leave empty to use the built-in Silver Assist logo.', 'silver-assist-security' ); ?>
+										</p>
+									</td>
+								</tr>
+
+								<!-- Background Color -->
+								<tr>
+									<th scope="row">
+										<label for="silver_assist_login_branding_bg_color">
+											<?php \esc_html_e( 'Illustration Panel Color', 'silver-assist-security' ); ?>
+										</label>
+									</th>
+									<td>
+										<input type="text"
+											id="silver_assist_login_branding_bg_color"
+											name="silver_assist_login_branding_bg_color"
+											value="<?php echo \esc_attr( $config['login_branding_bg_color'] ); ?>"
+											placeholder="#0a1628"
+											class="small-text"
+											maxlength="7">
+										<p class="description">
+											<?php \esc_html_e( 'Hex color for the illustration panel background. Leave empty for the default gradient.', 'silver-assist-security' ); ?>
+										</p>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+
+						<p class="submit">
+							<input type="submit"
+								name="submit"
+								id="login-branding-submit"
+								class="button button-primary"
+								value="<?php \esc_attr_e( 'Save Branding Settings', 'silver-assist-security' ); ?>">
+						</p>
+					</form>
+				</div>
 			</div>
 		</div>
 		<?php

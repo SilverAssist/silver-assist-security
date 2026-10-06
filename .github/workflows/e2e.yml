@@ -42,6 +42,12 @@ jobs:
                   npm ci
                   npx playwright install --with-deps chromium
 
+            - name: Build minified assets
+              # The plugin loads assets/**/*.min.* unless SCRIPT_DEBUG is on, and those files are
+              # git-ignored (the release build creates them). Without them the admin screens load
+              # no CSS or JavaScript and tab behavior cannot be tested.
+              run: npm run build
+
             - name: Start WordPress (wp-env)
               run: npm run wp-env:start
 
