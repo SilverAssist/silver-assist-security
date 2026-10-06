@@ -688,4 +688,179 @@ class GraphQLHeadlessBehaviorTest extends WP_UnitTestCase {
 			$this->assertArrayNotHasKey( 'errors', $result, "Authenticated request {$i} should pass" );
 		}
 	}
+
+	// ---------------------------------------------------------------------
+	// Response headers.
+	// ---------------------------------------------------------------------
+
+	/**
+	 * Headers WPGraphQL would send with its HTTP response, after every filter ran
+	 *
+	 * WPGraphQL answers on `parse_request` and exits before `send_headers`, so the filter
+	 * `graphql_response_headers_to_send` is the only extension point that reaches that response.
+	 *
+	 * @return array<string, string>
+	 */
+	private function graphql_response_headers(): array {
+		$method = new \ReflectionMethod( \WPGraphQL\Router::class, 'get_response_headers' );
+		$method->setAccessible( true );
+
+		return $method->invoke( null );
+	}
+
+	/**
+	 * A GraphQL response carries the baseline security headers
+	 *
+	 * @return void
+	 */
+	public function test_graphql_response_carries_the_baseline_security_headers(): void {
+		$headers = $this->graphql_response_headers();
+
+		$this->assertSame( 'nosniff', $headers['X-Content-Type-Options'] ?? null );
+		$this->assertSame( 'SAMEORIGIN', $headers['X-Frame-Options'] ?? null );
+		$this->assertSame( 'strict-origin-when-cross-origin', $headers['Referrer-Policy'] ?? null );
+		$this->assertArrayHasKey( 'Permissions-Policy', $headers );
+		$this->assertArrayHasKey( 'Content-Type', $headers, 'WPGraphQL own headers are kept' );
+		$this->assertArrayHasKey( 'Access-Control-Allow-Origin', $headers, 'WPGraphQL CORS headers are kept' );
+	}
+
+	/**
+	 * The headers follow the site wide header filter and the headers other code already set
+	 *
+	 * @return void
+	 */
+	public function test_graphql_response_headers_follow_the_site_filter_and_keep_earlier_values(): void {
+		\add_filter(
+			'silver_assist_security_headers',
+			static function ( array $headers ): array {
+				$headers['Permissions-Policy'] = 'geolocation=(self)';
+				unset( $headers['X-XSS-Protection'] );
+				return $headers;
+			}
+		);
+		\add_filter(
+			'graphql_response_headers_to_send',
+			static function ( array $headers ): array {
+				$headers['Referrer-Policy'] = 'no-referrer';
+				return $headers;
+			},
+			5
+		);
+
+		$headers = $this->graphql_response_headers();
+
+		$this->assertSame( 'geolocation=(self)', $headers['Permissions-Policy'] );
+		$this->assertArrayNotHasKey( 'X-XSS-Protection', $headers );
+		$this->assertSame( 'no-referrer', $headers['Referrer-Policy'], 'A header another filter set first is not overwritten' );
+	}
+
+	/**
+	 * A custom endpoint path gets the same headers
+	 *
+	 * @return void
+	 */
+	public function test_custom_endpoint_response_carries_the_baseline_security_headers(): void {
+		$original_route           = \WPGraphQL\Router::$route;
+		\WPGraphQL\Router::$route = 'headless-api';
+		$_SERVER['REQUEST_URI']   = '/headless-api';
+
+		try {
+			$this->assertSame( 'nosniff', $this->graphql_response_headers()['X-Content-Type-Options'] ?? null );
+		} finally {
+			\WPGraphQL\Router::$route = $original_route;
+		}
+	}
+
+	/**
+	 * No front-end hook matches URLs by the text "/graphql"
+	 *
+	 * The old `send_headers` callback never ran for the GraphQL response and would have framed or
+	 * uncached a page such as `/graphql-guide/`.
+	 *
+	 * @return void
+	 */
+	public function test_no_send_headers_hook_matches_graphql_by_substring(): void {
+		$this->assertFalse( \has_action( 'send_headers', array( $this->security, 'add_graphql_security_headers' ) ) );
+		$this->assertFalse( \method_exists( $this->security, 'add_graphql_security_headers' ) );
+	}
+
+	// ---------------------------------------------------------------------
+	// Dead introspection hooks.
+	// ---------------------------------------------------------------------
+
+	/**
+	 * The plugin does not register hooks WPGraphQL never fires
+	 *
+	 * `graphql_introspection_enabled`, `graphql_show_in_graphiql` and
+	 * `WPGraphQL\Type\Introspection::register_introspection_fields` do not exist in WPGraphQL, so
+	 * hooking them only suggests a protection that is not there. Introspection is rejected by
+	 * `validate_query_before_execution` and WPGraphQL's own rule.
+	 *
+	 * @return void
+	 */
+	public function test_production_does_not_register_hooks_wpgraphql_never_fires(): void {
+		$this->set_environment_type( 'production' );
+		$this->set_graphql_settings( array( 'public_introspection_enabled' => 'on' ) );
+		\remove_all_filters( 'graphql_introspection_enabled' );
+		\remove_all_filters( 'graphql_show_in_graphiql' );
+
+		\do_action( 'init' );
+		\do_action( 'graphql_init' );
+
+		$this->assertFalse( \has_filter( 'graphql_introspection_enabled' ) );
+		$this->assertFalse( \has_filter( 'graphql_show_in_graphiql' ) );
+		$this->assertFalse( \method_exists( $this->security, 'disable_introspection_in_production' ) );
+	}
+
+	/**
+	 * Anonymous introspection is rejected in production, with WPGraphQL's public setting on or off
+	 *
+	 * @return void
+	 */
+	public function test_anonymous_introspection_is_rejected_in_production_with_the_public_setting_on(): void {
+		$this->set_environment_type( 'production' );
+		$this->set_graphql_settings( array( 'public_introspection_enabled' => 'on' ) );
+		\wp_set_current_user( 0 );
+
+		$this->expectException( UserError::class );
+		$this->expectExceptionMessage( 'Introspection is disabled in production' );
+
+		$this->run_query( '{ __schema { queryType { name } } }' );
+	}
+
+	// ---------------------------------------------------------------------
+	// Failing validation helpers.
+	// ---------------------------------------------------------------------
+
+	/**
+	 * Validation helpers refuse the query when they fail
+	 *
+	 * A query that is not a string makes the counting helpers throw a TypeError (an Error, not an Exception); an error while validating
+	 * must not become "no errors found".
+	 *
+	 * @dataProvider validation_helpers
+	 *
+	 * @param string $helper Method name.
+	 * @return void
+	 */
+	public function test_validation_helpers_fail_closed_when_they_error( string $helper ): void {
+		$errors = $this->security->$helper( array( 'request_data' => array( 'query' => array( 'not', 'a', 'string' ) ) ) );
+
+		$this->assertNotEmpty( $errors, "{$helper} must not allow a query it could not check" );
+		$this->assertInstanceOf( UserError::class, $errors[0] );
+	}
+
+	/**
+	 * Helpers that parse the query text
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function validation_helpers(): array {
+		return array(
+			'depth'            => array( 'validate_query_depth' ),
+			'aliases'          => array( 'validate_aliases' ),
+			'directives'       => array( 'validate_directives' ),
+			'field duplicates' => array( 'validate_field_duplicates' ),
+		);
+	}
 }

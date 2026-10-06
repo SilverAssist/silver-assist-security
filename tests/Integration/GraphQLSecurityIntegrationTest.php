@@ -233,65 +233,6 @@ class GraphQLSecurityIntegrationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test introspection blocking in production environment
-	 *
-	 * @since 1.1.14
-	 * @return void
-	 */
-	public function test_introspection_disabled_in_production(): void {
-		$this->require_wpgraphql();
-
-		// Enable introspection in WPGraphQL settings so the method doesn't early-return.
-		$settings                                  = \get_option( 'graphql_general_settings', array() );
-		$settings['public_introspection_enabled'] = 'on';
-		\update_option( 'graphql_general_settings', $settings );
-
-		// Clear singleton config cache so it picks up the new setting.
-		GraphQLConfigManager::get_instance()->clear_cache();
-
-		// Production: the plugin switches introspection off.
-		$this->set_environment_type( 'production' );
-		\remove_all_filters( 'graphql_introspection_enabled' );
-
-		$security = new GraphQLSecurity();
-		$security->disable_introspection_in_production();
-
-		$this->assertNotFalse(
-			\has_filter( 'graphql_introspection_enabled' ),
-			'Introspection filter should be registered in production'
-		);
-
-		// Any other environment: it does not.
-		$this->set_environment_type( 'staging' );
-		\remove_all_filters( 'graphql_introspection_enabled' );
-
-		$security->disable_introspection_in_production();
-
-		$this->assertFalse(
-			\has_filter( 'graphql_introspection_enabled' ),
-			'Introspection filter should not be registered outside production'
-		);
-
-		// Cleanup.
-		\delete_option( 'graphql_general_settings' );
-	}
-
-	/**
-	 * Test security headers for GraphQL endpoint
-	 *
-	 * @since 1.1.14
-	 * @return void
-	 */
-	public function test_graphql_security_headers(): void {
-		$this->require_wpgraphql();
-
-		$security = new GraphQLSecurity();
-
-		// Check if send_headers action is registered
-		$this->assertTrue( \has_action( 'send_headers' ) !== false, 'send_headers action should be registered' );
-	}
-
-	/**
 	 * Test safe limit calculation for aliases
 	 *
 	 * @since 1.1.14
