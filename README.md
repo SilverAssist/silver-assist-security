@@ -538,6 +538,16 @@ The plugin changes core WordPress behavior, so a feature that only registers its
 2. **End to end (Playwright on `@wordpress/env`)**: use it when the behavior needs a browser, such as the block editor or the login screens. Example: `tests/e2e/editor.spec.ts` opens the editor as an administrator, inserts an Embed block and asserts there are no JS errors and the oEmbed proxy route exists. Run it with `npm run test:e2e:smoke` after `npm run wp-env:start`.
 3. Run the new test against the code without your fix and confirm it fails, then run `bash scripts/run-phpunit-complete.sh` (a full run must complete) before opening the pull request.
 
+### How to add a setting
+
+Settings the screen saves go through one registry and one saver, so adding an option is three small steps and no new save code:
+
+1. **Default**: add the option and its default to `DefaultConfig::get_defaults()`.
+2. **Register it** in `src/Admin/Settings/SettingsRegistry.php` with its section (`login`, `rest_api`, `login_branding`, `admin_hide`, `graphql`, `graphql_auth`, `cf7`, `ip`), type (`bool`, `int`, `url`, `hex_color`, `admin_path`, `user_id`), `min` and `max` for integers, `ui` (the screen renders a field for it) and `autosave` (the auto-save endpoint may write it; leave it `false` unless the maintainers decide otherwise, see #160).
+3. **Add the field** to the form of that section in `SettingsRenderer`, with the registered option name as the input `name`. The form already posts the gate field, its section and the nonce.
+
+`SettingsSaver` clamps, sanitizes and writes it, and both the Save button and auto-save report what was saved, adjusted or ignored. `SettingsRegistryTest` and `SettingsFormsTest` fail if the default is missing, the field is not inside its own section's form, or the saved value does not persist.
+
 ### Behavior Audit
 
 Every hook the plugin registers or removes is listed, with the core behavior it changes, who is affected, its risk

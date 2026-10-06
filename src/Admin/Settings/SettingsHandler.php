@@ -2,9 +2,8 @@
 /**
  * Silver Assist Security Essentials - Settings Handler
  *
- * Handles security settings form processing and validation for all security
- * configuration categories. Provides specialized methods for different settings
- * groups with proper validation and sanitization.
+ * Authorizes a settings form submission (gate field, capability, nonce) and
+ * delegates the save of the submitted section to SettingsSaver.
  *
  * @package SilverAssist\Security\Admin\Settings
  * @since 1.1.15
@@ -13,41 +12,38 @@
 
 namespace SilverAssist\Security\Admin\Settings;
 
-use SilverAssist\Security\Core\DefaultConfig;
-use SilverAssist\Security\Core\PathValidator;
-use SilverAssist\Security\Core\SecurityHelper;
-use SilverAssist\Security\GraphQL\GraphQLConfigManager;
-
 /**
  * Settings Handler class
  *
- * Processes and validates all security configuration form submissions
- * with specialized methods for each settings category.
+ * Authorizes the request and hands the submitted section to SettingsSaver, which owns
+ * sanitizing, clamping and writing.
  *
  * @since 1.1.15
  */
 class SettingsHandler {
 
 	/**
-	 * GraphQL Configuration Manager instance
+	 * Settings saver
 	 *
-	 * @var GraphQLConfigManager
+	 * @var SettingsSaver
 	 */
-	private GraphQLConfigManager $config_manager;
+	private SettingsSaver $saver;
 
 	/**
 	 * Constructor
 	 *
 	 * @since 1.1.15
+	 * @param SettingsSaver|null $saver Settings saver (defaults to a new one).
 	 */
-	public function __construct() {
-		$this->config_manager = GraphQLConfigManager::get_instance();
+	public function __construct( ?SettingsSaver $saver = null ) {
+		$this->saver = $saver ?? new SettingsSaver();
 	}
 
 	/**
 	 * Main settings processing method
 	 *
-	 * Validates request and delegates to appropriate specialized method
+	 * Requires the gate field, `manage_options` and a valid nonce, then saves the section named in
+	 * `settings_section`. A missing or unknown section writes nothing and shows an error notice.
 	 *
 	 * @since 1.1.15
 	 * @return void
@@ -63,292 +59,46 @@ class SettingsHandler {
 			\wp_die( \esc_html__( 'Security check failed.', 'silver-assist-security' ) );
 		}
 
-		// Check if submission is scoped to a specific section.
 		$section = isset( $_POST['settings_section'] ) ? \sanitize_text_field( \wp_unslash( $_POST['settings_section'] ) ) : '';
 
-		if ( 'graphql_auth' === $section ) {
-			// Only save GraphQL auth-related settings (service user ID).
-			$this->save_graphql_auth_settings();
-		} elseif ( 'login_branding' === $section ) {
-			// Only save login branding settings.
-			$this->save_login_branding_settings();
-		} elseif ( 'rest_api' === $section ) {
-			// Only save REST API security settings.
-			$this->save_rest_api_settings();
-		} else {
-			// Process all settings categories.
-			$this->save_login_security_settings();
-			$this->save_login_branding_settings();
-			$this->save_admin_hide_settings();
-			$this->save_graphql_settings();
-			$this->save_contact_form7_settings();
-			$this->save_ip_management_settings();
-		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce and capability verified above; SettingsSaver unslashes, sanitizes and clamps every value.
+		$result = $this->saver->save( $_POST, $section, SettingsSaver::MODE_FORM );
 
-		$this->add_success_notice();
-	}
-
-	/**
-	 * Save login security settings
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	private function save_login_security_settings(): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
-		// Login attempts validation.
-		if ( isset( $_POST['silver_assist_login_attempts'] ) ) {
-			$login_attempts = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_attempts'] ) ) );
-			$login_attempts = \max( 1, \min( 20, $login_attempts ) );
-			\update_option( 'silver_assist_login_attempts', $login_attempts );
-		}
-
-		// Lockout duration validation.
-		if ( isset( $_POST['silver_assist_lockout_duration'] ) ) {
-			$lockout_duration = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_lockout_duration'] ) ) );
-			$lockout_duration = \max( 60, \min( 3600, $lockout_duration ) );
-			\update_option( 'silver_assist_lockout_duration', $lockout_duration );
-		}
-
-		// Session timeout validation.
-		if ( isset( $_POST['silver_assist_session_timeout'] ) ) {
-			$session_timeout = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_session_timeout'] ) ) );
-			$session_timeout = \max( 5, \min( 120, $session_timeout ) );
-			\update_option( 'silver_assist_session_timeout', $session_timeout );
-		}
-
-		// Boolean settings.
-		\update_option( 'silver_assist_bot_protection', (int) ( isset( $_POST['silver_assist_bot_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_bot_protection'] ) ) : 0 ) );
-		\update_option( 'silver_assist_password_strength_enforcement', (int) ( isset( $_POST['silver_assist_password_strength_enforcement'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_password_strength_enforcement'] ) ) : 0 ) );
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-	}
-
-	/**
-	 * Save REST API security settings
-	 *
-	 * @since 1.5.0
-	 * @return void
-	 */
-	private function save_rest_api_settings(): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
-		// Batch endpoint protection.
-		\update_option( 'silver_assist_rest_batch_endpoint_protection', (int) ( isset( $_POST['silver_assist_rest_batch_endpoint_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_rest_batch_endpoint_protection'] ) ) : 0 ) );
-
-		// Rate limiting enabled.
-		\update_option( 'silver_assist_rest_rate_limiting_enabled', (int) ( isset( $_POST['silver_assist_rest_rate_limiting_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_rest_rate_limiting_enabled'] ) ) : 0 ) );
-
-		// Rate limit requests validation.
-		if ( isset( $_POST['silver_assist_rest_rate_limit_requests'] ) ) {
-			$rate_limit_requests = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_rest_rate_limit_requests'] ) ) );
-			$rate_limit_requests = \max( 10, \min( 1000, $rate_limit_requests ) );
-			\update_option( 'silver_assist_rest_rate_limit_requests', $rate_limit_requests );
-		}
-
-		// Rate limit window validation.
-		if ( isset( $_POST['silver_assist_rest_rate_limit_window'] ) ) {
-			$rate_limit_window = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_rest_rate_limit_window'] ) ) );
-			$rate_limit_window = \max( 30, \min( 300, $rate_limit_window ) );
-			\update_option( 'silver_assist_rest_rate_limit_window', $rate_limit_window );
-		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-	}
-
-	/**
-	 * Save login branding settings
-	 *
-	 * @since 1.4.0
-	 * @return void
-	 */
-	private function save_login_branding_settings(): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
-		// Enable/disable login branding.
-		\update_option( 'silver_assist_login_branding_enabled', (int) ( isset( $_POST['silver_assist_login_branding_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_branding_enabled'] ) ) : 0 ) );
-
-		// Show/hide illustration panel.
-		\update_option( 'silver_assist_login_branding_show_illustration', (int) ( isset( $_POST['silver_assist_login_branding_show_illustration'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_branding_show_illustration'] ) ) : 0 ) );
-
-		// Custom logo URL.
-		$logo_url = isset( $_POST['silver_assist_login_branding_logo_url'] ) ? \esc_url_raw( \wp_unslash( $_POST['silver_assist_login_branding_logo_url'] ) ) : '';
-		\update_option( 'silver_assist_login_branding_logo_url', $logo_url );
-
-		// Background color.
-		$bg_color = isset( $_POST['silver_assist_login_branding_bg_color'] ) ? \sanitize_hex_color( \wp_unslash( $_POST['silver_assist_login_branding_bg_color'] ) ) : '';
-		\update_option( 'silver_assist_login_branding_bg_color', $bg_color ?? '' );
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-	}
-
-	/**
-	 * Save Admin Hide settings
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	private function save_admin_hide_settings(): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
-		// Admin Hide enable/disable.
-		$admin_hide_enabled = (int) ( isset( $_POST['silver_assist_admin_hide_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_admin_hide_enabled'] ) ) : 0 );
-		\update_option( 'silver_assist_admin_hide_enabled', $admin_hide_enabled );
-
-		// Admin Hide path validation.
-		$admin_hide_path = isset( $_POST['silver_assist_admin_hide_path'] ) ? \sanitize_title( \wp_unslash( $_POST['silver_assist_admin_hide_path'] ) ) : 'silver-admin';
-		if ( ! empty( $admin_hide_path ) && $this->validate_admin_hide_path( $admin_hide_path ) ) {
-			\update_option( 'silver_assist_admin_hide_path', $admin_hide_path );
-		} else {
-			\update_option( 'silver_assist_admin_hide_path', 'silver-admin' );
-		}
-
-		// Flush rewrite rules when admin hide settings change.
-		if ( $admin_hide_enabled ) {
-			\flush_rewrite_rules();
-		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-	}
-
-	/**
-	 * Save GraphQL security settings
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	private function save_graphql_settings(): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
-		// Headless mode setting — only update when present in the form.
-		if ( isset( $_POST['silver_assist_graphql_headless_mode'] ) ) {
-			$headless_mode = (int) \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_headless_mode'] ) );
-			\update_option( 'silver_assist_graphql_headless_mode', $headless_mode );
-		}
-
-		// GraphQL timeout setting.
-		if ( isset( $_POST['silver_assist_graphql_query_timeout'] ) ) {
-			$graphql_timeout = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_query_timeout'] ) ) );
-			$php_timeout     = $this->config_manager->get_php_execution_timeout();
-			$graphql_timeout = \max( 1, \min( $php_timeout, $graphql_timeout ) );
-			\update_option( 'silver_assist_graphql_query_timeout', $graphql_timeout );
-		}
-
-		// Service User ID for API key authentication.
-		if ( isset( $_POST['silver_assist_graphql_service_user_id'] ) ) {
-			$service_user_id = \absint( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_service_user_id'] ) ) );
-			// Validate user exists.
-			if ( $service_user_id > 0 && ! \get_userdata( $service_user_id ) ) {
-				$service_user_id = 0;
-			}
-			\update_option( 'silver_assist_graphql_service_user_id', $service_user_id );
-		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-	}
-
-	/**
-	 * Save only GraphQL authentication settings (service user)
-	 *
-	 * Used when the GraphQL Authentication form is submitted with
-	 * settings_section=graphql_auth to avoid overwriting unrelated settings.
-	 *
-	 * @since 1.3.0
-	 * @return void
-	 */
-	private function save_graphql_auth_settings(): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
-		if ( isset( $_POST['silver_assist_graphql_service_user_id'] ) ) {
-			$service_user_id = \absint( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_service_user_id'] ) ) );
-			// Validate user exists.
-			if ( $service_user_id > 0 && ! \get_userdata( $service_user_id ) ) {
-				$service_user_id = 0;
-			}
-			\update_option( 'silver_assist_graphql_service_user_id', $service_user_id );
-		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-	}
-
-	/**
-	 * Save Contact Form 7 security settings
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	private function save_contact_form7_settings(): void {
-		// Only save CF7 settings if CF7 is active.
-		if ( ! SecurityHelper::is_contact_form_7_active() ) {
+		if ( isset( $result->errors['section'] ) ) {
+			$this->add_notice( 'error', $result->errors['section'] );
 			return;
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
-		// CF7 Protection enable/disable. Only written when submitted (see the IP blacklist toggle).
-		if ( isset( $_POST['silver_assist_cf7_protection_enabled'] ) ) {
-			\update_option( 'silver_assist_cf7_protection_enabled', (int) \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_protection_enabled'] ) ) );
-		}
+		$this->add_notice( 'success', \__( 'Security settings have been saved successfully.', 'silver-assist-security' ) );
 
-		// CF7 Rate limiting.
-		if ( isset( $_POST['silver_assist_cf7_rate_limit'] ) ) {
-			$cf7_rate_limit = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_rate_limit'] ) ) );
-			$cf7_rate_limit = \max( 1, \min( 10, $cf7_rate_limit ) );
-			\update_option( 'silver_assist_cf7_rate_limit', $cf7_rate_limit );
+		if ( ! empty( $result->adjusted ) ) {
+			$this->add_notice(
+				'warning',
+				sprintf(
+					/* translators: %s: list of setting names */
+					\__( 'Some values were adjusted to what is allowed: %s.', 'silver-assist-security' ),
+					implode( ', ', str_replace( 'silver_assist_', '', array_keys( $result->adjusted ) ) )
+				)
+			);
 		}
-
-		if ( isset( $_POST['silver_assist_cf7_rate_window'] ) ) {
-			$cf7_rate_window = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_rate_window'] ) ) );
-			$cf7_rate_window = \max( 30, \min( 300, $cf7_rate_window ) );
-			\update_option( 'silver_assist_cf7_rate_window', $cf7_rate_window );
-		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
-	 * Save IP management settings
+	 * Show an admin notice after the settings save
 	 *
 	 * @since 1.1.15
+	 * @param string $type    Notice type: success, warning or error.
+	 * @param string $message Notice text.
 	 * @return void
 	 */
-	private function save_ip_management_settings(): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
-		// IP Blacklist enable/disable. Only written when submitted: an unchecked box is saved by the
-		// auto-save handler, and a save that does not carry the field must not switch it off.
-		if ( isset( $_POST['silver_assist_ip_blacklist_enabled'] ) ) {
-			\update_option( 'silver_assist_ip_blacklist_enabled', (int) \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_enabled'] ) ) );
-		}
-
-		// IP violation threshold (the option IPBlacklist reads).
-		if ( isset( $_POST['silver_assist_ip_blacklist_threshold'] ) ) {
-			$ip_blacklist_threshold = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_threshold'] ) ) );
-			$ip_blacklist_threshold = \max( 3, \min( 20, $ip_blacklist_threshold ) );
-			\update_option( 'silver_assist_ip_blacklist_threshold', $ip_blacklist_threshold );
-		}
-
-		// IP blacklist duration.
-		if ( isset( $_POST['silver_assist_ip_blacklist_duration'] ) ) {
-			$ip_blacklist_duration = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_duration'] ) ) );
-			$ip_blacklist_duration = \max( 3600, \min( 604800, $ip_blacklist_duration ) );
-			\update_option( 'silver_assist_ip_blacklist_duration', $ip_blacklist_duration );
-		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-	}
-
-	/**
-	 * Add success notice after settings save
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	private function add_success_notice(): void {
+	private function add_notice( string $type, string $message ): void {
 		\add_action(
 			'admin_notices',
-			function () {
-				echo '<div class="notice notice-success is-dismissible">';
-				echo '<p>' . \esc_html__( 'Security settings have been saved successfully.', 'silver-assist-security' ) . '</p>';
+			function () use ( $type, $message ) {
+				echo '<div class="notice notice-' . \esc_attr( $type ) . ' is-dismissible">';
+				echo '<p>' . \esc_html( $message ) . '</p>';
 				echo '</div>';
 			}
 		);
-	}
-
-	/**
-	 * Validate admin hide path using centralized PathValidator
-	 *
-	 * @since 1.1.15
-	 * @param string $path The path to validate.
-	 * @return bool True if path is valid
-	 */
-	private function validate_admin_hide_path( string $path ): bool {
-		$result = PathValidator::validate_admin_path( $path );
-		return $result['is_valid'];
 	}
 }

@@ -210,13 +210,107 @@ class SecurityAjaxHandlerTest extends WP_UnitTestCase {
 	public function test_auto_save_with_admin_user(): void {
 		\wp_set_current_user( $this->admin_user_id );
 		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
-		$_POST['silver_assist_login_attempts'] = '5';
+		$_POST['silver_assist_login_attempts'] = '7';
 		$_POST['silver_assist_lockout_duration'] = '900';
 
 		$response = $this->call_ajax_handler( $this->handler, 'auto_save' );
 
 		$this->assertNotNull( $response );
 		$this->assertTrue( $response['success'] ?? false );
+		$this->assertSame( 2, $response['data']['saved_count'] );
+		$this->assertSame( 7, $response['data']['saved']['silver_assist_login_attempts'] );
+		$this->assertSame( 7, (int) \get_option( 'silver_assist_login_attempts' ) );
+		$this->assertSame( array(), $response['data']['errors'] );
+		$this->assertStringContainsString( '2', $response['data']['message'] );
+	}
+
+	/**
+	 * Auto-save reports adjusted values
+	 */
+	public function test_auto_save_reports_adjusted_values(): void {
+		\wp_set_current_user( $this->admin_user_id );
+		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
+		$_POST['silver_assist_login_attempts'] = '99';
+
+		$response = $this->call_ajax_handler( $this->handler, 'auto_save' );
+
+		$this->assertTrue( $response['success'] ?? false );
+		$this->assertSame( 1, $response['data']['saved_count'] );
+		$this->assertSame( 20, (int) \get_option( 'silver_assist_login_attempts' ) );
+		$this->assertSame( 99, $response['data']['adjusted']['silver_assist_login_attempts']['submitted'] );
+		$this->assertSame( 20, $response['data']['adjusted']['silver_assist_login_attempts']['saved'] );
+	}
+
+	/**
+	 * Auto-save does not claim success text when it saved nothing
+	 *
+	 * Fields outside the auto-save set (REST, branding, GraphQL auth, CF7 rate limit, admin path) are ignored,
+	 * and the response says so.
+	 */
+	public function test_auto_save_saved_nothing_says_so(): void {
+		\wp_set_current_user( $this->admin_user_id );
+		\update_option( 'silver_assist_rest_rate_limit_requests', 100 );
+		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
+		$_POST['silver_assist_rest_rate_limit_requests'] = '500';
+		$_POST['silver_assist_admin_hide_path'] = 'my-private-door';
+		$_POST['silver_assist_graphql_service_user_id'] = '1';
+
+		$response = $this->call_ajax_handler( $this->handler, 'auto_save' );
+
+		$this->assertTrue( $response['success'] ?? false );
+		$this->assertSame( 0, $response['data']['saved_count'] );
+		$this->assertSame( array(), $response['data']['saved'] );
+		$this->assertEqualsCanonicalizing(
+			array( 'silver_assist_rest_rate_limit_requests', 'silver_assist_admin_hide_path', 'silver_assist_graphql_service_user_id' ),
+			$response['data']['ignored']
+		);
+		$this->assertStringContainsString( 'Nothing was saved', $response['data']['message'] );
+		$this->assertStringNotContainsString( 'auto-saved', $response['data']['message'] );
+		$this->assertSame( 100, (int) \get_option( 'silver_assist_rest_rate_limit_requests' ) );
+		$this->assertFalse( \get_option( 'silver_assist_admin_hide_path' ) );
+	}
+
+	/**
+	 * A request carrying no settings saves nothing and says so
+	 */
+	public function test_auto_save_with_no_settings_saves_nothing(): void {
+		\wp_set_current_user( $this->admin_user_id );
+		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
+
+		$response = $this->call_ajax_handler( $this->handler, 'auto_save' );
+
+		$this->assertTrue( $response['success'] ?? false );
+		$this->assertSame( 0, $response['data']['saved_count'] );
+		$this->assertStringContainsString( 'Nothing was saved', $response['data']['message'] );
+	}
+
+	/**
+	 * Auto-save needs the manage_options capability
+	 */
+	public function test_auto_save_fails_with_non_admin_user(): void {
+		\update_option( 'silver_assist_login_attempts', 5 );
+		\wp_set_current_user( $this->factory()->user->create( array( 'role' => 'subscriber' ) ) );
+		$_POST['nonce'] = \wp_create_nonce( 'silver_assist_security_ajax' );
+		$_POST['silver_assist_login_attempts'] = '9';
+
+		$response = $this->call_ajax_handler( $this->handler, 'auto_save' );
+
+		$this->assertFalse( $response['success'] ?? true );
+		$this->assertSame( 5, (int) \get_option( 'silver_assist_login_attempts' ) );
+	}
+
+	/**
+	 * Auto-save needs a valid nonce
+	 */
+	public function test_auto_save_fails_without_nonce(): void {
+		\update_option( 'silver_assist_login_attempts', 5 );
+		\wp_set_current_user( $this->admin_user_id );
+		$_POST['silver_assist_login_attempts'] = '9';
+
+		$response = $this->call_ajax_handler( $this->handler, 'auto_save' );
+
+		$this->assertFalse( $response['success'] ?? true );
+		$this->assertSame( 5, (int) \get_option( 'silver_assist_login_attempts' ) );
 	}
 
 	/**

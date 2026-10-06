@@ -429,21 +429,28 @@
                 const { success, data = {} } = response || {};
 
                 if (success) {
-                    // Normal save indication using destructured timing
+                    // The server reports what it really saved: 0 means nothing was written.
+                    const nothingSaved = data.saved_count === 0;
+                    const text = nothingSaved
+                        ? (data.message || strings.nothingToSave || "Nothing to save")
+                        : (data.message || strings.saved || "Saved!");
+
                     $(".saving-indicator")
-                        .html(strings.saved || "Saved!")
-                        .delay(SUCCESS_DISPLAY)
+                        .text(text)
+                        .delay(nothingSaved ? LONG_ERROR_DISPLAY : SUCCESS_DISPLAY)
                         .fadeOut();
 
                     // Update dashboard to reflect changes immediately
-                    setTimeout(() => {
-                        loadSecurityStatus();
-                        loadLoginStats();
-                    }, DATABASE_UPDATE_DELAY);
+                    if (!nothingSaved) {
+                        setTimeout(() => {
+                            loadSecurityStatus();
+                            loadLoginStats();
+                        }, DATABASE_UPDATE_DELAY);
+                    }
                 } else {
-                    // Show error message using destructured timing
+                    // PHP sends the message as data.error (wp_send_json_error), older paths as data.message
                     $(".saving-indicator")
-                        .html(data.message || (strings.saveFailed || "Save failed"))
+                        .text(data.error || data.message || (strings.saveFailed || "Save failed"))
                         .addClass("error")
                         .delay(LONG_ERROR_DISPLAY)
                         .fadeOut();

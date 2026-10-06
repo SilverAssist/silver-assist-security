@@ -76,14 +76,16 @@ class IPBlacklistSettingsTest extends WP_UnitTestCase {
 	/**
 	 * Submit the settings form the way the admin does
 	 *
-	 * @param array $fields Form fields.
+	 * @param array  $fields  Form fields.
+	 * @param string $section Section of the form the fields belong to.
 	 * @return void
 	 */
-	private function submit( array $fields ): void {
+	private function submit( array $fields, string $section = 'ip' ): void {
 		$_POST = array_merge(
 			$fields,
 			array(
 				'save_silver_assist_security' => '1',
+				'settings_section'            => $section,
 				'_wpnonce'                    => \wp_create_nonce( 'silver_assist_security_settings' ),
 			)
 		);
@@ -159,7 +161,12 @@ class IPBlacklistSettingsTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_saved_threshold_is_the_one_the_blacklist_uses(): void {
-		$this->submit( array( 'silver_assist_ip_blacklist_threshold' => '3' ) );
+		$this->submit(
+			array(
+				'silver_assist_ip_blacklist_enabled'   => '1',
+				'silver_assist_ip_blacklist_threshold' => '3',
+			)
+		);
 
 		$this->assertSame( 3, (int) \get_option( 'silver_assist_ip_blacklist_threshold' ) );
 
@@ -181,7 +188,7 @@ class IPBlacklistSettingsTest extends WP_UnitTestCase {
 	public function test_saving_settings_does_not_touch_options_without_a_field(): void {
 		\update_option( 'silver_assist_cf7_honeypot_enabled', 1 );
 
-		$this->submit( array( 'silver_assist_login_attempts' => '5' ) );
+		$this->submit( array( 'silver_assist_login_attempts' => '5' ), 'login' );
 
 		$this->assertSame( 1, (int) \get_option( 'silver_assist_cf7_honeypot_enabled' ), 'Saving the settings form must not turn the CF7 honeypot off.' );
 		$this->assertFalse( \get_option( 'silver_assist_cf7_timing_protection' ), 'Options nothing reads are no longer written.' );
@@ -197,9 +204,28 @@ class IPBlacklistSettingsTest extends WP_UnitTestCase {
 	public function test_saving_another_section_keeps_the_ip_toggle(): void {
 		\update_option( 'silver_assist_ip_blacklist_enabled', 1 );
 
-		$this->submit( array( 'silver_assist_login_attempts' => '5' ) );
+		$this->submit( array( 'silver_assist_login_attempts' => '5' ), 'login' );
 
 		$this->assertSame( 1, (int) \get_option( 'silver_assist_ip_blacklist_enabled' ) );
+	}
+
+	/**
+	 * Saving the IP form with the toggle unchecked switches it off, and with it checked on
+	 *
+	 * An unchecked box is not part of a form post, so for a section save an absent toggle means off.
+	 *
+	 * @return void
+	 */
+	public function test_ip_form_save_follows_the_checkbox(): void {
+		\update_option( 'silver_assist_ip_blacklist_enabled', 1 );
+
+		$this->submit( array( 'silver_assist_ip_blacklist_threshold' => '6' ) );
+		$this->assertSame( 0, (int) \get_option( 'silver_assist_ip_blacklist_enabled' ) );
+		$this->assertSame( 6, (int) \get_option( 'silver_assist_ip_blacklist_threshold' ) );
+
+		$this->submit( array( 'silver_assist_ip_blacklist_enabled' => '1' ) );
+		$this->assertSame( 1, (int) \get_option( 'silver_assist_ip_blacklist_enabled' ) );
+		$this->assertSame( 6, (int) \get_option( 'silver_assist_ip_blacklist_threshold' ), 'An option that is not submitted keeps its value.' );
 	}
 
 	/**

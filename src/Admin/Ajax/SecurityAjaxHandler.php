@@ -15,6 +15,7 @@ use SilverAssist\Security\Core\PathValidator;
 use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\Admin\Data\SecurityDataProvider;
 use SilverAssist\Security\Admin\Data\StatisticsProvider;
+use SilverAssist\Security\Admin\Settings\SettingsSaver;
 use SilverAssist\Security\Security\IPBlacklist;
 
 /**
@@ -190,6 +191,10 @@ class SecurityAjaxHandler {
 	/**
 	 * AJAX handler for auto-save settings
 	 *
+	 * Delegates to SettingsSaver in auto-save mode and reports what it did: `saved_count`, `saved`,
+	 * `adjusted`, `errors` and `ignored`. A request that saves nothing still succeeds, with a message
+	 * that says nothing was saved.
+	 *
 	 * @since 1.1.15
 	 * @return void
 	 */
@@ -203,101 +208,46 @@ class SecurityAjaxHandler {
 		}
 
 		try {
-			// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified via SecurityHelper::validate_ajax_request() above.
-			$saved_settings = array();
+			// Only the plugin's own option keys go to the saver; the request also carries the action and nonce.
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce and capability verified above; SettingsSaver unslashes, sanitizes and clamps every value.
+			$input = array_filter( $_POST, static fn( $key ): bool => 0 === strpos( (string) $key, 'silver_assist_' ), ARRAY_FILTER_USE_KEY );
 
-			// Auto-save login security settings.
-			if ( isset( $_POST['silver_assist_login_attempts'] ) ) {
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
-				$login_attempts = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_login_attempts'] ) ) );
-				$login_attempts = \max( 1, \min( 20, $login_attempts ) );
-				\update_option( 'silver_assist_login_attempts', $login_attempts );
-				$saved_settings['login_attempts'] = $login_attempts;
-			}
-
-			if ( isset( $_POST['silver_assist_lockout_duration'] ) ) {
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
-				$lockout_duration = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_lockout_duration'] ) ) );
-				$lockout_duration = \max( 60, \min( 3600, $lockout_duration ) );
-				\update_option( 'silver_assist_lockout_duration', $lockout_duration );
-				$saved_settings['lockout_duration'] = $lockout_duration;
-			}
-
-			if ( isset( $_POST['silver_assist_session_timeout'] ) ) {
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
-				$session_timeout = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_session_timeout'] ) ) );
-				$session_timeout = \max( 5, \min( 120, $session_timeout ) );
-				\update_option( 'silver_assist_session_timeout', $session_timeout );
-				$saved_settings['session_timeout'] = $session_timeout;
-			}
-
-			// Auto-save IP blacklist settings.
-			if ( isset( $_POST['silver_assist_ip_blacklist_threshold'] ) ) {
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
-				$ip_threshold = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_threshold'] ) ) );
-				$ip_threshold = \max( 3, \min( 20, $ip_threshold ) );
-				\update_option( 'silver_assist_ip_blacklist_threshold', $ip_threshold );
-				$saved_settings['ip_blacklist_threshold'] = $ip_threshold;
-			}
-
-			// Auto-save GraphQL settings.
-			if ( isset( $_POST['silver_assist_graphql_query_depth'] ) ) {
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
-				$query_depth = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_query_depth'] ) ) );
-				$query_depth = \max( 1, \min( 20, $query_depth ) );
-				\update_option( 'silver_assist_graphql_query_depth', $query_depth );
-				$saved_settings['graphql_query_depth'] = $query_depth;
-			}
-
-			if ( isset( $_POST['silver_assist_graphql_query_complexity'] ) ) {
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
-				$query_complexity = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_graphql_query_complexity'] ) ) );
-				$query_complexity = \max( 10, \min( 1000, $query_complexity ) );
-				\update_option( 'silver_assist_graphql_query_complexity', $query_complexity );
-				$saved_settings['graphql_query_complexity'] = $query_complexity;
-			}
-
-			// Auto-save toggle settings (checkboxes).
-			$toggle_settings = array(
-				'silver_assist_password_strength_enforcement',
-				'silver_assist_bot_protection',
-				'silver_assist_graphql_headless_mode',
-				'silver_assist_admin_hide_enabled',
-				'silver_assist_ip_blacklist_enabled',
-				'silver_assist_cf7_protection_enabled',
-			);
-
-			foreach ( $toggle_settings as $setting ) {
-				if ( isset( $_POST[ $setting ] ) ) {
-					// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
-					$value = \sanitize_text_field( \wp_unslash( $_POST[ $setting ] ) ) === '1' ? 1 : 0;
-					\update_option( $setting, $value );
-					$saved_settings[ str_replace( 'silver_assist_', '', $setting ) ] = $value;
-				}
-			}
+			$result = ( new SettingsSaver() )->save( $input, '', SettingsSaver::MODE_AUTOSAVE );
 
 			SecurityHelper::log_security_event(
 				'SETTINGS_AUTO_SAVE',
-				'Security settings auto-saved successfully',
+				$result->saved_count() > 0 ? 'Security settings auto-saved' : 'Auto-save saved nothing',
 				array(
-					'saved_count' => count( $saved_settings ),
-					'settings'    => array_keys( $saved_settings ),
+					'saved_count' => $result->saved_count(),
+					'settings'    => array_keys( $result->saved ),
+					'adjusted'    => array_keys( $result->adjusted ),
+					'ignored'     => $result->ignored,
 					'user_id'     => \get_current_user_id(),
 				)
 			);
 
+			if ( 0 === $result->saved_count() ) {
+				$message = \__( 'Nothing was saved: these settings are saved with their Save button.', 'silver-assist-security' );
+			} else {
+				$message = sprintf(
+					/* translators: %d: number of settings saved */
+					\_n( '%d setting auto-saved', '%d settings auto-saved', $result->saved_count(), 'silver-assist-security' ),
+					$result->saved_count()
+				);
+				if ( ! empty( $result->adjusted ) ) {
+					$message .= ' ' . \__( '(some values were adjusted to the allowed range)', 'silver-assist-security' );
+				}
+			}
+
 			\wp_send_json_success(
-				array(
-					'message'        => sprintf(
-						/* translators: %d: number of settings saved */
-						\__( '%d settings auto-saved successfully', 'silver-assist-security' ),
-						count( $saved_settings )
-					),
-					'saved_settings' => $saved_settings,
-					'timestamp'      => \current_time( 'mysql' ),
+				array_merge(
+					$result->to_array(),
+					array(
+						'message'   => $message,
+						'timestamp' => \current_time( 'mysql' ),
+					)
 				)
 			);
-			// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		} catch ( \Exception $e ) {
 			SecurityHelper::log_security_event(
