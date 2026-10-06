@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Behavior-test (TDD) policy (#134) in the README and `.github/copilot-instructions.md`, with a short guide to adding an integration and an E2E behavior test, and a pull request template (`.github/pull_request_template.md`) whose checklist asks that tests assert user-visible behavior and that a bug fix test fails before the fix.
 - Tests: `OEmbedSanitizationTest` (the core sanitizer stays registered, hostile provider HTML is stripped end to end, a provider iframe is kept, and the editor's `/oembed/1.0/proxy` still serves the embed) and an E2E check that the editor Embed block can be inserted and reaches the oEmbed proxy.
 - Tests: `ClientIpResolutionTest` (forged headers, rotation, private and configured proxies, IPv6, parity across components) and a login-lockout test that rotates forged headers.
 - General hardening and forms audit (#133): `GeneralHardeningBehaviorTest` (headers per request context, HSTS, cookies, `wp_head`, XML-RPC, login messages, admin bar) and `FormSubmissionBehaviorTest` (real CF7 submit passes, bot, flood and injection are blocked, realistic enquiries are not).

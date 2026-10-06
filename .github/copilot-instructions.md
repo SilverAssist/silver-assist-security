@@ -20,6 +20,7 @@ Never create standalone `.md` files (`docs/`, `CONTRIBUTING.md`, `API.md`, etc.)
 - `.github/skills/<topic>/SKILL.md` — domain knowledge for Copilot
 - `.github/prompts/<task>.prompt.md` — reusable prompt templates
 - `.github/instructions/<scope>.instructions.md` — scoped coding context
+- `.github/pull_request_template.md` — GitHub pull request checklist (configuration, not documentation)
 
 ## Security Modules
 
@@ -147,7 +148,9 @@ All options use `silver_assist_` prefix (e.g., `silver_assist_login_attempts`, `
 
 ## TDD Requirement
 
-This is a security plugin — **all features must be developed test-first** (Red → Green → Refactor). Security classes require 100% test coverage. Tests use WordPress Test Suite (`WP_UnitTestCase`) with real database. Plugin-specific test layout:
+This is a security plugin — **all features must be developed test-first** (Red → Green → Refactor). Security classes require 100% test coverage.
+
+**Behavior-test policy** (see README "Behavior-Test Policy (TDD)"): a bug fix starts with a test that reproduces it and fails; a new hardening feature is tested twice, that the protection works and that the core features it could break still work (block editor, REST, assets, login, embeds), including ones with no obvious link. Prefer real WordPress flows over mocks and assert user-visible behavior, never only that a hook is registered. Prove every new test fails without the fix. Examples to copy: `tests/Integration/EditorCompatibilityTest.php` and `OEmbedSanitizationTest.php` (integration), `tests/e2e/editor.spec.ts` (E2E). Pull requests use `.github/pull_request_template.md`. Tests use WordPress Test Suite (`WP_UnitTestCase`) with real database. Plugin-specific test layout:
 
 - `tests/Unit/` — DefaultConfigTest, SecurityHelperTest, GraphQLConfigManagerTest, LoginSecurityTest
 - `tests/Security/` — SecurityTest (overall security validation)
