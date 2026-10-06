@@ -83,7 +83,6 @@ class SettingsHandler {
 			$this->save_graphql_settings();
 			$this->save_contact_form7_settings();
 			$this->save_ip_management_settings();
-			$this->save_advanced_protection_settings();
 		}
 
 		$this->add_success_notice();
@@ -274,8 +273,10 @@ class SettingsHandler {
 		}
 
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
-		// CF7 Protection enable/disable.
-		\update_option( 'silver_assist_cf7_protection_enabled', (int) ( isset( $_POST['silver_assist_cf7_protection_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_protection_enabled'] ) ) : 0 ) );
+		// CF7 Protection enable/disable. Only written when submitted (see the IP blacklist toggle).
+		if ( isset( $_POST['silver_assist_cf7_protection_enabled'] ) ) {
+			\update_option( 'silver_assist_cf7_protection_enabled', (int) \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_protection_enabled'] ) ) );
+		}
 
 		// CF7 Rate limiting.
 		if ( isset( $_POST['silver_assist_cf7_rate_limit'] ) ) {
@@ -300,14 +301,17 @@ class SettingsHandler {
 	 */
 	private function save_ip_management_settings(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
-		// IP Blacklist enable/disable.
-		\update_option( 'silver_assist_ip_blacklist_enabled', (int) ( isset( $_POST['silver_assist_ip_blacklist_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_enabled'] ) ) : 0 ) );
+		// IP Blacklist enable/disable. Only written when submitted: an unchecked box is saved by the
+		// auto-save handler, and a save that does not carry the field must not switch it off.
+		if ( isset( $_POST['silver_assist_ip_blacklist_enabled'] ) ) {
+			\update_option( 'silver_assist_ip_blacklist_enabled', (int) \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_enabled'] ) ) );
+		}
 
-		// IP violation threshold.
-		if ( isset( $_POST['silver_assist_ip_violation_threshold'] ) ) {
-			$ip_violation_threshold = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_violation_threshold'] ) ) );
-			$ip_violation_threshold = \max( 3, \min( 20, $ip_violation_threshold ) );
-			\update_option( 'silver_assist_ip_violation_threshold', $ip_violation_threshold );
+		// IP violation threshold (the option IPBlacklist reads).
+		if ( isset( $_POST['silver_assist_ip_blacklist_threshold'] ) ) {
+			$ip_blacklist_threshold = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_threshold'] ) ) );
+			$ip_blacklist_threshold = \max( 3, \min( 20, $ip_blacklist_threshold ) );
+			\update_option( 'silver_assist_ip_blacklist_threshold', $ip_blacklist_threshold );
 		}
 
 		// IP blacklist duration.
@@ -316,22 +320,6 @@ class SettingsHandler {
 			$ip_blacklist_duration = \max( 3600, \min( 604800, $ip_blacklist_duration ) );
 			\update_option( 'silver_assist_ip_blacklist_duration', $ip_blacklist_duration );
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-	}
-
-	/**
-	 * Save advanced protection settings
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	private function save_advanced_protection_settings(): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability already verified in the public save_security_settings() entry point that is this method's only caller.
-		// Advanced CF7 protection features.
-		\update_option( 'silver_assist_cf7_honeypot_enabled', (int) ( isset( $_POST['silver_assist_cf7_honeypot_enabled'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_honeypot_enabled'] ) ) : 0 ) );
-		\update_option( 'silver_assist_cf7_timing_protection', (int) ( isset( $_POST['silver_assist_cf7_timing_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_timing_protection'] ) ) : 0 ) );
-		\update_option( 'silver_assist_cf7_obsolete_browser_blocking', (int) ( isset( $_POST['silver_assist_cf7_obsolete_browser_blocking'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_obsolete_browser_blocking'] ) ) : 0 ) );
-		\update_option( 'silver_assist_cf7_sql_injection_protection', (int) ( isset( $_POST['silver_assist_cf7_sql_injection_protection'] ) ? \sanitize_text_field( \wp_unslash( $_POST['silver_assist_cf7_sql_injection_protection'] ) ) : 0 ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 

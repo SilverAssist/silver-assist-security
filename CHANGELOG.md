@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Tests (#147): `IPBlacklistSettingsTest` (the toggle and threshold change the blacklist's behavior, manual blocks survive, the dashboard reports the real default, a save does not touch options without a field).
 - The E2E workflow builds the minified assets (`npm run build`) before starting wp-env: the plugin loads `assets/**/*.min.*` unless `SCRIPT_DEBUG` is on, those files are git-ignored, and without them the admin screens loaded no CSS or JavaScript in CI (#156).
 - Tests (#156): `SettingsTabStructureTest` (every settings card is inside one tab panel, the branding card is inside the Login Protection panel) and an E2E spec that clicks through every tab of the settings screen (`tests/e2e/admin-settings.spec.ts`).
 - Updater tests (#145): the metadata must equal the plugin header, the configured token constant is `SILVER_GITHUB_TOKEN`, and a configured token is sent to `api.github.com` (private-repo updates). Two older tests that compared a literal with itself were replaced by these.
@@ -39,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The "IP Blacklist" toggle in IP Management now works (#147). Nothing read it: automatic blacklisting was always on while the dashboard showed it as Disabled. Automatic blacklisting is on by default and stops when the toggle is off; manual blocks still apply.
+- The violation threshold saved by the settings handler is the one the blacklist uses (`silver_assist_ip_blacklist_threshold`); it was saved as `silver_assist_ip_violation_threshold`, which nothing read.
+- Saving settings no longer writes options its form does not carry (#147): a save without the field left the CF7 honeypot, CF7 protection and the IP Blacklist toggle switched off. The CF7 timing, obsolete browser and SQL injection options were saved but never read (those checks always run) and are no longer written.
 - The "Login Page Branding" card is shown only on the Login Protection tab (#156). It was rendered after the closing tag of that tab's panel, so the tab script (which toggles only `.silver-tab-content`) never hid it and it appeared under every tab.
 - Updater metadata no longer contradicts the plugin (#145): `Updater` hard-coded `requires_php` 8.3 (and `requires_wordpress` 6.5) while the plugin runs on PHP 8.2, so WordPress refused the update on PHP 8.2 hosts and the plugin-information modal showed 8.3. Both values are now read from the plugin header (`Requires PHP`, `Requires at least`). `Tested up to` is now 7.1 (the suite runs on 7.1.2 and CI runs the latest WordPress).
 - **`__typename` was rejected in production (#132)**: the introspection check matched `__typename`, which Apollo Client and urql add to every query, so headless front ends would have broken once the environment check above applied. Only `__schema` and `__type` field selections count as introspection now, found by parsing the query, so the same text in a string argument or comment is allowed.

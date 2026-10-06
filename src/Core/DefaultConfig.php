@@ -51,6 +51,7 @@ class DefaultConfig {
 			'silver_assist_sql_injection_detection'        => 1, // Detect SQL injection attempts.
 
 			// IP Blacklist Settings.
+			'silver_assist_ip_blacklist_enabled'           => 1, // Automatic blacklisting of repeat offenders.
 			'silver_assist_ip_blacklist_threshold'         => 5, // Violations before auto-blacklist.
 			'silver_assist_ip_blacklist_duration'          => 86400, // 24 hours blacklist duration
 			'silver_assist_ip_violation_window'            => 3600, // 1 hour violation tracking window

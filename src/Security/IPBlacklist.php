@@ -128,6 +128,11 @@ class IPBlacklist {
 	 * @return void
 	 */
 	public function record_violation( string $ip, string $type ): void {
+		// Automatic blacklisting can be switched off in the admin; manual blocks still apply.
+		if ( ! (bool) DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' ) ) {
+			return;
+		}
+
 		$violations_key    = 'ip_violations_' . md5( $ip );
 		$stored_violations = \get_transient( $violations_key );
 		$violations        = ( false !== $stored_violations && is_array( $stored_violations ) ) ? $stored_violations : array();
