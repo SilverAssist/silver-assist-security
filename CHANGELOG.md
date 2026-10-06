@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Tests (#156): `SettingsTabStructureTest` (every settings card is inside one tab panel, the branding card is inside the Login Protection panel) and an E2E spec that clicks through every tab of the settings screen (`tests/e2e/admin-settings.spec.ts`).
 - Updater tests (#145): the metadata must equal the plugin header, the configured token constant is `SILVER_GITHUB_TOKEN`, and a configured token is sent to `api.github.com` (private-repo updates). Two older tests that compared a literal with itself were replaced by these.
 - Behavior-test (TDD) policy (#134) in the README and `.github/copilot-instructions.md`, with a short guide to adding an integration and an E2E behavior test, and a pull request template (`.github/pull_request_template.md`) whose checklist asks that tests assert user-visible behavior and that a bug fix test fails before the fix.
 - Behavior audit matrix (#130): the "Behavior Audit Matrix" section of `.github/copilot-instructions.md` lists every hook, removal, cron event, AJAX action, constant and extension filter the plugin registers (81 hook names under `src/` and the bootstrap), with the core behavior touched, the contexts affected, the risk and the test that covers it, plus a gaps list with a proposed test for each and four suspected bugs found while auditing (not fixed here). README points to it from Development & Testing.
@@ -37,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The "Login Page Branding" card is shown only on the Login Protection tab (#156). It was rendered after the closing tag of that tab's panel, so the tab script (which toggles only `.silver-tab-content`) never hid it and it appeared under every tab.
 - Updater metadata no longer contradicts the plugin (#145): `Updater` hard-coded `requires_php` 8.3 (and `requires_wordpress` 6.5) while the plugin runs on PHP 8.2, so WordPress refused the update on PHP 8.2 hosts and the plugin-information modal showed 8.3. Both values are now read from the plugin header (`Requires PHP`, `Requires at least`). `Tested up to` is now 7.1 (the suite runs on 7.1.2 and CI runs the latest WordPress).
 - **`__typename` was rejected in production (#132)**: the introspection check matched `__typename`, which Apollo Client and urql add to every query, so headless front ends would have broken once the environment check above applied. Only `__schema` and `__type` field selections count as introspection now, found by parsing the query, so the same text in a string argument or comment is allowed.
 - Test suite: a full `vendor/bin/phpunit` run no longer stops early (it reported about 178 of 511 tests with exit code 0). `LoginSecurityTest::test_session_timeout_in_admin_area` now intercepts the redirect before the plugin's `exit`, and `AdminHideSecurityTest` uses the `wp_doing_ajax` filter instead of defining `DOING_AJAX`, which leaked into every later test.
