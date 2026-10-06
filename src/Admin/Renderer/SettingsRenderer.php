@@ -79,7 +79,7 @@ class SettingsRenderer {
 				</div>
 				<div class="card-content">
 					<form method="post" action="" id="security-settings-form">
-						<?php \wp_nonce_field( 'silver_assist_security_settings', 'silver_assist_security_nonce' ); ?>
+						<?php $this->render_form_fields( 'login' ); ?>
 
 						<table class="form-table">
 							<tbody>
@@ -135,7 +135,7 @@ class SettingsRenderer {
 						<p class="submit">
 							<input type="submit"
 								name="submit"
-								id="submit"
+								id="login-settings-submit"
 								class="button button-primary"
 								value="<?php \esc_attr_e( 'Save Login Settings', 'silver-assist-security' ); ?>">
 						</p>
@@ -154,7 +154,7 @@ class SettingsRenderer {
 					</p>
 
 					<form method="post" action="" id="admin-hide-form">
-						<?php \wp_nonce_field( 'silver_assist_security_settings', 'silver_assist_security_nonce' ); ?>
+						<?php $this->render_form_fields( 'admin_hide' ); ?>
 
 						<table class="form-table">
 							<tbody>
@@ -242,9 +242,7 @@ class SettingsRenderer {
 					</p>
 
 					<form method="post" action="" id="login-branding-form">
-						<?php \wp_nonce_field( 'silver_assist_security_settings' ); ?>
-						<input type="hidden" name="save_silver_assist_security" value="1">
-						<input type="hidden" name="settings_section" value="login_branding">
+						<?php $this->render_form_fields( 'login_branding' ); ?>
 
 						<table class="form-table">
 							<tbody>
@@ -338,9 +336,7 @@ class SettingsRenderer {
 				</div>
 				<div class="card-content">
 					<form method="post" action="" id="rest-api-security-form">
-						<?php \wp_nonce_field( 'silver_assist_security_settings' ); ?>
-						<input type="hidden" name="save_silver_assist_security" value="1">
-						<input type="hidden" name="settings_section" value="rest_api">
+						<?php $this->render_form_fields( 'rest_api' ); ?>
 
 						<table class="form-table">
 							<tbody>
@@ -421,7 +417,7 @@ class SettingsRenderer {
 						</div>
 
 						<form method="post" action="" id="graphql-settings-form">
-							<?php \wp_nonce_field( 'silver_assist_security_settings', 'silver_assist_security_nonce' ); ?>
+							<?php $this->render_form_fields( 'graphql' ); ?>
 
 							<table class="form-table">
 								<tbody>
@@ -449,7 +445,7 @@ class SettingsRenderer {
 							<p class="submit">
 								<input type="submit"
 									name="submit"
-									id="submit"
+									id="graphql-settings-submit"
 									class="button button-primary"
 									value="<?php \esc_attr_e( 'Save GraphQL Settings', 'silver-assist-security' ); ?>">
 							</p>
@@ -505,9 +501,7 @@ class SettingsRenderer {
 						</div>
 
 						<form method="post" action="" id="graphql-auth-form">
-							<?php \wp_nonce_field( 'silver_assist_security_settings' ); ?>
-							<input type="hidden" name="save_silver_assist_security" value="1" />
-							<input type="hidden" name="settings_section" value="graphql_auth" />
+							<?php $this->render_form_fields( 'graphql_auth' ); ?>
 
 							<h4><?php \esc_html_e( 'API Key Management', 'silver-assist-security' ); ?></h4>
 
@@ -649,7 +643,7 @@ class SettingsRenderer {
 				</div>
 				<div class="card-content">
 					<form method="post" action="" id="cf7-settings-form">
-						<?php \wp_nonce_field( 'silver_assist_security_settings', 'silver_assist_security_nonce' ); ?>
+						<?php $this->render_form_fields( 'cf7' ); ?>
 
 						<table class="form-table">
 							<tbody>
@@ -677,7 +671,7 @@ class SettingsRenderer {
 						<p class="submit">
 							<input type="submit"
 								name="submit"
-								id="submit"
+								id="cf7-settings-submit"
 								class="button button-primary"
 								value="<?php \esc_attr_e( 'Save Form Settings', 'silver-assist-security' ); ?>">
 						</p>
@@ -719,7 +713,7 @@ class SettingsRenderer {
 				</div>
 				<div class="card-content">
 					<form method="post" action="" id="ip-management-form">
-						<?php \wp_nonce_field( 'silver_assist_security_settings', 'silver_assist_security_nonce' ); ?>
+						<?php $this->render_form_fields( 'ip' ); ?>
 
 						<table class="form-table">
 							<tbody>
@@ -747,7 +741,7 @@ class SettingsRenderer {
 						<p class="submit">
 							<input type="submit"
 								name="submit"
-								id="submit"
+								id="ip-management-submit"
 								class="button button-primary"
 								value="<?php \esc_attr_e( 'Save IP Settings', 'silver-assist-security' ); ?>">
 						</p>
@@ -811,6 +805,26 @@ class SettingsRenderer {
 				</div>
 			</div>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Print the hidden fields every settings form needs
+	 *
+	 * The gate field and the nonce the handler verifies (`_wpnonce`, with an id unique per form), plus the section the form saves.
+	 * Every form maps to exactly one section of SettingsRegistry.
+	 *
+	 * @since 1.5.4
+	 * @param string $section Section slug from SettingsRegistry.
+	 * @return void
+	 */
+	private function render_form_fields( string $section ): void {
+		// wp_nonce_field() uses the field name as the element id, which repeats on a page with several forms.
+		$nonce_field = \wp_nonce_field( 'silver_assist_security_settings', '_wpnonce', false, false );
+		echo \str_replace( 'id="_wpnonce"', 'id="' . \esc_attr( $section ) . '-settings-nonce"', $nonce_field ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup built by wp_nonce_field(); only the id attribute is replaced, with an escaped slug.
+		?>
+		<input type="hidden" name="save_silver_assist_security" value="1">
+		<input type="hidden" name="settings_section" value="<?php echo \esc_attr( $section ); ?>">
 		<?php
 	}
 

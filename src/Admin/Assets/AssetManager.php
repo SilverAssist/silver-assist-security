@@ -201,6 +201,7 @@ class AssetManager {
 			// Auto-save strings.
 			'saving'                  => \__( 'Saving...', 'silver-assist-security' ),
 			'saved'                   => \__( 'Saved!', 'silver-assist-security' ),
+			'nothingToSave'           => \__( 'Nothing to save', 'silver-assist-security' ),
 			'saveFailed'              => \__( 'Save failed', 'silver-assist-security' ),
 			// AJAX error strings.
 			'updateCheckFailed'       => \__( 'Failed to check for Silver Assist updates', 'silver-assist-security' ),

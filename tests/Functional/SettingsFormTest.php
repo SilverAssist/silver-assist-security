@@ -41,14 +41,17 @@ class SettingsFormTest extends WP_UnitTestCase
 
     /**
      * Helper to simulate form submission via SettingsHandler
-     * Sets the required POST trigger key and nonce
+     * Sets the POST trigger key, the section and the nonce, as the rendered form does
+     * (Integration/SettingsFormsTest posts the forms' own rendered fields)
      *
-     * @param array $fields Key-value pairs of form fields
+     * @param array  $fields  Key-value pairs of form fields
+     * @param string $section Settings section the form belongs to
      */
-    private function submit_settings(array $fields): void
+    private function submit_settings(array $fields, string $section = 'login'): void
     {
         $_POST = array_merge($fields, [
             'save_silver_assist_security' => '1',
+            'settings_section' => $section,
             '_wpnonce' => \wp_create_nonce('silver_assist_security_settings'),
         ]);
         $this->settings_handler->save_security_settings();
@@ -130,6 +133,23 @@ class SettingsFormTest extends WP_UnitTestCase
         // Verify toggles were disabled (0)
         $this->assertEquals(0, \get_option('silver_assist_password_strength_enforcement'), 'Password enforcement should be disabled when unchecked');
         $this->assertEquals(0, \get_option('silver_assist_bot_protection'), 'Bot protection should be disabled when unchecked');
+    }
+
+    /**
+     * A save without a section writes nothing (the old "save everything" branch is gone)
+     */
+    public function test_submission_without_section_writes_nothing(): void
+    {
+        \update_option('silver_assist_login_attempts', 5);
+
+        $_POST = [
+            'save_silver_assist_security' => '1',
+            '_wpnonce' => \wp_create_nonce('silver_assist_security_settings'),
+            'silver_assist_login_attempts' => '15',
+        ];
+        $this->settings_handler->save_security_settings();
+
+        $this->assertEquals(5, \get_option('silver_assist_login_attempts'), 'No section, no write');
     }
 
     /**

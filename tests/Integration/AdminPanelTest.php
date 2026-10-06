@@ -412,62 +412,110 @@ class AdminPanelTest extends WP_UnitTestCase
     }
 
     /**
+     * Post a settings form the way the browser does: gate field, section and the _wpnonce field
+     *
+     * @param string $section Section of the form
+     * @param array  $fields  Form fields
+     */
+    private function post_settings_form(string $section, array $fields): void
+    {
+        $_POST = array_merge($fields, [
+            'save_silver_assist_security' => '1',
+            'settings_section' => $section,
+            '_wpnonce' => \wp_create_nonce('silver_assist_security_settings'),
+        ]);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+
+        $this->admin_panel->save_security_settings();
+    }
+
+    /**
      * Test security settings save with valid data
      */
     public function test_security_settings_save_with_valid_data(): void
     {
-        // Login as administrator
         \wp_set_current_user($this->admin_user_id);
 
-        // Set up POST data with valid values
-        $_POST['silver_assist_security_nonce'] = \wp_create_nonce('silver_assist_security_settings');
-        $_POST['silver_assist_login_attempts'] = '10';
-        $_POST['silver_assist_lockout_duration'] = '600';
-        $_POST['silver_assist_session_timeout'] = '45';
-        $_POST['silver_assist_password_strength_enforcement'] = '1';
-        $_POST['silver_assist_bot_protection'] = '1';
-        $_POST['silver_assist_graphql_query_depth'] = '10';
-        $_POST['silver_assist_graphql_query_complexity'] = '150';
-        $_POST['silver_assist_graphql_query_timeout'] = '8';
-        $_POST['silver_assist_graphql_headless_mode'] = '1';
-        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->post_settings_form('login', [
+            'silver_assist_login_attempts' => '10',
+            'silver_assist_lockout_duration' => '600',
+            'silver_assist_session_timeout' => '45',
+            'silver_assist_password_strength_enforcement' => '1',
+            // Bot protection is not posted: an unchecked box.
+        ]);
 
-        // Call save method
-        $this->admin_panel->save_security_settings();
-
-        // Verify options were saved (may use DefaultConfig fallback in test environment)
-        // The important part is the method executed without errors
-        $login_attempts = (int) \get_option('silver_assist_login_attempts', 5);
-        $this->assertGreaterThanOrEqual(1, $login_attempts, 'Login attempts should be at least 1');
-        $this->assertLessThanOrEqual(20, $login_attempts, 'Login attempts should be at most 20');
+        $this->assertSame(10, (int) \get_option('silver_assist_login_attempts'));
+        $this->assertSame(600, (int) \get_option('silver_assist_lockout_duration'));
+        $this->assertSame(45, (int) \get_option('silver_assist_session_timeout'));
+        $this->assertSame(1, (int) \get_option('silver_assist_password_strength_enforcement'));
+        $this->assertSame(0, (int) \get_option('silver_assist_bot_protection'), 'An unchecked toggle is saved as off');
     }
 
     /**
-     * Test security settings validation rejects invalid values
+     * Test the GraphQL form saves its fields
+     */
+    public function test_graphql_settings_save_with_valid_data(): void
+    {
+        \wp_set_current_user($this->admin_user_id);
+
+        $this->post_settings_form('graphql', [
+            'silver_assist_graphql_query_depth' => '10',
+            'silver_assist_graphql_query_complexity' => '150',
+            'silver_assist_graphql_query_timeout' => '8',
+            'silver_assist_graphql_headless_mode' => '1',
+        ]);
+
+        $this->assertSame(10, (int) \get_option('silver_assist_graphql_query_depth'));
+        $this->assertSame(150, (int) \get_option('silver_assist_graphql_query_complexity'));
+        $this->assertSame(8, (int) \get_option('silver_assist_graphql_query_timeout'));
+        $this->assertSame(1, (int) \get_option('silver_assist_graphql_headless_mode'));
+    }
+
+    /**
+     * Test security settings validation clamps invalid values
      */
     public function test_security_settings_validation_rejects_invalid(): void
     {
-        // Login as administrator
         \wp_set_current_user($this->admin_user_id);
 
-        // Store original values
-        $original_attempts = \get_option('silver_assist_login_attempts');
+        $this->post_settings_form('login', [
+            'silver_assist_login_attempts' => '999', // Out of range (max 20)
+            'silver_assist_lockout_duration' => '10', // Too short (min 60)
+        ]);
 
-        // Set up POST data with invalid values
-        $_POST['silver_assist_security_nonce'] = \wp_create_nonce('silver_assist_security_settings');
-        $_POST['silver_assist_login_attempts'] = '999'; // Out of range (max 20)
-        $_POST['silver_assist_lockout_duration'] = '10'; // Too short (min 60)
-        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->assertSame(20, (int) \get_option('silver_assist_login_attempts'), 'Login attempts should be capped at 20');
+        $this->assertSame(60, (int) \get_option('silver_assist_lockout_duration'), 'Lockout duration should be raised to 60');
+    }
 
-        // Trigger save
+    /**
+     * Test a post that carries no gate field, or the old nonce field name, saves nothing
+     */
+    public function test_settings_post_without_gate_field_saves_nothing(): void
+    {
+        \wp_set_current_user($this->admin_user_id);
+        \update_option('silver_assist_login_attempts', 5);
+
+        $_POST = [
+            'silver_assist_security_nonce' => \wp_create_nonce('silver_assist_security_settings'),
+            'settings_section' => 'login',
+            'silver_assist_login_attempts' => '10',
+        ];
         $this->admin_panel->save_security_settings();
 
-        // Verify invalid values were corrected or rejected
-        $saved_attempts = \get_option('silver_assist_login_attempts');
-        $this->assertLessThanOrEqual(20, (int) $saved_attempts, 'Login attempts should be capped at 20');
+        $this->assertSame(5, (int) \get_option('silver_assist_login_attempts'));
+    }
 
-        $saved_lockout = \get_option('silver_assist_lockout_duration');
-        $this->assertGreaterThanOrEqual(60, (int) $saved_lockout, 'Lockout duration should be at least 60');
+    /**
+     * Test a subscriber cannot save settings, even with a valid nonce
+     */
+    public function test_subscriber_cannot_save_settings(): void
+    {
+        \update_option('silver_assist_login_attempts', 5);
+        \wp_set_current_user($this->subscriber_user_id);
+
+        $this->post_settings_form('login', ['silver_assist_login_attempts' => '10']);
+
+        $this->assertSame(5, (int) \get_option('silver_assist_login_attempts'));
     }
 
     /**
