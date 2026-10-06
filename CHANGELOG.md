@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Behavior-test (TDD) policy (#134) in the README and `.github/copilot-instructions.md`, with a short guide to adding an integration and an E2E behavior test, and a pull request template (`.github/pull_request_template.md`) whose checklist asks that tests assert user-visible behavior and that a bug fix test fails before the fix.
 - Tests: `OEmbedSanitizationTest` (the core sanitizer stays registered, hostile provider HTML is stripped end to end, a provider iframe is kept, and the editor's `/oembed/1.0/proxy` still serves the embed) and an E2E check that the editor Embed block can be inserted and reaches the oEmbed proxy.
 - Tests: `ClientIpResolutionTest` (forged headers, rotation, private and configured proxies, IPv6, parity across components) and a login-lockout test that rotates forged headers.
 - General hardening and forms audit (#133): `GeneralHardeningBehaviorTest` (headers per request context, HSTS, cookies, `wp_head`, XML-RPC, login messages, admin bar) and `FormSubmissionBehaviorTest` (real CF7 submit passes, bot, flood and injection are blocked, realistic enquiries are not).
@@ -53,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `EditorCompatibilityTest` now sends real REST requests as the role that uses each route and asserts the editor is not refused (it only checked that the route existed in the route table); the anonymous oEmbed check requests the route and expects `rest_no_route`. Re-adding the WEB-1222 `wp_oembed_register_route` removal makes it fail (#134).
 - Tests that asserted the old behavior (`CF-Connecting-IP` winning, first `X-Forwarded-For` value winning) now assert the new contract.
 - `scripts/run-quality-checks.sh` runs PHPUnit through the new `scripts/run-phpunit-complete.sh`, which fails when the run stops early (JUnit log missing or incomplete; for a full run, fewer tests than PHPUnit declares). It also fixes a blind spot: `run_phpunit` runs on the left of `||`, where bash disables `set -e`, so a failing test left the script at exit 0 and CI could not fail on broken tests; the status is now returned explicitly.
 - `RestAPISecurityIntegrationTest::test_graphql_endpoints_not_affected` (quarantined, wrong premise) is replaced by `RestAPIHeadlessBehaviorTest::test_graphql_requests_do_not_consume_the_rest_budget`, which sends real GraphQL requests (#132).

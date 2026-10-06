@@ -516,6 +516,22 @@ Run comprehensive quality checks matching CI/CD pipeline:
 ./scripts/run-quality-checks.sh --skip-tests
 ```
 
+### Behavior-Test Policy (TDD)
+
+The plugin changes core WordPress behavior, so a feature that only registers its hook can pass review and still break a real user. WEB-1222 is the example: three regressions reached the block editor, none was caught by the suite, and one test asserted the bug. The policy:
+
+- **Bug fix**: write the test that reproduces it, watch it fail, then fix. A test that passes without the fix proves nothing.
+- **New hardening feature**: test (a) that the protection works and (b) that the core features it could break still work, including ones with no obvious link (block editor, REST, assets, login, embeds).
+- **Real flows over mocks**: run real WordPress requests (`rest_do_request()`, WPGraphQL's `graphql()`, real login and redirects) and assert what a user or client receives, not that a hook exists. Fake only what is outside WordPress, such as an oEmbed provider (`pre_http_request`).
+- **No vacuous assertions**: a test that cannot fail is worse than no test. Prove each new test fails against the previous code.
+- Every pull request carries the checklist in `.github/pull_request_template.md`.
+
+#### How to add a behavior test
+
+1. **Integration (PHPUnit, `WP_UnitTestCase`)**: build the plugin class the way a request would, trigger the real WordPress path, and assert the result. Example: `tests/Integration/EditorCompatibilityTest.php` activates the hardening hooks, signs in as an editor, requests the REST routes the block editor calls and asserts they respond, while anonymous users still get nothing. `tests/Integration/OEmbedSanitizationTest.php` mocks only the oEmbed provider and asserts the rendered HTML.
+2. **End to end (Playwright on `@wordpress/env`)**: use it when the behavior needs a browser, such as the block editor or the login screens. Example: `tests/e2e/editor.spec.ts` opens the editor as an administrator, inserts an Embed block and asserts there are no JS errors and the oEmbed proxy route exists. Run it with `npm run test:e2e:smoke` after `npm run wp-env:start`.
+3. Run the new test against the code without your fix and confirm it fails, then run `bash scripts/run-phpunit-complete.sh` (a full run must complete) before opening the pull request.
+
 ### Testing Strategy for Security Plugin
 
 **🔒 CRITICAL**: This is a security plugin - testing requires real WordPress environment.
