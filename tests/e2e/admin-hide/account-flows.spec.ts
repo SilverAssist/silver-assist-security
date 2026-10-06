@@ -11,30 +11,30 @@ function linkTo(message: string, script: string): string {
 }
 
 /**
- * Submit a form straight to the server. The browser-side strength meter asks for a "confirm
- * weak password" tick and can disable the button; what is checked here is the server-side rule,
- * which is the one that cannot be skipped.
+ * Set a new password and submit the form to the server in one step.
+ *
+ * The browser-side strength meter asks for a "confirm weak password" tick, can disable the button
+ * and keeps rewriting the confirmation field after load; what is checked here is the server-side
+ * rule, which is the one that cannot be skipped. Doing both in one evaluate leaves the page's
+ * scripts no chance to change the fields in between.
  */
-async function submitWithoutScripts(page: Page, form: string): Promise<void> {
-  await Promise.all([
-    page.waitForLoadState("domcontentloaded"),
-    page.locator(form).evaluate((f) => HTMLFormElement.prototype.submit.call(f)),
-  ]);
-}
-
-/** Type a new password the way the screens expect: reveal the field (profile) and keep pass2 in step. */
-async function typePassword(page: Page, value: string): Promise<void> {
+async function submitNewPassword(page: Page, form: string, value: string): Promise<void> {
   const generate = page.locator(".wp-generate-pw");
   if (await generate.isVisible()) await generate.click();
-  await page.evaluate((v) => {
-    for (const id of ["pass1", "pass2"]) {
-      const field = document.querySelector<HTMLInputElement>(`#${id}`);
-      if (field) {
-        field.disabled = false;
-        field.value = v;
+
+  await Promise.all([
+    page.waitForLoadState("domcontentloaded"),
+    page.locator(form).evaluate((f, v) => {
+      for (const id of ["pass1", "pass2"]) {
+        const field = f.querySelector<HTMLInputElement>(`#${id}`);
+        if (field) {
+          field.disabled = false;
+          field.value = v;
+        }
       }
-    }
-  }, value);
+      HTMLFormElement.prototype.submit.call(f);
+    }, value),
+  ]);
 }
 
 const STRONG = "Fresh-Pass-4567!";
@@ -68,17 +68,15 @@ test.describe("Password reset by email", () => {
     await expect(reset.locator("#resetpassform")).toBeVisible();
 
     // 3. A weak password is refused, and the person is told the rules (not "Invalid login credentials").
-    await typePassword(reset, WEAK);
-    await submitWithoutScripts(reset, "#resetpassform");
+    await submitNewPassword(reset, "#resetpassform", WEAK);
     const error = reset.locator("#login_error");
     await expect(error).toBeVisible();
     await expect(error).toContainText(/at least 8 characters/i);
     await expect(error).not.toContainText(/invalid login credentials/i);
 
     // 4. A strong password goes through and works for the next login.
-    await typePassword(reset, STRONG);
-    await submitWithoutScripts(reset, "#resetpassform");
-    await expect(reset.locator(".message, #login .message")).toContainText(/password has been reset/i);
+    await submitNewPassword(reset, "#resetpassform", STRONG);
+    await expect(reset.locator("#login")).toContainText(/password has been reset/i);
     await visitorContext.close();
 
     resetLoginState();
@@ -103,13 +101,11 @@ test.describe("Profile changes", () => {
     await loginThroughHiddenPath(page, login, password);
     await page.goto("/wp-admin/profile.php");
 
-    await typePassword(page, WEAK);
-    await submitWithoutScripts(page, "#your-profile");
+    await submitNewPassword(page, "#your-profile", WEAK);
 
     await expect(page.locator("#wpbody-content")).toContainText(/at least 8 characters/i);
 
-    await typePassword(page, STRONG);
-    await submitWithoutScripts(page, "#your-profile");
+    await submitNewPassword(page, "#your-profile", STRONG);
     await expect(page.locator("#wpbody-content")).toContainText(/profile updated/i);
   });
 

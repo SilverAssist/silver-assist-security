@@ -6,10 +6,17 @@ import { execFileSync } from "node:child_process";
  * browser cannot see (the last captured email, transients).
  */
 export function wp(...args: string[]): string {
-  return execFileSync("npx", ["wp-env", "run", "cli", "wp", ...args], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  }).trim();
+  // `wp-env run` occasionally fails to attach to the container right after another call; one retry is enough.
+  for (let tries = 1; ; tries++) {
+    try {
+      return execFileSync("npx", ["wp-env", "run", "cli", "wp", ...args], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      }).trim();
+    } catch (error) {
+      if (tries >= 2) throw error;
+    }
+  }
 }
 
 /** Delete the plugin's per-IP login state (failed attempts, lockout, login page counter). */
