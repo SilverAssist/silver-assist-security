@@ -532,6 +532,12 @@ The plugin changes core WordPress behavior, so a feature that only registers its
 2. **End to end (Playwright on `@wordpress/env`)**: use it when the behavior needs a browser, such as the block editor or the login screens. Example: `tests/e2e/editor.spec.ts` opens the editor as an administrator, inserts an Embed block and asserts there are no JS errors and the oEmbed proxy route exists. Run it with `npm run test:e2e:smoke` after `npm run wp-env:start`.
 3. Run the new test against the code without your fix and confirm it fails, then run `bash scripts/run-phpunit-complete.sh` (a full run must complete) before opening the pull request.
 
+### Behavior Audit
+
+Every hook the plugin registers or removes is listed, with the core behavior it changes, who is affected, its risk
+and the test that proves it (or a gap), in the "Behavior Audit Matrix" section of `.github/copilot-instructions.md`.
+Update the matching row in the same PR whenever a hook in `src/` is added, removed or re-prioritised.
+
 ### Testing Strategy for Security Plugin
 
 **🔒 CRITICAL**: This is a security plugin - testing requires real WordPress environment.
