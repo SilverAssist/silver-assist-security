@@ -74,10 +74,10 @@ This plugin automatically implements enterprise-level security measures without 
 
 ### 🚫 IP Blacklisting *(v1.1.15+)*
 
-- **Automatic Blacklisting**: Repeat offenders are automatically blacklisted after configurable threshold
+- **Automatic Blacklisting**: Repeat offenders are automatically blacklisted after a threshold (5 violations by default, option `silver_assist_ip_blacklist_threshold`). The "IP Blacklist" toggle in IP Management switches it off; manual blocks keep working
 - **Manual Management**: Block/unblock specific IP addresses from the admin panel
 - **Dashboard Indicator**: Enabled/Disabled status shown on the Security Dashboard card
-- **Cross-Component Protection**: Blacklisted IPs are blocked from login, admin, and form submissions
+- **Scope**: the blacklist protects Contact Form 7 submissions (flood and abuse protection). The login lockout is a separate per-IP mechanism with its own dashboard
 
 ### 🔒 WordPress Hardening *(Automatic)*
 

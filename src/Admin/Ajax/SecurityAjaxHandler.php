@@ -231,6 +231,15 @@ class SecurityAjaxHandler {
 				$saved_settings['session_timeout'] = $session_timeout;
 			}
 
+			// Auto-save IP blacklist settings.
+			if ( isset( $_POST['silver_assist_ip_blacklist_threshold'] ) ) {
+				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
+				$ip_threshold = \intval( \sanitize_text_field( \wp_unslash( $_POST['silver_assist_ip_blacklist_threshold'] ) ) );
+				$ip_threshold = \max( 3, \min( 20, $ip_threshold ) );
+				\update_option( 'silver_assist_ip_blacklist_threshold', $ip_threshold );
+				$saved_settings['ip_blacklist_threshold'] = $ip_threshold;
+			}
+
 			// Auto-save GraphQL settings.
 			if ( isset( $_POST['silver_assist_graphql_query_depth'] ) ) {
 				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Input sanitized below
@@ -255,6 +264,7 @@ class SecurityAjaxHandler {
 				'silver_assist_graphql_headless_mode',
 				'silver_assist_admin_hide_enabled',
 				'silver_assist_ip_blacklist_enabled',
+				'silver_assist_cf7_protection_enabled',
 			);
 
 			foreach ( $toggle_settings as $setting ) {

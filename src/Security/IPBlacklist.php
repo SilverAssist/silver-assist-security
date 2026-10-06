@@ -128,12 +128,17 @@ class IPBlacklist {
 	 * @return void
 	 */
 	public function record_violation( string $ip, string $type ): void {
+		// Automatic blacklisting can be switched off in the admin; manual blocks still apply.
+		if ( ! (bool) DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' ) ) {
+			return;
+		}
+
 		$violations_key    = 'ip_violations_' . md5( $ip );
 		$stored_violations = \get_transient( $violations_key );
 		$violations        = ( false !== $stored_violations && is_array( $stored_violations ) ) ? $stored_violations : array();
 
 		$violation_window = (int) DefaultConfig::get_option( 'silver_assist_ip_violation_window' );
-		$threshold        = (int) DefaultConfig::get_option( 'silver_assist_ip_blacklist_threshold' );
+		$threshold        = $this->get_violation_threshold();
 
 		$violations[] = array(
 			'type'        => $type,
@@ -159,6 +164,22 @@ class IPBlacklist {
 		if ( count( $violations ) >= $threshold ) {
 			$this->auto_blacklist_ip( $ip, $violations );
 		}
+	}
+
+	/**
+	 * Violations before an IP is automatically blacklisted
+	 *
+	 * Earlier versions saved the value as `silver_assist_ip_violation_threshold`, an option nothing
+	 * read. A value saved there is still honored until the canonical option is saved.
+	 *
+	 * @since 1.5.4
+	 * @return int
+	 */
+	private function get_violation_threshold(): int {
+		$default = (int) DefaultConfig::get_default( 'silver_assist_ip_blacklist_threshold' );
+		$legacy  = (int) \get_option( 'silver_assist_ip_violation_threshold', $default );
+
+		return (int) \get_option( 'silver_assist_ip_blacklist_threshold', $legacy );
 	}
 
 	/**
