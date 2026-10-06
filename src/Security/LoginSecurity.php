@@ -16,6 +16,7 @@ namespace SilverAssist\Security\Security;
 
 use SilverAssist\PluginKernel\Interfaces\LoadableInterface;
 use SilverAssist\Security\Core\DefaultConfig;
+use SilverAssist\Security\Core\SecurityEventCounter;
 use SilverAssist\Security\Core\SecurityHelper;
 use WP_Error;
 use WP_User;
@@ -323,6 +324,8 @@ class LoginSecurity implements LoadableInterface {
 			return;
 		}
 
+		SecurityEventCounter::record( SecurityEventCounter::FAILED_LOGIN );
+
 		$key = SecurityHelper::generate_ip_transient_key( 'login_attempts', $ip );
 
 		$attempts = \get_transient( $key );
@@ -349,6 +352,7 @@ class LoginSecurity implements LoadableInterface {
 			// Set lockout flag.
 			$lockout_key = SecurityHelper::generate_ip_transient_key( 'lockout', $ip );
 			\set_transient( $lockout_key, true, $this->lockout_duration );
+			SecurityEventCounter::record( SecurityEventCounter::IP_BLOCKED );
 		}
 	}
 
@@ -858,6 +862,8 @@ class LoginSecurity implements LoadableInterface {
 	 * @return void
 	 */
 	private function send_404_response(): void {
+		SecurityEventCounter::record( SecurityEventCounter::BOT_BLOCKED );
+
 		// Log the blocked access attempt.
 		SecurityHelper::log_security_event(
 			'BOT_BLOCKED',

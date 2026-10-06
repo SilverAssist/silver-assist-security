@@ -96,7 +96,7 @@ class SecurityDataProvider {
 		$password_strength = DefaultConfig::get_option( 'silver_assist_password_strength_enforcement' );
 		$bot_protection    = DefaultConfig::get_option( 'silver_assist_bot_protection' );
 		$cookie_security   = true; // Always enabled in GeneralSecurity.
-		$admin_hide        = DefaultConfig::get_option( 'silver_assist_admin_path' ) !== 'wp-admin';
+		$admin_hide        = (bool) DefaultConfig::get_option( 'silver_assist_admin_hide_enabled' );
 
 		// GraphQL security status.
 		$graphql_active = false;
@@ -205,10 +205,13 @@ class SecurityDataProvider {
 		$raw_blocked = $this->ip_blacklist->get_all_blacklisted_ips();
 
 		foreach ( $raw_blocked as $ip => $data ) {
-			$blocked_at = isset( $data['blocked_at'] ) ? $data['blocked_at'] : time();
+			// Records are written by IPBlacklist with `timestamp` and `duration`; `violations`
+			// is the list of violations for an automatic block and absent for a manual one.
+			$blocked_at = isset( $data['timestamp'] ) ? (int) $data['timestamp'] : time();
 			$reason     = isset( $data['reason'] ) ? $data['reason'] : 'Multiple failed login attempts';
-			$violations = isset( $data['violations'] ) ? (int) $data['violations'] : 1;
-			$expires    = isset( $data['expires'] ) ? $data['expires'] : ( $blocked_at + ( 15 * MINUTE_IN_SECONDS ) );
+			$violations = isset( $data['violations'] ) && is_array( $data['violations'] ) ? count( $data['violations'] ) : 1;
+			$duration   = isset( $data['duration'] ) ? (int) $data['duration'] : ( 15 * MINUTE_IN_SECONDS );
+			$expires    = $blocked_at + $duration;
 
 			$blocked_ips[] = array(
 				'ip'            => $ip,
@@ -312,7 +315,7 @@ class SecurityDataProvider {
 			$paths[] = WP_DEBUG_LOG;
 		}
 
-		// Default WordPress debug.log locations.
+		// Default WordPress debug.log location (WP_CONTENT_DIR may be moved, ABSPATH may be the same file).
 		$paths[] = WP_CONTENT_DIR . '/debug.log';
 		$paths[] = ABSPATH . 'wp-content/debug.log';
 
@@ -322,8 +325,17 @@ class SecurityDataProvider {
 		$paths[] = '/var/log/apache2/error.log';
 		$paths[] = '/var/log/nginx/error.log';
 
-		// Remove empty/false values.
-		return array_filter( $paths );
+		// Remove empty values and paths that resolve to the same file (counted twice otherwise).
+		$unique = array();
+		foreach ( array_filter( $paths ) as $path ) {
+			$real = realpath( $path );
+			$key  = false !== $real ? $real : $path;
+			if ( ! isset( $unique[ $key ] ) ) {
+				$unique[ $key ] = $path;
+			}
+		}
+
+		return array_values( $unique );
 	}
 
 	/**

@@ -431,7 +431,7 @@ class SecurityAjaxHandler {
 			}
 
 			// Add IP to blacklist.
-			$ip_blacklist = new IPBlacklist();
+			$ip_blacklist = IPBlacklist::get_instance();
 			$duration     = 86400 * 30; // 30 days default
 			$ip_blacklist->add_to_blacklist( $ip_address, $reason, $duration );
 

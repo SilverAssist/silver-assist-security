@@ -11,7 +11,7 @@
 
 namespace SilverAssist\Security\Admin\Data;
 
-use SilverAssist\Security\Security\IPBlacklist;
+use SilverAssist\Security\Core\SecurityEventCounter;
 use SilverAssist\Security\Core\SecurityHelper;
 
 /**
@@ -22,23 +22,6 @@ use SilverAssist\Security\Core\SecurityHelper;
  * @since 1.1.15
  */
 class StatisticsProvider {
-
-	/**
-	 * IP Blacklist instance
-	 *
-	 * @var IPBlacklist
-	 * @since 1.1.15
-	 */
-	private IPBlacklist $ip_blacklist;
-
-	/**
-	 * Initialize statistics provider
-	 *
-	 * @since 1.1.15
-	 */
-	public function __construct() {
-		$this->ip_blacklist = IPBlacklist::get_instance();
-	}
 
 	/**
 	 * Get login statistics
@@ -91,238 +74,37 @@ class StatisticsProvider {
 	/**
 	 * Count failed login attempts since timestamp
 	 *
+	 * Read from the bounded event counter, which does not depend on WP_DEBUG logging.
+	 *
 	 * @param int $since_timestamp Timestamp to count from.
 	 * @return int Number of failed login attempts
 	 * @since 1.1.15
 	 */
 	private function count_failed_logins_since( int $since_timestamp ): int {
-		global $wpdb;
-
-		// Check for transient-based login attempts.
-		$transient_count = 0;
-		$results         = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT option_name, option_value FROM {$wpdb->options} 
-				WHERE option_name LIKE %s 
-				AND option_value > %d",
-				'_transient_login_attempts_%',
-				$since_timestamp
-			)
-		);
-
-		return count( $results );
+		return SecurityEventCounter::count_since( SecurityEventCounter::FAILED_LOGIN, $since_timestamp );
 	}
 
 	/**
-	 * Count blocked IPs since timestamp
+	 * Count IP blocks since timestamp (login lockouts plus blacklist blocks)
 	 *
 	 * @param int $since_timestamp Timestamp to count from.
 	 * @return int Number of IPs blocked
 	 * @since 1.1.15
 	 */
 	private function count_blocked_ips_since( int $since_timestamp ): int {
-		$all_blocked = $this->ip_blacklist->get_all_blacklisted_ips();
-		$count       = 0;
-
-		foreach ( $all_blocked as $ip => $data ) {
-			$blocked_at = isset( $data['blocked_at'] ) ? (int) $data['blocked_at'] : 0;
-			if ( $blocked_at >= $since_timestamp ) {
-				++$count;
-			}
-		}
-
-		return $count;
+		return SecurityEventCounter::count_since( SecurityEventCounter::IP_BLOCKED, $since_timestamp );
 	}
 
 	/**
-	 * Count bot blocks since given timestamp
+	 * Count bot blocks since timestamp
 	 *
 	 * @param int $since_timestamp Timestamp to count from.
 	 * @return int Number of bot blocks
 	 * @since 1.1.15
 	 */
 	private function count_bot_blocks_since( int $since_timestamp ): int {
-		try {
-			// First check transients for recent bot blocks (performance optimization).
-			$cache_key    = "bot_blocks_count_{$since_timestamp}";
-			$cached_count = \get_transient( $cache_key );
-
-			if ( false !== $cached_count ) {
-				return (int) $cached_count;
-			}
-
-			$count = 0;
-
-			// Method 1: Check for bot blocking transients (faster).
-			$count += $this->count_bot_block_transients( $since_timestamp );
-
-			// Method 2: Parse security logs for BOT_BLOCKED events (more comprehensive).
-			$count += $this->count_bot_blocks_from_logs( $since_timestamp );
-
-			// Cache result for 5 minutes to avoid repeated log parsing.
-			\set_transient( $cache_key, $count, 300 );
-
-			return $count;
-
-		} catch ( \Exception $e ) {
-			SecurityHelper::log_security_event(
-				'BOT_COUNT_ERROR',
-				"Failed to count bot blocks: {$e->getMessage()}",
-				array(
-					'since_timestamp' => $since_timestamp,
-					'error'           => $e->getMessage(),
-				)
-			);
-
-			return 0;
-		}
+		return SecurityEventCounter::count_since( SecurityEventCounter::BOT_BLOCKED, $since_timestamp );
 	}
-
-	/**
-	 * Count bot blocks from transient entries
-	 *
-	 * @param int $since_timestamp Timestamp to count from.
-	 * @return int Number of bot blocks found in transients
-	 * @since 1.1.15
-	 */
-	private function count_bot_block_transients( int $since_timestamp ): int {
-		global $wpdb;
-
-		try {
-			// Look for bot-related transients created since timestamp.
-			$count = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) 
-					 FROM {$wpdb->options} 
-					 WHERE option_name LIKE %s 
-					 AND option_name LIKE %s 
-					 AND UNIX_TIMESTAMP(STR_TO_DATE(SUBSTRING(option_name, LENGTH('_transient_timeout_') + 1), '%%Y-%%m-%%d %%H:%%i:%%s')) >= %d",
-					'_transient_timeout_%',
-					'%bot_block%',
-					$since_timestamp
-				)
-			);
-
-			return (int) $count;
-
-		} catch ( \Exception $e ) {
-			// Fallback to simpler query if complex one fails.
-			$count = $wpdb->get_var(
-				"SELECT COUNT(*) 
-				 FROM {$wpdb->options} 
-				 WHERE option_name LIKE '_transient_%bot_block%'"
-			);
-
-			return (int) $count;
-		}
-	}
-
-	/**
-	 * Count bot blocks from security logs
-	 *
-	 * @param int $since_timestamp Timestamp to count from.
-	 * @return int Number of BOT_BLOCKED events in logs
-	 * @since 1.1.15
-	 */
-	private function count_bot_blocks_from_logs( int $since_timestamp ): int {
-		$count = 0;
-
-		// Get log file paths directly to avoid circular dependency with SecurityDataProvider.
-		$log_files = $this->get_log_file_paths();
-
-		foreach ( $log_files as $log_file ) {
-			if ( ! file_exists( $log_file ) || ! is_readable( $log_file ) ) {
-				continue;
-			}
-
-			$count += $this->count_bot_blocks_in_file( $log_file, $since_timestamp );
-		}
-
-		return $count;
-	}
-
-	/**
-	 * Get possible log file paths
-	 *
-	 * @since 1.1.15
-	 * @return array List of potential log file paths
-	 */
-	private function get_log_file_paths(): array {
-		$paths = array();
-
-		if ( defined( 'WP_DEBUG_LOG' ) && ! \is_bool( WP_DEBUG_LOG ) && \is_string( WP_DEBUG_LOG ) && WP_DEBUG_LOG !== '' ) {
-			$paths[] = WP_DEBUG_LOG;
-		}
-
-		$paths[] = WP_CONTENT_DIR . '/debug.log';
-		$paths[] = ABSPATH . 'wp-content/debug.log';
-		$paths[] = ini_get( 'error_log' );
-
-		return array_filter( $paths );
-	}
-
-	// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen,WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- WP_Filesystem only supports whole-file reads; this method's bounded seek-from-end read of large log files has no WP_Filesystem equivalent and would otherwise have to load entire multi-MB files into memory.
-	/**
-	 * Count BOT_BLOCKED events in a specific log file
-	 *
-	 * @since 1.1.15
-	 * @param string $log_file Path to log file.
-	 * @param int    $since_timestamp Only count events after this timestamp.
-	 * @return int Count of BOT_BLOCKED events
-	 */
-	private function count_bot_blocks_in_file( string $log_file, int $since_timestamp ): int {
-		$count = 0;
-
-		try {
-			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- fopen() emits E_WARNING (not a catchable Exception) on failure; the immediately-following false-check already handles it, so un-suppressing would only leak PHP warnings into admin output/logs with no way to act on them here.
-			$handle = @fopen( $log_file, 'r' );
-			if ( ! $handle ) {
-				return 0;
-			}
-
-			// Bound the read to the last 1 MB of the file to avoid scanning huge logs.
-			$max_read_bytes = 1024 * 1024; // 1 MB
-			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- filesize() emits E_WARNING (not a catchable Exception) on failure; the falsy check on the next line already handles it.
-			$file_size = @filesize( $log_file );
-
-			if ( $file_size && $file_size > $max_read_bytes ) {
-				fseek( $handle, -$max_read_bytes, SEEK_END );
-				// Discard the (likely partial) first line after seeking.
-				fgets( $handle );
-			}
-
-			// Read file line by line to handle large files.
-			// phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition -- Standard PHP file-read idiom.
-			while ( ( $line = fgets( $handle ) ) !== false ) {
-				if ( strpos( $line, 'SILVER_ASSIST_SECURITY:' ) === false ) {
-					continue;
-				}
-				if ( strpos( $line, 'BOT_BLOCKED' ) === false ) {
-					continue;
-				}
-
-				// Extract timestamp from log line: [YYYY-MM-DD HH:MM:SS].
-				if ( preg_match( '/\[([^\]]+)\]/', $line, $matches ) ) {
-					$log_timestamp = strtotime( $matches[1] );
-					if ( $log_timestamp && $log_timestamp >= $since_timestamp ) {
-						++$count;
-					}
-				}
-			}
-
-			fclose( $handle );
-		} catch ( \Exception $e ) {
-			// Don't break statistics for log read errors, but don't swallow them silently either.
-			SecurityHelper::log_security_event(
-				'STATS_LOG_READ_ERROR',
-				"Failed to read log file for bot block statistics: {$e->getMessage()}",
-				array( 'log_file' => $log_file )
-			);
-		}
-
-		return $count;
-	}
-	// phpcs:enable WordPress.WP.AlternativeFunctions.file_system_operations_fopen,WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
 	/**
 	 * Get count of blocked IPs

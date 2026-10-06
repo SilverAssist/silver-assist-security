@@ -59,12 +59,10 @@ parameters:
         -
             message: '#Result of && is always false#'
             paths:
-                - src/Admin/Data/StatisticsProvider.php
                 - src/Admin/Data/SecurityDataProvider.php
         -
             message: '#Right side of && is always true#'
             paths:
-                - src/Admin/Data/StatisticsProvider.php
                 - src/Admin/Data/SecurityDataProvider.php
         
         # GraphQL library specific - graphql-php classes not in development environment
