@@ -2,8 +2,8 @@
 /**
  * Silver Assist Security Essentials - Settings Saver
  *
- * The only place that unslashes, sanitizes, clamps and writes the options the
- * settings screen manages. The settings form handler and the auto-save AJAX
+ * The only place that unslashes and writes the options the settings screen
+ * manages; SettingsSanitizer sanitizes and clamps each value. The settings form handler and the auto-save AJAX
  * endpoint both delegate here, driven by SettingsRegistry, so the two paths
  * cannot disagree.
  *
@@ -14,7 +14,6 @@
 
 namespace SilverAssist\Security\Admin\Settings;
 
-use SilverAssist\Security\Core\PathValidator;
 use SilverAssist\Security\Core\SecurityHelper;
 
 /**
@@ -35,11 +34,6 @@ class SettingsSaver {
 	public const MODE_AUTOSAVE = 'autosave';
 
 	/**
-	 * Path stored when an admin path is empty or invalid
-	 */
-	private const FALLBACK_ADMIN_PATH = 'silver-admin';
-
-	/**
 	 * Save a submission
 	 *
 	 * `$input` is the raw (slashed) request data, for example `$_POST`; this method unslashes it. The caller
@@ -50,6 +44,9 @@ class SettingsSaver {
 	 * section, including an empty one, writes nothing and reports an error. In `autosave` mode `$section`
 	 * may be empty (all sections) or limit the save to one section; only submitted keys of auto-save
 	 * eligible options are written, and a bool is on only when it is "1".
+	 *
+	 * A value that cannot be stored (an admin path that is empty, reserved or collides with a page or route)
+	 * is not written: the stored value stays and the reason is in `SaveResult::$errors`, keyed by option name.
 	 *
 	 * @since 1.5.4
 	 * @param array<string, mixed> $input   Raw submission.
@@ -131,58 +128,16 @@ class SettingsSaver {
 	 * @return void
 	 */
 	private function save_option( array $declaration, $raw, SaveResult $result ): void {
-		$option = $declaration['option'];
+		$option  = $declaration['option'];
+		$outcome = SettingsSanitizer::normalize( $declaration, \wp_unslash( $raw ) );
 
-		if ( ! is_scalar( $raw ) ) {
-			$result->errors[ $option ] = \__( 'Invalid value.', 'silver-assist-security' );
+		if ( '' !== $outcome['error'] ) {
+			// Rejected, not written: the stored value stays and the caller reports why.
+			$result->errors[ $option ] = $outcome['error'];
 			return;
 		}
 
-		$submitted = \sanitize_text_field( \wp_unslash( (string) $raw ) );
-
-		switch ( $declaration['type'] ) {
-			case SettingsRegistry::TYPE_BOOL:
-				$this->write( $option, '1' === $submitted ? 1 : 0, $result );
-				break;
-
-			case SettingsRegistry::TYPE_INT:
-				$value = (int) $submitted;
-				$min   = $declaration['min'] ?? null;
-				$max   = SettingsRegistry::resolve_max( $declaration );
-				if ( null !== $min ) {
-					$value = max( (int) $min, $value );
-				}
-				if ( null !== $max ) {
-					$value = min( $max, $value );
-				}
-				$this->write( $option, $value, $result, (int) $submitted );
-				break;
-
-			case SettingsRegistry::TYPE_URL:
-				$url   = trim( \wp_unslash( (string) $raw ) );
-				$value = \esc_url_raw( $url );
-				$this->write( $option, $value, $result, $url );
-				break;
-
-			case SettingsRegistry::TYPE_HEX_COLOR:
-				$value = \sanitize_hex_color( \wp_unslash( (string) $raw ) );
-				$this->write( $option, $value ?? '', $result, trim( \wp_unslash( (string) $raw ) ) );
-				break;
-
-			case SettingsRegistry::TYPE_USER_ID:
-				$value = \absint( $submitted );
-				if ( $value > 0 && ! \get_userdata( $value ) ) {
-					$value = 0;
-				}
-				$this->write( $option, $value, $result, \absint( $submitted ) );
-				break;
-
-			case SettingsRegistry::TYPE_ADMIN_PATH:
-				$path  = \sanitize_title( \wp_unslash( (string) $raw ) );
-				$value = ( '' !== $path && PathValidator::validate_admin_path( $path )['is_valid'] ) ? $path : self::FALLBACK_ADMIN_PATH;
-				$this->write( $option, $value, $result, trim( \wp_unslash( (string) $raw ) ) );
-				break;
-		}
+		$this->write( $option, $outcome['value'], $result, $outcome['submitted'] );
 	}
 
 	/**

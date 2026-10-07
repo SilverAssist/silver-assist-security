@@ -17,6 +17,8 @@ use WP_UnitTestCase;
  */
 class LoginSecurityTest extends WP_UnitTestCase
 {
+    use \SilverAssist\Security\Tests\Helpers\StoresRawOptions;
+
     /**
      * LoginSecurity instance
      *
@@ -237,7 +239,7 @@ class LoginSecurityTest extends WP_UnitTestCase
         wp_set_current_user($user_id);
 
         // The timeout is read when the object is built, so set the option first.
-        update_option("silver_assist_session_timeout", 1); // 1 minute
+        $this->store_raw_option( "silver_assist_session_timeout", 1 ); // 1 minute
         $security = new LoginSecurity();
 
         // Last activity 2 minutes ago exceeds the 1 minute timeout.

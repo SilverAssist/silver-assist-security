@@ -68,6 +68,7 @@ class FakeCf7Validation {
  * Behavior tests for CF7 and form protection
  */
 class FormSubmissionBehaviorTest extends WP_UnitTestCase {
+	use \SilverAssist\Security\Tests\Helpers\StoresRawOptions;
 
 	/**
 	 * Server and request globals changed by a test
@@ -212,7 +213,7 @@ class FormSubmissionBehaviorTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_rapid_fire_submits_hit_rate_limit_then_blacklist_and_the_block_expires(): void {
-		update_option( 'silver_assist_ip_blacklist_duration', 600 );
+		$this->store_raw_option( 'silver_assist_ip_blacklist_duration', 600 );
 		$ip        = $_SERVER['REMOTE_ADDR'];
 		$limit     = ( new FormProtection() )->get_rate_limit();
 		$threshold = (int) DefaultConfig::get_option( 'silver_assist_ip_blacklist_threshold' );

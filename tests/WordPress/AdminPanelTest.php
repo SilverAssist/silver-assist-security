@@ -117,10 +117,8 @@ class AdminPanelTest extends WP_UnitTestCase
     {
         global $wp_registered_settings;
         
-        // Call register_settings() directly instead of triggering admin_init
-        // do_action("admin_init") causes "headers already sent" errors in tests
-        $admin_panel = new \SilverAssist\Security\Admin\AdminPanel();
-        $admin_panel->register_settings();
+        // The registry-driven registration runs on init for every request kind.
+        \SilverAssist\Security\Admin\Settings\SettingsSanitizer::register();
         
         // Verify settings are registered
         $this->assertArrayHasKey("silver_assist_login_attempts", $wp_registered_settings);

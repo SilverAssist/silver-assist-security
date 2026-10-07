@@ -69,7 +69,24 @@ class SettingsHandler {
 			return;
 		}
 
-		$this->add_notice( 'success', \__( 'Security settings have been saved successfully.', 'silver-assist-security' ) );
+		if ( empty( $result->errors ) ) {
+			$this->add_notice( 'success', \__( 'Security settings have been saved successfully.', 'silver-assist-security' ) );
+		} else {
+			foreach ( $result->errors as $option => $message ) {
+				$this->add_notice(
+					'error',
+					sprintf(
+						/* translators: 1: setting name, 2: reason */
+						\__( '%1$s was not saved: %2$s.', 'silver-assist-security' ),
+						str_replace( 'silver_assist_', '', $option ),
+						rtrim( $message, '.' )
+					)
+				);
+			}
+			if ( $result->saved_count() > 0 ) {
+				$this->add_notice( 'success', \__( 'The other settings were saved.', 'silver-assist-security' ) );
+			}
+		}
 
 		if ( ! empty( $result->adjusted ) ) {
 			$this->add_notice(

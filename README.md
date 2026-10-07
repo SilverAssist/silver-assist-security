@@ -469,6 +469,10 @@ address (an office, a VPN, a mobile carrier) share the limits too. With the defa
   (up to 20) and lower the lockout duration (down to 60 seconds).
 - With admin hiding on, `wp-login.php` and `/wp-admin/` return 404 to visitors without a session. The
   secret path (default `/silver-admin`) sets a one-hour access cookie and leads to the login form.
+  The path is 3 to 50 letters, numbers, hyphens or underscores and cannot be a word like `admin` or `login`,
+  a WordPress route (`wp-json`, `feed`, `wp-cron`, `xmlrpc`, `sitemap`, the REST prefix and archive bases of
+  your site) or the slug of an existing page, post or rewrite rule. A path that is refused is not saved:
+  the settings screen shows an error and keeps the current path.
   `admin-ajax.php`, `admin-post.php` (public form handlers), `wp-cron.php`, the REST API, password reset
   and lost-password links, and logout keep working for visitors. The email change confirmation link
   carries the access token itself. Add `define( 'SILVER_ASSIST_HIDE_ADMIN', false );` to `wp-config.php`
@@ -567,7 +571,7 @@ Settings the screen saves go through one registry and one saver, so adding an op
 2. **Register it** in `src/Admin/Settings/SettingsRegistry.php` with its section (`login`, `rest_api`, `login_branding`, `admin_hide`, `graphql`, `graphql_auth`, `cf7`, `ip`), type (`bool`, `int`, `url`, `hex_color`, `admin_path`, `user_id`), `min` and `max` for integers, `ui` (the screen renders a field for it) and `autosave` (the auto-save endpoint may write it; leave it `false` unless the maintainers decide otherwise, see #160).
 3. **Add the field** to the form of that section in `SettingsRenderer`, with the registered option name as the input `name`. The form already posts the gate field, its section and the nonce.
 
-`SettingsSaver` clamps, sanitizes and writes it, and both the Save button and auto-save report what was saved, adjusted or ignored. `SettingsRegistryTest` and `SettingsFormsTest` fail if the default is missing, the field is not inside its own section's form, or the saved value does not persist.
+`SettingsSaver` writes it and `SettingsSanitizer` clamps and sanitizes it (the same callback is registered with `register_setting()` for every registry option, so a value written by `options.php`, WP-CLI or an import is clamped too), and both the Save button and auto-save report what was saved, adjusted or ignored. `SettingsRegistryTest` and `SettingsFormsTest` fail if the default is missing, the field is not inside its own section's form, or the saved value does not persist.
 
 ### Behavior Audit
 

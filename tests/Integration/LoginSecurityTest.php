@@ -28,6 +28,8 @@ use WP_Error;
  */
 class LoginSecurityTest extends WP_UnitTestCase
 {
+    use \SilverAssist\Security\Tests\Helpers\StoresRawOptions;
+
     /**
      * LoginSecurity instance
      *
@@ -553,7 +555,7 @@ class LoginSecurityTest extends WP_UnitTestCase
     public function test_session_timeout_in_admin_area(): void
     {
         // Set very short timeout for testing
-        \update_option('silver_assist_session_timeout', 1); // 1 minute
+        $this->store_raw_option( 'silver_assist_session_timeout', 1 ); // 1 minute
         $this->login_security = new LoginSecurity();
 
         // Create and login user

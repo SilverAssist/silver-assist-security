@@ -212,7 +212,6 @@ class AdminPanel implements LoadableInterface {
 	private function register_hooks(): void {
 		// Register with Settings Hub early (priority 4) to ensure hub processes it at priority 5.
 		\add_action( 'admin_menu', array( $this, 'register_with_hub' ), 4 );
-		\add_action( 'admin_init', array( $this, 'register_settings' ) );
 		\add_action( 'admin_init', array( $this, 'save_security_settings' ) );
 
 		// Register asset management hook (delegated to AssetManager).
@@ -314,31 +313,6 @@ class AdminPanel implements LoadableInterface {
 			'silver-assist-security',
 			array( $this, 'render_admin_page' )
 		);
-	}
-
-	/**
-	 * Register plugin settings
-	 *
-	 * @since 1.1.1
-	 * @return void
-	 */
-	public function register_settings(): void {
-		// Login Security Settings.
-		\register_setting( 'silver_assist_security_login', 'silver_assist_login_attempts' );
-		\register_setting( 'silver_assist_security_login', 'silver_assist_lockout_duration' );
-		\register_setting( 'silver_assist_security_login', 'silver_assist_session_timeout' );
-		\register_setting( 'silver_assist_security_login', 'silver_assist_bot_protection' );
-
-		// Admin Hide Settings.
-		\register_setting( 'silver_assist_security_admin_hide', 'silver_assist_admin_hide_enabled' );
-		\register_setting( 'silver_assist_security_admin_hide', 'silver_assist_admin_hide_path' );
-
-		// Password Settings.
-		\register_setting( 'silver_assist_security_password', 'silver_assist_password_strength_enforcement' );
-
-		// GraphQL Settings.
-		\register_setting( 'silver_assist_security_graphql', 'silver_assist_graphql_headless_mode' );
-		\register_setting( 'silver_assist_security_graphql', 'silver_assist_graphql_query_timeout' );
 	}
 
 	/**

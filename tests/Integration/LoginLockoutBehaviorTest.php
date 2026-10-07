@@ -29,6 +29,8 @@ use WP_UnitTestCase;
  */
 class LoginLockoutBehaviorTest extends WP_UnitTestCase
 {
+    use \SilverAssist\Security\Tests\Helpers\StoresRawOptions;
+
     /**
      * Original $_SERVER
      *
@@ -359,7 +361,7 @@ class LoginLockoutBehaviorTest extends WP_UnitTestCase
     {
         \update_option("silver_assist_admin_hide_enabled", 1);
         \update_option("silver_assist_admin_hide_path", "silver-admin");
-        \update_option("silver_assist_session_timeout", 1);
+        $this->store_raw_option( "silver_assist_session_timeout", 1 );
         new AdminHideSecurity();
         $login = new LoginSecurity();
 
