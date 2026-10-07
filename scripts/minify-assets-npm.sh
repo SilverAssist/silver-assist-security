@@ -142,6 +142,7 @@ main() {
         "assets/css/variables.min.css"
         "assets/css/captcha.min.css"
         "assets/js/admin.min.js"
+        "assets/js/escape-html.min.js"
         "assets/js/password-validation.min.js"
         "assets/js/captcha.min.js"
     )

@@ -35,6 +35,11 @@ module.exports = function (grunt) {
                     "assets/js/admin.min.js": ["assets/js/admin.js"]
                 }
             },
+            escapeHtml: {
+                files: {
+                    "assets/js/escape-html.min.js": ["assets/js/escape-html.js"]
+                }
+            },
             passwordValidation: {
                 files: {
                     "assets/js/password-validation.min.js": ["assets/js/password-validation.js"]
@@ -58,6 +63,7 @@ module.exports = function (grunt) {
         grunt.log.writeln("✨ JavaScript minification completed successfully!");
         grunt.log.writeln("📦 Generated files:");
         grunt.log.writeln("   • assets/js/admin.min.js");
+        grunt.log.writeln("   • assets/js/escape-html.min.js");
         grunt.log.writeln("   • assets/js/password-validation.min.js");
         grunt.log.writeln("");
         grunt.log.writeln("ℹ CSS minification: Run 'npm run minify:css' separately");

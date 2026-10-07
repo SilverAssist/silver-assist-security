@@ -221,11 +221,14 @@ class LoginSecurity implements LoadableInterface {
 			$this->plugin_version
 		);
 
+		// Shared HTML escaping helper (also used by the admin script).
+		SecurityHelper::enqueue_escape_helper( $this->plugin_version );
+
 		// Enqueue custom password validation script.
 		\wp_enqueue_script(
 			'silver-assist-password-validation',
 			$this->get_asset_url( 'assets/js/password-validation.js' ),
-			array( 'jquery', 'password-strength-meter' ),
+			array( 'jquery', 'password-strength-meter', SecurityHelper::ESCAPE_HELPER_HANDLE ),
 			$this->plugin_version,
 			true
 		);

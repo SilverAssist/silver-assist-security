@@ -283,6 +283,11 @@ class AuditResidualsBehaviorTest extends WP_UnitTestCase {
 		do_action( 'admin_enqueue_scripts', 'profile.php' );
 		$this->assertTrue( wp_script_is( 'silver-assist-password-validation', 'enqueued' ), 'on the profile screen' );
 		$this->assertTrue( wp_script_is( 'password-strength-meter', 'enqueued' ) );
+		$this->assertContains(
+			'silver-assist-security-utils',
+			wp_scripts()->registered['silver-assist-password-validation']->deps,
+			'the shared escaping helper must load before the validation script'
+		);
 
 		wp_dequeue_script( 'silver-assist-password-validation' );
 		wp_dequeue_script( 'password-strength-meter' );
