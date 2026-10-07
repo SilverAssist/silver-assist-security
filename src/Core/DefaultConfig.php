@@ -22,6 +22,68 @@ namespace SilverAssist\Security\Core;
 class DefaultConfig {
 
 	/**
+	 * Options of earlier versions mapped to the option that replaced them
+	 *
+	 * Before 1.5.4 enforcement read `silver_assist_form_rate_*` while the settings screen saved
+	 * `silver_assist_cf7_rate_*`, so the screen had no effect. Value: new option, minimum, maximum
+	 * (the range the settings saver enforces).
+	 *
+	 * @var array<string, array{0: string, 1: int, 2: int}>
+	 */
+	private const LEGACY_OPTION_MAP = array(
+		'silver_assist_form_rate_limit'  => array( 'silver_assist_cf7_rate_limit', 1, 10 ),
+		'silver_assist_form_rate_window' => array( 'silver_assist_cf7_rate_window', 30, 300 ),
+	);
+
+	/**
+	 * Legacy option names with no replacement, deleted by the migration
+	 *
+	 * `silver_assist_form_protection_enabled` was only displayed on the dashboard; the real
+	 * switch is `silver_assist_cf7_protection_enabled`, so its value is not adopted.
+	 *
+	 * @var array<int, string>
+	 */
+	private const LEGACY_OPTIONS_DROPPED = array( 'silver_assist_form_protection_enabled' );
+
+	/**
+	 * Names of every legacy option this class migrates or drops
+	 *
+	 * @since 1.5.4
+	 * @return array<int, string>
+	 */
+	public static function get_legacy_option_names(): array {
+		return array_merge( array_keys( self::LEGACY_OPTION_MAP ), self::LEGACY_OPTIONS_DROPPED );
+	}
+
+	/**
+	 * Move legacy form rate options to the CF7 options, once
+	 *
+	 * Idempotent: a legacy value is adopted only when the replacement was never stored, so a value
+	 * the admin saved is never overwritten, and the legacy row is deleted either way. The adopted
+	 * value is clamped to the saver range.
+	 *
+	 * @since 1.5.4
+	 * @return void
+	 */
+	public static function migrate_legacy_options(): void {
+		foreach ( self::LEGACY_OPTION_MAP as $legacy => list( $current, $min, $max ) ) {
+			$value = \get_option( $legacy, null );
+			if ( null === $value ) {
+				continue;
+			}
+
+			if ( null === \get_option( $current, null ) ) {
+				\add_option( $current, max( $min, min( $max, (int) $value ) ) );
+			}
+			\delete_option( $legacy );
+		}
+
+		foreach ( self::LEGACY_OPTIONS_DROPPED as $legacy ) {
+			\delete_option( $legacy );
+		}
+	}
+
+	/**
 	 * Get all default plugin options
 	 *
 	 * @since 1.1.1
@@ -43,10 +105,7 @@ class DefaultConfig {
 			'silver_assist_graphql_api_key'                => '', // Hashed API key for server-to-server authentication.
 			'silver_assist_graphql_service_user_id'        => 0, // WordPress user ID for API key authentication.
 
-			// Form Protection Settings.
-			'silver_assist_form_protection_enabled'        => 1, // Enable form protection by default.
-			'silver_assist_form_rate_limit'                => 2, // Max forms per minute per IP.
-			'silver_assist_form_rate_window'               => 60, // Rate limit window (seconds).
+			// Form Protection Settings (the CF7 rate limit lives under the CF7 options below).
 			'silver_assist_obsolete_browser_detection'     => 1, // Detect old browsers.
 			'silver_assist_sql_injection_detection'        => 1, // Detect SQL injection attempts.
 

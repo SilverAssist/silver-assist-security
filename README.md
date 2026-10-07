@@ -62,7 +62,7 @@ This plugin automatically implements enterprise-level security measures without 
 
 - **Automatic Integration**: Seamless integration with Contact Form 7 when plugin is active
 - **CAPTCHA on Forms**: Math-based CAPTCHA challenge injected into CF7 forms during Under Attack Mode
-- **Form Submission Rate Limiting**: Prevents rapid-fire spam submissions per IP
+- **Form Submission Rate Limiting**: Prevents rapid-fire spam submissions per IP. One setting governs it: "Rate Limit" on the Form Protection tab (`silver_assist_cf7_rate_limit`, 1-10 per window, default 2) and its window (`silver_assist_cf7_rate_window`, 30-300 seconds, default 60). The legacy `silver_assist_form_rate_*` options are migrated to these once and removed.
 - **Bot Protection**: Advanced detection of automated form submission attempts
 - **IP-based Blocking**: Temporary blocks for IPs exceeding submission limits
 - **CSRF Protection**: Enhanced nonce validation for form security

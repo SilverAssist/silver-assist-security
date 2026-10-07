@@ -63,6 +63,10 @@ class UninstallCleanupTest extends WP_UnitTestCase {
 		}
 		// Legacy option that older versions saved and that is not in the defaults.
 		\update_option( 'silver_assist_ip_violation_threshold', 7 );
+		// Form rate options read by enforcement before 1.5.4 (migrated to the CF7 options).
+		\update_option( 'silver_assist_form_protection_enabled', 1 );
+		\update_option( 'silver_assist_form_rate_limit', 2 );
+		\update_option( 'silver_assist_form_rate_window', 60 );
 		// Index of the IP blacklist.
 		\update_option( 'silver_assist_ip_blacklist_index', array( 'ip_blacklist_' . md5( '203.0.113.9' ) => time() + HOUR_IN_SECONDS ), false );
 

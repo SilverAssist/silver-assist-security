@@ -37,33 +37,42 @@ class FormProtection {
 	/**
 	 * Check if form submission is allowed for given IP
 	 *
-	 * Implements rate limiting to prevent spam submissions.
+	 * Implements rate limiting to prevent spam submissions. The limit and window are the
+	 * `silver_assist_cf7_rate_limit` and `silver_assist_cf7_rate_window` options saved on the
+	 * Form Protection tab (formerly read from `silver_assist_form_rate_*`, which no screen saved).
 	 *
 	 * @since 1.1.15
+	 * @since 1.5.4 Reads the options the settings screen saves; uses the atomic fixed-window counter.
 	 * @param string $ip The client IP address.
 	 * @return bool True if submission is allowed, false if rate limited
 	 */
 	public function allow_form_submission( string $ip ): bool {
-		$rate_key    = SecurityHelper::generate_ip_transient_key( 'form_rate', $ip );
-		$submissions = (int) \get_transient( $rate_key );
-		$rate_limit  = DefaultConfig::get_option( 'silver_assist_form_rate_limit' );
-		$rate_window = DefaultConfig::get_option( 'silver_assist_form_rate_window' );
+		$rate_limit  = $this->get_rate_limit();
+		$rate_window = $this->get_rate_window();
 
-		if ( $submissions >= $rate_limit ) {
+		// Atomic fixed-window counter shared with the login, REST and GraphQL limiters: concurrent
+		// submissions each get their own count, so they cannot overwrite each other and slip past the limit.
+		// Every attempt counts, blocked ones included; the window is fixed and never extended.
+		$submissions = SecurityHelper::increment_rate_window(
+			SecurityHelper::generate_ip_transient_key( 'form_rate_window', $ip ),
+			SecurityHelper::generate_ip_transient_key( 'form_rate', $ip ),
+			time(),
+			$rate_window
+		);
+
+		if ( $submissions > $rate_limit ) {
 			SecurityHelper::log_security_event(
 				'FORM_SPAM_BLOCKED',
 				'Form submission rate limit exceeded',
 				array(
 					'ip'          => $ip,
-					'submissions' => $submissions,
+					'submissions' => $submissions - 1,
 					'limit'       => $rate_limit,
 				)
 			);
 			return false;
 		}
 
-		// Increment counter and set expiration.
-		\set_transient( $rate_key, $submissions + 1, $rate_window );
 		return true;
 	}
 
@@ -209,7 +218,7 @@ class FormProtection {
 	 * @return int Current rate limit
 	 */
 	public function get_rate_limit(): int {
-		return (int) DefaultConfig::get_option( 'silver_assist_form_rate_limit' );
+		return (int) DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' );
 	}
 
 	/**
@@ -219,6 +228,6 @@ class FormProtection {
 	 * @return int Rate limiting window
 	 */
 	public function get_rate_window(): int {
-		return (int) DefaultConfig::get_option( 'silver_assist_form_rate_window' );
+		return (int) DefaultConfig::get_option( 'silver_assist_cf7_rate_window' );
 	}
 }

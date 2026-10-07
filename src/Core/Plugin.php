@@ -104,6 +104,9 @@ class Plugin extends AbstractPlugin {
 	 * @return void
 	 */
 	protected function init_hooks(): void {
+		// Idempotent: adopts the pre-1.5.4 form rate options into the CF7 options, then deletes them.
+		DefaultConfig::migrate_legacy_options();
+
 		$this->load_textdomain();
 		$this->init_updater();
 

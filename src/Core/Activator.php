@@ -154,7 +154,7 @@ class Activator {
 	 * @return void
 	 */
 	public static function uninstall(): void {
-		foreach ( array_merge( array_keys( DefaultConfig::get_defaults() ), self::LEGACY_OPTIONS ) as $option ) {
+		foreach ( array_merge( array_keys( DefaultConfig::get_defaults() ), self::LEGACY_OPTIONS, DefaultConfig::get_legacy_option_names() ) as $option ) {
 			\delete_option( $option );
 		}
 

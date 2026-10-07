@@ -188,7 +188,7 @@ class ContactForm7IntegrationTest extends WP_UnitTestCase {
 		];
 		
 		// First submissions should be allowed
-		$rate_limit = (int) DefaultConfig::get_option( 'silver_assist_form_rate_limit' );
+		$rate_limit = (int) DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' );
 		for ( $i = 0; $i < $rate_limit; $i++ ) {
 			$this->assertTrue(
 				$cf7_integration->validate_cf7_submission( $mock_contact_form, $normal_submission, $test_ip ),

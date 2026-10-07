@@ -170,8 +170,8 @@ class SecurityDataProvider {
 				'ip_blacklist_enabled' => (bool) DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' ),
 			),
 			'form_protection'  => array(
-				'enabled'    => (bool) DefaultConfig::get_option( 'silver_assist_form_protection_enabled' ),
-				'rate_limit' => (int) DefaultConfig::get_option( 'silver_assist_form_rate_limit' ),
+				'enabled'    => SecurityHelper::is_contact_form_7_active() && (bool) DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ),
+				'rate_limit' => (int) DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' ),
 			),
 			'overall'          => array(
 				'active_features'     => $active_features,
