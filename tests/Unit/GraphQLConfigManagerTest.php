@@ -260,9 +260,15 @@ class GraphQLConfigManagerTest extends \WP_UnitTestCase
      */
     public function test_cache_clearing(): void
     {
+        $this->assertFalse($this->config_manager->is_headless_mode());
+        $this->config_manager->get_configuration();
+
+        update_option("silver_assist_graphql_headless_mode", 1);
+        $this->assertFalse($this->config_manager->is_headless_mode(), "The mode is cached until the cache is cleared");
+
         $this->config_manager->clear_cache();
-        
-        $this->assertTrue(true);
+
+        $this->assertTrue($this->config_manager->is_headless_mode(), "Clearing the cache makes the manager read the option again");
     }
 
     /**

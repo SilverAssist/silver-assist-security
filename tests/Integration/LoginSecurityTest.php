@@ -759,29 +759,26 @@ class LoginSecurityTest extends WP_UnitTestCase
 
     /**
      * Test legitimate login actions bypass bot protection
+     *
+     * A request that is turned away as a bot is logged in `bot_activity_*` and answered with a 404
+     * that ends the process, so surviving the call with no log entry means the request passed.
      */
     public function test_legitimate_actions_bypass_bot_protection(): void
     {
-        $_SERVER['HTTP_USER_AGENT'] = 'curl/7.64.1'; // Would normally be blocked
+        \update_option("silver_assist_bot_protection", 1);
+        $ip = "198.51.100.44";
+        $_SERVER["REMOTE_ADDR"] = $ip;
+        $_SERVER["HTTP_USER_AGENT"] = "curl/7.64.1"; // Would normally be blocked
 
-        // Test legitimate actions
-        $legitimate_actions = [
-            'logout',
-            'lostpassword',
-            'resetpass',
-            'rp',
-            'register',
-        ];
+        foreach (["logout", "lostpassword", "resetpass", "rp", "register"] as $action) {
+            $_REQUEST["action"] = $action;
 
-        foreach ($legitimate_actions as $action) {
-            $_REQUEST['action'] = $action;
+            $this->login_security->block_suspicious_bots();
 
-            // Block suspicious bots should skip these actions
-            // We can't directly test the return, but we verify it doesn't block
-            $this->assertTrue(true, "Action {$action} should bypass bot protection");
+            $this->assertFalse(\get_transient("bot_activity_" . md5($ip)), "Action {$action} should bypass bot protection");
         }
 
-        unset($_REQUEST['action']);
+        unset($_REQUEST["action"]);
     }
 
     /**
@@ -789,18 +786,18 @@ class LoginSecurityTest extends WP_UnitTestCase
      */
     public function test_password_reset_with_key_bypasses_bot_protection(): void
     {
-        $_SERVER['HTTP_USER_AGENT'] = 'curl/7.64.1'; // Would normally be blocked
-        $_GET['key'] = 'test_reset_key';
-        $_GET['login'] = 'testuser';
+        \update_option("silver_assist_bot_protection", 1);
+        $ip = "198.51.100.45";
+        $_SERVER["REMOTE_ADDR"] = $ip;
+        $_SERVER["HTTP_USER_AGENT"] = "curl/7.64.1"; // Would normally be blocked
+        $_GET["key"] = "test_reset_key";
+        $_GET["login"] = "testuser";
 
-        // Password reset with key should bypass bot protection
-        // This is verified by the code checking for key and login parameters
-        $this->assertTrue(
-            isset($_GET['key']) && isset($_GET['login']),
-            'Password reset parameters should bypass bot protection'
-        );
+        $this->login_security->block_suspicious_bots();
 
-        unset($_GET['key'], $_GET['login']);
+        $this->assertFalse(\get_transient("bot_activity_" . md5($ip)), "A password reset link should bypass bot protection");
+
+        unset($_GET["key"], $_GET["login"]);
     }
 
     /**

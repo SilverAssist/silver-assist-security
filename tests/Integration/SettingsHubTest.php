@@ -146,28 +146,6 @@ class SettingsHubTest extends WP_UnitTestCase
     }
 
     /**
-     * Test AJAX update check handler
-     *
-     * @covers ::render_update_check_script
-     * @return void
-     */
-    public function test_ajax_update_check_handler(): void
-    {
-        // Create valid nonce
-        $nonce = wp_create_nonce("silver_assist_security_updates_nonce");
-
-        // Set up POST data
-        $_POST["nonce"] = $nonce;
-        $_POST["action"] = "silver_assist_check_updates";
-
-        // Update checks are now delegated to wp-github-updater via render_update_check_script
-        $this->assertTrue(method_exists($this->admin_panel, "render_update_check_script"), "render_update_check_script method should exist");
-
-        // Clean up
-        unset($_POST["nonce"], $_POST["action"]);
-    }
-
-    /**
      * Test update check script execution
      *
      * @covers ::render_update_check_script
@@ -237,8 +215,15 @@ class SettingsHubTest extends WP_UnitTestCase
         $hub = SettingsHub::get_instance();
         $this->assertNotNull($hub, "Settings Hub instance should be available");
 
-        // Verify registration method exists
-        $this->assertTrue(method_exists($this->admin_panel, "register_with_hub"), "register_with_hub method should exist");
+        $this->admin_panel->register_with_hub();
+
+        $this->assertTrue($hub->is_plugin_registered("silver-assist-security"), "The plugin should be registered with the hub");
+
+        $registered = $hub->get_plugins()["silver-assist-security"];
+        $this->assertSame("manage_options", $registered["capability"]);
+        $this->assertSame([$this->admin_panel, "render_admin_page"], $registered["callback"]);
+        $this->assertArrayHasKey("version", $registered);
+        $this->assertArrayNotHasKey("plugin_file", $registered, "The hub keeps the plugin file out of the stored data");
     }
 
     /**
@@ -257,9 +242,13 @@ class SettingsHubTest extends WP_UnitTestCase
         $updater = $this->plugin->get_updater();
 
         if ($updater) {
-            // Verify get_hub_actions method exists
-            $reflection = new \ReflectionClass($this->admin_panel);
-            $this->assertTrue($reflection->hasMethod("get_hub_actions"), "get_hub_actions method should exist");
+            $method = new \ReflectionMethod($this->admin_panel, "get_hub_actions");
+            $method->setAccessible(true);
+            $actions = $method->invoke($this->admin_panel);
+
+            $this->assertCount(1, $actions, "One action (Check Updates) is offered when the updater is available");
+            $this->assertSame([$this->admin_panel, "render_update_check_script"], $actions[0]["callback"]);
+            $this->assertIsCallable($actions[0]["callback"]);
         } else {
             $this->markTestSkipped("Updater not available");
         }
