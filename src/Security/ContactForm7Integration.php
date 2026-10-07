@@ -439,8 +439,10 @@ class ContactForm7Integration implements LoadableInterface {
 	/**
 	 * Add the signed timing field to a CF7 form
 	 *
-	 * The value is the time the form was rendered plus an HMAC of it, so a bot cannot claim an older
-	 * start. It is read back by read_form_start_time() to enforce the minimum submission time.
+	 * The value is the time the form was rendered plus an HMAC of it, so a client cannot forge an
+	 * older start. It is read back by read_form_start_time() to enforce the minimum submission time.
+	 * The token is not single use: a bot that keeps one captured earlier looks slow, so the delay is a
+	 * soft signal and the rate limit and the blacklist remain the flood defence.
 	 *
 	 * @since 1.5.4
 	 * @param string $form CF7 form HTML.
