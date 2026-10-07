@@ -942,7 +942,7 @@
                         (strings.disabled || "Disabled"));
             }
 
-            // Update IP Blacklisting status (5th feature-status div)
+            // Update Form Flood Blacklist status (5th feature-status div)
             const $blacklistElement = $(".general-security .feature-status:nth-child(5) .feature-value");
             if ($blacklistElement.length) {
                 $blacklistElement

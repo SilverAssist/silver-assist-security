@@ -19,7 +19,10 @@
 namespace SilverAssist\Security\Tests\Integration;
 
 use SilverAssist\Security\Security\ContactForm7Integration;
+use SilverAssist\Security\Core\DefaultConfig;
+use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\Security\FormProtection;
+use SilverAssist\Security\Security\IPBlacklist;
 use WP_UnitTestCase;
 
 /**
@@ -179,6 +182,72 @@ class FormSubmissionBehaviorTest extends WP_UnitTestCase {
 		}
 
 		$this->assertFalse( $this->submit( array( 'your-message' => 'Hello there, a question.' ) )->is_valid() );
+	}
+
+	/**
+	 * Delete the transient timeout so a transient reads as expired
+	 *
+	 * @param string $key Transient key without the prefix.
+	 * @return void
+	 */
+	private function expire_transient( string $key ): void {
+		update_option( "_transient_timeout_{$key}", time() - 10 );
+	}
+
+	/**
+	 * Rapid-fire submits from one IP hit the form rate limit and then the blacklist (#146)
+	 *
+	 * The case that motivated the CF7 flood protection: a script posting the form many times
+	 * within seconds. With the defaults (2 submits per minute, 5 violations) the first two
+	 * pass, each further one is rejected by the rate limit and counts as a violation, the
+	 * fifth violation blacklists the IP, and from then on the blacklist rejects it before the
+	 * rate limit is even consulted. The block ends after the configured duration, and a
+	 * different IP is never affected.
+	 *
+	 * @return void
+	 */
+	public function test_rapid_fire_submits_hit_rate_limit_then_blacklist_and_the_block_expires(): void {
+		update_option( 'silver_assist_ip_blacklist_duration', 600 );
+		$ip        = $_SERVER['REMOTE_ADDR'];
+		$limit     = ( new FormProtection() )->get_rate_limit();
+		$threshold = (int) DefaultConfig::get_option( 'silver_assist_ip_blacklist_threshold' );
+		$blacklist = new IPBlacklist();
+		$message   = array( 'your-message' => 'Hello there, a question about visiting hours.' );
+
+		for ( $i = 1; $i <= $limit; $i++ ) {
+			$this->assertTrue( $this->submit( $message )->is_valid(), "submit {$i} is within the limit" );
+		}
+		$this->assertFalse( $blacklist->is_blacklisted( $ip ), 'submits within the limit never blacklist an IP' );
+
+		// Every further submit in the same few seconds is rejected and counts as a violation.
+		for ( $i = 1; $i < $threshold; $i++ ) {
+			$this->assertFalse( $this->submit( $message )->is_valid(), "flood submit {$i} is rate limited" );
+			$this->assertSame( $i, $blacklist->get_violation_count( $ip ) );
+			$this->assertFalse( $blacklist->is_blacklisted( $ip ), 'the IP is not blacklisted before the threshold' );
+		}
+
+		$this->assertFalse( $this->submit( $message )->is_valid(), 'the submit that reaches the threshold is rejected' );
+		$this->assertTrue( $blacklist->is_blacklisted( $ip ), 'the IP is blacklisted once the threshold is reached' );
+
+		$details = $blacklist->get_blacklist_details( $ip );
+		$this->assertTrue( $details['auto'] );
+		$this->assertSame( 600, $details['duration'], 'the block lasts the configured duration' );
+		$this->assertEqualsWithDelta( time() + 600, (int) get_option( '_transient_timeout_' . SecurityHelper::generate_ip_transient_key( 'ip_blacklist', $ip ) ), 5 );
+
+		// While blacklisted the form is closed to that IP, even a perfectly normal enquiry.
+		$this->assertFalse( $this->submit( $message )->is_valid(), 'a blacklisted IP cannot submit' );
+
+		// Another visitor is unaffected: the block is per IP.
+		$_SERVER['REMOTE_ADDR'] = '203.0.113.' . wp_rand( 2, 250 );
+		$this->assertTrue( $this->submit( $message )->is_valid(), 'a different IP still submits' );
+		$_SERVER['REMOTE_ADDR'] = $ip;
+
+		// When the block and the rate window have run out the IP submits again.
+		$this->expire_transient( SecurityHelper::generate_ip_transient_key( 'ip_blacklist', $ip ) );
+		$this->expire_transient( SecurityHelper::generate_ip_transient_key( 'form_rate', $ip ) );
+		wp_cache_flush();
+		$this->assertFalse( $blacklist->is_blacklisted( $ip ), 'the block ends when its duration has passed' );
+		$this->assertTrue( $this->submit( $message )->is_valid(), 'the IP submits again after the block expired' );
 	}
 
 	/**

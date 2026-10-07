@@ -140,6 +140,8 @@ class SecurityDataProvider {
 				'lockout_duration'              => DefaultConfig::get_option( 'silver_assist_lockout_duration' ),
 				'password_strength_enforcement' => (bool) $password_strength,
 				'bot_protection'                => (bool) $bot_protection,
+				// IPs locked out of the login right now (the login lockout, not the form flood blacklist).
+				'locked_out_ips'                => $this->stats_provider->get_blocked_ips_count(),
 			),
 			'admin_security'   => array(
 				'status'                        => $admin_hide ? 'active' : 'inactive',
