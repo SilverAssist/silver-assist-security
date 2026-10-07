@@ -63,6 +63,10 @@ class UninstallCleanupTest extends WP_UnitTestCase {
 		}
 		// Legacy option that older versions saved and that is not in the defaults.
 		\update_option( 'silver_assist_ip_violation_threshold', 7 );
+		// CF7 options nothing read, removed from the defaults in 1.5.4 (#178).
+		foreach ( array( 'obsolete_browser_detection', 'sql_injection_detection', 'cf7_spam_threshold', 'cf7_auto_block_bots' ) as $dead ) {
+			\update_option( 'silver_assist_' . $dead, 1 );
+		}
 		// Form rate options read by enforcement before 1.5.4 (migrated to the CF7 options).
 		\update_option( 'silver_assist_form_protection_enabled', 1 );
 		\update_option( 'silver_assist_form_rate_limit', 2 );

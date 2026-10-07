@@ -63,7 +63,7 @@ This plugin automatically implements enterprise-level security measures without 
 - **Automatic Integration**: Seamless integration with Contact Form 7 when plugin is active
 - **CAPTCHA on Forms**: Math-based CAPTCHA challenge injected into CF7 forms during Under Attack Mode
 - **Form Submission Rate Limiting**: Prevents rapid-fire spam submissions per IP. One setting governs it: "Rate Limit" on the Form Protection tab (`silver_assist_cf7_rate_limit`, 1-10 per window, default 2) and its window (`silver_assist_cf7_rate_window`, 30-300 seconds, default 60). The legacy `silver_assist_form_rate_*` options are migrated to these once and removed.
-- **Bot Protection**: Advanced detection of automated form submission attempts
+- **Bot Protection**: Advanced detection of automated form submission attempts. Three settings on the Form Protection tab tune it: "Honeypot Field" (`silver_assist_cf7_honeypot_enabled`, default on), "Minimum Submission Time" (`silver_assist_cf7_submission_delay`, 0-10000 milliseconds, default 2000, 0 = off; the form carries a signed hidden timing field, and a form without it, such as a cached page, is not checked, and a bot can reuse a token it captured earlier, so this is a soft signal: the rate limit and the blacklist remain the flood defence; lower it or set 0 if autofill or assistive tools submit faster than the minimum) and "Manual Block Duration" (`silver_assist_cf7_ip_block_duration`, 1-1440 minutes, default 60, how long an IP blocked by hand stays blocked). The obsolete browser, SQL injection and spam pattern checks are always on, there is no switch for them
 - **IP-based Blocking**: Temporary blocks for IPs exceeding submission limits
 - **CSRF Protection**: Enhanced nonce validation for form security
 - **Real-time Monitoring**: Track blocked form submissions and suspicious IPs
@@ -144,7 +144,7 @@ The plugin features a comprehensive 5-tab interface (4 tabs when Contact Form 7 
 **📧 Form Protection Tab** *(When Contact Form 7 is Active)*
 
 - Contact Form 7 integration status and configuration
-- Form submission rate limiting and spam protection
+- Form submission rate limiting, honeypot, minimum submission time and manual block duration
 - Bot detection specifically for form submissions
 - Real-time monitoring of blocked form attempts
 

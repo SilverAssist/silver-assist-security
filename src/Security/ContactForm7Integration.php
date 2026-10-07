@@ -25,6 +25,14 @@ use SilverAssist\Security\Core\SecurityHelper;
 class ContactForm7Integration implements LoadableInterface {
 
 	/**
+	 * Name of the hidden field that carries the signed render time of a form
+	 *
+	 * @since 1.5.4
+	 * @var string
+	 */
+	private const TIMING_FIELD = 'silver_form_ts';
+
+	/**
 	 * Singleton instance
 	 *
 	 * @var self|null
@@ -149,6 +157,9 @@ class ContactForm7Integration implements LoadableInterface {
 		// Late priority, after the other spam checks (Akismet, disallowed list) have decided.
 		\add_filter( 'wpcf7_spam', array( $this, 'handle_cf7_spam' ), 20, 2 );
 
+		// Timing field: when the form was shown, signed, for the minimum submission time check.
+		\add_filter( 'wpcf7_form_elements', array( $this, 'inject_timing_field' ), 10, 1 );
+
 		// Honeypot field injection.
 		if ( DefaultConfig::get_option( 'silver_assist_cf7_honeypot_enabled' ) ) {
 			\add_filter( 'wpcf7_form_elements', array( $this, 'inject_honeypot_field' ), 10, 1 );
@@ -172,7 +183,7 @@ class ContactForm7Integration implements LoadableInterface {
 		// Create mock contact form for validation.
 		$contact_form = $this->get_current_cf7_form();
 
-		if ( ! $this->validate_cf7_submission( $contact_form, $submission_data, $client_ip ) ) {
+		if ( ! $this->validate_cf7_submission( $contact_form, $submission_data, $client_ip, $this->read_form_start_time( $submission_data ) ) ) {
 			// Contact Form 7 only records an error for a field that exists in the form and ignores the
 			// rest, so pass a tag object: a name string that matches no form tag would let the
 			// submission through unchanged.
@@ -426,6 +437,49 @@ class ContactForm7Integration implements LoadableInterface {
 	}
 
 	/**
+	 * Add the signed timing field to a CF7 form
+	 *
+	 * The value is the time the form was rendered plus an HMAC of it, so a client cannot forge an
+	 * older start. It is read back by read_form_start_time() to enforce the minimum submission time.
+	 * The token is not single use: a bot that keeps one captured earlier looks slow, so the delay is a
+	 * soft signal and the rate limit and the blacklist remain the flood defence.
+	 *
+	 * @since 1.5.4
+	 * @param string $form CF7 form HTML.
+	 * @return string Form HTML with the timing field.
+	 */
+	public function inject_timing_field( string $form ): string {
+		$started = sprintf( '%.3f', microtime( true ) );
+		$field   = '<input type="hidden" name="' . self::TIMING_FIELD . '" value="' . \esc_attr( $started . '.' . \wp_hash( $started, 'nonce' ) ) . '" />';
+
+		return $form . $field;
+	}
+
+	/**
+	 * Read and verify the render time posted with a submission
+	 *
+	 * A missing, malformed, forged or future value yields null, so the minimum time is not enforced:
+	 * a cached page or a client that drops the field must never be blocked by it.
+	 *
+	 * @since 1.5.4
+	 * @param array $submission_data Posted data.
+	 * @return float|null Render time as a Unix timestamp with milliseconds.
+	 */
+	private function read_form_start_time( array $submission_data ): ?float {
+		$value = $submission_data[ self::TIMING_FIELD ] ?? '';
+		if ( ! \is_string( $value ) || 1 !== preg_match( '/^(\d{10}\.\d{3})\.([a-f0-9]{32})$/', \wp_unslash( $value ), $parts ) ) {
+			return null;
+		}
+
+		if ( ! hash_equals( \wp_hash( $parts[1], 'nonce' ), $parts[2] ) || (float) $parts[1] > microtime( true ) + 1 ) {
+			return null;
+		}
+
+		// The stamp is rounded to milliseconds, so it can be a hair ahead of now.
+		return min( (float) $parts[1], microtime( true ) );
+	}
+
+	/**
 	 * Inject honeypot field into CF7 form
 	 *
 	 * @since 1.1.15
@@ -533,8 +587,8 @@ class ContactForm7Integration implements LoadableInterface {
 		// Combine message and name fields only (skip email field to avoid false positives).
 		$text_fields = array();
 		foreach ( $submission_data as $key => $value ) {
-			// Skip email fields and honeypot fields; array values (checkboxes) are joined.
-			if ( ! in_array( $key, array( 'your-email', 'email', 'silver_honeypot_field' ), true ) ) {
+			// Skip email fields and the plugin's own fields; array values (checkboxes) are joined.
+			if ( ! in_array( $key, array( 'your-email', 'email', 'silver_honeypot_field', self::TIMING_FIELD ), true ) ) {
 				$text_fields[] = is_array( $value ) ? implode( ' ', array_map( 'strval', $value ) ) : (string) $value;
 			}
 		}

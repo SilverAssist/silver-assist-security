@@ -58,10 +58,8 @@ class ContactForm7IntegrationTest extends TestCase {
 			'silver_assist_cf7_protection_enabled',
 			'silver_assist_cf7_rate_limit',
 			'silver_assist_cf7_rate_window',
-			'silver_assist_cf7_spam_threshold',
 			'silver_assist_cf7_honeypot_enabled',
 			'silver_assist_cf7_submission_delay',
-			'silver_assist_cf7_auto_block_bots',
 			'silver_assist_cf7_ip_block_duration',
 		];
 
@@ -85,7 +83,7 @@ class ContactForm7IntegrationTest extends TestCase {
 		$this->assertLessThanOrEqual( 300, $defaults['silver_assist_cf7_rate_window'] );
 		
 		// Test submission delay is reasonable (in milliseconds)
-		$this->assertGreaterThan( 0, $defaults['silver_assist_cf7_submission_delay'] );
+		$this->assertGreaterThanOrEqual( 0, $defaults['silver_assist_cf7_submission_delay'] );
 		$this->assertLessThanOrEqual( 10000, $defaults['silver_assist_cf7_submission_delay'] ); // Max 10 seconds
 		
 		// Test IP block duration is reasonable
