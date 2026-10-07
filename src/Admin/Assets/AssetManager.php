@@ -205,6 +205,8 @@ class AssetManager {
 			'unsavedChanges'          => \__( 'You have unsaved changes.', 'silver-assist-security' ),
 			'leaveWarning'            => \__( 'You have unsaved changes. If you leave this page they will be lost.', 'silver-assist-security' ),
 			'adminHideConfirmNeeded'  => \__( 'Confirm that you saved the admin URL before Admin Hide takes effect.', 'silver-assist-security' ),
+			// Result message strings.
+			'dismissNotice'           => \__( 'Dismiss this notice.', 'silver-assist-security' ),
 			// AJAX error strings.
 			'updateCheckFailed'       => \__( 'Failed to check for Silver Assist updates', 'silver-assist-security' ),
 			'securityStatusFailed'    => \__( 'Failed to load security essentials', 'silver-assist-security' ),

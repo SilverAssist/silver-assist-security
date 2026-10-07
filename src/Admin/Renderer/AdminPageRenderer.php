@@ -82,6 +82,12 @@ class AdminPageRenderer {
 		?>
 		<div class="wrap">
 
+			<!-- Result messages: persistent live regions filled by showMessage() in admin.js. -->
+			<div id="silver-assist-messages" class="silver-messages">
+				<div id="silver-assist-messages-status" class="silver-messages-region" role="status"></div>
+				<div id="silver-assist-messages-alert" class="silver-messages-region" role="alert"></div>
+			</div>
+
 			<!-- Tab Navigation - Internal Security Plugin Tabs -->
 			<nav class="silver-nav-tab-wrapper">
 				<a href="#dashboard" class="silver-nav-tab silver-nav-tab-active" id="dashboard-tab">

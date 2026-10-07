@@ -158,6 +158,9 @@ All styles use CSS custom properties from `variables.css` (prefix `--silver-*`).
 ### Admin JavaScript Escaping
 Never concatenate a string into `.html()`, `.append()`, `.after()` or a template literal that builds markup. Use `escapeHtml()` from `assets/js/escape-html.js` (`window.SilverAssistSecurityUtils`, a dependency of `admin.js` and `password-validation.js`), `.text()` or `.attr()`; use `safeUrl()` for an `href`. Only HTML escaped on the server (the CF7 panel's `data.html`) is inserted as is. Covered by `tests/e2e/admin-js-escaping.spec.ts`.
 
+### Admin Result Messages
+Show the outcome of an AJAX handler with the single `showMessage( message, type )` in `admin.js` (`"success"` or `"error"`); never define another or fall back to `alert()`. It fills the live regions rendered by `AdminPageRenderer` (`#silver-assist-messages-status` with `role="status"`, `#silver-assist-messages-alert` with `role="alert"`), sets text with `.text()`, never auto-dismisses errors and takes its dismiss label from the localized `dismissNotice`. Covered by `tests/e2e/admin-show-message.spec.ts`.
+
 ### WordPress Options
 All options use `silver_assist_` prefix (e.g., `silver_assist_login_attempts`, `silver_assist_graphql_query_depth`, `silver_assist_session_timeout`, `silver_assist_bot_protection`, `silver_assist_graphql_headless_mode`).
 
