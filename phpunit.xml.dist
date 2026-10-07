@@ -13,6 +13,9 @@
     stopOnFailure="false"
     verbose="true"
 >
+    <extensions>
+        <extension class="SilverAssist\Security\Tests\Helpers\FreshRequestClock"/>
+    </extensions>
     <coverage processUncoveredFiles="true">
         <include>
             <directory suffix=".php">./src</directory>
