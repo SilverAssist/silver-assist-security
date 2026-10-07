@@ -3,7 +3,7 @@
  * Silver Assist Security Essentials - Settings Sanitizer
  *
  * The one place that turns a raw value into what a registered option may store, driven by
- * SettingsRegistry. SettingsSaver uses it for the settings screen and the auto-save endpoint, and
+ * SettingsRegistry. SettingsSaver uses it for the settings screen, and
  * `register()` attaches it as the `sanitize_callback` of every registered option, so values written
  * outside the saver (core's options.php, the REST settings route, WP-CLI, imports) are sanitized the same way.
  *

@@ -2,7 +2,9 @@
 /**
  * Settings Renderer class
  *
- * Handles the rendering of all settings tabs
+ * Handles the rendering of all settings tabs. Every tab with settings is one form with one Save button
+ * (#160): a sticky save bar shows unsaved changes, and the messages of the last save are shown next to
+ * their fields.
  *
  * @package SilverAssist\Security\Admin\Renderer
  * @since   1.1.15
@@ -10,6 +12,7 @@
 
 namespace SilverAssist\Security\Admin\Renderer;
 
+use SilverAssist\Security\Admin\Settings\SettingsSaver;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
@@ -64,23 +67,25 @@ class SettingsRenderer {
 	/**
 	 * Render login security settings tab
 	 *
+	 * One form for the whole tab: login protection, Admin Hide and login branding.
+	 *
 	 * @since 1.1.15
 	 * @return void
 	 */
 	private function render_login_security_tab(): void {
-		$config = $this->get_current_config();
+		$config     = $this->get_current_config();
+		$admin_path = RenderHelper::sticky_value( 'silver_assist_admin_hide_path', (string) $config['admin_hide_path'] );
 		?>
 		<!-- Login Security Tab -->
 		<div id="login-security-content" class="silver-tab-content">
+			<form method="post" action="" id="login-security-form" class="silver-settings-form">
+				<?php $this->render_form_fields( 'login-security' ); ?>
 
-			<div class="status-card login-security">
-				<div class="card-header">
-					<h3><?php \esc_html_e( 'Login Protection Settings', 'silver-assist-security' ); ?></h3>
-				</div>
-				<div class="card-content">
-					<form method="post" action="" id="security-settings-form">
-						<?php $this->render_form_fields( 'login' ); ?>
-
+				<div class="status-card login-security">
+					<div class="card-header">
+						<h3><?php \esc_html_e( 'Login Protection Settings', 'silver-assist-security' ); ?></h3>
+					</div>
+					<div class="card-content">
 						<table class="form-table">
 							<tbody>
 								<?php
@@ -131,30 +136,18 @@ class SettingsRenderer {
 								?>
 							</tbody>
 						</table>
+					</div>
+				</div>
 
-						<p class="submit">
-							<input type="submit"
-								name="submit"
-								id="login-settings-submit"
-								class="button button-primary"
-								value="<?php \esc_attr_e( 'Save Login Settings', 'silver-assist-security' ); ?>">
+				<!-- Admin Hide Security Section -->
+				<div class="status-card">
+					<div class="card-header">
+						<h3><?php \esc_html_e( 'Admin Hide Security', 'silver-assist-security' ); ?></h3>
+					</div>
+					<div class="card-content">
+						<p class="description" style="margin-top: 0;">
+							<?php \esc_html_e( 'Hide WordPress admin and login pages from unauthorized users by redirecting to custom URLs.', 'silver-assist-security' ); ?>
 						</p>
-					</form>
-				</div>
-			</div>
-
-			<!-- Admin Hide Security Section -->
-			<div class="status-card">
-				<div class="card-header">
-					<h3><?php \esc_html_e( 'Admin Hide Security', 'silver-assist-security' ); ?></h3>
-				</div>
-				<div class="card-content">
-					<p class="description" style="margin-top: 0;">
-						<?php \esc_html_e( 'Hide WordPress admin and login pages from unauthorized users by redirecting to custom URLs.', 'silver-assist-security' ); ?>
-					</p>
-
-					<form method="post" action="" id="admin-hide-form">
-						<?php $this->render_form_fields( 'admin_hide' ); ?>
 
 						<table class="form-table">
 							<tbody>
@@ -169,14 +162,16 @@ class SettingsRenderer {
 												id="silver_assist_admin_hide_enabled"
 												name="silver_assist_admin_hide_enabled"
 												value="1"
-												<?php \checked( $config['admin_hide_enabled'], 1 ); ?>>
+												<?php echo RenderHelper::field_attributes( 'silver_assist_admin_hide_enabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Attributes built and escaped by RenderHelper::field_attributes(). ?>
+												<?php \checked( RenderHelper::sticky_value( 'silver_assist_admin_hide_enabled', (string) (int) $config['admin_hide_enabled'] ), '1' ); ?>>
 											<span class="toggle-slider"></span>
 										</label>
 										<span class="toggle-label">
 											<?php \esc_html_e( 'Hide /wp-admin and /wp-login.php from unauthorized users', 'silver-assist-security' ); ?>
 										</span>
+										<?php RenderHelper::render_field_message( 'silver_assist_admin_hide_enabled' ); ?>
 										<p class="description">
-											<?php \esc_html_e( 'When enabled, direct access to WordPress admin URLs will return 404 errors. Use the custom path below to access the admin area.', 'silver-assist-security' ); ?>
+											<?php \esc_html_e( 'When enabled, direct access to WordPress admin URLs will return 404 errors. Use the custom path below to access the admin area. Nothing changes until you save.', 'silver-assist-security' ); ?>
 										</p>
 									</td>
 								</tr>
@@ -192,13 +187,43 @@ class SettingsRenderer {
 										<input type="text"
 											id="silver_assist_admin_hide_path"
 											name="silver_assist_admin_hide_path"
-											value="<?php echo \esc_attr( $config['admin_hide_path'] ); ?>"
+											value="<?php echo \esc_attr( $admin_path ); ?>"
 											placeholder="silver-admin"
 											maxlength="50"
-											class="regular-text">
+											class="regular-text"
+											<?php echo RenderHelper::field_attributes( 'silver_assist_admin_hide_path' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Attributes built and escaped by RenderHelper::field_attributes(). ?>>
+										<?php RenderHelper::render_field_message( 'silver_assist_admin_hide_path' ); ?>
 
 										<p class="description">
 											<?php \esc_html_e( "Custom path to access the admin area (e.g., 'my-secret-admin'). Avoid common words like 'admin', 'login', etc.", 'silver-assist-security' ); ?>
+										</p>
+										<p class="description">
+											<?php \esc_html_e( 'Your admin will be reachable at:', 'silver-assist-security' ); ?>
+											<code id="admin-hide-url-preview" data-base="<?php echo \esc_attr( \trailingslashit( \home_url() ) ); ?>"><?php echo \esc_html( SettingsSaver::admin_url_for_path( \sanitize_title( $admin_path ) ) ); ?></code>
+										</p>
+									</td>
+								</tr>
+
+								<!-- Confirmation: required for the change to take effect -->
+								<tr>
+									<th scope="row">
+										<label for="silver_assist_admin_hide_confirm">
+											<?php \esc_html_e( 'Confirm the admin URL', 'silver-assist-security' ); ?>
+										</label>
+									</th>
+									<td>
+										<input type="checkbox"
+											id="<?php echo \esc_attr( SettingsSaver::ADMIN_HIDE_CONFIRM_FIELD ); ?>"
+											name="<?php echo \esc_attr( SettingsSaver::ADMIN_HIDE_CONFIRM_FIELD ); ?>"
+											value="1"
+											data-enabled="<?php echo \esc_attr( (string) (int) $config['admin_hide_enabled'] ); ?>"
+											data-path="<?php echo \esc_attr( \sanitize_title( (string) $config['admin_hide_path'] ) ); ?>"
+											class="silver-no-toggle">
+										<label for="<?php echo \esc_attr( SettingsSaver::ADMIN_HIDE_CONFIRM_FIELD ); ?>">
+											<?php \esc_html_e( 'I saved the admin URL above and can open it', 'silver-assist-security' ); ?>
+										</label>
+										<p class="description">
+											<?php \esc_html_e( 'Required when you turn Admin Hide on or change the path while it is on. Without it the change is not saved, so a mistyped path cannot lock you out.', 'silver-assist-security' ); ?>
 										</p>
 									</td>
 								</tr>
@@ -219,30 +244,18 @@ class SettingsRenderer {
 								<li><?php \esc_html_e( 'This feature adds an extra layer of security but should be used alongside strong passwords and other security measures.', 'silver-assist-security' ); ?></li>
 							</ul>
 						</div>
+					</div>
+				</div>
 
-						<p class="submit">
-							<input type="submit"
-								name="submit"
-								id="admin-hide-submit"
-								class="button button-primary"
-								value="<?php \esc_attr_e( 'Save Admin Hide Settings', 'silver-assist-security' ); ?>">
+				<!-- Login Branding Section (inside the tab panel: the tab script only toggles .silver-tab-content) -->
+				<div class="status-card">
+					<div class="card-header">
+						<h3><?php \esc_html_e( 'Login Page Branding', 'silver-assist-security' ); ?></h3>
+					</div>
+					<div class="card-content">
+						<p class="description">
+							<?php \esc_html_e( 'Customize the WordPress login page with Silver Assist branding and a modern split-layout design.', 'silver-assist-security' ); ?>
 						</p>
-					</form>
-				</div>
-			</div>
-
-			<!-- Login Branding Section (inside the tab panel: the tab script only toggles .silver-tab-content) -->
-			<div class="status-card">
-				<div class="card-header">
-					<h3><?php \esc_html_e( 'Login Page Branding', 'silver-assist-security' ); ?></h3>
-				</div>
-				<div class="card-content">
-					<p class="description">
-						<?php \esc_html_e( 'Customize the WordPress login page with Silver Assist branding and a modern split-layout design.', 'silver-assist-security' ); ?>
-					</p>
-
-					<form method="post" action="" id="login-branding-form">
-						<?php $this->render_form_fields( 'login_branding' ); ?>
 
 						<table class="form-table">
 							<tbody>
@@ -272,9 +285,11 @@ class SettingsRenderer {
 										<input type="url"
 											id="silver_assist_login_branding_logo_url"
 											name="silver_assist_login_branding_logo_url"
-											value="<?php echo \esc_attr( $config['login_branding_logo_url'] ); ?>"
+											value="<?php echo \esc_attr( RenderHelper::sticky_value( 'silver_assist_login_branding_logo_url', (string) $config['login_branding_logo_url'] ) ); ?>"
 											placeholder="https://example.com/logo.png"
-											class="regular-text">
+											class="regular-text"
+											<?php echo RenderHelper::field_attributes( 'silver_assist_login_branding_logo_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Attributes built and escaped by RenderHelper::field_attributes(). ?>>
+										<?php RenderHelper::render_field_message( 'silver_assist_login_branding_logo_url' ); ?>
 										<p class="description">
 											<?php \esc_html_e( 'URL to a custom logo image. Leave empty to use the built-in Silver Assist logo.', 'silver-assist-security' ); ?>
 										</p>
@@ -292,10 +307,12 @@ class SettingsRenderer {
 										<input type="text"
 											id="silver_assist_login_branding_bg_color"
 											name="silver_assist_login_branding_bg_color"
-											value="<?php echo \esc_attr( $config['login_branding_bg_color'] ); ?>"
+											value="<?php echo \esc_attr( RenderHelper::sticky_value( 'silver_assist_login_branding_bg_color', (string) $config['login_branding_bg_color'] ) ); ?>"
 											placeholder="#0a1628"
 											class="small-text"
-											maxlength="7">
+											maxlength="7"
+											<?php echo RenderHelper::field_attributes( 'silver_assist_login_branding_bg_color' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Attributes built and escaped by RenderHelper::field_attributes(). ?>>
+										<?php RenderHelper::render_field_message( 'silver_assist_login_branding_bg_color' ); ?>
 										<p class="description">
 											<?php \esc_html_e( 'Hex color for the illustration panel background. Leave empty for the default gradient.', 'silver-assist-security' ); ?>
 										</p>
@@ -303,17 +320,11 @@ class SettingsRenderer {
 								</tr>
 							</tbody>
 						</table>
-
-						<p class="submit">
-							<input type="submit"
-								name="submit"
-								id="login-branding-submit"
-								class="button button-primary"
-								value="<?php \esc_attr_e( 'Save Branding Settings', 'silver-assist-security' ); ?>">
-						</p>
-					</form>
+					</div>
 				</div>
-			</div>
+
+				<?php $this->render_save_bar( 'login-security' ); ?>
+			</form>
 		</div>
 		<?php
 	}
@@ -329,15 +340,14 @@ class SettingsRenderer {
 		?>
 		<!-- REST API Security Tab -->
 		<div id="rest-api-security-content" class="silver-tab-content">
+			<form method="post" action="" id="rest-api-security-form" class="silver-settings-form">
+				<?php $this->render_form_fields( 'rest-api-security' ); ?>
 
-			<div class="status-card rest-api-security">
-				<div class="card-header">
-					<h3><?php \esc_html_e( 'REST API Security Settings', 'silver-assist-security' ); ?></h3>
-				</div>
-				<div class="card-content">
-					<form method="post" action="" id="rest-api-security-form">
-						<?php $this->render_form_fields( 'rest_api' ); ?>
-
+				<div class="status-card rest-api-security">
+					<div class="card-header">
+						<h3><?php \esc_html_e( 'REST API Security Settings', 'silver-assist-security' ); ?></h3>
+					</div>
+					<div class="card-content">
 						<table class="form-table">
 							<tbody>
 								<?php
@@ -376,23 +386,19 @@ class SettingsRenderer {
 								?>
 							</tbody>
 						</table>
-
-						<p class="submit">
-							<input type="submit"
-								name="submit"
-								id="rest-api-security-submit"
-								class="button button-primary"
-								value="<?php \esc_attr_e( 'Save REST API Settings', 'silver-assist-security' ); ?>">
-						</p>
-					</form>
+					</div>
 				</div>
-			</div>
+
+				<?php $this->render_save_bar( 'rest-api-security' ); ?>
+			</form>
 		</div>
 		<?php
 	}
 
 	/**
 	 * Render GraphQL security settings tab
+	 *
+	 * One form for the settings card and the authentication card; the API key buttons act immediately.
 	 *
 	 * @since 1.1.15
 	 * @return void
@@ -405,19 +411,19 @@ class SettingsRenderer {
 
 			<?php if ( \class_exists( 'WPGraphQL' ) ) : ?>
 
-				<div class="status-card graphql-security">
-					<div class="card-header">
-						<h3><?php \esc_html_e( 'GraphQL Security Settings', 'silver-assist-security' ); ?></h3>
-					</div>
-					<div class="card-content">
+				<form method="post" action="" id="graphql-security-form" class="silver-settings-form">
+					<?php $this->render_form_fields( 'graphql-security' ); ?>
 
-						<!-- Display current GraphQL configuration -->
-						<div class="graphql-config-display">
-							<?php echo $this->config_manager->get_settings_display(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_settings_display() returns HTML assembled entirely from esc_html()/esc_html__()-wrapped pieces and static markup; see GraphQLConfigManager::get_settings_display(). ?>
+					<div class="status-card graphql-security">
+						<div class="card-header">
+							<h3><?php \esc_html_e( 'GraphQL Security Settings', 'silver-assist-security' ); ?></h3>
 						</div>
+						<div class="card-content">
 
-						<form method="post" action="" id="graphql-settings-form">
-							<?php $this->render_form_fields( 'graphql' ); ?>
+							<!-- Display current GraphQL configuration -->
+							<div class="graphql-config-display">
+								<?php echo $this->config_manager->get_settings_display(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_settings_display() returns HTML assembled entirely from esc_html()/esc_html__()-wrapped pieces and static markup; see GraphQLConfigManager::get_settings_display(). ?>
+							</div>
 
 							<table class="form-table">
 								<tbody>
@@ -441,67 +447,55 @@ class SettingsRenderer {
 									?>
 								</tbody>
 							</table>
-
-							<p class="submit">
-								<input type="submit"
-									name="submit"
-									id="graphql-settings-submit"
-									class="button button-primary"
-									value="<?php \esc_attr_e( 'Save GraphQL Settings', 'silver-assist-security' ); ?>">
-							</p>
-						</form>
-					</div>
-				</div>
-
-				<!-- GraphQL Authentication Section -->
-				<div class="status-card graphql-security">
-					<div class="card-header">
-						<h3><?php \esc_html_e( 'GraphQL Authentication', 'silver-assist-security' ); ?></h3>
-					</div>
-					<div class="card-content">
-
-						<?php
-						$is_auth_required = $this->config_manager->is_authentication_required();
-						?>
-
-						<table class="form-table">
-							<tbody>
-								<tr>
-									<th scope="row">
-										<?php \esc_html_e( 'Require Authentication', 'silver-assist-security' ); ?>
-									</th>
-									<td>
-										<?php if ( $is_auth_required ) : ?>
-											<span class="feature-value enabled"><?php \esc_html_e( 'Enabled', 'silver-assist-security' ); ?></span>
-										<?php else : ?>
-											<span class="feature-value disabled"><?php \esc_html_e( 'Disabled', 'silver-assist-security' ); ?></span>
-										<?php endif; ?>
-										<p class="description">
-											<?php
-											\printf(
-												/* translators: %s: URL to WPGraphQL settings page. */
-												\esc_html__( 'This setting is managed by WPGraphQL. %s to change it.', 'silver-assist-security' ),
-												'<a href="' . \esc_url( \admin_url( 'admin.php?page=graphql-settings' ) ) . '">' . \esc_html__( 'Go to WPGraphQL Settings', 'silver-assist-security' ) . '</a>'
-											);
-											?>
-										</p>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-
-						<!-- Authentication info -->
-						<div class="admin-hide-warning">
-							<h4><?php \esc_html_e( 'Important Notice', 'silver-assist-security' ); ?></h4>
-							<ul>
-								<li><?php \esc_html_e( 'When enabled, all GraphQL consumers must authenticate via Application Passwords, API Key, or WordPress session.', 'silver-assist-security' ); ?></li>
-								<li><?php \esc_html_e( 'Authentication is not enforced in local/development environments to allow development tooling.', 'silver-assist-security' ); ?></li>
-								<li><?php \esc_html_e( 'Headless front-end applications (Next.js, Gatsby, etc.) will need to use Application Passwords or the API Key below.', 'silver-assist-security' ); ?></li>
-							</ul>
 						</div>
+					</div>
 
-						<form method="post" action="" id="graphql-auth-form">
-							<?php $this->render_form_fields( 'graphql_auth' ); ?>
+					<!-- GraphQL Authentication Section -->
+					<div class="status-card graphql-security">
+						<div class="card-header">
+							<h3><?php \esc_html_e( 'GraphQL Authentication', 'silver-assist-security' ); ?></h3>
+						</div>
+						<div class="card-content">
+
+							<?php
+							$is_auth_required = $this->config_manager->is_authentication_required();
+							?>
+
+							<table class="form-table">
+								<tbody>
+									<tr>
+										<th scope="row">
+											<?php \esc_html_e( 'Require Authentication', 'silver-assist-security' ); ?>
+										</th>
+										<td>
+											<?php if ( $is_auth_required ) : ?>
+												<span class="feature-value enabled"><?php \esc_html_e( 'Enabled', 'silver-assist-security' ); ?></span>
+											<?php else : ?>
+												<span class="feature-value disabled"><?php \esc_html_e( 'Disabled', 'silver-assist-security' ); ?></span>
+											<?php endif; ?>
+											<p class="description">
+												<?php
+												\printf(
+													/* translators: %s: URL to WPGraphQL settings page. */
+													\esc_html__( 'This setting is managed by WPGraphQL. %s to change it.', 'silver-assist-security' ),
+													'<a href="' . \esc_url( \admin_url( 'admin.php?page=graphql-settings' ) ) . '">' . \esc_html__( 'Go to WPGraphQL Settings', 'silver-assist-security' ) . '</a>'
+												);
+												?>
+											</p>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+
+							<!-- Authentication info -->
+							<div class="admin-hide-warning">
+								<h4><?php \esc_html_e( 'Important Notice', 'silver-assist-security' ); ?></h4>
+								<ul>
+									<li><?php \esc_html_e( 'When enabled, all GraphQL consumers must authenticate via Application Passwords, API Key, or WordPress session.', 'silver-assist-security' ); ?></li>
+									<li><?php \esc_html_e( 'Authentication is not enforced in local/development environments to allow development tooling.', 'silver-assist-security' ); ?></li>
+									<li><?php \esc_html_e( 'Headless front-end applications (Next.js, Gatsby, etc.) will need to use Application Passwords or the API Key below.', 'silver-assist-security' ); ?></li>
+								</ul>
+							</div>
 
 							<h4><?php \esc_html_e( 'API Key Management', 'silver-assist-security' ); ?></h4>
 
@@ -519,14 +513,15 @@ class SettingsRenderer {
 												array(
 													'name' => 'silver_assist_graphql_service_user_id',
 													'id'   => 'silver_assist_graphql_service_user_id',
-													'selected' => $config['graphql_service_user_id'],
+													'selected' => (int) RenderHelper::sticky_value( 'silver_assist_graphql_service_user_id', (string) $config['graphql_service_user_id'] ),
 													'show_option_none' => \__( '— Select Service User —', 'silver-assist-security' ),
 													'option_none_value' => '0',
 												)
 											);
 											?>
+											<?php RenderHelper::render_field_message( 'silver_assist_graphql_service_user_id' ); ?>
 											<p class="description">
-												<?php \esc_html_e( 'WordPress user for API key authentication. A Subscriber role is recommended.', 'silver-assist-security' ); ?>
+												<?php \esc_html_e( 'WordPress user for API key authentication. A Subscriber role is recommended. Saved with the Save button.', 'silver-assist-security' ); ?>
 											</p>
 										</td>
 									</tr>
@@ -575,6 +570,9 @@ class SettingsRenderer {
 													</button>
 												<?php endif; ?>
 											</p>
+											<p class="description">
+												<?php \esc_html_e( 'These buttons act immediately and do not need Save.', 'silver-assist-security' ); ?>
+											</p>
 										</td>
 									</tr>
 								</tbody>
@@ -590,17 +588,11 @@ class SettingsRenderer {
 									<code class="api-key-usage-code">Authorization: Bearer your-api-key</code>
 								</div>
 							<?php endif; ?>
-
-							<p class="submit">
-								<input type="submit"
-									name="submit"
-									id="graphql-auth-submit"
-									class="button button-primary"
-									value="<?php \esc_attr_e( 'Save Authentication Settings', 'silver-assist-security' ); ?>">
-							</p>
-						</form>
+						</div>
 					</div>
-				</div>
+
+					<?php $this->render_save_bar( 'graphql-security' ); ?>
+				</form>
 
 			<?php else : ?>
 
@@ -637,14 +629,14 @@ class SettingsRenderer {
 		<!-- CF7 Security Tab -->
 		<div id="cf7-security-content" class="silver-tab-content">
 
-			<div class="status-card cf7-security">
-				<div class="card-header">
-					<h3><?php \esc_html_e( 'Contact Form 7 Protection', 'silver-assist-security' ); ?></h3>
-				</div>
-				<div class="card-content">
-					<form method="post" action="" id="cf7-settings-form">
-						<?php $this->render_form_fields( 'cf7' ); ?>
+			<form method="post" action="" id="cf7-security-form" class="silver-settings-form">
+				<?php $this->render_form_fields( 'cf7-security' ); ?>
 
+				<div class="status-card cf7-security">
+					<div class="card-header">
+						<h3><?php \esc_html_e( 'Contact Form 7 Protection', 'silver-assist-security' ); ?></h3>
+					</div>
+					<div class="card-content">
 						<table class="form-table">
 							<tbody>
 								<?php
@@ -667,19 +659,13 @@ class SettingsRenderer {
 								?>
 							</tbody>
 						</table>
-
-						<p class="submit">
-							<input type="submit"
-								name="submit"
-								id="cf7-settings-submit"
-								class="button button-primary"
-								value="<?php \esc_attr_e( 'Save Form Settings', 'silver-assist-security' ); ?>">
-						</p>
-					</form>
+					</div>
 				</div>
-			</div>
 
-			<!-- CF7 Blocked IPs Management -->
+				<?php $this->render_save_bar( 'cf7-security' ); ?>
+			</form>
+
+			<!-- CF7 Blocked IPs Management (immediate actions, outside the form) -->
 			<div class="status-card">
 				<div class="card-header">
 					<h3><?php \esc_html_e( 'Form Flood Blacklist - Blocked IPs Management', 'silver-assist-security' ); ?></h3>
@@ -707,17 +693,17 @@ class SettingsRenderer {
 		<!-- IP Management Tab -->
 		<div id="ip-management-content" class="silver-tab-content">
 
-			<div class="status-card admin-security">
-				<div class="card-header">
-					<h3><?php \esc_html_e( 'Form Flood Protection (Contact Form 7)', 'silver-assist-security' ); ?></h3>
-				</div>
-				<div class="card-content">
-					<p class="description">
-						<?php \esc_html_e( 'These controls and the lists below cover Contact Form 7 submissions only. Failed-login lockouts by IP are a separate protection: set them in the Login Security tab; they end on their own and are not listed here.', 'silver-assist-security' ); ?>
-					</p>
-					<form method="post" action="" id="ip-management-form">
-						<?php $this->render_form_fields( 'ip' ); ?>
+			<form method="post" action="" id="ip-management-form" class="silver-settings-form">
+				<?php $this->render_form_fields( 'ip-management' ); ?>
 
+				<div class="status-card admin-security">
+					<div class="card-header">
+						<h3><?php \esc_html_e( 'Form Flood Protection (Contact Form 7)', 'silver-assist-security' ); ?></h3>
+					</div>
+					<div class="card-content">
+						<p class="description">
+							<?php \esc_html_e( 'These controls and the lists below cover Contact Form 7 submissions only. Failed-login lockouts by IP are a separate protection: set them in the Login Security tab; they end on their own and are not listed here.', 'silver-assist-security' ); ?>
+						</p>
 						<table class="form-table">
 							<tbody>
 								<?php
@@ -740,17 +726,11 @@ class SettingsRenderer {
 								?>
 							</tbody>
 						</table>
-
-						<p class="submit">
-							<input type="submit"
-								name="submit"
-								id="ip-management-submit"
-								class="button button-primary"
-								value="<?php \esc_attr_e( 'Save IP Settings', 'silver-assist-security' ); ?>">
-						</p>
-					</form>
+					</div>
 				</div>
-			</div>
+
+				<?php $this->render_save_bar( 'ip-management' ); ?>
+			</form>
 
 			<!-- Login Security Blocked IPs Section -->
 			<div class="status-card">
@@ -780,7 +760,7 @@ class SettingsRenderer {
 				</div>
 			<?php endif; ?>
 
-			<!-- Manual IP Management Section -->
+			<!-- Manual IP Management Section (immediate actions, outside the form) -->
 			<div class="status-card">
 				<div class="card-header">
 					<h3><?php \esc_html_e( 'Manual IP Management', 'silver-assist-security' ); ?></h3>
@@ -802,7 +782,7 @@ class SettingsRenderer {
 							</button>
 						</div>
 						<p class="description">
-							<?php \esc_html_e( 'Manually block an IP address from submitting Contact Form 7 forms for 30 days. This does not block login, the front end, REST or GraphQL; login lockouts are managed in the Login Security tab.', 'silver-assist-security' ); ?>
+							<?php \esc_html_e( 'Manually block an IP address from submitting Contact Form 7 forms for 30 days. This does not block login, the front end, REST or GraphQL; login lockouts are managed in the Login Security tab. Blocking applies immediately and does not need Save.', 'silver-assist-security' ); ?>
 						</p>
 					</div>
 				</div>
@@ -814,20 +794,45 @@ class SettingsRenderer {
 	/**
 	 * Print the hidden fields every settings form needs
 	 *
-	 * The gate field and the nonce the handler verifies (`_wpnonce`, with an id unique per form), plus the section the form saves.
-	 * Every form maps to exactly one section of SettingsRegistry.
+	 * The gate field and the nonce the handler verifies (`_wpnonce`, with an id unique per form), plus the
+	 * tab the form saves. Every form maps to exactly one tab of SettingsRegistry.
 	 *
 	 * @since 1.5.4
-	 * @param string $section Section slug from SettingsRegistry.
+	 * @param string $tab Tab slug from SettingsRegistry::tabs().
 	 * @return void
 	 */
-	private function render_form_fields( string $section ): void {
+	private function render_form_fields( string $tab ): void {
 		// wp_nonce_field() uses the field name as the element id, which repeats on a page with several forms.
 		$nonce_field = \wp_nonce_field( 'silver_assist_security_settings', '_wpnonce', false, false );
-		echo \str_replace( 'id="_wpnonce"', 'id="' . \esc_attr( $section ) . '-settings-nonce"', $nonce_field ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup built by wp_nonce_field(); only the id attribute is replaced, with an escaped slug.
+		echo \str_replace( 'id="_wpnonce"', 'id="' . \esc_attr( $tab ) . '-settings-nonce"', $nonce_field ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup built by wp_nonce_field(); only the id attribute is replaced, with an escaped slug.
 		?>
 		<input type="hidden" name="save_silver_assist_security" value="1">
-		<input type="hidden" name="settings_section" value="<?php echo \esc_attr( $section ); ?>">
+		<input type="hidden" name="settings_tab" value="<?php echo \esc_attr( $tab ); ?>">
+		<?php
+	}
+
+	/**
+	 * Print the sticky save bar that ends a tab form
+	 *
+	 * The tab's one Save button, a Discard button the script reveals while there are unsaved changes and
+	 * the persistent status region (role="status") that says "Unsaved changes", "Saving..." or the result.
+	 * Without JavaScript the bar is a plain Save button.
+	 *
+	 * @since 1.5.4
+	 * @param string $tab Tab slug.
+	 * @return void
+	 */
+	private function render_save_bar( string $tab ): void {
+		?>
+		<div class="silver-save-bar" data-dirty="false">
+			<p class="silver-save-status" id="<?php echo \esc_attr( $tab ); ?>-save-status" role="status" aria-live="polite"></p>
+			<button type="button" class="button silver-discard" hidden><?php \esc_html_e( 'Discard changes', 'silver-assist-security' ); ?></button>
+			<input type="submit"
+				name="submit"
+				id="<?php echo \esc_attr( $tab ); ?>-submit"
+				class="button button-primary"
+				value="<?php \esc_attr_e( 'Save changes', 'silver-assist-security' ); ?>">
+		</div>
 		<?php
 	}
 

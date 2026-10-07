@@ -1264,11 +1264,70 @@
     border-top: var(--silver-border-width-thin) solid var(--silver-border-lighter);
 }
 
-/* Submit button saving state — visual feedback during autosave */
+/* Submit button saving state — visual feedback while the form is being sent */
 .silver-assist-security-admin input[type="submit"].is-saving {
     opacity: 0.65;
     cursor: not-allowed;
     pointer-events: none;
+}
+
+/* Sticky save bar: the one Save of a tab (#160). Always at the bottom of the viewport inside the
+   form; it is highlighted and shows Discard while the form has unsaved changes. */
+.silver-assist-security-admin .silver-save-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--silver-spacing-md);
+    flex-wrap: wrap;
+    margin-top: var(--silver-spacing-lg);
+    padding: var(--silver-spacing-md) var(--silver-spacing-lg);
+    background: var(--silver-bg-primary);
+    border: var(--silver-border-width-thin) solid var(--silver-border-secondary);
+    border-radius: var(--silver-radius-md);
+    box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.silver-assist-security-admin .silver-save-bar[data-dirty="true"] {
+    border-color: var(--silver-primary-blue);
+    background: var(--silver-primary-blue-light);
+}
+
+.silver-assist-security-admin .silver-save-bar .silver-save-status {
+    margin: 0;
+    margin-inline-end: auto;
+    font-weight: 600;
+    color: var(--silver-text-primary);
+}
+
+.silver-assist-security-admin .silver-save-bar .silver-discard[hidden] {
+    display: none;
+}
+
+/* Admin Hide confirmation row, highlighted while the change needs the checkbox */
+.silver-assist-security-admin tr.silver-needs-confirmation th,
+.silver-assist-security-admin tr.silver-needs-confirmation td {
+    background: var(--silver-primary-blue-light);
+}
+
+/* Messages of the last save, shown next to the field they are about */
+.silver-assist-security-admin .silver-field-message {
+    margin: var(--silver-spacing-sm) 0 0;
+    font-weight: 600;
+}
+
+.silver-assist-security-admin .silver-field-message.is-error {
+    color: var(--silver-error-tertiary);
+}
+
+.silver-assist-security-admin .silver-field-message.is-adjusted {
+    color: var(--silver-text-secondary);
+}
+
+.silver-assist-security-admin input[aria-invalid="true"] {
+    border-color: var(--silver-error-tertiary);
 }
 
 /* Add IP Form */

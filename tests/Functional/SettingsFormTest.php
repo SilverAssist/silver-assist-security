@@ -153,14 +153,13 @@ class SettingsFormTest extends WP_UnitTestCase
     }
 
     /**
-     * Test auto-save AJAX action is registered
+     * The auto-save AJAX action no longer exists: settings are saved explicitly (#160)
      */
-    public function test_auto_save_action_registered(): void
+    public function test_auto_save_action_is_not_registered(): void
     {
-        // The auto_save action should be registered by SecurityAjaxHandler
-        $this->assertNotFalse(
+        $this->assertFalse(
             \has_action('wp_ajax_silver_assist_auto_save'),
-            'Auto-save AJAX action should be registered'
+            'Settings are saved with the tab Save button only'
         );
     }
 

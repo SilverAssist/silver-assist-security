@@ -41,24 +41,14 @@ class SettingsSaverTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Save in form mode
+	 * Save one section
 	 *
 	 * @param array<string, mixed> $input   Input.
 	 * @param string               $section Section.
 	 * @return SaveResult
 	 */
 	private function form( array $input, string $section ): SaveResult {
-		return $this->saver->save( $input, $section, SettingsSaver::MODE_FORM );
-	}
-
-	/**
-	 * Save in auto-save mode
-	 *
-	 * @param array<string, mixed> $input Input.
-	 * @return SaveResult
-	 */
-	private function autosave( array $input ): SaveResult {
-		return $this->saver->save( $input, '', SettingsSaver::MODE_AUTOSAVE );
+		return $this->saver->save( $input, $section );
 	}
 
 	/**
@@ -173,26 +163,6 @@ class SettingsSaverTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * In auto-save only submitted keys are touched, and only "1" means on
-	 *
-	 * @return void
-	 */
-	public function test_autosave_mode_touches_only_submitted_keys(): void {
-		\update_option( 'silver_assist_bot_protection', 1 );
-		\update_option( 'silver_assist_password_strength_enforcement', 1 );
-
-		$this->autosave( array( 'silver_assist_password_strength_enforcement' => '' ) );
-		$this->assertSame( 0, (int) \get_option( 'silver_assist_password_strength_enforcement' ), 'An empty string is an unchecked box.' );
-		$this->assertSame( 1, (int) \get_option( 'silver_assist_bot_protection' ), 'A key that was not submitted is untouched.' );
-
-		$this->autosave( array( 'silver_assist_password_strength_enforcement' => '1' ) );
-		$this->assertSame( 1, (int) \get_option( 'silver_assist_password_strength_enforcement' ) );
-
-		$this->autosave( array( 'silver_assist_password_strength_enforcement' => 'yes' ) );
-		$this->assertSame( 0, (int) \get_option( 'silver_assist_password_strength_enforcement' ), 'Anything but "1" is off.' );
-	}
-
-	/**
 	 * Unknown keys and keys of another section are ignored in a section save
 	 *
 	 * @return void
@@ -214,55 +184,6 @@ class SettingsSaverTest extends WP_UnitTestCase {
 		$this->assertContains( 'silver_assist_not_an_option', $result->ignored );
 		$this->assertContains( 'settings_section', $result->ignored );
 		$this->assertNotContains( 'silver_assist_login_attempts', $result->ignored );
-	}
-
-	/**
-	 * Auto-save accepts only the eligible options and reports the rest as ignored
-	 *
-	 * @return void
-	 */
-	public function test_autosave_ignores_ineligible_options(): void {
-		$result = $this->autosave(
-			array(
-				'silver_assist_login_attempts'                 => '8',
-				'silver_assist_rest_rate_limit_requests'       => '500',
-				'silver_assist_login_branding_logo_url'        => 'https://example.com/l.png',
-				'silver_assist_admin_hide_path'                => 'my-private-door',
-				'silver_assist_graphql_service_user_id'        => '1',
-				'silver_assist_graphql_query_timeout'          => '5',
-				'silver_assist_cf7_rate_limit'                 => '4',
-				'silver_assist_nonsense'                       => '1',
-			)
-		);
-
-		$this->assertSame( array( 'silver_assist_login_attempts' ), \array_keys( $result->saved ) );
-		$this->assertSame( 1, $result->saved_count() );
-		$this->assertEqualsCanonicalizing(
-			array(
-				'silver_assist_rest_rate_limit_requests',
-				'silver_assist_login_branding_logo_url',
-				'silver_assist_admin_hide_path',
-				'silver_assist_graphql_service_user_id',
-				'silver_assist_graphql_query_timeout',
-				'silver_assist_cf7_rate_limit',
-				'silver_assist_nonsense',
-			),
-			$result->ignored
-		);
-		$this->assertFalse( \get_option( 'silver_assist_rest_rate_limit_requests' ) );
-		$this->assertFalse( \get_option( 'silver_assist_admin_hide_path' ) );
-	}
-
-	/**
-	 * Auto-save of nothing eligible saves nothing
-	 *
-	 * @return void
-	 */
-	public function test_autosave_with_nothing_eligible_saves_nothing(): void {
-		$result = $this->autosave( array( 'silver_assist_rest_rate_limit_window' => '60' ) );
-
-		$this->assertSame( 0, $result->saved_count() );
-		$this->assertSame( array(), $result->saved );
 	}
 
 	/**
@@ -340,30 +261,44 @@ class SettingsSaverTest extends WP_UnitTestCase {
 	public function test_admin_path_not_submitted_is_untouched(): void {
 		\update_option( 'silver_assist_admin_hide_path', 'my-private-door' );
 
-		$this->form( array( 'silver_assist_admin_hide_enabled' => '1' ), 'admin_hide' );
+		$this->form(
+			array(
+				'silver_assist_admin_hide_enabled'      => '1',
+				SettingsSaver::ADMIN_HIDE_CONFIRM_FIELD => '1',
+			),
+			'admin_hide'
+		);
 
 		$this->assertSame( 'my-private-door', \get_option( 'silver_assist_admin_hide_path' ) );
+		$this->assertSame( 1, (int) \get_option( 'silver_assist_admin_hide_enabled' ) );
 	}
 
 	/**
-	 * Rewrite rules are flushed when an admin hide save leaves hiding enabled
+	 * Rewrite rules are flushed when the toggle or the path changes, and only then
 	 *
 	 * @return void
 	 */
-	public function test_admin_hide_form_save_flushes_rewrite_rules_when_enabled(): void {
-		\update_option( 'rewrite_rules', 'a:0:{}' );
-		$this->form( array( 'silver_assist_admin_hide_path' => 'my-private-door' ), 'admin_hide' );
-		$this->assertSame( 0, (int) \get_option( 'silver_assist_admin_hide_enabled' ) );
-		$this->assertSame( 'a:0:{}', \get_option( 'rewrite_rules' ), 'No flush while hiding is off.' );
+	public function test_admin_hide_save_flushes_rewrite_rules_only_when_the_state_changes(): void {
+		$this->set_permalink_structure( '/%postname%/' );
 
-		$this->form(
+		$this->form( array( 'silver_assist_admin_hide_path' => 'my-private-door' ), 'admin_hide' );
+		\update_option( 'rewrite_rules', 'a:0:{}' );
+
+		$result = $this->form( array( 'silver_assist_admin_hide_path' => 'my-private-door' ), 'admin_hide' );
+		$this->assertSame( 'a:0:{}', \get_option( 'rewrite_rules' ), 'Nothing changed, nothing flushed.' );
+		$this->assertFalse( $result->rewrite_flushed );
+
+		$result = $this->form(
 			array(
-				'silver_assist_admin_hide_enabled' => '1',
-				'silver_assist_admin_hide_path'    => 'my-private-door',
+				'silver_assist_admin_hide_enabled'      => '1',
+				'silver_assist_admin_hide_path'         => 'my-private-door',
+				SettingsSaver::ADMIN_HIDE_CONFIRM_FIELD => '1',
 			),
 			'admin_hide'
 		);
 		$this->assertNotSame( 'a:0:{}', \get_option( 'rewrite_rules' ), 'Rewrite rules were flushed.' );
+		$this->assertTrue( $result->rewrite_flushed );
+		$this->assertSame( \home_url( '/my-private-door' ), $result->admin_url );
 	}
 
 	/**
@@ -386,19 +321,6 @@ class SettingsSaverTest extends WP_UnitTestCase {
 			$this->assertFalse( \get_option( 'silver_assist_login_attempts' ) );
 			$this->assertFalse( \get_option( 'silver_assist_bot_protection' ) );
 		}
-	}
-
-	/**
-	 * An unknown mode writes nothing
-	 *
-	 * @return void
-	 */
-	public function test_unknown_mode_writes_nothing(): void {
-		$result = $this->saver->save( array( 'silver_assist_login_attempts' => '9' ), 'login', 'whatever' );
-
-		$this->assertSame( 0, $result->saved_count() );
-		$this->assertArrayHasKey( 'mode', $result->errors );
-		$this->assertFalse( \get_option( 'silver_assist_login_attempts' ) );
 	}
 
 	/**

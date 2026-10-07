@@ -199,8 +199,7 @@ class AdminPathValidationTest extends WP_UnitTestCase {
 		foreach ( array( 'wp-json', 'feed', 'login', 'ab', '', '!!!' ) as $bad ) {
 			$result = ( new SettingsSaver() )->save(
 				array( 'silver_assist_admin_hide_path' => $bad ),
-				'admin_hide',
-				SettingsSaver::MODE_FORM
+				'admin_hide'
 			);
 
 			$this->assertSame( 'my-private-door', \get_option( 'silver_assist_admin_hide_path' ), "'{$bad}' must not overwrite the stored path." );
@@ -227,8 +226,7 @@ class AdminPathValidationTest extends WP_UnitTestCase {
 
 		$result = ( new SettingsSaver() )->save(
 			array( 'silver_assist_admin_hide_path' => 'contact-us' ),
-			'admin_hide',
-			SettingsSaver::MODE_FORM
+			'admin_hide'
 		);
 
 		$this->assertArrayHasKey( 'silver_assist_admin_hide_path', $result->errors );
@@ -236,26 +234,28 @@ class AdminPathValidationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A valid path is saved; the other options of the form are saved next to a rejected one
+	 * A valid path is saved; a rejected path keeps the stored one and never enables Admin Hide
 	 *
 	 * @return void
 	 */
-	public function test_valid_path_saves_and_rejection_keeps_other_fields(): void {
+	public function test_valid_path_saves_and_a_rejected_path_never_enables_admin_hide(): void {
 		$saver  = new SettingsSaver();
-		$result = $saver->save( array( 'silver_assist_admin_hide_path' => 'My Private Door' ), 'admin_hide', SettingsSaver::MODE_FORM );
+		$result = $saver->save( array( 'silver_assist_admin_hide_path' => 'My Private Door' ), 'admin_hide' );
 		$this->assertSame( 'my-private-door', \get_option( 'silver_assist_admin_hide_path' ) );
 		$this->assertSame( array(), $result->errors );
 
 		$result = $saver->save(
 			array(
-				'silver_assist_admin_hide_enabled' => '1',
-				'silver_assist_admin_hide_path'    => 'wp-json',
+				'silver_assist_admin_hide_enabled'      => '1',
+				'silver_assist_admin_hide_path'         => 'wp-json',
+				SettingsSaver::ADMIN_HIDE_CONFIRM_FIELD => '1',
 			),
-			'admin_hide',
-			SettingsSaver::MODE_FORM
+			'admin_hide'
 		);
-		$this->assertSame( 1, (int) \get_option( 'silver_assist_admin_hide_enabled' ) );
+		$this->assertSame( 0, (int) \get_option( 'silver_assist_admin_hide_enabled' ), 'A rejected path never turns Admin Hide on.' );
+		$this->assertSame( 'my-private-door', \get_option( 'silver_assist_admin_hide_path' ) );
 		$this->assertArrayHasKey( 'silver_assist_admin_hide_path', $result->errors );
+		$this->assertArrayHasKey( 'silver_assist_admin_hide_enabled', $result->errors );
 	}
 
 	/**

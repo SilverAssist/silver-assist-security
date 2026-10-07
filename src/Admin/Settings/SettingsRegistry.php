@@ -3,8 +3,8 @@
  * Silver Assist Security Essentials - Settings Registry
  *
  * Declares, once, every option the settings screen saves: its section, type,
- * allowed range, whether the screen renders a field for it and whether the
- * auto-save endpoint may write it. SettingsSaver is the only consumer that
+ * allowed range and whether the screen renders a field for it, plus which tab
+ * of the screen each section is saved from. SettingsSaver is the only consumer that
  * writes; renderers, tests and documentation read the same declarations.
  *
  * @package SilverAssist\Security\Admin\Settings
@@ -40,6 +40,22 @@ class SettingsRegistry {
 	public const SECTION_IP             = 'ip';
 
 	/**
+	 * Tabs of the settings screen and the sections each one saves
+	 *
+	 * Each tab renders one form and one Save button; the form posts every section of its tab. The slug
+	 * is the id prefix of the tab panel (`{slug}-content`) and the form (`{slug}-form`).
+	 *
+	 * @var array<string, string[]>
+	 */
+	private const TABS = array(
+		'login-security'    => array( self::SECTION_LOGIN, self::SECTION_ADMIN_HIDE, self::SECTION_LOGIN_BRANDING ),
+		'rest-api-security' => array( self::SECTION_REST_API ),
+		'graphql-security'  => array( self::SECTION_GRAPHQL, self::SECTION_GRAPHQL_AUTH ),
+		'cf7-security'      => array( self::SECTION_CF7 ),
+		'ip-management'     => array( self::SECTION_IP ),
+	);
+
+	/**
 	 * Option declarations, keyed by option name (built on first use)
 	 *
 	 * @var array<string, array<string, mixed>>|null
@@ -50,7 +66,7 @@ class SettingsRegistry {
 	 * Every declared option
 	 *
 	 * Each entry has: `option`, `section`, `type`, `min` (int|null), `max` (int|callable|null),
-	 * `ui` (the settings screen renders a field for it) and `autosave` (the auto-save endpoint may write it).
+	 * and `ui` (the settings screen renders a field for it).
 	 *
 	 * @since 1.5.4
 	 * @return array<string, array<string, mixed>>
@@ -62,39 +78,39 @@ class SettingsRegistry {
 
 		$declarations = array(
 			// Login protection.
-			self::declare_option( 'silver_assist_login_attempts', self::SECTION_LOGIN, self::TYPE_INT, 1, 20, true, true ),
-			self::declare_option( 'silver_assist_lockout_duration', self::SECTION_LOGIN, self::TYPE_INT, 60, 3600, true, true ),
-			self::declare_option( 'silver_assist_session_timeout', self::SECTION_LOGIN, self::TYPE_INT, 5, 120, true, true ),
-			self::declare_option( 'silver_assist_password_strength_enforcement', self::SECTION_LOGIN, self::TYPE_BOOL, null, null, true, true ),
-			self::declare_option( 'silver_assist_bot_protection', self::SECTION_LOGIN, self::TYPE_BOOL, null, null, true, true ),
+			self::declare_option( 'silver_assist_login_attempts', self::SECTION_LOGIN, self::TYPE_INT, 1, 20, true ),
+			self::declare_option( 'silver_assist_lockout_duration', self::SECTION_LOGIN, self::TYPE_INT, 60, 3600, true ),
+			self::declare_option( 'silver_assist_session_timeout', self::SECTION_LOGIN, self::TYPE_INT, 5, 120, true ),
+			self::declare_option( 'silver_assist_password_strength_enforcement', self::SECTION_LOGIN, self::TYPE_BOOL, null, null, true ),
+			self::declare_option( 'silver_assist_bot_protection', self::SECTION_LOGIN, self::TYPE_BOOL, null, null, true ),
 			// REST API.
-			self::declare_option( 'silver_assist_rest_batch_endpoint_protection', self::SECTION_REST_API, self::TYPE_BOOL, null, null, true, false ),
-			self::declare_option( 'silver_assist_rest_rate_limiting_enabled', self::SECTION_REST_API, self::TYPE_BOOL, null, null, true, false ),
-			self::declare_option( 'silver_assist_rest_rate_limit_requests', self::SECTION_REST_API, self::TYPE_INT, 10, 1000, true, false ),
-			self::declare_option( 'silver_assist_rest_rate_limit_window', self::SECTION_REST_API, self::TYPE_INT, 30, 300, true, false ),
+			self::declare_option( 'silver_assist_rest_batch_endpoint_protection', self::SECTION_REST_API, self::TYPE_BOOL, null, null, true ),
+			self::declare_option( 'silver_assist_rest_rate_limiting_enabled', self::SECTION_REST_API, self::TYPE_BOOL, null, null, true ),
+			self::declare_option( 'silver_assist_rest_rate_limit_requests', self::SECTION_REST_API, self::TYPE_INT, 10, 1000, true ),
+			self::declare_option( 'silver_assist_rest_rate_limit_window', self::SECTION_REST_API, self::TYPE_INT, 30, 300, true ),
 			// Login branding.
-			self::declare_option( 'silver_assist_login_branding_enabled', self::SECTION_LOGIN_BRANDING, self::TYPE_BOOL, null, null, true, false ),
-			self::declare_option( 'silver_assist_login_branding_show_illustration', self::SECTION_LOGIN_BRANDING, self::TYPE_BOOL, null, null, true, false ),
-			self::declare_option( 'silver_assist_login_branding_logo_url', self::SECTION_LOGIN_BRANDING, self::TYPE_URL, null, null, true, false ),
-			self::declare_option( 'silver_assist_login_branding_bg_color', self::SECTION_LOGIN_BRANDING, self::TYPE_HEX_COLOR, null, null, true, false ),
-			// Admin hide. The enabled toggle is auto-saved today; making that safe is tracked in #160.
-			self::declare_option( 'silver_assist_admin_hide_enabled', self::SECTION_ADMIN_HIDE, self::TYPE_BOOL, null, null, true, true ),
-			self::declare_option( 'silver_assist_admin_hide_path', self::SECTION_ADMIN_HIDE, self::TYPE_ADMIN_PATH, null, null, true, false ),
-			// GraphQL. Depth and complexity are auto-save only, they have no field on the screen.
-			self::declare_option( 'silver_assist_graphql_headless_mode', self::SECTION_GRAPHQL, self::TYPE_BOOL, null, null, true, true ),
-			self::declare_option( 'silver_assist_graphql_query_timeout', self::SECTION_GRAPHQL, self::TYPE_INT, 1, array( self::class, 'graphql_timeout_max' ), true, false ),
-			self::declare_option( 'silver_assist_graphql_query_depth', self::SECTION_GRAPHQL, self::TYPE_INT, 1, 20, false, true ),
-			self::declare_option( 'silver_assist_graphql_query_complexity', self::SECTION_GRAPHQL, self::TYPE_INT, 10, 1000, false, true ),
+			self::declare_option( 'silver_assist_login_branding_enabled', self::SECTION_LOGIN_BRANDING, self::TYPE_BOOL, null, null, true ),
+			self::declare_option( 'silver_assist_login_branding_show_illustration', self::SECTION_LOGIN_BRANDING, self::TYPE_BOOL, null, null, true ),
+			self::declare_option( 'silver_assist_login_branding_logo_url', self::SECTION_LOGIN_BRANDING, self::TYPE_URL, null, null, true ),
+			self::declare_option( 'silver_assist_login_branding_bg_color', self::SECTION_LOGIN_BRANDING, self::TYPE_HEX_COLOR, null, null, true ),
+			// Admin hide. Enabling it goes through the confirmation in SettingsSaver (#160).
+			self::declare_option( 'silver_assist_admin_hide_enabled', self::SECTION_ADMIN_HIDE, self::TYPE_BOOL, null, null, true ),
+			self::declare_option( 'silver_assist_admin_hide_path', self::SECTION_ADMIN_HIDE, self::TYPE_ADMIN_PATH, null, null, true ),
+			// GraphQL. Depth and complexity have no field on the screen.
+			self::declare_option( 'silver_assist_graphql_headless_mode', self::SECTION_GRAPHQL, self::TYPE_BOOL, null, null, true ),
+			self::declare_option( 'silver_assist_graphql_query_timeout', self::SECTION_GRAPHQL, self::TYPE_INT, 1, array( self::class, 'graphql_timeout_max' ), true ),
+			self::declare_option( 'silver_assist_graphql_query_depth', self::SECTION_GRAPHQL, self::TYPE_INT, 1, 20, false ),
+			self::declare_option( 'silver_assist_graphql_query_complexity', self::SECTION_GRAPHQL, self::TYPE_INT, 10, 1000, false ),
 			// GraphQL authentication.
-			self::declare_option( 'silver_assist_graphql_service_user_id', self::SECTION_GRAPHQL_AUTH, self::TYPE_USER_ID, null, null, true, false ),
+			self::declare_option( 'silver_assist_graphql_service_user_id', self::SECTION_GRAPHQL_AUTH, self::TYPE_USER_ID, null, null, true ),
 			// Contact Form 7. The rate window has no field on the screen.
-			self::declare_option( 'silver_assist_cf7_protection_enabled', self::SECTION_CF7, self::TYPE_BOOL, null, null, true, true ),
-			self::declare_option( 'silver_assist_cf7_rate_limit', self::SECTION_CF7, self::TYPE_INT, 1, 10, true, false ),
-			self::declare_option( 'silver_assist_cf7_rate_window', self::SECTION_CF7, self::TYPE_INT, 30, 300, false, false ),
+			self::declare_option( 'silver_assist_cf7_protection_enabled', self::SECTION_CF7, self::TYPE_BOOL, null, null, true ),
+			self::declare_option( 'silver_assist_cf7_rate_limit', self::SECTION_CF7, self::TYPE_INT, 1, 10, true ),
+			self::declare_option( 'silver_assist_cf7_rate_window', self::SECTION_CF7, self::TYPE_INT, 30, 300, false ),
 			// IP management. The blacklist duration has no field on the screen.
-			self::declare_option( 'silver_assist_ip_blacklist_enabled', self::SECTION_IP, self::TYPE_BOOL, null, null, true, true ),
-			self::declare_option( 'silver_assist_ip_blacklist_threshold', self::SECTION_IP, self::TYPE_INT, 3, 20, true, true ),
-			self::declare_option( 'silver_assist_ip_blacklist_duration', self::SECTION_IP, self::TYPE_INT, 3600, 604800, false, false ),
+			self::declare_option( 'silver_assist_ip_blacklist_enabled', self::SECTION_IP, self::TYPE_BOOL, null, null, true ),
+			self::declare_option( 'silver_assist_ip_blacklist_threshold', self::SECTION_IP, self::TYPE_INT, 3, 20, true ),
+			self::declare_option( 'silver_assist_ip_blacklist_duration', self::SECTION_IP, self::TYPE_INT, 3600, 604800, false ),
 		);
 
 		self::$options = array();
@@ -138,6 +154,27 @@ class SettingsRegistry {
 	}
 
 	/**
+	 * The settings tabs and the sections each saves
+	 *
+	 * @since 1.5.4
+	 * @return array<string, string[]> Section slugs keyed by tab slug.
+	 */
+	public static function tabs(): array {
+		return self::TABS;
+	}
+
+	/**
+	 * Sections saved from one tab
+	 *
+	 * @since 1.5.4
+	 * @param string $tab Tab slug.
+	 * @return string[] Empty when the tab is unknown.
+	 */
+	public static function sections_for_tab( string $tab ): array {
+		return self::TABS[ $tab ] ?? array();
+	}
+
+	/**
 	 * Options of one section
 	 *
 	 * @since 1.5.4
@@ -148,21 +185,6 @@ class SettingsRegistry {
 		return array_filter(
 			self::all(),
 			static fn( array $declaration ): bool => $declaration['section'] === $section
-		);
-	}
-
-	/**
-	 * Option names the auto-save endpoint may write
-	 *
-	 * @since 1.5.4
-	 * @return string[]
-	 */
-	public static function autosave_options(): array {
-		return array_keys(
-			array_filter(
-				self::all(),
-				static fn( array $declaration ): bool => true === $declaration['autosave']
-			)
 		);
 	}
 
@@ -205,18 +227,16 @@ class SettingsRegistry {
 	 * @param int|null          $min      Lower bound (int type).
 	 * @param int|callable|null $max      Upper bound or a callable returning it (int type).
 	 * @param bool              $ui       Whether the settings screen renders a field for it.
-	 * @param bool              $autosave Whether auto-save may write it.
 	 * @return array<string, mixed>
 	 */
-	private static function declare_option( string $option, string $section, string $type, ?int $min, $max, bool $ui, bool $autosave ): array {
+	private static function declare_option( string $option, string $section, string $type, ?int $min, $max, bool $ui ): array {
 		return array(
-			'option'   => $option,
-			'section'  => $section,
-			'type'     => $type,
-			'min'      => $min,
-			'max'      => $max,
-			'ui'       => $ui,
-			'autosave' => $autosave,
+			'option'  => $option,
+			'section' => $section,
+			'type'    => $type,
+			'min'     => $min,
+			'max'     => $max,
+			'ui'      => $ui,
 		);
 	}
 }

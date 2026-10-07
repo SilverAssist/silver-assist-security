@@ -3,7 +3,8 @@
  * Silver Assist Security Essentials - Settings Handler
  *
  * Authorizes a settings form submission (gate field, capability, nonce) and
- * delegates the save of the submitted section to SettingsSaver.
+ * delegates the save of the submitted tab to SettingsSaver, then keeps the result
+ * for the renderer, which shows each message next to its field.
  *
  * @package SilverAssist\Security\Admin\Settings
  * @since 1.1.15
@@ -15,12 +16,19 @@ namespace SilverAssist\Security\Admin\Settings;
 /**
  * Settings Handler class
  *
- * Authorizes the request and hands the submitted section to SettingsSaver, which owns
+ * Authorizes the request and hands the submitted tab to SettingsSaver, which owns
  * sanitizing, clamping and writing.
  *
  * @since 1.1.15
  */
 class SettingsHandler {
+
+	/**
+	 * Result of the save handled in this request, for the renderer
+	 *
+	 * @var SaveResult|null
+	 */
+	private static ?SaveResult $last_result = null;
 
 	/**
 	 * Settings saver
@@ -40,10 +48,34 @@ class SettingsHandler {
 	}
 
 	/**
+	 * What the save handled in this request did, or null when the request was not a save
+	 *
+	 * The settings screen renders after the handler runs (same request, no redirect), so it reads this to
+	 * show an error or an adjusted value next to its field and to keep what the user typed.
+	 *
+	 * @since 1.5.4
+	 * @return SaveResult|null
+	 */
+	public static function last_result(): ?SaveResult {
+		return self::$last_result;
+	}
+
+	/**
+	 * Forget the last result (a new request starts clean; tests call it between cases)
+	 *
+	 * @since 1.5.4
+	 * @return void
+	 */
+	public static function clear_last_result(): void {
+		self::$last_result = null;
+	}
+
+	/**
 	 * Main settings processing method
 	 *
-	 * Requires the gate field, `manage_options` and a valid nonce, then saves the section named in
-	 * `settings_section`. A missing or unknown section writes nothing and shows an error notice.
+	 * Requires the gate field, `manage_options` and a valid nonce, then saves the tab named in
+	 * `settings_tab` (one form per tab) or, for a single-section post, the section named in
+	 * `settings_section`. A missing or unknown tab or section writes nothing and shows an error notice.
 	 *
 	 * @since 1.1.15
 	 * @return void
@@ -59,10 +91,16 @@ class SettingsHandler {
 			\wp_die( \esc_html__( 'Security check failed.', 'silver-assist-security' ) );
 		}
 
+		$tab     = isset( $_POST['settings_tab'] ) ? \sanitize_text_field( \wp_unslash( $_POST['settings_tab'] ) ) : '';
 		$section = isset( $_POST['settings_section'] ) ? \sanitize_text_field( \wp_unslash( $_POST['settings_section'] ) ) : '';
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce and capability verified above; SettingsSaver unslashes, sanitizes and clamps every value.
-		$result = $this->saver->save( $_POST, $section, SettingsSaver::MODE_FORM );
+		// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce and capability verified above; SettingsSaver unslashes, sanitizes and clamps every value.
+		$result = isset( $_POST['settings_tab'] )
+			? $this->saver->save_tab( $_POST, $tab )
+			: $this->saver->save( $_POST, $section );
+		// phpcs:enable
+
+		self::$last_result = $result;
 
 		if ( isset( $result->errors['section'] ) ) {
 			$this->add_notice( 'error', $result->errors['section'] );
@@ -72,6 +110,7 @@ class SettingsHandler {
 		if ( empty( $result->errors ) ) {
 			$this->add_notice( 'success', \__( 'Security settings have been saved successfully.', 'silver-assist-security' ) );
 		} else {
+			$this->add_notice( 'error', \__( 'Some settings were not saved. Fix the fields marked below and save again.', 'silver-assist-security' ) );
 			foreach ( $result->errors as $option => $message ) {
 				$this->add_notice(
 					'error',
@@ -86,6 +125,17 @@ class SettingsHandler {
 			if ( $result->saved_count() > 0 ) {
 				$this->add_notice( 'success', \__( 'The other settings were saved.', 'silver-assist-security' ) );
 			}
+		}
+
+		if ( $result->rewrite_flushed && '' !== $result->admin_url ) {
+			$this->add_notice(
+				'warning',
+				sprintf(
+					/* translators: %s: URL of the admin */
+					\__( 'Admin Hide is on. Your admin is reachable at %s. Keep this URL: /wp-admin and /wp-login.php do not open without it.', 'silver-assist-security' ),
+					$result->admin_url
+				)
+			);
 		}
 
 		if ( ! empty( $result->adjusted ) ) {

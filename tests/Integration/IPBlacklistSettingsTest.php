@@ -11,9 +11,7 @@
 
 namespace SilverAssist\Security\Tests\Integration;
 
-use SilverAssist\Security\Admin\Ajax\SecurityAjaxHandler;
 use SilverAssist\Security\Admin\Data\SecurityDataProvider;
-use SilverAssist\Security\Admin\Data\StatisticsProvider;
 use SilverAssist\Security\Admin\Renderer\SettingsRenderer;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 use SilverAssist\Security\Tests\Helpers\AjaxTestHelper;
@@ -229,19 +227,6 @@ class IPBlacklistSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Auto-save the given fields the way the admin screen does
-	 *
-	 * @param array $fields Fields to post.
-	 * @return array<string, mixed>|null JSON response.
-	 */
-	private function auto_save( array $fields ): ?array {
-		$_POST   = array_merge( $fields, array( 'nonce' => \wp_create_nonce( 'silver_assist_security_ajax' ) ) );
-		$handler = new SecurityAjaxHandler( new SecurityDataProvider(), new StatisticsProvider() );
-
-		return $this->call_ajax_handler( $handler, 'auto_save' );
-	}
-
-	/**
 	 * A threshold saved under the old option name is still honored
 	 *
 	 * Earlier versions saved it as silver_assist_ip_violation_threshold.
@@ -259,7 +244,7 @@ class IPBlacklistSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The threshold is a control on the IP Management tab and auto-save persists it
+	 * The threshold is a control on the IP Management tab and its Save persists it
 	 *
 	 * @return void
 	 */
@@ -272,42 +257,50 @@ class IPBlacklistSettingsTest extends WP_UnitTestCase {
 		$html = (string) ob_get_clean();
 		$this->assertStringContainsString( 'name="silver_assist_ip_blacklist_threshold"', $html, 'The IP Management tab should render the threshold control.' );
 
-		$response = $this->auto_save( array( 'silver_assist_ip_blacklist_threshold' => '8' ) );
+		$this->submit( array( 'silver_assist_ip_blacklist_threshold' => '8' ) );
 
-		$this->assertTrue( $response['success'] ?? false );
 		$this->assertSame( 8, (int) \get_option( 'silver_assist_ip_blacklist_threshold' ) );
 	}
 
 	/**
-	 * Auto-save clamps the threshold to the supported range
+	 * Saving clamps the threshold to the supported range
 	 *
 	 * @return void
 	 */
-	public function test_auto_save_clamps_the_threshold(): void {
-		\wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
-
-		$this->auto_save( array( 'silver_assist_ip_blacklist_threshold' => '1' ) );
+	public function test_save_clamps_the_threshold(): void {
+		$this->submit( array( 'silver_assist_ip_blacklist_threshold' => '1' ) );
 		$this->assertSame( 3, (int) \get_option( 'silver_assist_ip_blacklist_threshold' ) );
 
-		$this->auto_save( array( 'silver_assist_ip_blacklist_threshold' => '99' ) );
+		$this->submit( array( 'silver_assist_ip_blacklist_threshold' => '99' ) );
 		$this->assertSame( 20, (int) \get_option( 'silver_assist_ip_blacklist_threshold' ) );
 	}
 
 	/**
 	 * The CF7 protection toggle can be switched off and on from the admin screen
 	 *
-	 * An unchecked box is sent by auto-save as an empty string.
+	 * An unchecked box is not part of a form post, so an absent toggle means off.
 	 *
 	 * @return void
 	 */
-	public function test_cf7_protection_toggle_can_be_turned_off_by_auto_save(): void {
-		\wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+	public function test_cf7_protection_toggle_can_be_turned_off_by_saving(): void {
+		if ( ! \defined( 'WPCF7_VERSION' ) ) {
+			\define( 'WPCF7_VERSION', '5.8' );
+		}
+		if ( ! \class_exists( 'WPCF7' ) ) {
+			eval( 'class WPCF7 {}' ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- Test-only CF7 class stub; excluded from the eval() security scan via --exclude-dir=tests.
+		}
 		\update_option( 'silver_assist_cf7_protection_enabled', 1 );
 
-		$this->auto_save( array( 'silver_assist_cf7_protection_enabled' => '' ) );
+		$this->submit( array( 'silver_assist_cf7_rate_limit' => '2' ), 'cf7' );
 		$this->assertSame( 0, (int) \get_option( 'silver_assist_cf7_protection_enabled' ) );
 
-		$this->auto_save( array( 'silver_assist_cf7_protection_enabled' => '1' ) );
+		$this->submit(
+			array(
+				'silver_assist_cf7_protection_enabled' => '1',
+				'silver_assist_cf7_rate_limit'         => '2',
+			),
+			'cf7'
+		);
 		$this->assertSame( 1, (int) \get_option( 'silver_assist_cf7_protection_enabled' ) );
 	}
 }

@@ -17,6 +17,7 @@ use DOMElement;
 use SilverAssist\Security\Admin\Renderer\SettingsRenderer;
 use SilverAssist\Security\Admin\Settings\SettingsHandler;
 use SilverAssist\Security\Admin\Settings\SettingsRegistry;
+use SilverAssist\Security\Admin\Settings\SettingsSaver;
 use SilverAssist\Security\Core\DefaultConfig;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 use SilverAssist\Security\Tests\Helpers\RenderedSettingsForms;
@@ -34,7 +35,7 @@ class SettingsFormsTest extends WP_UnitTestCase {
 	 *
 	 * @var string[]
 	 */
-	private const NON_OPTION_FIELDS = array( 'save_silver_assist_security', 'settings_section', '_wpnonce', '_wp_http_referer', 'submit' );
+	private const NON_OPTION_FIELDS = array( 'save_silver_assist_security', 'settings_tab', '_wpnonce', '_wp_http_referer', 'submit', SettingsSaver::ADMIN_HIDE_CONFIRM_FIELD );
 
 	/**
 	 * Sentinel for "option not stored"
@@ -151,26 +152,28 @@ class SettingsFormsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The screen has one form per section, and every section of the registry has a form
+	 * The screen has one form per tab, and every section of the registry is saved by exactly one form
 	 *
 	 * @return void
 	 */
-	public function test_every_registry_section_has_exactly_one_form(): void {
+	public function test_every_registry_section_is_saved_by_exactly_one_form(): void {
+		$tabs     = array();
 		$sections = array();
 		foreach ( $this->submit_forms() as $form ) {
-			$fields     = $this->form_fields( $form );
-			$sections[] = $fields['settings_section'] ?? '(none)';
+			$tabs[]   = $this->form_fields( $form )['settings_tab'] ?? '(none)';
+			$sections = array_merge( $sections, $this->form_sections( $form ) );
 		}
 
-		$this->assertSame( \count( $sections ), \count( \array_unique( $sections ) ), 'Two forms share a section: ' . \implode( ', ', $sections ) );
+		$this->assertSame( \count( $tabs ), \count( \array_unique( $tabs ) ), 'Two forms share a tab: ' . \implode( ', ', $tabs ) );
+		$this->assertSame( \count( $sections ), \count( \array_unique( $sections ) ), 'Two forms save the same section.' );
 		$expected = SettingsRegistry::sections();
 		\sort( $expected );
 		\sort( $sections );
-		$this->assertSame( $expected, $sections, 'Every registry section needs a rendered form, and every form a registry section.' );
+		$this->assertSame( $expected, $sections, 'Every registry section needs a rendered form, and every form a registry tab.' );
 	}
 
 	/**
-	 * Every form with a submit button carries the gate field, a known section and the _wpnonce field
+	 * Every form with a submit button carries the gate field, a known tab and the _wpnonce field
 	 *
 	 * @return void
 	 */
@@ -183,7 +186,7 @@ class SettingsFormsTest extends WP_UnitTestCase {
 			$fields = $this->form_fields( $form );
 
 			$this->assertSame( '1', $fields['save_silver_assist_security'] ?? null, "Form #{$id} lacks the hidden gate field." );
-			$this->assertTrue( SettingsRegistry::has_section( $fields['settings_section'] ?? '' ), "Form #{$id} has no valid settings_section." );
+			$this->assertNotEmpty( SettingsRegistry::sections_for_tab( $fields['settings_tab'] ?? '' ), "Form #{$id} has no valid settings_tab." );
 			$this->assertNotEmpty( $fields['_wpnonce'] ?? '', "Form #{$id} lacks the _wpnonce field the handler verifies." );
 			$this->assertArrayNotHasKey( 'silver_assist_security_nonce', $fields, "Form #{$id} still prints the old nonce field name." );
 		}
@@ -208,28 +211,31 @@ class SettingsFormsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Posting each form's own fields, every field changes its option and nothing else is touched
+	 * Posting each form's own fields, every field changes its option and nothing of another tab is touched
 	 *
 	 * @return void
 	 */
-	public function test_each_form_persists_every_field_and_only_its_own_section(): void {
+	public function test_each_form_persists_every_field_and_only_its_own_tab(): void {
 		$forms = $this->submit_forms();
 		$this->assertNotEmpty( $forms );
 
 		foreach ( $forms as $form ) {
 			$id      = $form->getAttribute( 'id' );
 			$fields  = $this->form_fields( $form );
-			$section = $fields['settings_section'] ?? '';
-			$options = SettingsRegistry::for_section( $section );
-			$before  = $this->stored_options();
-			$expect  = array();
+			$tab     = $fields['settings_tab'] ?? '';
+			$options = array();
+			foreach ( $this->form_sections( $form ) as $section ) {
+				$options = \array_merge( $options, SettingsRegistry::for_section( $section ) );
+			}
+			$before = $this->stored_options();
+			$expect = array();
 
 			// Every named input is a registered option of this form's section, or one of the form's own plumbing fields.
 			foreach ( \array_keys( $fields ) as $name ) {
 				if ( \in_array( $name, self::NON_OPTION_FIELDS, true ) ) {
 					continue;
 				}
-				$this->assertArrayHasKey( $name, $options, "Form #{$id} has the input {$name}, which is not an option of section {$section}." );
+				$this->assertArrayHasKey( $name, $options, "Form #{$id} has the input {$name}, which is not an option of tab {$tab}." );
 			}
 
 			$post = $fields;
@@ -250,9 +256,14 @@ class SettingsFormsTest extends WP_UnitTestCase {
 				}
 			}
 
-			// Another section's option riding along in the same POST must not be written.
-			$foreign_option          = 'rest_api' === $section ? 'silver_assist_login_attempts' : 'silver_assist_rest_rate_limit_requests';
+			// Another tab's option riding along in the same POST must not be written.
+			$foreign_option          = 'rest-api-security' === $tab ? 'silver_assist_login_attempts' : 'silver_assist_rest_rate_limit_requests';
 			$post[ $foreign_option ] = '77';
+
+			// Turning Admin Hide on needs the confirmation the form offers.
+			if ( null !== $this->field_element( $form, SettingsSaver::ADMIN_HIDE_CONFIRM_FIELD ) ) {
+				$post[ SettingsSaver::ADMIN_HIDE_CONFIRM_FIELD ] = '1';
+			}
 
 			$this->post( $post );
 
@@ -263,7 +274,7 @@ class SettingsFormsTest extends WP_UnitTestCase {
 			$after = $this->stored_options();
 			foreach ( $before as $option => $value ) {
 				if ( ! isset( $options[ $option ] ) ) {
-					$this->assertSame( $value, $after[ $option ], "Form #{$id} (section {$section}) changed {$option}, an option of another section." );
+					$this->assertSame( $value, $after[ $option ], "Form #{$id} (tab {$tab}) changed {$option}, an option of another tab." );
 				}
 			}
 		}
@@ -338,6 +349,7 @@ class SettingsFormsTest extends WP_UnitTestCase {
 	 */
 	public function test_missing_or_unknown_section_writes_nothing(): void {
 		foreach ( array( null, '', 'nope', 'all' ) as $section ) {
+			$this->assertSame( array(), SettingsRegistry::sections_for_tab( (string) $section ) );
 			$before = $this->stored_options();
 			$fields = array(
 				'save_silver_assist_security'  => '1',

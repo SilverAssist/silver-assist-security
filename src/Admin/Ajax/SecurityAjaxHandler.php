@@ -15,7 +15,6 @@ use SilverAssist\Security\Core\PathValidator;
 use SilverAssist\Security\Core\SecurityHelper;
 use SilverAssist\Security\Admin\Data\SecurityDataProvider;
 use SilverAssist\Security\Admin\Data\StatisticsProvider;
-use SilverAssist\Security\Admin\Settings\SettingsSaver;
 use SilverAssist\Security\Security\IPBlacklist;
 
 /**
@@ -70,7 +69,6 @@ class SecurityAjaxHandler {
 		\add_action( 'wp_ajax_silver_assist_get_login_stats', array( $this, 'get_login_stats' ) );
 		\add_action( 'wp_ajax_silver_assist_get_blocked_ips', array( $this, 'get_blocked_ips' ) );
 		\add_action( 'wp_ajax_silver_assist_get_security_logs', array( $this, 'get_security_logs' ) );
-		\add_action( 'wp_ajax_silver_assist_auto_save', array( $this, 'auto_save' ) );
 		\add_action( 'wp_ajax_silver_assist_validate_admin_path', array( $this, 'validate_admin_path' ) );
 		\add_action( 'wp_ajax_silver_assist_add_manual_ip', array( $this, 'add_manual_ip' ) );
 		\add_action( 'wp_ajax_silver_assist_unblock_ip', array( $this, 'unblock_ip' ) );
@@ -185,80 +183,6 @@ class SecurityAjaxHandler {
 				array( 'function' => __FUNCTION__ )
 			);
 			\wp_send_json_error( array( 'error' => \__( 'Failed to retrieve security logs', 'silver-assist-security' ) ) );
-		}
-	}
-
-	/**
-	 * AJAX handler for auto-save settings
-	 *
-	 * Delegates to SettingsSaver in auto-save mode and reports what it did: `saved_count`, `saved`,
-	 * `adjusted`, `errors` and `ignored`. A request that saves nothing still succeeds, with a message
-	 * that says nothing was saved.
-	 *
-	 * @since 1.1.15
-	 * @return void
-	 */
-	public function auto_save(): void {
-		if ( ! SecurityHelper::validate_ajax_request( 'silver_assist_security_ajax' ) ) {
-			\wp_send_json_error( array( 'error' => \__( 'Security validation failed', 'silver-assist-security' ) ) );
-		}
-
-		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_send_json_error( array( 'error' => \__( 'Insufficient permissions', 'silver-assist-security' ) ) );
-		}
-
-		try {
-			// Only the plugin's own option keys go to the saver; the request also carries the action and nonce.
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce and capability verified above; SettingsSaver unslashes, sanitizes and clamps every value.
-			$input = array_filter( $_POST, static fn( $key ): bool => 0 === strpos( (string) $key, 'silver_assist_' ), ARRAY_FILTER_USE_KEY );
-
-			$result = ( new SettingsSaver() )->save( $input, '', SettingsSaver::MODE_AUTOSAVE );
-
-			SecurityHelper::log_security_event(
-				'SETTINGS_AUTO_SAVE',
-				$result->saved_count() > 0 ? 'Security settings auto-saved' : 'Auto-save saved nothing',
-				array(
-					'saved_count' => $result->saved_count(),
-					'settings'    => array_keys( $result->saved ),
-					'adjusted'    => array_keys( $result->adjusted ),
-					'ignored'     => $result->ignored,
-					'user_id'     => \get_current_user_id(),
-				)
-			);
-
-			if ( 0 === $result->saved_count() ) {
-				$message = \__( 'Nothing was saved: these settings are saved with their Save button.', 'silver-assist-security' );
-			} else {
-				$message = sprintf(
-					/* translators: %d: number of settings saved */
-					\_n( '%d setting auto-saved', '%d settings auto-saved', $result->saved_count(), 'silver-assist-security' ),
-					$result->saved_count()
-				);
-				if ( ! empty( $result->adjusted ) ) {
-					$message .= ' ' . \__( '(some values were adjusted to the allowed range)', 'silver-assist-security' );
-				}
-			}
-
-			\wp_send_json_success(
-				array_merge(
-					$result->to_array(),
-					array(
-						'message'   => $message,
-						'timestamp' => \current_time( 'mysql' ),
-					)
-				)
-			);
-
-		} catch ( \Exception $e ) {
-			SecurityHelper::log_security_event(
-				'SETTINGS_AUTO_SAVE_ERROR',
-				"Auto-save failed: {$e->getMessage()}",
-				array(
-					'function' => __FUNCTION__,
-					'error'    => $e->getMessage(),
-				)
-			);
-			\wp_send_json_error( array( 'error' => \__( 'Failed to save settings', 'silver-assist-security' ) ) );
 		}
 	}
 

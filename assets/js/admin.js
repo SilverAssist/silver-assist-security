@@ -28,8 +28,6 @@
      * @since 1.1.7
      */
     const TIMING = {
-        AUTO_SAVE_DELAY: 2000,          // Auto-save delay after input changes (ms)
-        AUTO_SAVE_FALLBACK: 15000,      // Safety timeout to re-enable buttons if autosave hangs (ms)
         VALIDATION_DEBOUNCE: 500,       // Real-time validation debounce (ms)
         ERROR_DISPLAY: 5000,            // Error message display duration (ms)
         SUCCESS_DISPLAY: 2000,          // Success message display duration (ms)
@@ -56,67 +54,6 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
-    };
-
-    // ========================================
-    // SAVE STATE MANAGEMENT
-    // ========================================
-
-    /**
-     * Shared save state to coordinate autosave and manual submit.
-     *
-     * Prevents race conditions where a manual submit fires while an
-     * autosave request is still in-flight, or vice-versa.
-     *
-     * @since 1.1.15
-     */
-    let isSaving = false;
-    let autoSaveTimeout = null;
-    let autoSaveFallbackTimeout = null;
-
-    /**
-     * Disable all submit buttons and show a saving indicator on them.
-     *
-     * Each button's original label is stored in a data attribute so it
-     * can be restored later regardless of success or failure.
-     *
-     * @since 1.1.15
-     * @returns {void}
-     */
-    const disableSubmitButtons = () => {
-        const { strings = {} } = silverAssistSecurity || {};
-        const savingLabel = strings.saving || "Saving...";
-
-        $("form input[type='submit']").each(function () {
-            const $btn = $(this);
-            if (!$btn.data("original-value")) {
-                $btn.data("original-value", $btn.val());
-            }
-            $btn.val(savingLabel).prop("disabled", true).addClass("is-saving");
-        });
-    };
-
-    /**
-     * Re-enable all submit buttons and restore their original labels.
-     *
-     * Called after autosave completes (success or error) and as a
-     * safety fallback if the AJAX request never resolves.
-     *
-     * @since 1.1.15
-     * @returns {void}
-     */
-    const enableSubmitButtons = () => {
-        $("form input[type='submit']").each(function () {
-            const $btn = $(this);
-            const original = $btn.data("original-value");
-            if (original) {
-                $btn.val(original);
-            }
-            $btn.prop("disabled", false).removeClass("is-saving");
-        });
-
-        isSaving = false;
-        clearTimeout(autoSaveFallbackTimeout);
     };
 
     /**
@@ -166,16 +103,7 @@
             ADMIN_PATH_LENGTH
         } = VALIDATION_LIMITS;
 
-        $("form").on("submit", e => {
-            // If an autosave is in-flight, cancel the manual submit
-            if (isSaving) {
-                e.preventDefault();
-                return;
-            }
-
-            // Cancel any pending autosave timer so it doesn't fire after manual submit
-            clearTimeout(autoSaveTimeout);
-
+        $("form.silver-settings-form").on("submit", e => {
             let isValid = true;
             const errors = [];
 
@@ -289,8 +217,8 @@
             const $checkbox = $(this);
             const $label = $checkbox.closest("label");
 
-            // Skip checkboxes already inside a .toggle-switch label
-            if ($label.hasClass("toggle-switch")) {
+            // Skip checkboxes already inside a .toggle-switch label, and plain checkboxes that opt out
+            if ($label.hasClass("toggle-switch") || $checkbox.hasClass("silver-no-toggle")) {
                 return;
             }
 
@@ -323,153 +251,119 @@
     };
 
     /**
-     * Initialize auto-save feature for form changes
-     * 
-     * Automatically saves form changes after a short delay to improve
-     * user experience and prevent data loss.
-     * 
-     * @since 1.0.0
+     * Initialize the explicit-save behavior of every settings tab form
+     *
+     * Each tab is one form with one Save. While the form differs from what the server rendered, its sticky
+     * save bar is highlighted and shows "Unsaved changes" and Discard; leaving the page with unsaved changes
+     * asks for confirmation. Nothing is saved in the background.
+     *
+     * @since 1.5.4
      * @returns {void}
      */
-    const initAutoSave = () => {
-        // Destructure timing constants for cleaner code
-        const { AUTO_SAVE_DELAY } = TIMING;
-
-        const $form = $("form");
-
-        $form.find("input, select, textarea").on("change", () => {
-            clearTimeout(autoSaveTimeout);
-
-            // Show saving indicator
-            showSavingIndicator();
-
-            // Auto-save after configured delay using destructured constant
-            autoSaveTimeout = setTimeout(() => {
-                autoSaveSettings();
-            }, AUTO_SAVE_DELAY);
-        });
-    };
-
-    /**
-     * Display saving indicator to the user
-     * 
-     * Shows a temporary saving indicator in the top-right corner
-     * when auto-save is triggered.
-     * 
-     * @since 1.0.0
-     * @returns {void}
-     */
-    const showSavingIndicator = () => {
-        // Use destructuring for cleaner string access
+    const initSettingsForms = () => {
         const { strings = {} } = silverAssistSecurity || {};
-        const savingText = strings.saving || "Saving...";
+        const $forms = $("form.silver-settings-form");
+        let submitting = false;
 
-        const $indicator = $(".saving-indicator");
-        if ($indicator.length) {
-            // Reset existing indicator: stop animations, update text, and show
-            $indicator.stop(true, true).html(savingText).removeClass("error").show();
-        } else {
-            $("form").first().append(`<div class="saving-indicator" style="position: fixed; top: 32px; right: 20px; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 9999;">${savingText}</div>`);
+        if (!$forms.length) {
+            return;
         }
+
+        $forms.each(function () {
+            const $form = $(this);
+            const $bar = $form.find(".silver-save-bar");
+            const $status = $form.find(".silver-save-status");
+            const $discard = $form.find(".silver-discard");
+            const initial = $form.serialize();
+
+            const refresh = () => {
+                const dirty = $form.serialize() !== initial;
+                $form.data("dirty", dirty);
+                $bar.attr("data-dirty", dirty ? "true" : "false");
+                $discard.prop("hidden", !dirty);
+                if (!submitting) {
+                    $status.text(dirty ? (strings.unsavedChanges || "You have unsaved changes.") : "");
+                }
+                syncAdminHideConfirmation($form);
+            };
+
+            $form.on("input change", refresh);
+
+            $discard.on("click", () => {
+                $form[0].reset();
+            });
+
+            // reset fires before the values are restored
+            $form.on("reset", () => {
+                setTimeout(() => {
+                    $form.find("input[type=\"range\"]").trigger("input");
+                    $form.find("#silver_assist_admin_hide_path").trigger("input");
+                    refresh();
+                }, 0);
+            });
+
+            $form.on("submit", e => {
+                if (e.isDefaultPrevented()) {
+                    return;
+                }
+                submitting = true;
+                $status.text(strings.saving || "Saving...");
+                $form.find("input[type=\"submit\"]").addClass("is-saving");
+            });
+
+            refresh();
+        });
+
+        // Back/forward cache can restore the page after a submit started
+        window.addEventListener("pageshow", e => {
+            if (e.persisted) {
+                submitting = false;
+                $forms.find("input[type=\"submit\"]").removeClass("is-saving");
+            }
+        });
+
+        // Leaving with unsaved changes (a form submit is not leaving)
+        window.addEventListener("beforeunload", e => {
+            if (submitting) {
+                return;
+            }
+            const dirty = $forms.filter(function () {
+                return $(this).data("dirty") === true;
+            }).length > 0;
+            if (dirty) {
+                e.preventDefault();
+                e.returnValue = strings.leaveWarning || "You have unsaved changes.";
+            }
+        });
     };
 
     /**
-     * Auto-save settings via AJAX
-     * 
-     * Automatically saves form data to the server without requiring
-     * a page refresh or manual form submission.
-     * 
-     * @since 1.0.0
+     * Require the Admin Hide confirmation only when the change takes effect
+     *
+     * Turning Admin Hide on, or changing the path while it is on, is what can lock an administrator
+     * out, so the confirmation checkbox is then required. The server enforces the same rule.
+     *
+     * @since 1.5.4
+     * @param {jQuery} $form - The settings form
      * @returns {void}
      */
-    const autoSaveSettings = () => {
-        // Destructure timing constants for cleaner code
-        const { SUCCESS_DISPLAY, LONG_ERROR_DISPLAY, DATABASE_UPDATE_DELAY, AUTO_SAVE_FALLBACK } = TIMING;
+    const syncAdminHideConfirmation = $form => {
+        const $confirm = $form.find("#silver_assist_admin_hide_confirm");
+        if (!$confirm.length) {
+            return;
+        }
 
-        // Mark as saving and lock submit buttons
-        isSaving = true;
-        disableSubmitButtons();
+        const storedEnabled = String($confirm.data("enabled")) === "1";
+        const storedPath = String($confirm.data("path") || "");
+        const wantsEnabled = $form.find("#silver_assist_admin_hide_enabled").is(":checked");
+        const path = String($form.find("#silver_assist_admin_hide_path").val() || "").trim().toLowerCase();
+        const takesEffect = wantsEnabled && (!storedEnabled || path !== storedPath);
 
-        // Safety fallback: if AJAX never resolves, re-enable buttons after timeout
-        clearTimeout(autoSaveFallbackTimeout);
-        autoSaveFallbackTimeout = setTimeout(() => {
-            enableSubmitButtons();
-        }, AUTO_SAVE_FALLBACK);
-
-        const $form = $("form");
-        const formData = {};
-
-        // Serialize form data manually to handle checkboxes correctly
-        $form.find("input, select, textarea").each(function () {
-            const $field = $(this);
-            const name = $field.attr("name");
-
-            if (!name) return;
-
-            if ($field.attr("type") === "checkbox") {
-                formData[name] = $field.is(":checked") ? "1" : "";
-            } else {
-                formData[name] = $field.val();
-            }
-        });
-
-        // Use destructuring for cleaner object access
-        const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
-
-        // Add action and nonce
-        formData.action = "silver_assist_auto_save";
-        formData.nonce = nonce;
-
-        $.ajax({
-            url: ajaxurl,
-            type: "POST",
-            data: formData,
-            success: response => {
-                // Use destructuring for response handling
-                const { success, data = {} } = response || {};
-
-                if (success) {
-                    // The server reports what it really saved: 0 means nothing was written.
-                    const nothingSaved = data.saved_count === 0;
-                    const text = nothingSaved
-                        ? (data.message || strings.nothingToSave || "Nothing to save")
-                        : (data.message || strings.saved || "Saved!");
-
-                    $(".saving-indicator")
-                        .text(text)
-                        .delay(nothingSaved ? LONG_ERROR_DISPLAY : SUCCESS_DISPLAY)
-                        .fadeOut();
-
-                    // Update dashboard to reflect changes immediately
-                    if (!nothingSaved) {
-                        setTimeout(() => {
-                            loadSecurityStatus();
-                            loadLoginStats();
-                        }, DATABASE_UPDATE_DELAY);
-                    }
-                } else {
-                    // PHP sends the message as data.error (wp_send_json_error), older paths as data.message
-                    $(".saving-indicator")
-                        .text(data.error || data.message || (strings.saveFailed || "Save failed"))
-                        .addClass("error")
-                        .delay(LONG_ERROR_DISPLAY)
-                        .fadeOut();
-                }
-
-                // Re-enable submit buttons regardless of success/failure
-                enableSubmitButtons();
-            },
-            error: () => {
-                $(".saving-indicator")
-                    .html(strings.saveFailed || "Save failed")
-                    .addClass("error")
-                    .delay(LONG_ERROR_DISPLAY)
-                    .fadeOut();
-
-                // Re-enable submit buttons on connection failure
-                enableSubmitButtons();
-            }
-        });
+        $confirm.prop("required", takesEffect);
+        $confirm.closest("tr").toggleClass("silver-needs-confirmation", takesEffect);
+        $confirm[0].setCustomValidity(takesEffect && !$confirm.is(":checked")
+            ? ((silverAssistSecurity.strings || {}).adminHideConfirmNeeded || "Confirm the admin URL first.")
+            : "");
     };
 
     /**
@@ -1210,19 +1104,14 @@
             $pathInput.removeClass("validation-valid validation-invalid validation-validating")
                 .addClass(`validation-${type}`);
 
-            // Update preview URL if valid
-            if (type === "valid" && message.includes("✓")) {
-                updatePathPreview($pathInput.val());
-            }
         };
 
-        // Update path preview URL
+        // Update the admin URL shown under the path field
         const updatePathPreview = (path) => {
-            const $previewElement = $("code:contains('" + window.location.origin + "')").first();
+            const $previewElement = $("#admin-hide-url-preview");
             if ($previewElement.length && path) {
-                const sanitizedPath = path.toLowerCase().replace(/[^a-zA-Z0-9-_]/g, "");
-                const homeUrl = window.location.origin;
-                $previewElement.text(`${homeUrl}/${sanitizedPath}`);
+                const sanitizedPath = path.toLowerCase().replace(/[^a-z0-9-_]/g, "");
+                $previewElement.text(`${$previewElement.data("base")}${sanitizedPath}`);
             }
         };
 
@@ -1282,6 +1171,7 @@
         // Attach real-time validation using destructured timing constant
         $pathInput.on("input", function () {
             const path = $(this).val().trim();
+            updatePathPreview(path);
 
             // Clear previous validation timeout
             clearTimeout(validationTimeout);
@@ -1987,12 +1877,12 @@
         initFormValidation();
         initToggleSwitches();
         initTooltips();
-        initAutoSave();
         initRangeSliders();
         initAdminPathValidation();
         initCF7BlockedIPs(); // Initialize CF7 panel
         initManualIPManagement(); // Initialize manual IP management
         initGraphQLApiKey(); // Initialize GraphQL API key management
+        initSettingsForms();   // One Save per tab, dirty state and leave warning (last: it snapshots the rendered state)
     });
 
 }))(jQuery);

@@ -568,10 +568,10 @@ The plugin changes core WordPress behavior, so a feature that only registers its
 Settings the screen saves go through one registry and one saver, so adding an option is three small steps and no new save code:
 
 1. **Default**: add the option and its default to `DefaultConfig::get_defaults()`.
-2. **Register it** in `src/Admin/Settings/SettingsRegistry.php` with its section (`login`, `rest_api`, `login_branding`, `admin_hide`, `graphql`, `graphql_auth`, `cf7`, `ip`), type (`bool`, `int`, `url`, `hex_color`, `admin_path`, `user_id`), `min` and `max` for integers, `ui` (the screen renders a field for it) and `autosave` (the auto-save endpoint may write it; leave it `false` unless the maintainers decide otherwise, see #160).
-3. **Add the field** to the form of that section in `SettingsRenderer`, with the registered option name as the input `name`. The form already posts the gate field, its section and the nonce.
+2. **Register it** in `src/Admin/Settings/SettingsRegistry.php` with its section (`login`, `rest_api`, `login_branding`, `admin_hide`, `graphql`, `graphql_auth`, `cf7`, `ip`), type (`bool`, `int`, `url`, `hex_color`, `admin_path`, `user_id`), `min` and `max` for integers and `ui` (the screen renders a field for it). The section must belong to a tab in `SettingsRegistry::TABS` (Login Security holds `login`, `admin_hide` and `login_branding`; GraphQL holds `graphql` and `graphql_auth`).
+3. **Add the field** to the form of that section in `SettingsRenderer`, with the registered option name as the input `name`. The tab's form already posts the gate field, its tab and the nonce, and ends in the sticky save bar, so there is no Save button to add.
 
-`SettingsSaver` writes it and `SettingsSanitizer` clamps and sanitizes it (the same callback is registered with `register_setting()` for every registry option, so a value written by `options.php`, WP-CLI or an import is clamped too), and both the Save button and auto-save report what was saved, adjusted or ignored. `SettingsRegistryTest` and `SettingsFormsTest` fail if the default is missing, the field is not inside its own section's form, or the saved value does not persist.
+`SettingsSaver` writes it and `SettingsSanitizer` clamps and sanitizes it (the same callback is registered with `register_setting()` for every registry option, so a value written by `options.php`, WP-CLI or an import is clamped too), and the Save button reports what was saved, adjusted or rejected, next to the field (`RenderHelper::render_field_message()`). Nothing is saved in the background: there is no auto-save. `SettingsRegistryTest` and `SettingsFormsTest` fail if the default is missing, the field is not inside the form of its section's tab, or the saved value does not persist.
 
 ### Behavior Audit
 
