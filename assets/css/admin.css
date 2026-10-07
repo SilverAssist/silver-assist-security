@@ -1401,3 +1401,12 @@
         display: none;
     }
 }
+
+/* Result messages (showMessage): persistent live regions above the tabs */
+.silver-assist-security-admin .silver-messages .silver-message {
+    margin: var(--silver-spacing-sm) 0 0;
+}
+
+.silver-assist-security-admin .silver-messages .silver-message p {
+    overflow-wrap: anywhere;
+}

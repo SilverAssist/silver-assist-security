@@ -31,6 +31,7 @@
         VALIDATION_DEBOUNCE: 500,       // Real-time validation debounce (ms)
         ERROR_DISPLAY: 5000,            // Error message display duration (ms)
         SUCCESS_DISPLAY: 2000,          // Success message display duration (ms)
+        MESSAGE_SUCCESS_DISPLAY: 8000,  // Success message (showMessage) display duration (ms), errors never auto-dismiss
         LONG_ERROR_DISPLAY: 3000,       // Long error message display duration (ms)
         DASHBOARD_REFRESH: 2000,        // Dashboard refresh button delay (ms)
         DATABASE_UPDATE_DELAY: 500      // Small delay for database update completion (ms)
@@ -46,6 +47,60 @@
      * @since 1.1.15
      */
     const { escapeHtml, safeUrl } = window.SilverAssistSecurityUtils;
+
+    /**
+     * Show a result message in the persistent live regions of the settings page
+     *
+     * The regions are rendered by AdminPageRenderer (role="status" for success, role="alert" for
+     * errors) so screen readers already track them when the text arrives. The text is always set with
+     * .text(), never .html(). Errors stay until dismissed; successes dismiss themselves after
+     * TIMING.MESSAGE_SUCCESS_DISPLAY. Only one message per region is kept at a time.
+     *
+     * @since 1.5.4
+     * @param {string} message - Text to show (localized string or server response, treated as plain text)
+     * @param {string} [type="success"] - "success" or "error"
+     * @returns {void}
+     */
+    const showMessage = (message, type = "success") => {
+        const isError = type === "error";
+        const kind = isError ? "error" : "success";
+        const regionId = `silver-assist-messages-${isError ? "alert" : "status"}`;
+        let $region = $(`#${regionId}`);
+
+        // The server renders the regions; create the same markup if the page did not.
+        if (!$region.length) {
+            let $container = $("#silver-assist-messages");
+            if (!$container.length) {
+                $container = $("<div>", { id: "silver-assist-messages", "class": "silver-messages" });
+                $(".wrap").first().prepend($container);
+            }
+            $region = $("<div>", { id: regionId, "class": "silver-messages-region", role: isError ? "alert" : "status" })
+                .appendTo($container);
+        }
+
+        const timerKey = "silverMessageTimer";
+        window.clearTimeout($region.data(timerKey));
+
+        const { strings = {} } = window.silverAssistSecurity || {};
+        const dismiss = () => {
+            window.clearTimeout($region.data(timerKey));
+            $region.empty();
+        };
+
+        const $notice = $("<div>", { "class": `notice notice-${kind} is-dismissible silver-message` })
+            .append($("<p>").text(String(message ?? "")))
+            .append(
+                $("<button>", { type: "button", "class": "notice-dismiss" })
+                    .append($("<span>", { "class": "screen-reader-text" }).text(strings.dismissNotice || "Dismiss this notice."))
+                    .on("click", dismiss)
+            );
+
+        $region.empty().append($notice);
+
+        if (!isError) {
+            $region.data(timerKey, window.setTimeout(dismiss, TIMING.MESSAGE_SUCCESS_DISPLAY));
+        }
+    };
 
     /**
      * Form validation constants
@@ -1601,6 +1656,7 @@
      * @returns {void}
      */
     const initManualIPManagement = () => {
+        const { ajaxurl, nonce, strings = {} } = silverAssistSecurity || {};
         const $ipInput = $("#manual-ip-address");
         const $reasonInput = $("#manual-ip-reason");
         const $addBtn = $("#add-manual-ip");
