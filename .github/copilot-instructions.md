@@ -54,7 +54,7 @@ Never create standalone `.md` files (`docs/`, `CONTRIBUTING.md`, `API.md`, etc.)
 
 ### Contact Form 7 Integration (`Security\ContactForm7Integration`)
 - Automatic CF7 plugin detection via `SecurityHelper::is_contact_form_7_active()`
-- Form submission rate limiting with IP tracking
+- Form submission rate limiting with IP tracking (options `silver_assist_cf7_rate_limit` / `silver_assist_cf7_rate_window`, the only ones enforcement, dashboard and settings use; legacy `silver_assist_form_rate_*` are migrated by `DefaultConfig::migrate_legacy_options()`; counted with `SecurityHelper::increment_rate_window()`)
 - Conditional "Form Protection" admin tab (appears only when CF7 detected)
 
 ## Bootstrap Architecture
