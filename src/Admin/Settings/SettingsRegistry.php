@@ -107,6 +107,11 @@ class SettingsRegistry {
 			self::declare_option( 'silver_assist_cf7_protection_enabled', self::SECTION_CF7, self::TYPE_BOOL, null, null, true ),
 			self::declare_option( 'silver_assist_cf7_rate_limit', self::SECTION_CF7, self::TYPE_INT, 1, 10, true ),
 			self::declare_option( 'silver_assist_cf7_rate_window', self::SECTION_CF7, self::TYPE_INT, 30, 300, false ),
+			self::declare_option( 'silver_assist_cf7_honeypot_enabled', self::SECTION_CF7, self::TYPE_BOOL, null, null, true ),
+			// Milliseconds; 0 turns the minimum submission time off.
+			self::declare_option( 'silver_assist_cf7_submission_delay', self::SECTION_CF7, self::TYPE_INT, 0, 10000, true ),
+			// Seconds a manual block of the form flood blacklist lasts.
+			self::declare_option( 'silver_assist_cf7_ip_block_duration', self::SECTION_CF7, self::TYPE_INT, 60, 86400, true ),
 			// IP management. The blacklist duration has no field on the screen.
 			self::declare_option( 'silver_assist_ip_blacklist_enabled', self::SECTION_IP, self::TYPE_BOOL, null, null, true ),
 			self::declare_option( 'silver_assist_ip_blacklist_threshold', self::SECTION_IP, self::TYPE_INT, 3, 20, true ),

@@ -41,9 +41,20 @@ class DefaultConfig {
 	 * `silver_assist_form_protection_enabled` was only displayed on the dashboard; the real
 	 * switch is `silver_assist_cf7_protection_enabled`, so its value is not adopted.
 	 *
+	 * The next four were defaults that nothing read (#178). The checks they implied stay always on
+	 * (obsolete browser and SQL injection checks in `FormProtection`, spam patterns and the
+	 * rate-limit violations that feed the IP blacklist in `ContactForm7Integration`), so there is no
+	 * switch to offer; the names stay here so the migration and uninstall remove the stored rows.
+	 *
 	 * @var array<int, string>
 	 */
-	private const LEGACY_OPTIONS_DROPPED = array( 'silver_assist_form_protection_enabled' );
+	private const LEGACY_OPTIONS_DROPPED = array(
+		'silver_assist_form_protection_enabled',
+		'silver_assist_obsolete_browser_detection',
+		'silver_assist_sql_injection_detection',
+		'silver_assist_cf7_spam_threshold',
+		'silver_assist_cf7_auto_block_bots',
+	);
 
 	/**
 	 * Names of every legacy option this class migrates or drops
@@ -105,10 +116,6 @@ class DefaultConfig {
 			'silver_assist_graphql_api_key'                => '', // Hashed API key for server-to-server authentication.
 			'silver_assist_graphql_service_user_id'        => 0, // WordPress user ID for API key authentication.
 
-			// Form Protection Settings (the CF7 rate limit lives under the CF7 options below).
-			'silver_assist_obsolete_browser_detection'     => 1, // Detect old browsers.
-			'silver_assist_sql_injection_detection'        => 1, // Detect SQL injection attempts.
-
 			// IP Blacklist Settings.
 			'silver_assist_ip_blacklist_enabled'           => 1, // Automatic blacklisting of repeat offenders.
 			'silver_assist_ip_blacklist_threshold'         => 5, // Violations before auto-blacklist.
@@ -131,11 +138,9 @@ class DefaultConfig {
 			'silver_assist_cf7_protection_enabled'         => 1, // Enable CF7 protection by default.
 			'silver_assist_cf7_rate_limit'                 => 2, // Max CF7 submissions per minute per IP.
 			'silver_assist_cf7_rate_window'                => 60, // CF7 rate limiting window in seconds.
-			'silver_assist_cf7_spam_threshold'             => 3, // Spam attempts before IP blacklist consideration.
 			'silver_assist_cf7_honeypot_enabled'           => 1, // Enable honeypot fields.
-			'silver_assist_cf7_submission_delay'           => 2000, // Minimum submission time (milliseconds).
-			'silver_assist_cf7_auto_block_bots'            => 1, // Auto-block detected bots.
-			'silver_assist_cf7_ip_block_duration'          => 3600, // CF7 IP block duration (1 hour).
+			'silver_assist_cf7_submission_delay'           => 2000, // Minimum submission time (milliseconds, 0 = off).
+			'silver_assist_cf7_ip_block_duration'          => 3600, // Duration of a manual CF7 IP block (seconds, 1 hour).
 		);
 	}
 

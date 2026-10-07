@@ -656,6 +656,35 @@ class SettingsRenderer {
 									(string) $config['cf7_rate_limit'],
 									\__( 'Maximum form submissions per minute per IP address', 'silver-assist-security' )
 								);
+								RenderHelper::render_toggle_row(
+									\__( 'Honeypot Field', 'silver-assist-security' ),
+									'silver_assist_cf7_honeypot_enabled',
+									$config['cf7_honeypot_enabled'],
+									\__( 'Add a hidden field that people never fill in; a submission that fills it is blocked as a bot', 'silver-assist-security' )
+								);
+								RenderHelper::render_range_row(
+									\__( 'Minimum Submission Time (milliseconds)', 'silver-assist-security' ),
+									'silver_assist_cf7_submission_delay',
+									$config['cf7_submission_delay'],
+									0,
+									10000,
+									'cf7-submission-delay-value',
+									(string) $config['cf7_submission_delay'],
+									\__( 'A form sent sooner than this after it was shown is blocked, which stops bots that fire requests within seconds. 0 turns it off. Cached pages and forms without the hidden timing field are not checked', 'silver-assist-security' ),
+									250
+								);
+								RenderHelper::render_range_row(
+									\__( 'Manual Block Duration (minutes)', 'silver-assist-security' ),
+									'silver_assist_cf7_ip_block_duration',
+									$config['cf7_ip_block_duration'],
+									60,
+									86400,
+									'cf7-ip-block-duration-value',
+									(string) \round( $config['cf7_ip_block_duration'] / 60 ),
+									\__( 'How long an IP you block by hand below stays blocked (1-1440 minutes)', 'silver-assist-security' ),
+									60,
+									60
+								);
 								?>
 							</tbody>
 						</table>
@@ -857,6 +886,9 @@ class SettingsRenderer {
 			'graphql_query_timeout'            => \get_option( 'silver_assist_graphql_query_timeout', $this->config_manager->get_php_execution_timeout() ),
 			'cf7_protection_enabled'           => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_protection_enabled' ) : 0,
 			'cf7_rate_limit'                   => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_rate_limit' ) : DefaultConfig::get_default( 'silver_assist_cf7_rate_limit' ) ?? 2,
+			'cf7_honeypot_enabled'             => DefaultConfig::get_option( 'silver_assist_cf7_honeypot_enabled' ),
+			'cf7_submission_delay'             => DefaultConfig::get_option( 'silver_assist_cf7_submission_delay' ),
+			'cf7_ip_block_duration'            => DefaultConfig::get_option( 'silver_assist_cf7_ip_block_duration' ),
 			'cf7_rate_window'                  => SecurityHelper::is_contact_form_7_active() ? DefaultConfig::get_option( 'silver_assist_cf7_rate_window' ) : DefaultConfig::get_default( 'silver_assist_cf7_rate_window' ) ?? 60,
 			'ip_blacklist_enabled'             => DefaultConfig::get_option( 'silver_assist_ip_blacklist_enabled' ),
 			'ip_violation_threshold'           => DefaultConfig::get_option( 'silver_assist_ip_blacklist_threshold' ),
