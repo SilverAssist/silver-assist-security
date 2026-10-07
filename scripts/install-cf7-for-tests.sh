@@ -68,6 +68,10 @@ fi
 
 CF7_PLUGIN_DIR="$WP_PLUGINS_DIR/contact-form-7"
 
+# Contact Form 7 6.2 requires PHP 8.3 (its Composer platform check aborts on 8.2), and the CI
+# matrix runs PHP 8.2, so pin the last release that supports it. Override with CF7_TEST_VERSION.
+CF7_TEST_VERSION="${CF7_TEST_VERSION:-6.1.7}"
+
 # Check if Contact Form 7 is already installed
 if [ -d "$CF7_PLUGIN_DIR" ]; then
     print_success "Contact Form 7 already installed at: $CF7_PLUGIN_DIR"
@@ -107,9 +111,9 @@ CF7_ZIP="$TEMP_DIR/contact-form-7.zip"
 # Download latest Contact Form 7 from WordPress.org
 echo "Downloading from WordPress.org repository..."
 if command -v curl >/dev/null 2>&1; then
-    curl -L "https://downloads.wordpress.org/plugin/contact-form-7.latest-stable.zip" -o "$CF7_ZIP"
+    curl -L "https://downloads.wordpress.org/plugin/contact-form-7.${CF7_TEST_VERSION}.zip" -o "$CF7_ZIP"
 elif command -v wget >/dev/null 2>&1; then
-    wget "https://downloads.wordpress.org/plugin/contact-form-7.latest-stable.zip" -O "$CF7_ZIP"
+    wget "https://downloads.wordpress.org/plugin/contact-form-7.${CF7_TEST_VERSION}.zip" -O "$CF7_ZIP"
 else
     print_error "Neither curl nor wget found. Please install one of them."
     exit 1
