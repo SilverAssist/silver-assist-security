@@ -105,6 +105,29 @@ test.describe("Admin scripts escape what they render (#177)", () => {
     for (const href of hrefs) expect(href.toLowerCase()).not.toContain("javascript:");
   });
 
+  test("safeUrl accepts site and http(s) links and rejects script and protocol-relative URLs @smoke", async ({ page }) => {
+    await page.goto(SETTINGS_URL);
+    const results = await page.evaluate(() => {
+      const { safeUrl } = (window as any).SilverAssistSecurityUtils;
+      return {
+        relative: safeUrl("/wp-admin/plugins.php"),
+        https: safeUrl("https://example.com/x"),
+        mailto: safeUrl("mailto:a@example.com"),
+        script: safeUrl("javascript:window.__xss=1"),
+        spaced: safeUrl("  JaVaScRiPt:window.__xss=1"),
+        data: safeUrl("data:text/html,x"),
+        protocolRelative: safeUrl("//evil.example/x"),
+        backslashes: safeUrl("\\\\evil.example/x"),
+      };
+    });
+    expect(results.relative).toBe("/wp-admin/plugins.php");
+    expect(results.https).toBe("https://example.com/x");
+    expect(results.mailto).toBe("mailto:a@example.com");
+    for (const key of ["script", "spaced", "data", "protocolRelative", "backslashes"] as const) {
+      expect(results[key], key).toBe("#");
+    }
+  });
+
   test("form validation errors show localized text literally @smoke", async ({ page }) => {
     await arm(page, { loginAttemptsError: PAYLOAD });
     await page.goto(SETTINGS_URL);

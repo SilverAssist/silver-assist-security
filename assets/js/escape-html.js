@@ -39,7 +39,7 @@
      * Return a URL that is safe to use as an href, or the fallback.
      *
      * Escaping does not stop a "javascript:" URL from running when clicked, so
-     * only http, https and mailto URLs (absolute or relative) are accepted.
+     * only http, https and mailto URLs (absolute or relative, never protocol-relative) are accepted.
      * The result is NOT escaped: pass it through escapeHtml() when it goes into markup.
      *
      * @since 1.5.4
@@ -49,6 +49,10 @@
      */
     const safeUrl = (url, fallback = "#") => {
         try {
+            // A protocol-relative URL ("//host") would inherit the page scheme and leave the site.
+            if (/^[\s]*[\/\\]{2}/.test(String(url))) {
+                return fallback;
+            }
             const parsed = new URL(String(url), window.location.href);
             return ["http:", "https:", "mailto:"].includes(parsed.protocol) ? String(url) : fallback;
         } catch (e) {
