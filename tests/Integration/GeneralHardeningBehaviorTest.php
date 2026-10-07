@@ -308,8 +308,10 @@ class GeneralHardeningBehaviorTest extends WP_UnitTestCase {
 		add_action( 'wp_head', 'rsd_link' );
 		add_action( 'wp_head', 'wp_generator' );
 		add_action( 'wp_head', 'wp_shortlink_wp_head', 10, 0 );
-		// Core hooks the discovery links twice: priority 4 and again at 10 (default-filters.php).
-		add_action( 'wp_head', 'wp_oembed_add_discovery_links', 4 );
+		// Core 6.9 added a second hook at priority 4 (default-filters.php); older cores only have the default priority.
+		if ( version_compare( get_bloginfo( 'version' ), '6.9', '>=' ) ) {
+			add_action( 'wp_head', 'wp_oembed_add_discovery_links', 4 );
+		}
 		add_action( 'wp_head', 'wp_oembed_add_discovery_links' );
 	}
 
