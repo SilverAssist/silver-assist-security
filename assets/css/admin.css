@@ -1306,6 +1306,12 @@
     display: none;
 }
 
+/* Admin Hide confirmation row, highlighted while the change needs the checkbox */
+.silver-assist-security-admin tr.silver-needs-confirmation th,
+.silver-assist-security-admin tr.silver-needs-confirmation td {
+    background: var(--silver-primary-blue-light);
+}
+
 /* Messages of the last save, shown next to the field they are about */
 .silver-assist-security-admin .silver-field-message {
     margin: var(--silver-spacing-sm) 0 0;
