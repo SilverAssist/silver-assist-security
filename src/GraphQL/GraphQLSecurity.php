@@ -9,7 +9,7 @@
  * @package SilverAssist\Security\GraphQL
  * @since 1.1.1
  * @author Silver Assist
- * @version 1.5.3
+ * @version 1.5.4
  */
 
 namespace SilverAssist\Security\GraphQL;

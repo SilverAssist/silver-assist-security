@@ -12,7 +12,7 @@
 #
 # @package SilverAssist\Security
 # @since 1.5.4
-# @version 1.5.3
+# @version 1.5.4
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

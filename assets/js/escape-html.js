@@ -7,7 +7,7 @@
  * password-validation.js.
  *
  * @file escape-html.js
- * @version 1.5.3
+ * @version 1.5.4
  * @author Silver Assist
  * @since 1.5.4
  */
