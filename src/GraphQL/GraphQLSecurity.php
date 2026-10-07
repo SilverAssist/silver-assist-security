@@ -375,17 +375,23 @@ class GraphQLSecurity implements LoadableInterface {
 				$base_complexity = 1;
 
 				// Field count estimation (each field adds complexity).
-				$field_matches = array();
-				preg_match_all( '/\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*[{\(]/', $query_string, $field_matches );
+				$field_matches    = array();
+				$fields_found     = preg_match_all( '/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*[{\(]/', $query_string, $field_matches );
 				$field_complexity = ! empty( $field_matches[1] ) ? count( $field_matches[1] ) : 0;
 
 				// Connection complexity (connections with arguments).
 				$connection_matches = array();
-				preg_match_all( '/\(\s*first:\s*(\d+)/', $query_string, $connection_matches );
+				// Both page size arguments count, `first:` and `last:`, wherever they sit in the argument list.
+				$pages_found = preg_match_all( '/\b(?:first|last)\s*:\s*(\d+)/', $query_string, $connection_matches );
+
+				// PCRE gave up: an estimate that could not be made is over any budget.
+				if ( false === $fields_found || false === $pages_found ) {
+					return PHP_INT_MAX;
+				}
 				$connection_complexity = 0;
 				if ( ! empty( $connection_matches[1] ) ) {
-					foreach ( $connection_matches[1] as $first_value ) {
-						$connection_complexity += (int) ceil( (int) $first_value / 10 );
+					foreach ( $connection_matches[1] as $page_size ) {
+						$connection_complexity += (int) ceil( (int) $page_size / 10 );
 					}
 				}
 
@@ -500,7 +506,8 @@ class GraphQLSecurity implements LoadableInterface {
 			$document = Parser::parse( $query, array( 'noLocation' => true ) );
 		} catch ( \Throwable $e ) {
 			// Not a valid document, so it will not execute; stay conservative with a text match.
-			return (bool) \preg_match( '/\b__(?:schema|type)\b/', $query );
+			// A match failure (PCRE gave up) counts as introspection: reject rather than allow.
+			return 0 !== \preg_match( '/\b__(?:schema|type)\b/', $query );
 		}
 
 		$found = false;
@@ -530,8 +537,33 @@ class GraphQLSecurity implements LoadableInterface {
 	 * @throws UserError When query exceeds security limits (aliases, directives, depth, size, duplicates).
 	 */
 	private function validate_query_patterns( string $query ): void {
-		// Check for excessive aliases.
-		$alias_count = preg_match_all( '/\w+\s*:\s*\w+/', $query );
+		// Length first: every check below is linear, and this bounds how much text they see.
+		$max_query_length = $this->max_query_complexity * 100;
+		if ( strlen( $query ) > $max_query_length ) {
+			throw new UserError(
+				\esc_html(
+					sprintf(
+						/* translators: 1: current query length in characters, 2: maximum allowed characters */
+						\__( 'Query is too large (%1$d characters). Maximum allowed: %2$d characters.', 'silver-assist-security' ),
+						strlen( $query ),
+						$max_query_length
+					)
+				)
+			);
+		}
+
+		// The counters below are linear scans (no backtracking) over the query without comments and
+		// strings. If one cannot complete, the query is rejected: a check that could not run is not a pass.
+		try {
+			$cleaned         = $this->strip_comments_and_strings( $query );
+			$alias_count     = $this->count_aliases( $query );
+			$directive_count = $this->count_directives( $query );
+			$duplicate_count = $this->max_selection_repeats( $cleaned );
+			$depth           = $this->brace_depth( $cleaned );
+		} catch ( \Throwable $e ) {
+			throw new UserError( \esc_html( \__( 'The query could not be validated and was rejected.', 'silver-assist-security' ) ) );
+		}
+
 		if ( $alias_count > $this->max_aliases ) {
 			throw new UserError(
 				\esc_html(
@@ -545,8 +577,6 @@ class GraphQLSecurity implements LoadableInterface {
 			);
 		}
 
-		// Check for excessive directive usage.
-		$directive_count = preg_match_all( '/@\w+/', $query );
 		if ( $directive_count > $this->max_directives * 2 ) {
 			throw new UserError(
 				\esc_html(
@@ -560,8 +590,7 @@ class GraphQLSecurity implements LoadableInterface {
 			);
 		}
 
-		// Check for field duplication patterns.
-		if ( preg_match( "/(\w+)(\s*\w+\s*)*\{[^}]*\1[^}]*\1/", $query ) ) {
+		if ( $duplicate_count > $this->max_field_duplicates ) {
 			throw new UserError(
 				\esc_html(
 					sprintf(
@@ -573,30 +602,13 @@ class GraphQLSecurity implements LoadableInterface {
 			);
 		}
 
-		// Check for potential circular queries using configured depth limit.
-		$depth_pattern = str_repeat( '\{[^}]*', $this->max_query_depth + 1 );
-		if ( preg_match( "/$depth_pattern/", $query ) ) {
+		if ( $depth > $this->max_query_depth ) {
 			throw new UserError(
 				\esc_html(
 					sprintf(
 						/* translators: %d: maximum query depth limit in levels */
 						\__( 'Query depth exceeds maximum limit of %d levels.', 'silver-assist-security' ),
 						$this->max_query_depth
-					)
-				)
-			);
-		}
-
-		// Check for excessively long queries (potential DoS).
-		$max_query_length = $this->max_query_complexity * 100;
-		if ( strlen( $query ) > $max_query_length ) {
-			throw new UserError(
-				\esc_html(
-					sprintf(
-						/* translators: 1: current query length in characters, 2: maximum allowed characters */
-						\__( 'Query is too large (%1$d characters). Maximum allowed: %2$d characters.', 'silver-assist-security' ),
-						strlen( $query ),
-						$max_query_length
 					)
 				)
 			);
@@ -881,25 +893,227 @@ class GraphQLSecurity implements LoadableInterface {
 		$directive_threshold       = max( 3, intval( $this->max_directives / 2 ) );
 		$field_duplicate_threshold = max( 10, $this->max_field_duplicates * 5 );
 
-		$suspicious_patterns = array(
-			'/(__schema|__type).*\{.*\{.*\{/', // Deep introspection.
-			'/(@\w+.*){' . $directive_threshold . ',}/', // Many directives.
-			'/.{' . $max_query_length . ',}/', // Very long query.
-			'/\{[^}]*(\w+[^}]*){' . $field_duplicate_threshold . ',}\}/', // Many field duplicates.
-		);
-
-		// Many aliases: reuse the count validation runs (a linear scan, no backtracking).
-		if ( $this->count_aliases( $query ) >= $alias_threshold ) {
+		// Very long query: a length check, nothing to match.
+		if ( strlen( $query ) >= $max_query_length ) {
 			return true;
 		}
 
-		foreach ( $suspicious_patterns as $pattern ) {
-			if ( preg_match( $pattern, $query ) ) {
-				return true;
+		// Many aliases, directives or repeated fields: the counts validation runs. They are linear
+		// scans, so a crafted query cannot exhaust PCRE's backtrack limit and go unflagged.
+		try {
+			return $this->count_aliases( $query ) >= $alias_threshold
+				|| $this->count_directives( $query ) >= $directive_threshold
+				|| $this->count_field_duplicates( $query ) >= $field_duplicate_threshold
+				|| $this->is_deep_introspection( $query );
+		} catch ( \RuntimeException $e ) {
+			// A query that could not be classified is flagged, not waved through.
+			return true;
+		}
+	}
+
+	/**
+	 * Check whether a query introspects the schema with three or more selection sets below it
+	 *
+	 * Counts the selection sets opened from the first `__schema` or `__type` on, in one linear pass
+	 * (word boundaries, so `__typename` is not introspection; line breaks do not matter).
+	 *
+	 * @since 1.5.4
+	 * @param string $query GraphQL query string.
+	 * @throws \RuntimeException When PCRE fails.
+	 * @return bool
+	 */
+	private function is_deep_introspection( string $query ): bool {
+		$cleaned = $this->strip_comments_and_strings( $query );
+
+		$found = preg_match( '/\b__(?:schema|type)\b/', $cleaned, $match, PREG_OFFSET_CAPTURE );
+		if ( false === $found ) {
+			throw new \RuntimeException( \esc_html( 'PCRE failed: ' . preg_last_error_msg() ) );
+		}
+
+		if ( 0 === $found ) {
+			return false;
+		}
+
+		return substr_count( $cleaned, '{', (int) $match[0][1] ) >= 3;
+	}
+
+	/**
+	 * Remove comments and string literals so counts do not see their content
+	 *
+	 * One linear pass, no regular expression. Handles `#` comments, strings with escaped quotes
+	 * (`"a \" b"`) and block strings (`"""..."""`, where only `\"""` is an escape). Strings are
+	 * replaced by `""`; an unterminated string or block string runs to the end of the text.
+	 *
+	 * @since 1.5.4
+	 * @param string $query GraphQL query string.
+	 * @return string Query with comments removed and strings emptied.
+	 */
+	private function strip_comments_and_strings( string $query ): string {
+		$length = strlen( $query );
+		$out    = '';
+		$i      = 0;
+
+		while ( $i < $length ) {
+			$char = $query[ $i ];
+
+			if ( '#' === $char ) {
+				// Comment: skip to the end of the line, keep the line break.
+				$end = strcspn( $query, "\r\n", $i );
+				$i  += $end;
+				continue;
+			}
+
+			if ( '"' !== $char ) {
+				// Copy the run up to the next comment or string start.
+				$run  = strcspn( $query, '#"', $i );
+				$out .= substr( $query, $i, $run );
+				$i   += $run;
+				continue;
+			}
+
+			if ( '"""' === substr( $query, $i, 3 ) ) {
+				$i += 3;
+				while ( $i < $length && '"""' !== substr( $query, $i, 3 ) ) {
+					$i += ( '\\"""' === substr( $query, $i, 4 ) ) ? 4 : 1;
+				}
+				$i += 3;
+			} else {
+				++$i;
+				while ( $i < $length && '"' !== $query[ $i ] && "\n" !== $query[ $i ] ) {
+					$i += ( '\\' === $query[ $i ] ) ? 2 : 1;
+				}
+				++$i;
+			}
+
+			$out .= '""';
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Deepest nesting of curly braces in a text without comments and strings
+	 *
+	 * @since 1.5.4
+	 * @param string $cleaned Output of strip_comments_and_strings().
+	 * @return int Maximum depth.
+	 */
+	private function brace_depth( string $cleaned ): int {
+		$depth     = 0;
+		$max_depth = 0;
+		$length    = strlen( $cleaned );
+
+		for ( $i = 0; $i < $length; $i++ ) {
+			if ( '{' === $cleaned[ $i ] ) {
+				$max_depth = max( $max_depth, ++$depth );
+			} elseif ( '}' === $cleaned[ $i ] && $depth > 0 ) {
+				--$depth;
 			}
 		}
 
-		return false;
+		return $max_depth;
+	}
+
+	/**
+	 * Most times one response key repeats inside a single selection set, minus the first
+	 *
+	 * This is what field duplication means for the limit: `{ posts {..} posts {..} posts {..} }`.
+	 * The same name in different selection sets (`nodes` under every connection) is ordinary and not
+	 * counted, and an aliased field counts under its alias, which the alias limit governs. One linear
+	 * pass over text without comments and strings; arguments and directive arguments are skipped.
+	 *
+	 * @since 1.5.4
+	 * @param string $cleaned Output of strip_comments_and_strings().
+	 * @return int Excess occurrences of the most repeated key (0 when none repeats).
+	 */
+	private function max_selection_repeats( string $cleaned ): int {
+		$length  = strlen( $cleaned );
+		$stack   = array( array() );
+		$worst   = 0;
+		$i       = 0;
+		$pending = 0; // Names to ignore: the type condition after `...`.
+
+		while ( $i < $length ) {
+			$char = $cleaned[ $i ];
+
+			if ( '(' === $char ) {
+				// Skip the arguments, nested parentheses included.
+				$level = 0;
+				for ( ; $i < $length; $i++ ) {
+					if ( '(' === $cleaned[ $i ] ) {
+						++$level;
+					} elseif ( ')' === $cleaned[ $i ] && 0 === --$level ) {
+						break;
+					}
+				}
+				++$i;
+			} elseif ( '{' === $char ) {
+				$stack[] = array();
+				++$i;
+			} elseif ( '}' === $char ) {
+				if ( count( $stack ) > 1 ) {
+					array_pop( $stack );
+				}
+				++$i;
+			} elseif ( '@' === $char || '$' === $char ) {
+				$i += 1 + strspn( $cleaned, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_', $i + 1 );
+			} elseif ( '.' === $char ) {
+				$pending = 1;
+				$i      += strspn( $cleaned, '.', $i );
+			} elseif ( '_' === $char || ctype_alpha( $char ) ) {
+				$name = substr( $cleaned, $i, strspn( $cleaned, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_', $i ) );
+				$i   += strlen( $name );
+
+				if ( $pending > 0 ) {
+					// `... on Type` has two names, `...Fragment` one.
+					$pending = 'on' === $name ? 1 : 0;
+					continue;
+				}
+
+				$after = $i + strspn( $cleaned, " \t\r\n,", $i );
+				if ( count( $stack ) > 1 ) {
+					$level = count( $stack ) - 1;
+					$key   = $name;
+					$count = ( $stack[ $level ][ $key ] ?? 0 ) + 1;
+
+					$stack[ $level ][ $key ] = $count;
+					$worst                   = max( $worst, $count - 1 );
+				}
+
+				if ( $after < $length && ':' === $cleaned[ $after ] ) {
+					// `alias: field`: the key is the alias, so skip the field name that follows.
+					$i  = $after + 1;
+					$i += strspn( $cleaned, " \t\r\n,", $i );
+					$i += strspn( $cleaned, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_', $i );
+				}
+			} else {
+				++$i;
+			}
+		}
+
+		return $worst;
+	}
+
+	/**
+	 * Count the matches of a pattern, failing instead of returning a smaller number
+	 *
+	 * `preg_match_all()` returns false when PCRE gives up (backtrack or JIT stack limit). A count of
+	 * zero there would let the query through.
+	 *
+	 * @since 1.5.4
+	 * @param string $pattern Regular expression.
+	 * @param string $subject Text to search.
+	 * @return int Number of matches.
+	 * @throws \RuntimeException When PCRE fails.
+	 */
+	private function count_matches( string $pattern, string $subject ): int {
+		$count = preg_match_all( $pattern, $subject );
+
+		if ( false === $count ) {
+			throw new \RuntimeException( \esc_html( 'PCRE failed: ' . preg_last_error_msg() ) );
+		}
+
+		return $count;
 	}
 
 	/**
@@ -990,45 +1204,7 @@ class GraphQLSecurity implements LoadableInterface {
 	 * @since 1.1.1
 	 */
 	private function calculate_query_depth( string $query ): int {
-		// Remove comments and normalize whitespace.
-		$query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
-		$query = trim( (string) preg_replace( '/\s+/', ' ', $query ) );
-
-		$max_depth     = 0;
-		$current_depth = 0;
-		$in_string     = false;
-		$string_char   = null;
-		$query_length  = strlen( $query );
-
-		for ( $i = 0; $i < $query_length; $i++ ) {
-			$char = $query[ $i ];
-
-			// Handle string literals.
-			if ( ( '"' === $char || "'" === $char ) && ( 0 === $i || '\\' !== $query[ $i - 1 ] ) ) {
-				if ( ! $in_string ) {
-					$in_string   = true;
-					$string_char = $char;
-				} elseif ( $char === $string_char ) {
-					$in_string   = false;
-					$string_char = null;
-				}
-				continue;
-			}
-
-			if ( $in_string ) {
-				continue;
-			}
-
-			// Count nesting levels.
-			if ( '{' === $char ) {
-				++$current_depth;
-				$max_depth = max( $max_depth, $current_depth );
-			} elseif ( '}' === $char ) {
-				$current_depth = max( 0, $current_depth - 1 );
-			}
-		}
-
-		return $max_depth;
+		return $this->brace_depth( $this->strip_comments_and_strings( $query ) );
 	}
 
 	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Kept for signature consistency with the other validate_query_* methods in this class.
@@ -1123,15 +1299,11 @@ class GraphQLSecurity implements LoadableInterface {
 	 */
 	private function count_aliases( string $query ): int {
 		// Remove comments and strings to avoid false positives.
-		$cleaned_query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
-		$cleaned_query = (string) preg_replace( '/"[^"]*"/', '""', $cleaned_query );
-		$cleaned_query = (string) preg_replace( "/'[^']*'/", "''", $cleaned_query );
+		$cleaned_query = $this->strip_comments_and_strings( $query );
 
 		// Pattern to match aliases: fieldAlias: actualField
 		// This matches word characters followed by colon and space/word.
-		preg_match_all( '/\b[a-zA-Z_][a-zA-Z0-9_]*\s*:\s*[a-zA-Z_]/', $cleaned_query, $matches );
-
-		return count( $matches[0] );
+		return $this->count_matches( '/\b[a-zA-Z_][a-zA-Z0-9_]*\s*:\s*[a-zA-Z_]/', $cleaned_query );
 	}
 
 	/**
@@ -1201,14 +1373,10 @@ class GraphQLSecurity implements LoadableInterface {
 	 */
 	private function count_directives( string $query ): int {
 		// Remove comments and strings to avoid false positives.
-		$cleaned_query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
-		$cleaned_query = (string) preg_replace( '/"[^"]*"/', '""', $cleaned_query );
-		$cleaned_query = (string) preg_replace( "/'[^']*'/", "''", $cleaned_query );
+		$cleaned_query = $this->strip_comments_and_strings( $query );
 
 		// Pattern to match directives: @directiveName.
-		preg_match_all( '/@[a-zA-Z_][a-zA-Z0-9_]*/', $cleaned_query, $matches );
-
-		return count( $matches[0] );
+		return $this->count_matches( '/@[a-zA-Z_][a-zA-Z0-9_]*/', $cleaned_query );
 	}
 
 	/**
@@ -1274,16 +1442,19 @@ class GraphQLSecurity implements LoadableInterface {
 	 *
 	 * @param string $query GraphQL query string.
 	 * @return int Number of duplicate fields found
+	 * @throws \RuntimeException When PCRE fails.
 	 * @since 1.1.1
 	 */
 	private function count_field_duplicates( string $query ): int {
 		// Remove comments and strings to avoid false positives.
-		$cleaned_query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
-		$cleaned_query = (string) preg_replace( '/"[^"]*"/', '""', $cleaned_query );
-		$cleaned_query = (string) preg_replace( "/'[^']*'/", "''", $cleaned_query );
+		$cleaned_query = $this->strip_comments_and_strings( $query );
 
 		// Extract all field names (simplified pattern).
-		preg_match_all( '/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*[({]/', $cleaned_query, $matches );
+		$matched = preg_match_all( '/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*[({]/', $cleaned_query, $matches );
+
+		if ( false === $matched ) {
+			throw new \RuntimeException( \esc_html( 'PCRE failed: ' . preg_last_error_msg() ) );
+		}
 
 		if ( empty( $matches[1] ) ) {
 			return 0;

@@ -601,12 +601,19 @@ class SecurityHelper {
 		 * Observation only: it does not change what is written to the log. Tests use it to assert an
 		 * event was raised, since under PHPUnit only errors are written.
 		 *
+		 * Any plugin or theme can hook it, so it never carries the text of a request: `query_preview`
+		 * (the first characters of a GraphQL query, which can hold personal data in its literals) is
+		 * removed from the context. It is still written to the security log, which only someone with
+		 * file access can read.
+		 *
 		 * @since 1.5.4
 		 * @param string $event_type Type of security event.
 		 * @param string $message    Human-readable event description.
-		 * @param array  $context    Additional context data.
+		 * @param array  $context    Additional context data, without `query_preview`.
 		 */
-		\do_action( 'silver_assist_security_event', $event_type, $message, $context );
+		$observable_context = $context;
+		unset( $observable_context['query_preview'] );
+		\do_action( 'silver_assist_security_event', $event_type, $message, $observable_context );
 
 		// Only log when WP_DEBUG is enabled.
 		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
