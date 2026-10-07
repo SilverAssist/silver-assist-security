@@ -201,33 +201,6 @@ class SecurityFeaturesIntegrationTest extends WP_UnitTestCase
     }
 
     /**
-     * Test security headers integration with WordPress
-     *
-     * @return void
-     */
-    public function test_security_headers_integration(): void
-    {
-        // Test that security headers can be set
-        if (!\headers_sent()) {
-            // Simulate header setting
-            $security_headers = array(
-                'X-Content-Type-Options' => 'nosniff',
-                'X-Frame-Options' => 'SAMEORIGIN',
-                'X-XSS-Protection' => '1; mode=block',
-                'Referrer-Policy' => 'strict-origin-when-cross-origin'
-            );
-            
-            foreach ($security_headers as $header => $value) {
-                // In real implementation, headers would be set via WordPress hooks
-                $this->assertIsString($header, 'Security header name should be string');
-                $this->assertIsString($value, 'Security header value should be string');
-            }
-        }
-        
-        $this->assertTrue(true, 'Security headers integration test completed');
-    }
-
-    /**
      * Test WordPress user meta integration for security data
      *
      * @return void

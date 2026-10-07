@@ -35,7 +35,7 @@ Never create standalone `.md` files (`docs/`, `CONTRIBUTING.md`, `API.md`, etc.)
 ### Cookie Security (`Security\GeneralSecurity`)
 - Automatic HTTPOnly flag for all WordPress authentication cookies
 - Secure flag (HTTPS), SameSite attribute (CSRF protection)
-- Security headers (X-Frame-Options, X-XSS-Protection, CSP), WordPress hardening (XML-RPC blocking, version hiding)
+- Security headers (nosniff, X-Frame-Options SAMEORIGIN, X-XSS-Protection, Referrer-Policy, Permissions-Policy, HSTS on SSL; no CSP), WordPress hardening (XML-RPC blocking, version hiding)
 
 ### GraphQL Security (`GraphQL\GraphQLSecurity` + `GraphQL\GraphQLConfigManager`)
 - WPGraphQL detection and conditional loading
@@ -224,7 +224,7 @@ Tests added by the epic: #127 (suite completes), #128 (`ClientIpResolutionTest`)
 
 | Hook | Callback | Core behavior touched | Context | Risk | Test |
 |------|----------|-----------------------|---------|------|------|
-| `send_headers`, `admin_init`, `login_init` | `add_security_headers` | Sends nosniff, Referrer-Policy, Permissions-Policy, HSTS (https only, not in development), no `X-Frame-Options: DENY` so same-origin framing (editor preview, customizer) keeps working | FE, ADM, LOG, ED | high | `Integration/GeneralHardeningBehaviorTest::test_baseline_headers_are_sent_in_every_context`, `::test_headers_do_not_forbid_same_origin_framing`, `::test_headers_can_be_adjusted_with_a_filter`, `::test_hsts_only_on_ssl_outside_development`, `::test_hsts_not_sent_in_development`; `Integration/HSTSDevelopmentTest` (11 environment cases, e.g. `::test_localhost_with_https_no_hsts`); E2E `assets-and-headers.spec.ts` "security headers are present @smoke" |
+| `send_headers`, `admin_init`, `login_init` | `add_security_headers` | Sends nosniff, Referrer-Policy, Permissions-Policy, HSTS (https only, not in development), no `X-Frame-Options: DENY` so same-origin framing (editor preview, customizer) keeps working | FE, ADM, LOG, ED | high | `Integration/GeneralHardeningBehaviorTest::test_baseline_headers_are_sent_in_every_context`, `::test_headers_do_not_forbid_same_origin_framing`, `::test_headers_can_be_adjusted_with_a_filter`, `::test_hsts_only_on_ssl_outside_development`, `::test_hsts_not_sent_in_development`; E2E `assets-and-headers.spec.ts` "security headers are present @smoke" |
 | `rest_pre_serve_request` | `add_rest_security_headers` | Same headers on REST responses; must not change the served flag | REST, ED, headless | medium | `Integration/GeneralHardeningBehaviorTest::test_rest_header_hook_does_not_change_served_flag`, `::test_baseline_headers_are_sent_in_every_context` |
 | `the_generator` | `remove_version` | Empty generator string in feeds and head | FE | low | `Security/GeneralSecurityTest::test_wordpress_version_removed`; `Integration/EditorCompatibilityTest::test_generator_tag_is_not_printed`; E2E "front end does not print the generator tag or WP version @smoke" |
 | `init` | `remove_unnecessary_headers` (adds the `wp_head` removals below and the oEmbed route filter) | Cleans `<head>` | FE, REST | medium | see the two rows below |

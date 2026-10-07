@@ -208,34 +208,25 @@ class AdminPanelTest extends WP_UnitTestCase
     }
 
     /**
-     * Test admin menu registration with Settings Hub fallback
+     * Test admin menu registration puts the plugin in the Settings Hub or, without it, under Settings
      */
     public function test_admin_menu_registration_with_hub_fallback(): void
     {
-        // Clear existing menu
+        \wp_set_current_user($this->admin_user_id);
+
+        $this->admin_panel->register_with_hub();
+
+        if (\class_exists(\SilverAssist\SettingsHub\SettingsHub::class)) {
+            $this->assertTrue(
+                \SilverAssist\SettingsHub\SettingsHub::get_instance()->is_plugin_registered('silver-assist-security'),
+                'The plugin should be registered with the Settings Hub'
+            );
+            return;
+        }
+
         global $submenu;
-        $submenu = [];
-
-        // Trigger menu registration
-        \do_action('admin_menu');
-
-        // Verify menu was registered (either in Settings Hub or standalone)
-        // Note: In test environment, Settings Hub may not be available
-        $this->assertTrue(true, 'Menu registration completed without errors');
-    }
-
-    /**
-     * Test AJAX security status endpoint with authentication
-     */
-    public function test_ajax_security_status_requires_authentication(): void
-    {
-        // Test without authentication - should fail
-        $_POST['nonce'] = \wp_create_nonce('silver_assist_security_nonce');
-        $_SERVER['REQUEST_METHOD'] = 'POST';
-
-        // AJAX endpoints require admin user - without it, should fail
-        // This test verifies the endpoint exists and has security checks
-        $this->assertTrue(true, 'AJAX endpoint requires authentication');
+        $slugs = \array_column($submenu['options-general.php'] ?? [], 2);
+        $this->assertContains('silver-assist-security', $slugs, 'Without the hub the plugin gets its own Settings page');
     }
 
     /**
@@ -363,21 +354,11 @@ class AdminPanelTest extends WP_UnitTestCase
         // Login as administrator
         \wp_set_current_user($this->admin_user_id);
 
-        // Verify enqueue_admin_scripts method is callable
-        $this->assertTrue(
-            is_callable([$this->admin_panel, 'enqueue_admin_scripts']),
-            'Enqueue admin scripts method should be callable'
-        );
-        
         // Verify hook is registered
         $this->assertNotFalse(
             \has_action('admin_enqueue_scripts', [$this->admin_panel, 'enqueue_admin_scripts']),
             'Admin enqueue scripts hook should be registered'
         );
-        
-        // In test environment, full asset enqueuing may not work
-        // The important part is the method and hook exist
-        $this->assertTrue(true, 'Asset enqueuing method and hook verified');
     }
 
     /**
@@ -399,9 +380,14 @@ class AdminPanelTest extends WP_UnitTestCase
         // Trigger script enqueue
         $this->admin_panel->enqueue_admin_scripts($hook_suffix);
 
-        // Scripts should NOT be enqueued on non-plugin pages
-        // (This is a behavior test - implementation may vary)
-        $this->assertTrue(true, 'Script enqueue completed without errors');
+        $this->assertFalse(\wp_script_is('silver-assist-security-admin', 'enqueued'), 'The admin script is not loaded on the dashboard');
+        $this->assertFalse(\wp_style_is('silver-assist-security-admin', 'enqueued'), 'The admin style is not loaded on the dashboard');
+
+        // Control: the plugin page does load them.
+        $this->admin_panel->enqueue_admin_scripts('settings_page_silver-assist-security');
+
+        $this->assertTrue(\wp_script_is('silver-assist-security-admin', 'enqueued'));
+        $this->assertTrue(\wp_style_is('silver-assist-security-admin', 'enqueued'));
     }
 
     /**
@@ -520,11 +506,11 @@ class AdminPanelTest extends WP_UnitTestCase
         \update_option('silver_assist_graphql_headless_mode', 1);
         \update_option('silver_assist_graphql_query_timeout', 10);
 
-        // Create new AdminPanel to load updated config
-        $admin_panel = new AdminPanel();
+        $manager = \SilverAssist\Security\GraphQL\GraphQLConfigManager::get_instance();
+        $manager->clear_cache();
 
-        // Verify configuration is accessible
-        $this->assertTrue(true, 'GraphQL configuration loaded successfully');
+        $this->assertTrue($manager->is_headless_mode());
+        $this->assertGreaterThanOrEqual(120, $manager->get_rate_limiting_config()['requests_per_minute'], 'Headless mode raises the rate limit base to 120');
     }
 
     /**
@@ -660,7 +646,6 @@ class AdminPanelTest extends WP_UnitTestCase
             
             // Should render without PHP errors
             $this->assertNotEmpty($output, 'Admin page should produce output');
-            $this->assertTrue(true, 'Admin page rendered without fatal errors');
         } catch (\Exception $e) {
             ob_end_clean();
             $this->fail('Admin page rendering threw exception: ' . $e->getMessage());

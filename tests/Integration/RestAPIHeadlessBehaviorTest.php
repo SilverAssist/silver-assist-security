@@ -71,6 +71,10 @@ class RestAPIHeadlessBehaviorTest extends WP_UnitTestCase {
 		$_SERVER['REMOTE_ADDR'] = self::CLIENT_IP;
 		$this->clear_counters( self::CLIENT_IP );
 		\wp_set_current_user( 0 );
+
+		// The GraphQL limiter keeps its own window for this IP and reads configuration cached by
+		// whichever test ran before: start from a known state instead of inheriting it.
+		$this->clear_graphql_config_caches();
 	}
 
 	/**
@@ -115,6 +119,8 @@ class RestAPIHeadlessBehaviorTest extends WP_UnitTestCase {
 	private function clear_counters( string $ip ): void {
 		\delete_transient( SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_window', $ip ) );
 		\delete_transient( SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_limit', $ip ) );
+		\delete_transient( SecurityHelper::generate_ip_transient_key( 'graphql_rate_window', $ip ) );
+		\delete_transient( SecurityHelper::generate_ip_transient_key( 'graphql_rate_limit', $ip ) );
 	}
 
 	/**
@@ -318,8 +324,13 @@ class RestAPIHeadlessBehaviorTest extends WP_UnitTestCase {
 
 		for ( $i = 0; $i < self::LIMIT * 2; $i++ ) {
 			$result = \graphql( array( 'query' => '{ generalSettings { title } }' ) );
-			$this->assertArrayNotHasKey( 'errors', $result );
+			$this->assertArrayNotHasKey( 'errors', $result, 'GraphQL call ' . ( $i + 1 ) . ' failed: ' . \wp_json_encode( $result['errors'] ?? null ) );
 		}
+
+		$this->assertNotFalse(
+			\get_transient( SecurityHelper::generate_ip_transient_key( 'graphql_rate_limit', self::CLIENT_IP ) ),
+			'The calls should have gone through the GraphQL limiter, with its own counter'
+		);
 
 		$this->assertFalse(
 			\get_transient( SecurityHelper::generate_ip_transient_key( 'silver_assist_rest_limit', self::CLIENT_IP ) ),

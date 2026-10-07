@@ -50,34 +50,10 @@ class AdminInterfaceTest extends WP_UnitTestCase
         // Test menu registration
         $this->admin_panel->register_with_hub();
 
-        // In integration, this would be registered under Settings Hub
-        // For unit test, we verify the method executes without error
-        $this->assertTrue(true, 'Admin menu registration should complete without errors');
-    }
-
-    /**
-     * Test standalone menu registration when Settings Hub is not available  
-     */
-    public function test_standalone_menu_registration(): void
-    {
-        global $admin_page_hooks, $submenu;
-
-        // Ensure we're testing standalone mode
-        $this->admin_panel->register_with_hub();
-
-        // Check if our menu hook exists
-        $found_menu = false;
-        if (\is_array($admin_page_hooks)) {
-            foreach ($admin_page_hooks as $menu_slug => $hook) {
-                if (\strpos($menu_slug, 'silver-assist-security') !== false) {
-                    $found_menu = true;
-                    break;
-                }
-            }
-        }
-
-        // In standalone mode, should have its own menu
-        $this->assertTrue(true, 'Standalone menu should be registered when Settings Hub unavailable');
+        $this->assertTrue(
+            \SilverAssist\SettingsHub\SettingsHub::get_instance()->is_plugin_registered('silver-assist-security'),
+            'The plugin should be registered with the Settings Hub'
+        );
     }
 
     /**

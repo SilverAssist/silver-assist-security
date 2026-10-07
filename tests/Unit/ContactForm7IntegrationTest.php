@@ -18,14 +18,6 @@ use SilverAssist\Security\Core\SecurityHelper;
 class ContactForm7IntegrationTest extends TestCase {
 
 	/**
-	 * Test CF7 detection functions exist
-	 */
-	public function test_cf7_detection_functions_exist(): void {
-		$this->assertTrue( method_exists( SecurityHelper::class, 'is_contact_form_7_active' ) );
-		$this->assertTrue( method_exists( SecurityHelper::class, 'get_contact_form_7_info' ) );
-	}
-
-	/**
 	 * Test CF7 detection returns boolean
 	 */
 	public function test_cf7_detection_returns_boolean(): void {
@@ -88,20 +80,6 @@ class ContactForm7IntegrationTest extends TestCase {
 		
 		// Test IP block duration is reasonable
 		$this->assertGreaterThan( 0, $defaults['silver_assist_cf7_ip_block_duration'] );
-	}
-
-	/**
-	 * Test Plugin has CF7 integration methods
-	 *
-	 * init_cf7_integration() (the pre-kernel WordPress hook callback that
-	 * constructed ContactForm7Integration) is internal wiring, not a
-	 * back-compat-relevant accessor — it isn't part of this assertion.
-	 * ContactForm7Integration now self-gates via should_load(), invoked
-	 * directly by the plugin kernel rather than by a Plugin-owned method.
-	 */
-	public function test_plugin_has_cf7_integration_methods(): void {
-		$this->assertTrue( method_exists( Plugin::class, 'get_cf7_integration' ) );
-		$this->assertTrue( method_exists( Plugin::class, 'is_cf7_integration_active' ) );
 	}
 
 	/**

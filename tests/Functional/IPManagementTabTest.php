@@ -72,25 +72,6 @@ class IPManagementTabTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test CF7 section is conditional on CF7 being active
-	 */
-	public function test_cf7_section_conditional_on_cf7_active(): void {
-		$cf7_active = \SilverAssist\Security\Core\SecurityHelper::is_contact_form_7_active();
-
-		if ( $cf7_active ) {
-			$this->assertStringContainsString(
-				'cf7',
-				strtolower( $this->settings_html ),
-				'CF7 section should appear when CF7 is active'
-			);
-		} else {
-			// When CF7 is not active, the section may be hidden or absent
-			// This test documents the conditional behavior
-			$this->assertTrue( true, 'CF7 section correctly absent when CF7 is not active' );
-		}
-	}
-
-	/**
 	 * Clean up
 	 */
 	protected function tearDown(): void {

@@ -21,7 +21,6 @@ This plugin automatically implements enterprise-level security measures without 
 
 - **Login Protection**: IP-based login attempt limiting (configurable 1-20 attempts)
 - **Session Management**: Session timeout management (5-120 minutes) with enforced session cookie lifetime
-- **CAPTCHA Security Challenge**: Math-based CAPTCHA on login page during Under Attack Mode to block automated login attempts
 - **Remember Me Removal**: "Remember Me" checkbox removed from login form to enforce strict session timeout policies
 - **User Enumeration Protection**: Login error standardization prevents user discovery
 - **Strong Password Enforcement**: Mandatory complex passwords (8+ characters, mixed case, numbers, symbols)
@@ -51,7 +50,7 @@ This plugin automatically implements enterprise-level security measures without 
 - **Introspection Blocking**: Disabled in production environments
 - **Query Depth Limits**: Configurable limits (1-20 levels, default: 8)
 - **Query Complexity Control**: Prevents resource exhaustion (10-1000 points, default: 100)
-- **Query Timeout Protection**: Configurable timeouts (1-30 seconds, default: 5)
+- **Query Timeout Protection**: Configurable timeout (1 second up to PHP's `max_execution_time`, or 30 seconds when PHP has no limit; the default is PHP's limit capped at 30)
 - **Rate Limiting**: 60 anonymous requests per minute per IP (120 in headless mode), see "Headless Clients: REST and GraphQL"
 - **Alias & Field Duplication Protection**: Prevents excessive aliases and field repetition
 
@@ -61,7 +60,6 @@ This plugin automatically implements enterprise-level security measures without 
 **Solution**:
 
 - **Automatic Integration**: Seamless integration with Contact Form 7 when plugin is active
-- **CAPTCHA on Forms**: Math-based CAPTCHA challenge injected into CF7 forms during Under Attack Mode
 - **Form Submission Rate Limiting**: Prevents rapid-fire spam submissions per IP. One setting governs it: "Rate Limit" on the Form Protection tab (`silver_assist_cf7_rate_limit`, 1-10 per window, default 2) and its window (`silver_assist_cf7_rate_window`, 30-300 seconds, default 60). The legacy `silver_assist_form_rate_*` options are migrated to these once and removed.
 - **Bot Protection**: Advanced detection of automated form submission attempts. Three settings on the Form Protection tab tune it: "Honeypot Field" (`silver_assist_cf7_honeypot_enabled`, default on), "Minimum Submission Time" (`silver_assist_cf7_submission_delay`, 0-10000 milliseconds, default 2000, 0 = off; the form carries a signed hidden timing field, and a form without it, such as a cached page, is not checked, and a bot can reuse a token it captured earlier, so this is a soft signal: the rate limit and the blacklist remain the flood defence; lower it or set 0 if autofill or assistive tools submit faster than the minimum) and "Manual Block Duration" (`silver_assist_cf7_ip_block_duration`, 1-1440 minutes, default 60, how long an IP blocked by hand stays blocked). The obsolete browser, SQL injection and spam pattern checks are always on, there is no switch for them
 - **IP-based Blocking**: Temporary blocks for IPs exceeding submission limits
@@ -106,10 +104,10 @@ The plugin has two separate per-IP protections. They have their own settings, th
 - **404 Responses**: Returns "Not Found" to suspicious automated requests
 - **Rate Limiting**: Prevents rapid-fire access attempts from scripts
 - **Header Analysis**: Detects missing browser headers typical of automated tools
-- **Enhanced Security Headers**: X-Frame-Options, X-XSS-Protection, Content Security Policy
+- **Security Headers**: `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy` and HSTS on SSL (no Content Security Policy is sent)
 - **WordPress Hardening**: XML-RPC blocking, version hiding, file editing restrictions
 - **User Enumeration Protection**: Prevents discovery of valid usernames
-- **Behavioral Tracking**: Monitors and extends blocks for persistent bot activity
+- **Behavioral Tracking**: Logs requests turned away as bots (the last 10 per IP, kept for an hour) for monitoring; the log does not extend or add any block
 
 ## 📊 Multi-Tab Security Dashboard
 
@@ -121,7 +119,6 @@ The plugin features a comprehensive 5-tab interface (4 tabs when Contact Form 7 
 
 - Real-time security status overview and compliance indicators
 - Live statistics: failed login attempts, locked-out IPs (login lockout) and form flood blocked IPs (Contact Form 7), GraphQL queries
-- **Under Attack Mode indicator**: Shows Active/Inactive status in General Security card
 - **Form Flood Blacklist indicator**: Shows Enabled/Disabled status in the Admin Security card (this is the Contact Form 7 flood protection, not the login lockout)
 - **Session Timeout stat**: Displays configured timeout in Admin Security card
 - Security recommendations and quick actions
@@ -157,7 +154,7 @@ The plugin features a comprehensive 5-tab interface (4 tabs when Contact Form 7 
 ## 🌍 Enterprise Features
 
 - **Easy Configuration**: Simple admin panel with toggle switches and sliders
-- **Instant Updates**: All settings take effect immediately
+- **Explicit Save**: Each settings tab has one Save button; saved settings take effect immediately
 - **Multi-Language Support**: Full Spanish translation included
 - **No Technical Knowledge Required**: Works automatically after activation
 - **Automatic Updates**: Built-in update system for latest security patches
@@ -200,7 +197,6 @@ The plugin starts protecting your website immediately after activation:
 ✅ **User enumeration** is prevented  
 ✅ **Remember Me** checkbox is removed (session timeout enforced)  
 ✅ **Admin URL hiding** (optional - requires configuration)  
-✅ **Under Attack Mode** CAPTCHA protection (optional - toggle in IP Management)  
 
 ### Configuration Dashboard
 
@@ -263,8 +259,8 @@ composer require silverassist/wp-settings-hub
 
 - 🔧 **Query Depth Limit**: 1-20 levels (default: 8)
 - 🔧 **Query Complexity**: 10-1000 points (default: 100)
-- 🔧 **Query Timeout**: 1-30 seconds (default: 5)
-- ✅ **Rate Limiting**: 30 requests/minute per IP (automatic)
+- 🔧 **Query Timeout**: 1 second up to PHP's `max_execution_time` (30 when unlimited); default is PHP's limit capped at 30
+- ✅ **Rate Limiting**: 60 anonymous requests/minute per IP, 120 in headless mode (automatic, see "Headless Clients: REST and GraphQL")
 - ✅ **Introspection**: Disabled in production (automatic)
 
 **Admin URL Hide Configuration** *(Optional Security Layer)*
@@ -331,7 +327,7 @@ Never commit a token or an `auth.json`.
 
 - ✅ **Weekly Checks**: Automatically verifies Composer, npm, and GitHub Actions updates every Monday
 - ✅ **Auto-PRs**: Creates Pull Requests with dependency updates
-- ✅ **Quality Gates**: Runs PHPStan, PHPCS, builds, and security audits
+- ✅ **Quality Gates**: The Quality Checks workflow (PHPStan, PHPCS, PHPUnit) and the security audit run on every PR
 - ✅ **Auto-Merge**: Safe updates (minor/patch) merge automatically
 - ✅ **Manual Review**: Major version updates require human approval
 - ✅ **Security Audits**: Continuous vulnerability scanning (90-day reports)
@@ -356,11 +352,10 @@ Never commit a token or an `auth.json`.
 
 **Workflow jobs:**
 
-1. `check-composer-updates` - PHP dependencies validation
-2. `check-npm-updates` - JavaScript dependencies validation
+1. `check-composer-updates` - PHP dependencies report
+2. `check-npm-updates` - JavaScript dependencies report
 3. `security-audit` - CVE scanning and reports
-4. `validate-pr` - Quality checks on Dependabot PRs
-5. `auto-merge-dependabot` - Safe updates auto-merge
+4. `auto-merge-dependabot` - Approves and auto-merges Dependabot patch and minor PRs, comments on major ones
 
 **For contributors:**
 
@@ -657,10 +652,11 @@ npm run test:e2e:admin-hide # the same site with admin hiding on (turns it on, r
 
 #### Test Coverage
 
-- **Unit Tests**: 350+ tests across all security components
-- **Integration Tests**: 50+ tests for WordPress environment
-- **Security Tests**: Comprehensive coverage of login, cookies, GraphQL, CAPTCHA
-- **CI/CD Matrix**: 12 environment combinations (PHP 8.0-8.2 × WordPress 6.5-latest)
+- **Unit Tests**: 150+ tests across the security components
+- **Integration Tests**: 590+ tests that run in a real WordPress environment
+- **Security and Functional Tests**: about 90 more, for headers, cookies and the admin screens
+- **Security Tests**: Comprehensive coverage of login, cookies, headers, GraphQL, REST and Contact Form 7
+- **CI/CD Matrix**: 3 environment combinations (PHP 8.2 × WordPress 6.5, 6.6 and latest)
 
 ## 🆘 Support & Troubleshooting
 

@@ -89,10 +89,6 @@ class ContactForm7AjaxHandlerTest extends WP_UnitTestCase {
 			$this->handler,
 			'ContactForm7AjaxHandler should be properly instantiated'
 		);
-		
-		// If CF7 is not active in test environment, that's expected
-		// The important thing is that the handler can be created without errors
-		$this->assertTrue( true, 'Handler creation completed without errors' );
 	}
 
 	/**

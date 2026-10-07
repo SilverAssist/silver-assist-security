@@ -266,107 +266,14 @@ class GeneralSecurityTest extends WP_UnitTestCase
         );
     }
 
-    /**
-     * Test HSTS header is not sent in localhost environment
-     *
-     * @since 1.1.14
-     */
-    public function test_hsts_not_sent_on_localhost(): void
-    {
-        // Simulate localhost environment
-        $_SERVER['SERVER_NAME'] = 'localhost';
-        $_SERVER['HTTPS'] = 'on';
-
-        // Create new instance to test with localhost
-        $security = new GeneralSecurity();
-
-        // Capture headers
-        ob_start();
-        $security->add_security_headers();
-        ob_end_clean();
-
-        // Get sent headers (in test environment, we verify the logic exists)
-        // The method should check for development environment
-        $this->assertTrue(true, 'HSTS should not be sent on localhost');
-    }
-
-    /**
-     * Test HSTS header is not sent in .local domain
-     *
-     * @since 1.1.14
-     */
-    public function test_hsts_not_sent_on_local_domain(): void
-    {
-        // Simulate .local domain
-        $_SERVER['SERVER_NAME'] = 'mysite.local';
-        $_SERVER['HTTP_HOST'] = 'mysite.local';
-        $_SERVER['HTTPS'] = 'on';
-
-        // Create new instance
-        $security = new GeneralSecurity();
-
-        // The method should detect .local as development environment
-        ob_start();
-        $security->add_security_headers();
-        ob_end_clean();
-
-        $this->assertTrue(true, 'HSTS should not be sent on .local domains');
-    }
-
-    /**
-     * Test HSTS header is not sent with local IP addresses
-     *
-     * @since 1.1.14
-     */
-    public function test_hsts_not_sent_on_local_ip(): void
-    {
-        // Test various local IP patterns
-        $local_ips = [
-            '127.0.0.1',
-            '192.168.1.100',
-            '10.0.0.5',
-            '172.16.0.10',
-        ];
-
-        foreach ($local_ips as $ip) {
-            $_SERVER['SERVER_NAME'] = $ip;
-            $_SERVER['HTTP_HOST'] = $ip;
-            $_SERVER['HTTPS'] = 'on';
-
-            $security = new GeneralSecurity();
-
-            ob_start();
-            $security->add_security_headers();
-            ob_end_clean();
-
-            $this->assertTrue(true, "HSTS should not be sent on local IP: {$ip}");
-        }
-    }
+    // The host-name cases (localhost, .local, private IPs, development environment type) that were
+    // here ended in an unconditional pass. They cannot be told apart in this suite, where WP_DEBUG is
+    // on and already disables HSTS whatever the host is (see
+    // Integration/ConstantsBehaviorTest::test_wp_debug_constant_disables_hsts).
 
     // The WP_DEBUG case that was here ended in an unconditional pass. It is now
     // Integration/ConstantsBehaviorTest::test_wp_debug_constant_disables_hsts, which records the headers.
 
-    /**
-     * Test HSTS header is not sent in development environment type
-     *
-     * @since 1.1.14
-     */
-    public function test_hsts_not_sent_in_development_environment_type(): void
-    {
-        // Simulate WordPress environment type 'local' or 'development'
-        // This uses wp_get_environment_type() which is available in WP 5.5+
-        
-        $_SERVER['SERVER_NAME'] = 'staging.example.com';
-        $_SERVER['HTTPS'] = 'on';
-
-        $security = new GeneralSecurity();
-
-        ob_start();
-        $security->add_security_headers();
-        ob_end_clean();
-
-        $this->assertTrue(true, 'HSTS should not be sent in development environment type');
-    }
 
     /**
      * Test development environment detection with domains containing .test
