@@ -3,8 +3,8 @@
  * GraphQL connection limits, query timeout and request logging
  *
  * Real `graphql()` requests through WPGraphQL, asserting what a client gets back: how many nodes a
- * connection returns when the complexity limit is tightened, the `QUERY_TIMEOUT` error for a request
- * that overran, and that the request-logging filter hands the response on untouched (#154, G5).
+ * connection returns, the `QUERY_TIMEOUT` error for a request that overran, and that request
+ * logging flags many-alias queries (#154 G5, #175).
  *
  * @package SilverAssist\Security\Tests\Integration
  * @since 1.5.4
@@ -93,22 +93,22 @@ class GraphQLLimitsBehaviorTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The plugin caps how many nodes one connection returns: 100 normally, 50 in headless mode
+	 * A client gets every node it asked for, up to WPGraphQL's own 100 node ceiling, in both modes
 	 *
-	 * The cap is the 100 node ceiling WPGraphQL passes in, divided by the complexity limit over 100.
-	 * Headless mode raises that limit to 200, so it halves the ceiling: a headless client asking for
-	 * `first: 100` silently receives 50 nodes. That is how the code behaves today (suspected bug S6 in
-	 * `.github/copilot-instructions.md`); the test records it so a change is deliberate.
+	 * Headless mode raises the complexity limit to 200. The plugin used to divide the connection ceiling
+	 * by that limit over 100, so a headless client asking for `first: 100` silently received 50 nodes
+	 * (S6, #175). Page size is not the plugin's to cap: the complexity rule already counts `first` and
+	 * rejects an over-budget query with an error.
 	 *
 	 * @return void
 	 */
-	public function test_connection_page_size_is_capped_by_the_complexity_limit(): void {
+	public function test_connection_returns_the_requested_nodes_in_standard_and_headless_mode(): void {
 		self::factory()->post->create_many( 60 );
 		$query = '{ posts(first: 100) { nodes { databaseId } } }';
 
 		$standard = $this->run_query( $query );
 		$this->assertSame( array(), $standard['errors'] ?? array(), (string) \wp_json_encode( $standard ) );
-		$this->assertGreaterThanOrEqual( 60, \count( $standard['data']['posts']['nodes'] ), 'control: standard mode returns every post up to 100' );
+		$this->assertGreaterThanOrEqual( 60, \count( $standard['data']['posts']['nodes'] ), 'standard mode returns every post up to 100' );
 
 		\update_option( 'silver_assist_graphql_headless_mode', true );
 		$this->clear_graphql_config_caches();
@@ -116,35 +116,8 @@ class GraphQLLimitsBehaviorTest extends WP_UnitTestCase {
 
 		$headless = $this->run_query( $query );
 		$this->assertSame( array(), $headless['errors'] ?? array(), (string) \wp_json_encode( $headless ) );
-		$this->assertCount( 50, $headless['data']['posts']['nodes'], 'the connection returns 50 nodes, not the 60 requested' );
-	}
-
-	/**
-	 * Connection resolvers receive the plugin's complexity hint
-	 *
-	 * @return void
-	 */
-	public function test_connection_query_args_carry_the_complexity_hint(): void {
-		self::factory()->post->create_many( 3 );
-
-		$seen = null;
-		\add_filter(
-			'graphql_connection_query_args',
-			static function ( $args ) use ( &$seen ) {
-				$seen = $args;
-				return $args;
-			},
-			99
-		);
-
-		$this->run_query( '{ posts(first: 30) { nodes { databaseId } } }' );
-
-		$this->assertIsArray( $seen );
-		$hint = $seen['_silver_assist_complexity_hint'] ?? null;
-		$this->assertIsArray( $hint, 'the hint is added to the connection query args' );
-		// WPGraphQL passes the resolver and the unfiltered args to this filter, not a source and the
-		// field info, so `connection_type` is always "unknown" (suspected bug S6); nothing reads the hint.
-		$this->assertSame( 5 + 3, $hint['estimated_cost'], 'base cost 5 plus one point per ten requested nodes' );
+		$this->assertGreaterThanOrEqual( 60, \count( $headless['data']['posts']['nodes'] ), 'headless mode returns every post up to 100 too' );
+		$this->assertSame( \count( $standard['data']['posts']['nodes'] ), \count( $headless['data']['posts']['nodes'] ) );
 	}
 
 	/**
@@ -179,32 +152,117 @@ class GraphQLLimitsBehaviorTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Request logging hands the response on untouched, for ordinary and suspicious queries
+	 * Raised security events
 	 *
-	 * The log line itself is not asserted: `SecurityHelper::log_security_event()` writes nothing but
-	 * errors under PHPUnit.
+	 * @var array<int, array{0: string, 1: string, 2: array<string, mixed>}>
+	 */
+	private array $events = array();
+
+	/**
+	 * Record every security event raised from now on
+	 *
+	 * @return void
+	 */
+	private function spy_on_security_events(): void {
+		$this->events = array();
+		\add_action(
+			'silver_assist_security_event',
+			function ( string $type, string $message, array $context ): void {
+				$this->events[] = array( $type, $message, $context );
+			},
+			10,
+			3
+		);
+	}
+
+	/**
+	 * Types of the security events raised so far
+	 *
+	 * @return array<int, string>
+	 */
+	private function event_types(): array {
+		return \array_column( $this->events, 0 );
+	}
+
+	/**
+	 * Build a query with a number of aliased fields
+	 *
+	 * @param int $count Number of aliases.
+	 * @return string GraphQL document.
+	 */
+	private function aliased_query( int $count ): string {
+		$aliases = '';
+		for ( $i = 0; $i < $count; $i++ ) {
+			$aliases .= "a{$i}: generalSettings { title } ";
+		}
+
+		return '{ ' . $aliases . '}';
+	}
+
+	/**
+	 * A many-alias query is answered and flagged in the security log
+	 *
+	 * The standard alias limit is 20, so 12 aliases pass validation; the log flags from half the limit
+	 * (10). The log signature used to be a regular expression that exhausted PCRE's backtrack limit and
+	 * never matched (S7, #175).
+	 *
+	 * @return void
+	 */
+	public function test_many_alias_query_is_flagged_in_the_security_log(): void {
+		$this->spy_on_security_events();
+
+		$result = $this->run_query( $this->aliased_query( 12 ) );
+
+		$this->assertSame( array(), $result['errors'] ?? array(), (string) \wp_json_encode( $result ) );
+		$this->assertArrayHasKey( 'a11', $result['data'], 'every alias is answered' );
+		$this->assertContains( 'GRAPHQL_SUSPICIOUS_QUERY', $this->event_types() );
+	}
+
+	/**
+	 * Few aliases and ordinary queries are not flagged
+	 *
+	 * @return void
+	 */
+	public function test_ordinary_and_few_alias_queries_are_not_flagged(): void {
+		$this->spy_on_security_events();
+
+		$this->run_query( '{ generalSettings { title } }' );
+		$this->run_query( $this->aliased_query( 4 ) );
+
+		$this->assertNotContains( 'GRAPHQL_SUSPICIOUS_QUERY', $this->event_types() );
+	}
+
+	/**
+	 * The alias signature in headless mode starts at half of the headless limit (25 of 50)
+	 *
+	 * @return void
+	 */
+	public function test_alias_flag_threshold_follows_the_headless_limit(): void {
+		\update_option( 'silver_assist_graphql_headless_mode', true );
+		$this->clear_graphql_config_caches();
+		$this->security->refresh_configuration();
+		$this->spy_on_security_events();
+
+		$this->run_query( $this->aliased_query( 12 ) );
+		$this->assertNotContains( 'GRAPHQL_SUSPICIOUS_QUERY', $this->event_types(), '12 aliases are below the headless threshold' );
+
+		$this->run_query( $this->aliased_query( 30 ) );
+		$this->assertContains( 'GRAPHQL_SUSPICIOUS_QUERY', $this->event_types() );
+	}
+
+	/**
+	 * A very long query is flagged for the log and an ordinary request is answered untouched
 	 *
 	 * @return void
 	 */
 	public function test_request_logging_does_not_change_the_response(): void {
-		$aliases = '';
-		for ( $i = 0; $i < 12; $i++ ) {
-			$aliases .= "a{$i}: generalSettings { title } ";
-		}
-
-		$ordinary   = $this->run_query( '{ generalSettings { title } }' );
-		$suspicious = $this->run_query( '{ ' . $aliases . '}' );
-
+		$ordinary = $this->run_query( '{ generalSettings { title } }' );
 		$this->assertSame( array(), $ordinary['errors'] ?? array() );
-		$this->assertSame( array(), $suspicious['errors'] ?? array(), (string) \wp_json_encode( $suspicious ) );
-		$this->assertArrayHasKey( 'a11', $suspicious['data'], 'every alias is answered' );
 
 		$classify = new \ReflectionMethod( $this->security, 'is_suspicious_query' );
 		$classify->setAccessible( true );
 		// The very long query signature is 50 characters per complexity point (5000 by default).
 		$this->assertTrue( $classify->invoke( $this->security, '{ generalSettings { title } }' . \str_repeat( ' ', 5000 ) ), 'a very long query is flagged for the log' );
-		// The many-aliases signature is not asserted: its regular expression exhausts PCRE's backtrack limit
-		// on a small query and so never matches (suspected bug S7 in `.github/copilot-instructions.md`).
 		$this->assertFalse( $classify->invoke( $this->security, '{ generalSettings { title } }' ), 'an ordinary query is not' );
 	}
 }

@@ -242,9 +242,6 @@ class GraphQLSecurity implements LoadableInterface {
 
 		// Integrate with WPGraphQL's native depth validation.
 		$this->integrate_with_wpgraphql_depth_validation();
-
-		// Enhance WPGraphQL's connection limits for complexity estimation.
-		$this->enhance_wpgraphql_connection_limits();
 	}
 
 	/**
@@ -282,93 +279,12 @@ class GraphQLSecurity implements LoadableInterface {
 	}
 
 	/**
-	 * Enhance WPGraphQL's connection limits for complexity estimation
+	 * Add custom validation rules with WPGraphQL integration
 	 *
 	 * @since 1.1.1
-	 * @return void
+	 * @param array $validation_rules Existing validation rules.
+	 * @return array Modified validation rules
 	 */
-	private function enhance_wpgraphql_connection_limits(): void {
-		// Filter WPGraphQL's max query amount for complexity estimation.
-		\add_filter( 'graphql_connection_max_query_amount', array( $this, 'filter_connection_max_query_amount' ), 10, 5 );
-
-		// Add complexity hints to connection resolvers.
-		\add_filter( 'graphql_connection_query_args', array( $this, 'add_complexity_hints_to_connections' ), 10, 5 );
-	}
-
-	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Required by the graphql_connection_max_query_amount filter signature.
-	/**
-	 * Filter WPGraphQL's connection max query amount based on complexity estimation
-	 *
-	 * @since 1.1.1
-	 * @param int   $max_query_amount The maximum number of nodes to query.
-	 * @param mixed $source The source object (optional).
-	 * @param array $args The connection arguments (optional).
-	 * @param mixed $context The GraphQL context (optional).
-	 * @param mixed $info The ResolveInfo object (optional).
-	 * @return int
-	 */
-	public function filter_connection_max_query_amount( int $max_query_amount, $source = null, array $args = array(), $context = null, $info = null ): int {
-		// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
-		// Use our complexity configuration to adjust connection limits.
-		$complexity_ratio = $this->max_query_complexity / 100; // Base ratio.
-
-		// More complex queries get lower connection limits.
-		$adjusted_limit = intval( $max_query_amount / $complexity_ratio );
-
-		// Ensure we don't go below 10 or above default WPGraphQL limit (100).
-		return max( 10, min( 100, $adjusted_limit ) );
-	}
-
-	/**
-	 * Add complexity hints to GraphQL connections
-	 *
-	 * @since 1.1.1
-	 * @param array $query_args The query arguments.
-	 * @param mixed $source The source object (optional).
-	 * @param array $args The connection arguments (optional).
-	 * @param mixed $context The GraphQL context (optional).
-	 * @param mixed $info The ResolveInfo object (optional).
-	 * @return array
-	 */
-	public function add_complexity_hints_to_connections( array $query_args, $source = null, array $args = array(), $context = null, $info = null ): array {
-		// Add complexity metadata for monitoring.
-		$query_args['_silver_assist_complexity_hint'] = array(
-			'max_complexity'  => $this->max_query_complexity,
-			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- WPGraphQL uses camelCase for properties
-			'connection_type' => $info->fieldName ?? 'unknown',
-			'estimated_cost'  => $this->estimate_connection_complexity( $args ),
-		);
-
-		return $query_args;
-	}
-
-	/**
-	 * Estimate connection query complexity based on pagination arguments
-	 *
-	 * @since 1.1.1
-	 * @param array $args Connection arguments.
-	 * @return int Estimated complexity score
-	 */
-	private function estimate_connection_complexity( array $args ): int {
-		$base_cost = 5; // Base cost for connection queries.
-
-		// Extract pagination info.
-		$item_count = (int) ( $args['first'] ?? $args['last'] ?? 10 );
-
-		// Higher item counts increase complexity.
-		$item_complexity = (int) ceil( $item_count / 10 );
-
-		// Factor in where arguments (filtering increases complexity).
-		$where_complexity = ! empty( $args['where'] ) ? count( $args['where'] ) : 0;
-
-		return $base_cost + $item_complexity + $where_complexity;
-	}   /**
-		 * Add custom validation rules with WPGraphQL integration
-		 *
-		 * @since 1.1.1
-		 * @param array $validation_rules Existing validation rules.
-		 * @return array Modified validation rules
-		 */
 	public function add_custom_validation_rules( array $validation_rules ): array {
 		// Add our enhanced complexity validation.
 		$validation_rules[] = new class($this->config_manager) {
@@ -967,11 +883,15 @@ class GraphQLSecurity implements LoadableInterface {
 
 		$suspicious_patterns = array(
 			'/(__schema|__type).*\{.*\{.*\{/', // Deep introspection.
-			'/(\w+:\s*\w+.*){' . $alias_threshold . ',}/', // Many aliases.
 			'/(@\w+.*){' . $directive_threshold . ',}/', // Many directives.
 			'/.{' . $max_query_length . ',}/', // Very long query.
 			'/\{[^}]*(\w+[^}]*){' . $field_duplicate_threshold . ',}\}/', // Many field duplicates.
 		);
+
+		// Many aliases: reuse the count validation runs (a linear scan, no backtracking).
+		if ( $this->count_aliases( $query ) >= $alias_threshold ) {
+			return true;
+		}
 
 		foreach ( $suspicious_patterns as $pattern ) {
 			if ( preg_match( $pattern, $query ) ) {
