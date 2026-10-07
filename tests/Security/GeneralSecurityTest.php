@@ -343,29 +343,8 @@ class GeneralSecurityTest extends WP_UnitTestCase
         }
     }
 
-    /**
-     * Test HSTS header is not sent when WP_DEBUG is enabled
-     *
-     * @since 1.1.14
-     */
-    public function test_hsts_not_sent_when_wp_debug_enabled(): void
-    {
-        // Simulate WP_DEBUG enabled
-        if (!defined('WP_DEBUG')) {
-            define('WP_DEBUG', true);
-        }
-
-        $_SERVER['SERVER_NAME'] = 'example.com';
-        $_SERVER['HTTPS'] = 'on';
-
-        $security = new GeneralSecurity();
-
-        ob_start();
-        $security->add_security_headers();
-        ob_end_clean();
-
-        $this->assertTrue(true, 'HSTS should not be sent when WP_DEBUG is true');
-    }
+    // The WP_DEBUG case that was here ended in an unconditional pass. It is now
+    // Integration/ConstantsBehaviorTest::test_wp_debug_constant_disables_hsts, which records the headers.
 
     /**
      * Test HSTS header is not sent in development environment type

@@ -81,6 +81,75 @@ function _manually_load_plugin() {
 
 tests_add_filter("muplugins_loaded", "_manually_load_plugin");
 
+/**
+ * Record how far the plugin's loading tiers had got at the moments that matter (PluginLoadingTiersTest)
+ *
+ * Callbacks registered by a plugin stay in $wp_filter, so a later look cannot tell when they were
+ * added. The probes run at fixed points of the real boot sequence and store what they see.
+ *
+ * @param string $hook     Hook name.
+ * @param string $class    Class whose method is expected on the hook.
+ * @return bool Whether a callback of the class is registered on the hook.
+ */
+function _silver_probe_has_callback_of(string $hook, string $class): bool {
+    global $wp_filter;
+    if (!isset($wp_filter[$hook])) {
+        return false;
+    }
+    foreach ($wp_filter[$hook]->callbacks as $callbacks) {
+        foreach ($callbacks as $callback) {
+            $function = $callback["function"];
+            if (is_array($function) && is_object($function[0]) && $function[0] instanceof $class) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+$GLOBALS["silver_assist_boot_probe"] = array();
+
+// After the p1 tier and before the p5 tier.
+tests_add_filter("plugins_loaded", function () {
+    $GLOBALS["silver_assist_boot_probe"]["after_p1"] = array(
+        "login_hooks" => _silver_probe_has_callback_of("login_init", "SilverAssist\\Security\\Security\\LoginSecurity"),
+        "api_key_auth" => _silver_probe_has_callback_of("determine_current_user", "SilverAssist\\Security\\GraphQL\\GraphQLSecurity"),
+    );
+}, 2);
+
+// After the p5 tier, before WordPress works out the current user.
+tests_add_filter("plugins_loaded", function () {
+    $GLOBALS["silver_assist_boot_probe"]["after_p5"] = array(
+        "wpgraphql_loaded" => class_exists("WPGraphQL"),
+        "api_key_auth" => _silver_probe_has_callback_of("determine_current_user", "SilverAssist\\Security\\GraphQL\\GraphQLSecurity"),
+        "init_done" => did_action("init"),
+    );
+}, 6);
+
+// The first time WordPress resolves the user (before init) the API key callback must already be there.
+tests_add_filter("determine_current_user", function ($user_id) {
+    if (!isset($GLOBALS["silver_assist_boot_probe"]["first_user_resolution"])) {
+        $GLOBALS["silver_assist_boot_probe"]["first_user_resolution"] = array(
+            "api_key_auth" => _silver_probe_has_callback_of("determine_current_user", "SilverAssist\\Security\\GraphQL\\GraphQLSecurity"),
+            "init_done" => did_action("init"),
+        );
+    }
+    return $user_id;
+}, 0);
+
+// A test that runs in a separate process can ask for constants that must exist before WordPress
+// boots (WP_ENVIRONMENT_TYPE is read once and cached, SCRIPT_DEBUG is defined during startup). It
+// passes them as JSON in SILVER_ASSIST_TEST_DEFINES; see ConstantsBehaviorTest. WP_DEBUG cannot be
+// injected this way, the test configuration defines it unconditionally.
+$_silver_defines = getenv("SILVER_ASSIST_TEST_DEFINES");
+if (is_string($_silver_defines) && "" !== $_silver_defines) {
+    foreach ((array) json_decode($_silver_defines, true) as $_name => $_value) {
+        if (!defined((string) $_name)) {
+            define((string) $_name, $_value);
+        }
+    }
+}
+
 // Start up the WP testing environment
 require "{$_tests_dir}/includes/bootstrap.php";
 

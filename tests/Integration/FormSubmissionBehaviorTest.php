@@ -40,12 +40,17 @@ class FakeCf7Validation {
 	/**
 	 * Record an invalidated field
 	 *
-	 * @param string $name    Field name.
-	 * @param string $message Message.
+	 * @param object|array<string, string>|string $name    Form tag, tag definition or field name.
+	 * @param string                              $message Message.
 	 * @return void
 	 */
 	public function invalidate( $name, $message ): void {
 		unset( $message );
+		if ( is_object( $name ) ) {
+			$name = $name->name;
+		} elseif ( is_array( $name ) ) {
+			$name = $name['name'];
+		}
 		$this->invalid[] = (string) $name;
 	}
 

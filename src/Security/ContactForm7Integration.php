@@ -145,8 +145,9 @@ class ContactForm7Integration implements LoadableInterface {
 		// Before send mail hook.
 		\add_action( 'wpcf7_before_send_mail', array( $this, 'process_cf7_submission' ), 10, 3 );
 
-		// Spam detection hook.
-		\add_action( 'wpcf7_spam', array( $this, 'handle_cf7_spam' ), 10, 1 );
+		// Spam verdict: `wpcf7_spam` is a filter, so the callback must return the verdict it received.
+		// Late priority, after the other spam checks (Akismet, disallowed list) have decided.
+		\add_filter( 'wpcf7_spam', array( $this, 'handle_cf7_spam' ), 20, 2 );
 
 		// Honeypot field injection.
 		if ( DefaultConfig::get_option( 'silver_assist_cf7_honeypot_enabled' ) ) {
@@ -172,9 +173,11 @@ class ContactForm7Integration implements LoadableInterface {
 		$contact_form = $this->get_current_cf7_form();
 
 		if ( ! $this->validate_cf7_submission( $contact_form, $submission_data, $client_ip ) ) {
-			// Add validation error.
+			// Contact Form 7 only records an error for a field that exists in the form and ignores the
+			// rest, so pass a tag object: a name string that matches no form tag would let the
+			// submission through unchanged.
 			$result->invalidate(
-				'security_validation',
+				$this->get_error_target( $tags ),
 				\__( 'Security validation failed. Please try again.', 'silver-assist-security' )
 			);
 		}
@@ -207,7 +210,7 @@ class ContactForm7Integration implements LoadableInterface {
 				"CF7 submission blocked from blacklisted IP: {$client_ip}",
 				array(
 					'ip'      => $client_ip,
-					'form_id' => $contact_form->id ?? 'unknown',
+					'form_id' => $this->get_form_id( $contact_form ),
 				)
 			);
 			return false;
@@ -253,7 +256,7 @@ class ContactForm7Integration implements LoadableInterface {
 				"CF7 submission rate limited: {$client_ip}",
 				array(
 					'ip'      => $client_ip,
-					'form_id' => $contact_form->id ?? 'unknown',
+					'form_id' => $this->get_form_id( $contact_form ),
 				)
 			);
 
@@ -344,7 +347,7 @@ class ContactForm7Integration implements LoadableInterface {
 			"CF7 form submitted successfully from: {$client_ip}",
 			array(
 				'ip'      => $client_ip,
-				'form_id' => $contact_form->id ?? 'unknown',
+				'form_id' => $this->get_form_id( $contact_form ),
 			)
 		);
 	}
@@ -352,11 +355,21 @@ class ContactForm7Integration implements LoadableInterface {
 	/**
 	 * Handle CF7 spam detection
 	 *
+	 * Runs on the `wpcf7_spam` filter, which CF7 applies to every submission with the verdict
+	 * so far. A spam verdict counts as a violation of the client IP; the verdict is returned as
+	 * received so this filter never turns spam into a pass or the reverse.
+	 *
 	 * @since 1.1.15
-	 * @param object $contact_form CF7 form object.
-	 * @return void
+	 * @since 1.5.4 Filter instead of an action: returns the verdict and acts only on spam.
+	 * @param mixed       $spam       Verdict so far (true when the submission is spam).
+	 * @param object|null $submission CF7 submission.
+	 * @return mixed The verdict, unchanged.
 	 */
-	public function handle_cf7_spam( $contact_form ): void {
+	public function handle_cf7_spam( $spam, $submission = null ) {
+		if ( ! $spam ) {
+			return $spam;
+		}
+
 		$client_ip = SecurityHelper::get_client_ip();
 
 		// Record spam attempt.
@@ -364,14 +377,52 @@ class ContactForm7Integration implements LoadableInterface {
 			$this->ip_blacklist->record_violation( $client_ip, 'CF7 marked as spam' );
 		}
 
+		$contact_form = ( \is_object( $submission ) && \method_exists( $submission, 'get_contact_form' ) ) ? $submission->get_contact_form() : null;
+
 		SecurityHelper::log_security_event(
 			'CF7_SPAM_DETECTED',
 			"CF7 spam detected from: {$client_ip}",
 			array(
 				'ip'      => $client_ip,
-				'form_id' => $contact_form->id ?? 'unknown',
+				'form_id' => $this->get_form_id( $contact_form ),
 			)
 		);
+
+		return $spam;
+	}
+
+	/**
+	 * Pick the form tag that carries the security error
+	 *
+	 * @since 1.5.4
+	 * @param mixed $tags CF7 form tags.
+	 * @return object|array<string, string> First named tag, or a tag definition when the form has none.
+	 */
+	private function get_error_target( $tags ) {
+		foreach ( (array) $tags as $tag ) {
+			if ( \is_object( $tag ) && ! empty( $tag->name ) ) {
+				return $tag;
+			}
+		}
+
+		return array( 'name' => 'security_validation' );
+	}
+
+	/**
+	 * Read the ID of a CF7 form object
+	 *
+	 * CF7 6.x removed the public `id` property in favor of `id()`.
+	 *
+	 * @since 1.5.4
+	 * @param mixed $contact_form CF7 form, or the stand-in object this class builds.
+	 * @return int|string Form ID, or "unknown".
+	 */
+	private function get_form_id( $contact_form ) {
+		if ( \is_object( $contact_form ) && \method_exists( $contact_form, 'id' ) ) {
+			return $contact_form->id();
+		}
+
+		return ( \is_object( $contact_form ) && isset( $contact_form->id ) ) ? $contact_form->id : 'unknown';
 	}
 
 	/**
