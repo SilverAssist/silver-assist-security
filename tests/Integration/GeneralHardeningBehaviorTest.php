@@ -308,6 +308,8 @@ class GeneralHardeningBehaviorTest extends WP_UnitTestCase {
 		add_action( 'wp_head', 'rsd_link' );
 		add_action( 'wp_head', 'wp_generator' );
 		add_action( 'wp_head', 'wp_shortlink_wp_head', 10, 0 );
+		// Core hooks the discovery links twice: priority 4 and again at 10 (default-filters.php).
+		add_action( 'wp_head', 'wp_oembed_add_discovery_links', 4 );
 		add_action( 'wp_head', 'wp_oembed_add_discovery_links' );
 	}
 
@@ -344,6 +346,26 @@ class GeneralHardeningBehaviorTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'EditURI', $after );
 		$this->assertStringNotContainsString( "rel='shortlink'", $after );
 		$this->assertStringNotContainsString( 'name="generator"', $after );
+	}
+
+	/**
+	 * No oEmbed discovery link survives, with core's own wp_head hooks
+	 *
+	 * Core's default-filters.php is loaded again so wp_head carries exactly the
+	 * hooks and priorities core registers, none hand-picked by the test.
+	 *
+	 * @return void
+	 */
+	public function test_wp_head_has_no_oembed_discovery_with_core_hooks(): void {
+		require ABSPATH . WPINC . '/default-filters.php';
+		$this->assertStringContainsString( 'application/json+oembed', $this->head_markup(), 'control: core prints oEmbed discovery' );
+
+		$general = new GeneralSecurity();
+		$general->remove_unnecessary_headers();
+		$after = $this->head_markup();
+
+		$this->assertStringNotContainsString( 'application/json+oembed', $after );
+		$this->assertStringNotContainsString( 'text/xml+oembed', $after );
 	}
 
 	/**
