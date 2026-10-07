@@ -23,6 +23,8 @@ use WP_REST_Server;
  * @since 1.5.0
  */
 class RestAPISecurityTest extends WP_UnitTestCase {
+	use \SilverAssist\Security\Tests\Helpers\StoresRawOptions;
+
 
 	/**
 	 * REST API Security instance
@@ -133,7 +135,7 @@ class RestAPISecurityTest extends WP_UnitTestCase {
 	public function test_rate_limiting_applied_to_unauthenticated(): void {
 		// Enable rate limiting with low limits for testing
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 1 );
-		\update_option( 'silver_assist_rest_rate_limit_requests', 2 );
+		$this->store_raw_option( 'silver_assist_rest_rate_limit_requests', 2 );
 		\update_option( 'silver_assist_rest_rate_limit_window', 60 );
 
 		$rest_api_security = new RestAPISecurity();
@@ -174,7 +176,7 @@ class RestAPISecurityTest extends WP_UnitTestCase {
 	public function test_rate_limiting_not_applied_to_authenticated(): void {
 		// Enable rate limiting
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 1 );
-		\update_option( 'silver_assist_rest_rate_limit_requests', 1 );
+		$this->store_raw_option( 'silver_assist_rest_rate_limit_requests', 1 );
 		\update_option( 'silver_assist_rest_rate_limit_window', 60 );
 
 		$rest_api_security = new RestAPISecurity();
@@ -327,7 +329,7 @@ class RestAPISecurityTest extends WP_UnitTestCase {
 		global $wpdb;
 
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 1 );
-		\update_option( 'silver_assist_rest_rate_limit_requests', 5 );
+		$this->store_raw_option( 'silver_assist_rest_rate_limit_requests', 5 );
 		\update_option( 'silver_assist_rest_rate_limit_window', 60 );
 
 		if ( \wp_using_ext_object_cache() ) {

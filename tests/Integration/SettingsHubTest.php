@@ -279,9 +279,9 @@ class SettingsHubTest extends WP_UnitTestCase
             'admin_menu hook should be registered'
         );
 
-        $this->assertNotFalse(
+        $this->assertFalse(
             has_action('admin_init', [$this->admin_panel, 'register_settings']),
-            'register_settings hook should be registered'
+            'settings are registered on init by SettingsSanitizer, not by the admin panel'
         );
     }
 }

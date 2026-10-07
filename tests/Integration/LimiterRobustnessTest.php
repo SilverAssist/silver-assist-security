@@ -26,6 +26,8 @@ use WP_UnitTestCase;
  */
 class LimiterRobustnessTest extends WP_UnitTestCase
 {
+    use \SilverAssist\Security\Tests\Helpers\StoresRawOptions;
+
     /**
      * Option that indexes the blacklist
      */
@@ -201,7 +203,7 @@ class LimiterRobustnessTest extends WP_UnitTestCase
     public function test_auto_blacklisted_ip_is_listed_with_persistent_object_cache(): void
     {
         \wp_using_ext_object_cache(true);
-        \update_option("silver_assist_ip_blacklist_threshold", 2);
+        $this->store_raw_option( "silver_assist_ip_blacklist_threshold", 2 );
 
         $blacklist = new IPBlacklist();
         $blacklist->record_violation("203.0.113.60", "sql_injection");

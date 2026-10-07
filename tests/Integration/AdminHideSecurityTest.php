@@ -27,6 +27,8 @@ use WP_UnitTestCase;
  */
 class AdminHideSecurityTest extends WP_UnitTestCase
 {
+    use \SilverAssist\Security\Tests\Helpers\StoresRawOptions;
+
     /**
      * AdminHideSecurity instance
      *
@@ -151,7 +153,7 @@ class AdminHideSecurityTest extends WP_UnitTestCase
     {
         // Enable feature with custom path
         \update_option('silver_assist_admin_hide_enabled', 1);
-        \update_option('silver_assist_admin_hide_path', 'secure-backend-2024');
+        $this->store_raw_option( 'silver_assist_admin_hide_path', 'secure-backend-2024' );
 
         // Create instance
         $this->admin_hide_security = new AdminHideSecurity();
@@ -624,7 +626,7 @@ class AdminHideSecurityTest extends WP_UnitTestCase
         ];
 
         foreach ($forbidden_paths as $forbidden) {
-            \update_option('silver_assist_admin_hide_path', $forbidden);
+            $this->store_raw_option( 'silver_assist_admin_hide_path', $forbidden );
 
             $this->clear_admin_hide_hooks();
             $admin_hide = new AdminHideSecurity();
@@ -647,7 +649,7 @@ class AdminHideSecurityTest extends WP_UnitTestCase
     public function test_empty_custom_path_defaults(): void
     {
         \update_option('silver_assist_admin_hide_enabled', 1);
-        \update_option('silver_assist_admin_hide_path', '');
+        $this->store_raw_option( 'silver_assist_admin_hide_path', '' );
 
         $this->admin_hide_security = new AdminHideSecurity();
 
@@ -666,7 +668,7 @@ class AdminHideSecurityTest extends WP_UnitTestCase
     public function test_wordpress_admin_environment_integration(): void
     {
         \update_option('silver_assist_admin_hide_enabled', 1);
-        \update_option('silver_assist_admin_hide_path', 'wp-backend');
+        $this->store_raw_option( 'silver_assist_admin_hide_path', 'wp-backend' );
 
         // Simulate admin environment
         \set_current_screen('dashboard');

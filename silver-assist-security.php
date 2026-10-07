@@ -53,6 +53,7 @@ if ( file_exists( $composer_autoloader ) ) {
 	require_once $composer_autoloader;
 }
 
+use SilverAssist\Security\Admin\Settings\SettingsSanitizer;
 use SilverAssist\Security\Core\Activator;
 use SilverAssist\Security\Core\Plugin;
 use SilverAssist\Security\Core\SecurityHelper;
@@ -101,6 +102,13 @@ add_action(
 		GraphQLLoader::instance()->init();
 	},
 	5
+);
+
+// Sanitize callbacks for every registered option, on every request kind (REST, WP-CLI, cron, wp-admin).
+add_action(
+	'init',
+	array( SettingsSanitizer::class, 'register' ),
+	1
 );
 
 add_action(

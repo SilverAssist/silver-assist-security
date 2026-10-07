@@ -146,9 +146,9 @@ class AdminPanelTest extends WP_UnitTestCase
         );
 
         // Verify admin_init hooks
-        $this->assertNotFalse(
+        $this->assertFalse(
             \has_action('admin_init', [$this->admin_panel, 'register_settings']),
-            'register_settings hook should be registered'
+            'settings are registered on init by SettingsSanitizer, not by the admin panel'
         );
 
         $this->assertNotFalse(
@@ -189,7 +189,7 @@ class AdminPanelTest extends WP_UnitTestCase
         global $wp_registered_settings;
 
         // Trigger settings registration
-        $this->admin_panel->register_settings();
+        \SilverAssist\Security\Admin\Settings\SettingsSanitizer::register();
 
         // Verify login security settings
         $this->assertArrayHasKey('silver_assist_login_attempts', $wp_registered_settings);
@@ -256,11 +256,6 @@ class AdminPanelTest extends WP_UnitTestCase
         $this->assertTrue(
             is_callable([$this->admin_panel, 'render_admin_page']),
             'AdminPanel should have render_admin_page method'
-        );
-        
-        $this->assertTrue(
-            is_callable([$this->admin_panel, 'register_settings']),
-            'AdminPanel should have register_settings method'
         );
     }
 

@@ -27,6 +27,8 @@ use WP_UnitTestCase;
  * @since 1.5.0
  */
 class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
+	use \SilverAssist\Security\Tests\Helpers\StoresRawOptions;
+
 
 	/**
 	 * Plugin instance
@@ -216,7 +218,7 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 	 */
 	public function test_trusted_proxy_client_ip_detection(): void {
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 1 );
-		\update_option( 'silver_assist_rest_rate_limit_requests', 1 );
+		$this->store_raw_option( 'silver_assist_rest_rate_limit_requests', 1 );
 		\update_option( 'silver_assist_rest_rate_limit_window', 60 );
 
 		$alb_private_ip     = '10.0.1.42';    // ALB inside the VPC
@@ -289,7 +291,7 @@ class RestAPISecurityIntegrationTest extends WP_UnitTestCase {
 	 */
 	public function test_client_ip_uses_remote_addr_when_no_trusted_proxies_configured(): void {
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 1 );
-		\update_option( 'silver_assist_rest_rate_limit_requests', 1 );
+		$this->store_raw_option( 'silver_assist_rest_rate_limit_requests', 1 );
 		\update_option( 'silver_assist_rest_rate_limit_window', 60 );
 
 		$this->assertFalse(

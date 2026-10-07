@@ -314,19 +314,21 @@ class SettingsSaverTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * An invalid admin path falls back to the default and the fallback is reported
+	 * An invalid admin path is rejected and reported, the stored one stays (#153)
 	 *
 	 * @return void
 	 */
-	public function test_admin_path_fallback_is_reported(): void {
+	public function test_invalid_admin_path_is_rejected_and_reported(): void {
 		$result = $this->form( array( 'silver_assist_admin_hide_path' => 'my-private-door' ), 'admin_hide' );
 		$this->assertSame( 'my-private-door', \get_option( 'silver_assist_admin_hide_path' ) );
 		$this->assertSame( array(), $result->adjusted );
+		$this->assertSame( array(), $result->errors );
 
 		foreach ( array( 'wp-admin', 'ab', '', '!!!', 'login' ) as $bad ) {
 			$result = $this->form( array( 'silver_assist_admin_hide_path' => $bad ), 'admin_hide' );
-			$this->assertSame( 'silver-admin', \get_option( 'silver_assist_admin_hide_path' ), "'{$bad}' must fall back." );
-			$this->assertSame( 'silver-admin', $result->adjusted['silver_assist_admin_hide_path']['saved'], "The fallback of '{$bad}' must be reported." );
+			$this->assertSame( 'my-private-door', \get_option( 'silver_assist_admin_hide_path' ), "'{$bad}' must not replace the stored path." );
+			$this->assertArrayHasKey( 'silver_assist_admin_hide_path', $result->errors, "'{$bad}' must be reported." );
+			$this->assertArrayNotHasKey( 'silver_assist_admin_hide_path', $result->saved );
 		}
 	}
 

@@ -28,6 +28,8 @@ use WP_UnitTestCase;
  * @since 1.5.4
  */
 class RestAPIHeadlessBehaviorTest extends WP_UnitTestCase {
+	use \SilverAssist\Security\Tests\Helpers\StoresRawOptions;
+
 
 	use HeadlessTestSupport;
 
@@ -53,7 +55,7 @@ class RestAPIHeadlessBehaviorTest extends WP_UnitTestCase {
 
 		\update_option( 'silver_assist_rest_batch_endpoint_protection', 1 );
 		\update_option( 'silver_assist_rest_rate_limiting_enabled', 1 );
-		\update_option( 'silver_assist_rest_rate_limit_requests', self::LIMIT );
+		$this->store_raw_option( 'silver_assist_rest_rate_limit_requests', self::LIMIT );
 		\update_option( 'silver_assist_rest_rate_limit_window', 60 );
 
 		// Only the instance under test: the one built at plugin load would count every request too.
@@ -188,7 +190,7 @@ class RestAPIHeadlessBehaviorTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_limit_and_window_follow_the_settings(): void {
-		\update_option( 'silver_assist_rest_rate_limit_requests', 3 );
+		$this->store_raw_option( 'silver_assist_rest_rate_limit_requests', 3 );
 		\update_option( 'silver_assist_rest_rate_limit_window', 120 );
 		\remove_all_filters( 'rest_pre_dispatch' );
 		new RestAPISecurity();
