@@ -33,6 +33,9 @@
         FADE_OUT_DURATION: 400       // Smooth fade out animation duration (ms)
     };
 
+    // Shared with admin.js (escape-html.js is a dependency of this script).
+    const { escapeHtml } = window.SilverAssistSecurityUtils;
+
     /**
      * Initialize password validation on document ready
      *
@@ -251,7 +254,7 @@
         $container
             .removeClass("error warning")
             .addClass("success")
-            .html(`✓ ${successMessage}`)
+            .html(`✓ ${escapeHtml(successMessage)}`)
             .show();
     };
 
@@ -277,7 +280,7 @@
         $container
             .removeClass("success warning")
             .addClass("error")
-            .html(`✗ ${errorMessage}`)
+            .html(`✗ ${escapeHtml(errorMessage)}`)
             .show();
     };
 

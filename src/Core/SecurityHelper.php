@@ -24,6 +24,13 @@ namespace SilverAssist\Security\Core;
 class SecurityHelper {
 
 	/**
+	 * Script handle of the shared HTML escaping helper (assets/js/escape-html.js).
+	 *
+	 * @since 1.5.4
+	 */
+	public const ESCAPE_HELPER_HANDLE = 'silver-assist-security-utils';
+
+	/**
 	 * Plugin URL for assets
 	 *
 	 * @var string
@@ -78,6 +85,26 @@ class SecurityHelper {
 
 		// Return original path for debug mode.
 		return self::$plugin_url . $asset_path;
+	}
+
+	/**
+	 * Enqueue the shared HTML escaping helper used by the admin and password validation scripts
+	 *
+	 * Exposes `window.SilverAssistSecurityUtils` (escapeHtml, safeUrl). Safe to call from several
+	 * components: WordPress ignores a handle that is already enqueued.
+	 *
+	 * @since 1.5.4
+	 * @param string $version Script version for cache busting.
+	 * @return void
+	 */
+	public static function enqueue_escape_helper( string $version ): void {
+		\wp_enqueue_script(
+			self::ESCAPE_HELPER_HANDLE,
+			self::get_asset_url( 'assets/js/escape-html.js' ),
+			array(),
+			$version,
+			true
+		);
 	}
 
 	/**

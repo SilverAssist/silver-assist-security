@@ -134,6 +134,7 @@ jobs:
           test -f assets/css/password-validation.min.css || echo "❌ Missing: password-validation.min.css"
           test -f assets/css/variables.min.css || echo "❌ Missing: variables.min.css"
           test -f assets/js/admin.min.js || echo "❌ Missing: admin.min.js"
+          test -f assets/js/escape-html.min.js || echo "❌ Missing: escape-html.min.js"
           test -f assets/js/password-validation.min.js || echo "❌ Missing: password-validation.min.js"
           test -f assets/js/update-check.min.js || echo "❌ Missing: update-check.min.js"
       

@@ -117,10 +117,12 @@ class AssetManager {
 	 * @return void
 	 */
 	private function enqueue_scripts(): void {
+		SecurityHelper::enqueue_escape_helper( $this->plugin_version );
+
 		\wp_enqueue_script(
 			'silver-assist-security-admin',
 			SecurityHelper::get_asset_url( 'assets/js/admin.js' ),
-			array( 'jquery' ),
+			array( 'jquery', SecurityHelper::ESCAPE_HELPER_HANDLE ),
 			$this->plugin_version,
 			true
 		);

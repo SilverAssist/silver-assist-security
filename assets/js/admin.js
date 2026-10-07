@@ -37,24 +37,15 @@
     };
 
     /**
-     * Escape a string for safe insertion into HTML.
+     * HTML escaping helpers shared with password-validation.js
      *
-     * Replaces &, <, >, ", and ' with their HTML entity equivalents
-     * to prevent DOM-based XSS when building markup from untrusted data.
+     * Defined in escape-html.js (a dependency of this script). Every value that is
+     * interpolated into markup (localized strings, AJAX responses, user input) must go
+     * through escapeHtml(), or be set with .text() / .attr(), never concatenated raw.
      *
      * @since 1.1.15
-     * @param {string} str - The string to escape
-     * @returns {string} HTML-safe string
      */
-    const escapeHtml = str => {
-        if (typeof str !== "string") return "";
-        return str
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    };
+    const { escapeHtml, safeUrl } = window.SilverAssistSecurityUtils;
 
     /**
      * Form validation constants
@@ -190,7 +181,7 @@
 
         let errorHtml = "<div class=\"notice notice-error is-dismissible\"><ul>";
         errors.forEach(error => {
-            errorHtml += `<li>${error}</li>`;
+            errorHtml += `<li>${escapeHtml(error)}</li>`;
         });
         errorHtml += "</ul></div>";
 
@@ -419,8 +410,8 @@
             if (success && data.update_available) {
                 const updateNotice = `<div class="notice notice-info is-dismissible">` +
                     `<p><strong>Silver Assist Security Essentials:</strong> ` +
-                    strings.newVersionAvailable.replace("%s", data.latest_version) + ` ` +
-                    `<a href="${strings.updateUrl}">${strings.updateNow}</a></p>` +
+                    escapeHtml(strings.newVersionAvailable || "Version %s is available.").replace("%s", () => escapeHtml(data.latest_version)) + ` ` +
+                    `<a href="${escapeHtml(safeUrl(strings.updateUrl))}">${escapeHtml(strings.updateNow)}</a></p>` +
                     `</div>`;
                 $(".wrap h1").after(updateNotice);
             }
@@ -606,10 +597,10 @@
                 const ips = Array.isArray(data) ? data : (data && data.blocked_ips ? data.blocked_ips : []);
                 updateBlockedIPsDisplay(ips);
             } else {
-                $blockedIpsListSelector.html(`<p class="no-threats">${strings.noThreats || "No active threats detected"}</p>`);
+                $blockedIpsListSelector.html(`<p class="no-threats">${escapeHtml(strings.noThreats || "No active threats detected")}</p>`);
             }
         }).fail(() => {
-            $blockedIpsListSelector.html(`<p class="error">${strings.error || "Error loading data"}</p>`);
+            $blockedIpsListSelector.html(`<p class="error">${escapeHtml(strings.error || "Error loading data")}</p>`);
         });
     };
 
@@ -893,7 +884,7 @@
         $("#blocked-ips-count").text(count);
 
         if (!data || data.length === 0) {
-            const emptyHtml = `<p class="no-threats">${strings.noThreats || "No active threats detected"}</p>`;
+            const emptyHtml = `<p class="no-threats">${escapeHtml(strings.noThreats || "No active threats detected")}</p>`;
             $dashboardContainer.html(emptyHtml);
             $ipMgmtContainer.html(emptyHtml);
             return;
@@ -912,7 +903,7 @@
         });
         dashHtml += '</ul>';
         if (count > 3) {
-            dashHtml += `<p class="view-all-link"><a href="#ip-management">${strings.viewAll || "View all"} (${count})</a></p>`;
+            dashHtml += `<p class="view-all-link"><a href="#ip-management">${escapeHtml(strings.viewAll || "View all")} (${escapeHtml(count)})</a></p>`;
         }
         $dashboardContainer.html(dashHtml);
 
@@ -1098,7 +1089,7 @@
 
             $indicator.removeClass("validating valid invalid")
                 .addClass(type)
-                .html(message);
+                .text(message);
 
             // Update input styling
             $pathInput.removeClass("validation-valid validation-invalid validation-validating")
@@ -1228,7 +1219,9 @@
                 const { success, data = {} } = response || {};
 
                 if (success) {
-                    $cf7Panel.html(data.html || `<p class="no-threats">${strings.noCF7BlockedIPs || "No CF7 blocked IPs found."}</p>`);
+                    // data.html is built and escaped on the server (ContactForm7AjaxHandler::get_blocked_ips uses
+                    // esc_html), so it is inserted as is. The fallback string is not server-escaped and is escaped here.
+                    $cf7Panel.html(data.html || `<p class="no-threats">${escapeHtml(strings.noCF7BlockedIPs || "No CF7 blocked IPs found.")}</p>`);
                     $cf7Count.text(data.count || 0);
 
                     // Initialize unblock buttons after content load
@@ -1266,11 +1259,11 @@
                         });
                     });
                 } else {
-                    $cf7Panel.html(`<p class="error">${data.error || strings.errorLoadingCF7IPs || "Error loading CF7 blocked IPs"}</p>`);
+                    $cf7Panel.html(`<p class="error">${escapeHtml(data.error || strings.errorLoadingCF7IPs || "Error loading CF7 blocked IPs")}</p>`);
                 }
             },
             error: () => {
-                $cf7Panel.html(`<p class="error">${strings.errorLoadingCF7IPs || "Error loading CF7 blocked IPs"}</p>`);
+                $cf7Panel.html(`<p class="error">${escapeHtml(strings.errorLoadingCF7IPs || "Error loading CF7 blocked IPs")}</p>`);
             }
         });
     };
@@ -1406,7 +1399,7 @@
                     if (success) {
                         showMessage(data.message || strings.cf7IPsCleared || "All CF7 blocked IPs cleared successfully", "success");
                         $cf7Count.text("0");
-                        $cf7Panel.html(`<p class="no-blocked-ips">${strings.noCF7BlockedIPs || "No CF7 blocked IPs found."}</p>`);
+                        $cf7Panel.html(`<p class="no-blocked-ips">${escapeHtml(strings.noCF7BlockedIPs || "No CF7 blocked IPs found.")}</p>`);
                     } else {
                         showMessage(data.error || strings.errorClearingCF7IPs || "Error clearing CF7 blocked IPs", "error");
                     }
@@ -1758,15 +1751,15 @@
                             // Key generated — show it once.
                             let resultHtml =
                                 "<div class=\"notice notice-success inline\">" +
-                                "<p><strong>" + (response.data.message || "") + "</strong></p>" +
+                                "<p><strong>" + escapeHtml(response.data.message) + "</strong></p>" +
                                 "<code class=\"api-key-code\">" +
-                                $("<span>").text(response.data.api_key).html() +
+                                escapeHtml(response.data.api_key) +
                                 "</code></div>";
 
                             if (response.data.needs_service_user && response.data.warning) {
                                 resultHtml +=
                                     "<div class=\"notice notice-warning inline\">" +
-                                    "<p>" + $("<span>").text(response.data.warning).html() + "</p>" +
+                                    "<p>" + escapeHtml(response.data.warning) + "</p>" +
                                     "</div>";
                             }
 
@@ -1774,26 +1767,26 @@
 
                             // Update status to Active.
                             $status.html(
-                                "<span class=\"feature-value enabled\">" + (strings.apiKeyActive || "Active") + "</span>" +
-                                "<p class=\"description\">" + (strings.apiKeyConfigured || "An API key is configured. Regenerate to create a new key (invalidates the current one).") + "</p>"
+                                "<span class=\"feature-value enabled\">" + escapeHtml(strings.apiKeyActive || "Active") + "</span>" +
+                                "<p class=\"description\">" + escapeHtml(strings.apiKeyConfigured || "An API key is configured. Regenerate to create a new key (invalidates the current one).") + "</p>"
                             );
 
                             // Update buttons to regenerate/revoke.
                             $actions.html(
                                 "<button type=\"button\" id=\"graphql-regenerate-api-key\" class=\"button button-secondary\" " +
-                                "data-confirm=\"" + (strings.apiKeyRegenerateConfirm || "This will invalidate the current API key. Continue?") + "\">" +
-                                (strings.regenerateApiKey || "Regenerate API Key") + "</button> " +
+                                "data-confirm=\"" + escapeHtml(strings.apiKeyRegenerateConfirm || "This will invalidate the current API key. Continue?") + "\">" +
+                                escapeHtml(strings.regenerateApiKey || "Regenerate API Key") + "</button> " +
                                 "<button type=\"button\" id=\"graphql-revoke-api-key\" class=\"button button-link-delete\" " +
-                                "data-confirm=\"" + (strings.apiKeyRevokeConfirm || "This will revoke the API key. Continue?") + "\">" +
-                                (strings.revokeApiKey || "Revoke API Key") + "</button>"
+                                "data-confirm=\"" + escapeHtml(strings.apiKeyRevokeConfirm || "This will revoke the API key. Continue?") + "\">" +
+                                escapeHtml(strings.revokeApiKey || "Revoke API Key") + "</button>"
                             );
 
                             // Show usage example if not visible.
                             if (!$usage.length) {
                                 $actions.closest("table").after(
                                     "<div class=\"notice notice-success inline\" id=\"graphql-api-key-usage\">" +
-                                    "<h4>" + (strings.usageExample || "Usage Example") + "</h4>" +
-                                    "<p>" + (strings.usageExampleDesc || "Add one of the following headers to your GraphQL requests:") + "</p>" +
+                                    "<h4>" + escapeHtml(strings.usageExample || "Usage Example") + "</h4>" +
+                                    "<p>" + escapeHtml(strings.usageExampleDesc || "Add one of the following headers to your GraphQL requests:") + "</p>" +
                                     "<p><strong>X-API-Key:</strong></p>" +
                                     "<code class=\"api-key-usage-code\">X-API-Key: your-api-key</code>" +
                                     "<p><strong>Authorization Bearer:</strong></p>" +
@@ -1805,20 +1798,20 @@
                             // Key revoked.
                             $result.html(
                                 "<div class=\"notice notice-success inline\"><p>" +
-                                $("<span>").text(response.data.message || "").html() +
+                                escapeHtml(response.data.message) +
                                 "</p></div>"
                             ).show();
 
                             // Update status to Not configured.
                             $status.html(
-                                "<span class=\"feature-value disabled\">" + (strings.apiKeyNotConfigured || "Not configured") + "</span>" +
-                                "<p class=\"description\">" + (strings.apiKeyGenerateDesc || "Generate an API key for server-to-server authentication.") + "</p>"
+                                "<span class=\"feature-value disabled\">" + escapeHtml(strings.apiKeyNotConfigured || "Not configured") + "</span>" +
+                                "<p class=\"description\">" + escapeHtml(strings.apiKeyGenerateDesc || "Generate an API key for server-to-server authentication.") + "</p>"
                             );
 
                             // Update button to generate.
                             $actions.html(
                                 "<button type=\"button\" id=\"graphql-generate-api-key\" class=\"button button-secondary\">" +
-                                (strings.generateApiKey || "Generate API Key") + "</button>"
+                                escapeHtml(strings.generateApiKey || "Generate API Key") + "</button>"
                             );
 
                             // Hide usage example.
@@ -1829,7 +1822,7 @@
                     } else {
                         $result.html(
                             "<div class=\"notice notice-error inline\"><p>" +
-                            $("<span>").text(response.data.error || strings.error || "Error").html() +
+                            escapeHtml(response.data.error || strings.error || "Error") +
                             "</p></div>"
                         ).show();
                     }
@@ -1837,7 +1830,7 @@
                 .fail(() => {
                     $("#graphql-api-key-result").html(
                         "<div class=\"notice notice-error inline\"><p>" +
-                        (strings.error || "Error loading data") +
+                        escapeHtml(strings.error || "Error loading data") +
                         "</p></div>"
                     ).show();
                 })
