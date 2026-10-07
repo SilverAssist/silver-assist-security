@@ -72,12 +72,23 @@ This plugin automatically implements enterprise-level security measures without 
 
 ## ✨ Additional Security Features
 
-### 🚫 IP Blacklisting *(v1.1.15+)*
+### 🚫 Two IP Protections: Login Lockout and Form Flood Blacklist
 
-- **Automatic Blacklisting**: Repeat offenders are automatically blacklisted after a threshold (5 violations by default, option `silver_assist_ip_blacklist_threshold`). The "IP Blacklist" toggle in IP Management switches it off; manual blocks keep working
-- **Manual Management**: Block/unblock specific IP addresses from the admin panel
-- **Dashboard Indicator**: Enabled/Disabled status shown on the Security Dashboard card
-- **Scope**: the blacklist protects Contact Form 7 submissions (flood and abuse protection). The login lockout is a separate per-IP mechanism with its own dashboard
+The plugin has two separate per-IP protections. They have their own settings, their own state and their own figures on the dashboard, and neither one reads the other's data.
+
+| | Login lockout | Form flood blacklist |
+|---|---|---|
+| Protects | the login (`wp-login.php`, `LoginSecurity`) | Contact Form 7 submissions (`IPBlacklist`, `ContactForm7Integration`, `FormProtection`) |
+| Trigger | failed logins from one IP (5 by default, `silver_assist_login_attempts`) | more submits than the rate limit (2 per minute by default) from one IP, repeated until the violation threshold is reached (5 by default, `silver_assist_ip_blacklist_threshold`); spam, SQL injection and obsolete browser rejections count as violations too |
+| Block lasts | 15 minutes by default (`silver_assist_lockout_duration`), ends on its own | 24 hours for an automatic block (`silver_assist_ip_blacklist_duration`), 30 days for a block added from the IP Management tab |
+| Admin settings | Login Security tab | IP Management tab (toggle "Form Flood Blacklist", violations before blocking) and Form Protection tab |
+| Dashboard | "Locked-out IPs" in the Login Security card | "Form Flood Blocked IPs" in the Form Protection card, the statistics and the activity tab; listed with unblock actions in IP Management |
+| Origin | the original IP block of the plugin | added after an attack on one site that sent form submits within seconds of each other |
+
+- **Scope, by design**: the form flood blacklist is checked only when Contact Form 7 validates a submit. An IP on it can still log in, browse the site and call REST and GraphQL (those have their own rate limits). It is not a site-wide block, and the class name `IPBlacklist` is kept only for backward compatibility. The manual "Block IP" action in IP Management blocks the form for 30 days, nothing else.
+- **Toggle**: "Form Flood Blacklist" switches the automatic block off; manual blocks keep working. The login lockout is tuned with the attempts and lockout duration in the Login Security tab.
+- **Shared logic, decision (#146)**: the two are kept as separate implementations on purpose, with no common limiter class. What is genuinely common already lives in `SecurityHelper` and both use it: client IP resolution (`get_client_ip()`, see "Proxies, Load Balancers and CDNs") and the IPv6 `/64` grouping in the transient keys (`generate_ip_transient_key()`). The login lockout, the login-page limit and the REST and GraphQL limiters also share the atomic fixed-window counter `SecurityHelper::increment_rate_window()`. The rest differs for good reasons: a lockout is a counter that locks and expires by itself, while the flood blacklist keeps a violation list, a block record and an index so an administrator can list, export and unblock IPs; they have different durations, options and messages. Merging them would couple a login change to the forms and the other way round. One known difference is left as a follow-up: `FormProtection::allow_form_submission()` still counts submits with a plain transient (the window slides and parallel submits can pass the limit) instead of `increment_rate_window()`.
+- **Tested flood case**: `FormSubmissionBehaviorTest::test_rapid_fire_submits_hit_rate_limit_then_blacklist_and_the_block_expires` sends submits within a few seconds from one IP through the `wpcf7_validate` filter; the first two pass, the rest hit the rate limit, the fifth violation blacklists the IP, and the block ends after its configured duration. `IPProtectionScopeTest` pins that each protection leaves the other alone.
 
 ### 🔒 WordPress Hardening *(Automatic)*
 
@@ -109,9 +120,9 @@ The plugin features a comprehensive 5-tab interface (4 tabs when Contact Form 7 
 **🎯 Security Dashboard Tab**
 
 - Real-time security status overview and compliance indicators
-- Live statistics: login attempts, blocked IPs, GraphQL queries
+- Live statistics: failed login attempts, locked-out IPs (login lockout) and form flood blocked IPs (Contact Form 7), GraphQL queries
 - **Under Attack Mode indicator**: Shows Active/Inactive status in General Security card
-- **IP Blacklisting indicator**: Shows Enabled/Disabled status in General Security card
+- **Form Flood Blacklist indicator**: Shows Enabled/Disabled status in the Admin Security card (this is the Contact Form 7 flood protection, not the login lockout)
 - **Session Timeout stat**: Displays configured timeout in Admin Security card
 - Security recommendations and quick actions
 - Auto-refresh on tab switch: Dashboard data updates automatically when returning from settings tabs
@@ -139,10 +150,9 @@ The plugin features a comprehensive 5-tab interface (4 tabs when Contact Form 7 
 
 **🛡️ IP Management Tab**
 
-- Comprehensive IP blocking and allowlist management
-- Real-time blocked IPs monitoring across all protection layers
-- Manual IP management (block/unblock specific addresses)
-- Geographic and behavioral IP analysis reports
+- Settings and lists of the Contact Form 7 form flood blacklist (see "Two IP Protections"); login lockouts are configured in the Login Security tab and are not listed here
+- Blocked IPs of the form flood blacklist, with unblock actions
+- Manual IP management (block an address from the forms for 30 days, or unblock it)
 
 ## 🌍 Enterprise Features
 

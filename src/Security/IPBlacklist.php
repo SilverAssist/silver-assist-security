@@ -23,6 +23,13 @@ use SilverAssist\Security\Core\SecurityHelper;
  * Manages IP blacklisting for malicious IPs and automatic blacklisting
  * based on violation patterns.
  *
+ * Scope, by design: this is the Contact Form 7 flood protection, added after an attack that sent
+ * submits within seconds of each other. `ContactForm7Integration::validate_cf7_submission()` is the
+ * only caller of `is_blacklisted()`, so a blocked IP can still use the login, the front end, REST
+ * and GraphQL. The login lockout by IP is a separate protection in `LoginSecurity` with its own
+ * counters and dashboard figure; the two share only the client IP resolution and the IPv6 grouping
+ * in `SecurityHelper` (see the README, "Two IP protections").
+ *
  * @since 1.1.15
  */
 class IPBlacklist {

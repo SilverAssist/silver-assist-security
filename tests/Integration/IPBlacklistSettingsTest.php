@@ -2,7 +2,7 @@
 /**
  * IP blacklist settings behavior tests
  *
- * The admin shows an "IP Blacklist" toggle, and saved settings must change what the
+ * The admin shows a "Form Flood Blacklist" toggle, and saved settings must change what the
  * blacklist does (#147). Also guards the options a settings save must not touch.
  *
  * @package SilverAssist\Security\Tests\Integration

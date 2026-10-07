@@ -682,7 +682,7 @@ class SettingsRenderer {
 			<!-- CF7 Blocked IPs Management -->
 			<div class="status-card">
 				<div class="card-header">
-					<h3><?php \esc_html_e( 'Blocked IPs Management', 'silver-assist-security' ); ?></h3>
+					<h3><?php \esc_html_e( 'Form Flood Blacklist - Blocked IPs Management', 'silver-assist-security' ); ?></h3>
 				</div>
 				<div class="card-content">
 					<div id="cf7-blocked-ips-container">
@@ -709,9 +709,12 @@ class SettingsRenderer {
 
 			<div class="status-card admin-security">
 				<div class="card-header">
-					<h3><?php \esc_html_e( 'IP Management & Attack Protection', 'silver-assist-security' ); ?></h3>
+					<h3><?php \esc_html_e( 'Form Flood Protection (Contact Form 7)', 'silver-assist-security' ); ?></h3>
 				</div>
 				<div class="card-content">
+					<p class="description">
+						<?php \esc_html_e( 'These controls and the lists below cover Contact Form 7 submissions only. Failed-login lockouts by IP are a separate protection: set them in the Login Security tab; they end on their own and are not listed here.', 'silver-assist-security' ); ?>
+					</p>
 					<form method="post" action="" id="ip-management-form">
 						<?php $this->render_form_fields( 'ip' ); ?>
 
@@ -719,20 +722,20 @@ class SettingsRenderer {
 							<tbody>
 								<?php
 								RenderHelper::render_toggle_row(
-									\__( 'IP Blacklist', 'silver-assist-security' ),
+									\__( 'Form Flood Blacklist', 'silver-assist-security' ),
 									'silver_assist_ip_blacklist_enabled',
 									$config['ip_blacklist_enabled'],
-									\__( 'Enable automatic IP blacklisting for repeat offenders', 'silver-assist-security' )
+									\__( 'Automatically block an IP from submitting Contact Form 7 forms after repeat violations (rate limit, spam, injection). Login is not affected.', 'silver-assist-security' )
 								);
 								RenderHelper::render_range_row(
-									\__( 'Violations Before Blacklisting', 'silver-assist-security' ),
+									\__( 'Violations Before Blocking', 'silver-assist-security' ),
 									'silver_assist_ip_blacklist_threshold',
 									$config['ip_violation_threshold'],
 									3,
 									20,
 									'ip-blacklist-threshold-value',
 									(string) $config['ip_violation_threshold'],
-									\__( 'Number of security violations from one IP before it is blacklisted automatically (3-20)', 'silver-assist-security' )
+									\__( 'Rejected Contact Form 7 submissions from one IP before it is blocked from the forms (3-20)', 'silver-assist-security' )
 								);
 								?>
 							</tbody>
@@ -752,7 +755,7 @@ class SettingsRenderer {
 			<!-- Login Security Blocked IPs Section -->
 			<div class="status-card">
 				<div class="card-header">
-					<h3><?php \esc_html_e( 'Login Security - Blocked IPs', 'silver-assist-security' ); ?></h3>
+					<h3><?php \esc_html_e( 'Form Flood Blacklist - Blocked IPs', 'silver-assist-security' ); ?></h3>
 				</div>
 				<div class="card-content">
 					<div id="ip-mgmt-blocked-ips-list">
@@ -766,7 +769,7 @@ class SettingsRenderer {
 			<?php if ( SecurityHelper::is_contact_form_7_active() ) : ?>
 				<div class="status-card">
 					<div class="card-header">
-						<h3><?php \esc_html_e( 'Form Protection - Blocked IPs', 'silver-assist-security' ); ?></h3>
+						<h3><?php \esc_html_e( 'Form Flood Blacklist - Contact Form 7 Blocks', 'silver-assist-security' ); ?></h3>
 					</div>
 					<div class="card-content">
 						<div id="cf7-blocked-ips-content">
@@ -799,7 +802,7 @@ class SettingsRenderer {
 							</button>
 						</div>
 						<p class="description">
-							<?php \esc_html_e( 'Manually block specific IP addresses. Blocked IPs will be denied access to login and forms.', 'silver-assist-security' ); ?>
+							<?php \esc_html_e( 'Manually block an IP address from submitting Contact Form 7 forms for 30 days. This does not block login, the front end, REST or GraphQL; login lockouts are managed in the Login Security tab.', 'silver-assist-security' ); ?>
 						</p>
 					</div>
 				</div>

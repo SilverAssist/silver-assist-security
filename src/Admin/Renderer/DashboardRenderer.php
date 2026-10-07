@@ -97,7 +97,7 @@ class DashboardRenderer {
 				<div class="card-content">
 					<?php
 					RenderHelper::render_stat( $security_status['login_security']['max_attempts'], \__( 'Max Attempts', 'silver-assist-security' ) );
-					RenderHelper::render_stat( $security_status['overall']['blocked_ips_count'], \__( 'Blocked IPs', 'silver-assist-security' ), '', 'blocked-ips-card' );
+					RenderHelper::render_stat( $security_status['login_security']['locked_out_ips'], \__( 'Locked-out IPs', 'silver-assist-security' ), '', 'locked-out-ips-card' );
 					RenderHelper::render_stat( (int) round( $security_status['login_security']['lockout_duration'] / 60 ), \__( 'Lockout (min)', 'silver-assist-security' ) );
 					?>
 				</div>
@@ -165,7 +165,7 @@ class DashboardRenderer {
 					RenderHelper::render_feature_status( \__( 'XML-RPC Protection', 'silver-assist-security' ), (bool) $security_status['general_security']['xmlrpc_disabled'] );
 					RenderHelper::render_feature_status( \__( 'Version Hiding', 'silver-assist-security' ), (bool) $security_status['general_security']['version_hiding'] );
 					RenderHelper::render_feature_status( \__( 'SSL/HTTPS', 'silver-assist-security' ), (bool) $security_status['general_security']['ssl_enabled'] );
-					RenderHelper::render_feature_status( \__( 'IP Blacklisting', 'silver-assist-security' ), (bool) $security_status['general_security']['ip_blacklist_enabled'] );
+					RenderHelper::render_feature_status( \__( 'Form Flood Blacklist', 'silver-assist-security' ), (bool) $security_status['general_security']['ip_blacklist_enabled'] );
 					?>
 				</div>
 			</div>
@@ -183,6 +183,7 @@ class DashboardRenderer {
 					<?php
 					RenderHelper::render_feature_status( \__( 'Form Protection', 'silver-assist-security' ), (bool) $security_status['form_protection']['enabled'] );
 					RenderHelper::render_stat( $security_status['form_protection']['rate_limit'], \__( 'Rate Limit (min)', 'silver-assist-security' ) );
+					RenderHelper::render_stat( $security_status['overall']['blocked_ips_count'], \__( 'Form Flood Blocked IPs', 'silver-assist-security' ), '', 'blocked-ips-card' );
 					?>
 				</div>
 			</div>
@@ -204,7 +205,7 @@ class DashboardRenderer {
 			
 			<div class="silver-stats-grid" id="security-stats-container">
 				<?php
-				RenderHelper::render_async_stat( 'blocked-ips-count', \__( 'Blocked IPs', 'silver-assist-security' ) );
+				RenderHelper::render_async_stat( 'blocked-ips-count', \__( 'Form Flood Blocked IPs', 'silver-assist-security' ) );
 				RenderHelper::render_async_stat( 'failed-attempts-count', \__( 'Failed Login Attempts (24h)', 'silver-assist-security' ) );
 				RenderHelper::render_async_stat( 'security-events-count', \__( 'Security Events (7d)', 'silver-assist-security' ) );
 				?>
@@ -229,7 +230,7 @@ class DashboardRenderer {
 				<div class="activity-tabs">
 					<button class="activity-tab active" data-tab="blocked-ips">
 						<span class="dashicons dashicons-dismiss"></span>
-						<?php \esc_html_e( 'Blocked IPs', 'silver-assist-security' ); ?>
+						<?php \esc_html_e( 'Form Flood Blocked IPs', 'silver-assist-security' ); ?>
 					</button>
 					<button class="activity-tab" data-tab="security-logs">
 						<span class="dashicons dashicons-list-view"></span>
