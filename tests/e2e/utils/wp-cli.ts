@@ -24,7 +24,7 @@ export function resetLoginState(): void {
   wp(
     "db",
     "query",
-    "DELETE FROM wp_options WHERE option_name LIKE '%login_attempts_%' OR option_name LIKE '%lockout_%' OR option_name LIKE '%login_access_%' OR option_name LIKE '%bot_activity_%' OR option_name LIKE '%extended_bot_block_%'",
+    "DELETE FROM wp_options WHERE option_name LIKE '%login_attempts_%' OR option_name LIKE '%lockout_%' OR option_name LIKE '%login_access_%' OR option_name LIKE '%login_window_%' OR option_name LIKE '%bot_activity_%' OR option_name LIKE '%extended_bot_block_%'",
   );
 }
 

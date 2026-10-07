@@ -416,6 +416,17 @@ define( 'SILVER_ASSIST_TRUSTED_PROXY_CIDRS', '10.0.0.0/8,52.84.0.0/15' ); // VPC
   until you do (behind a load balancer every visitor then shares the balancer's address).
 - Behind a CDN that sits in front of the load balancer, declare the CDN ranges too; otherwise the CDN
   edge address is taken as the visitor.
+- IPv6: every limiter (login lockout, login-page limit, blacklist, form protection, REST and GraphQL
+  rate limits) counts an IPv6 client by its `/64` network prefix, not by the exact address, because a
+  subscriber normally controls a whole /64 and could otherwise rotate through billions of addresses.
+  Blocking one IPv6 address blocks its /64 (the list still shows the address that was blocked). An
+  IPv4-mapped address counts as its IPv4 address. Change the prefix with the
+  `silver_assist_security_ipv6_prefix_length` filter (default 64; 128 keeps the exact address). IPv4 is
+  unchanged.
+- Persistent object cache (Redis, Memcached): limiter counters and blocks are transients, so they live
+  in the cache and survive without touching the options table. The blocked-IP list reads a small index
+  option (`silver_assist_ip_blacklist_index`, capped at 1000 entries and pruned by the daily cleanup),
+  so it works the same with or without an object cache.
 - Cookies: the auth and logged-in cookies are Secure only when WordPress sees an HTTPS request
   (`is_ssl()`, which reads `$_SERVER['HTTPS']` or port 443). The plugin does not trust
   `X-Forwarded-Proto` on its own, since any client can send it. If TLS ends at your proxy, set
@@ -430,8 +441,8 @@ address (an office, a VPN, a mobile carrier) share the limits too. With the defa
 | Limit | Default | Setting | Behavior |
 |-------|---------|---------|----------|
 | Failed logins | 5 | Login Attempts (1-20) | The IP is locked out; the right password is refused from that IP too. The page says "Too many failed login attempts. Try again in N minutes." |
-| Lockout duration | 15 minutes | Lockout Duration (60-3600 s) | Counted from the failure that triggered it. Trying again while locked out does not extend it. A successful login or password reset from that IP clears the count. |
-| Login page requests | 15 per minute | not configurable | The 16th request within a minute from one IP gets a 404 (the counter expires a minute after the latest request). A login costs two requests (the form and the submit), so about seven logins a minute from one address. Lost password, password reset and logout requests are not counted. Switch off Bot Protection to disable this counter. |
+| Lockout duration | 15 minutes | Lockout Duration (60-3600 s) | The 5 failures are counted in a fixed window that opens at the first failure and lasts as long as the lockout. The lockout is counted from the failure that triggered it. Trying again while locked out does not extend it. A successful login or password reset from that IP clears the count. |
+| Login page requests | 15 per minute | not configurable | The 16th request within a minute from one IP gets a 404 (a fixed window: it opens at the first request and ends a minute later, so a monitor that checks the page once a minute is not blocked). A login costs two requests (the form and the submit), so about seven logins a minute from one address. Lost password, password reset and logout requests are not counted. Switch off Bot Protection to disable this counter. |
 | Idle session | 30 minutes | Session Timeout (5-120) | No user activity for that long ends the session, administrators included; in wp-admin the visitor lands on the login screen with `session_expired=1`. Page views and form posts count as activity; Heartbeat, REST reads and admin-ajax reads do not, so an open tab still goes idle. The activity stamp is written at most once a minute. The auth cookie lasts as long as the timeout from the login, is not renewed by activity, and "Remember Me" is removed, so a session also ends that long after login. |
 
 - Password policy (8+ characters with upper and lower case, a number and a symbol, when enabled) is enforced
