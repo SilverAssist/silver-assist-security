@@ -381,11 +381,12 @@ class GraphQLSecurity implements LoadableInterface {
 
 				// Connection complexity (connections with arguments).
 				$connection_matches = array();
-				preg_match_all( '/\(\s*first:\s*(\d+)/', $query_string, $connection_matches );
+				// Both page size arguments count, `first:` and `last:`, wherever they sit in the argument list.
+				preg_match_all( '/\b(?:first|last)\s*:\s*(\d+)/', $query_string, $connection_matches );
 				$connection_complexity = 0;
 				if ( ! empty( $connection_matches[1] ) ) {
-					foreach ( $connection_matches[1] as $first_value ) {
-						$connection_complexity += (int) ceil( (int) $first_value / 10 );
+					foreach ( $connection_matches[1] as $page_size ) {
+						$connection_complexity += (int) ceil( (int) $page_size / 10 );
 					}
 				}
 
@@ -881,25 +882,55 @@ class GraphQLSecurity implements LoadableInterface {
 		$directive_threshold       = max( 3, intval( $this->max_directives / 2 ) );
 		$field_duplicate_threshold = max( 10, $this->max_field_duplicates * 5 );
 
-		$suspicious_patterns = array(
-			'/(__schema|__type).*\{.*\{.*\{/', // Deep introspection.
-			'/(@\w+.*){' . $directive_threshold . ',}/', // Many directives.
-			'/.{' . $max_query_length . ',}/', // Very long query.
-			'/\{[^}]*(\w+[^}]*){' . $field_duplicate_threshold . ',}\}/', // Many field duplicates.
-		);
-
-		// Many aliases: reuse the count validation runs (a linear scan, no backtracking).
-		if ( $this->count_aliases( $query ) >= $alias_threshold ) {
+		// Very long query: a length check, nothing to match.
+		if ( strlen( $query ) >= $max_query_length ) {
 			return true;
 		}
 
-		foreach ( $suspicious_patterns as $pattern ) {
-			if ( preg_match( $pattern, $query ) ) {
-				return true;
-			}
+		// Many aliases, directives or repeated fields: the counts validation runs. They are linear
+		// scans, so a crafted query cannot exhaust PCRE's backtrack limit and go unflagged.
+		if ( $this->count_aliases( $query ) >= $alias_threshold
+			|| $this->count_directives( $query ) >= $directive_threshold
+			|| $this->count_field_duplicates( $query ) >= $field_duplicate_threshold
+		) {
+			return true;
 		}
 
-		return false;
+		return $this->is_deep_introspection( $query );
+	}
+
+	/**
+	 * Check whether a query introspects the schema with three or more selection sets below it
+	 *
+	 * Counts the selection sets opened from the first `__schema` or `__type` on, in one linear pass
+	 * (word boundaries, so `__typename` is not introspection; line breaks do not matter).
+	 *
+	 * @since 1.5.4
+	 * @param string $query GraphQL query string.
+	 * @return bool
+	 */
+	private function is_deep_introspection( string $query ): bool {
+		$cleaned = $this->strip_comments_and_strings( $query );
+
+		if ( ! preg_match( '/\b__(?:schema|type)\b/', $cleaned, $match, PREG_OFFSET_CAPTURE ) ) {
+			return false;
+		}
+
+		return substr_count( $cleaned, '{', (int) $match[0][1] ) >= 3;
+	}
+
+	/**
+	 * Remove comments and string literals so counts do not see their content
+	 *
+	 * @since 1.5.4
+	 * @param string $query GraphQL query string.
+	 * @return string Query with comments removed and strings emptied.
+	 */
+	private function strip_comments_and_strings( string $query ): string {
+		$cleaned = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
+		$cleaned = (string) preg_replace( '/"[^"]*"/', '""', $cleaned );
+
+		return (string) preg_replace( "/'[^']*'/", "''", $cleaned );
 	}
 
 	/**
@@ -1123,9 +1154,7 @@ class GraphQLSecurity implements LoadableInterface {
 	 */
 	private function count_aliases( string $query ): int {
 		// Remove comments and strings to avoid false positives.
-		$cleaned_query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
-		$cleaned_query = (string) preg_replace( '/"[^"]*"/', '""', $cleaned_query );
-		$cleaned_query = (string) preg_replace( "/'[^']*'/", "''", $cleaned_query );
+		$cleaned_query = $this->strip_comments_and_strings( $query );
 
 		// Pattern to match aliases: fieldAlias: actualField
 		// This matches word characters followed by colon and space/word.
@@ -1201,9 +1230,7 @@ class GraphQLSecurity implements LoadableInterface {
 	 */
 	private function count_directives( string $query ): int {
 		// Remove comments and strings to avoid false positives.
-		$cleaned_query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
-		$cleaned_query = (string) preg_replace( '/"[^"]*"/', '""', $cleaned_query );
-		$cleaned_query = (string) preg_replace( "/'[^']*'/", "''", $cleaned_query );
+		$cleaned_query = $this->strip_comments_and_strings( $query );
 
 		// Pattern to match directives: @directiveName.
 		preg_match_all( '/@[a-zA-Z_][a-zA-Z0-9_]*/', $cleaned_query, $matches );
@@ -1278,9 +1305,7 @@ class GraphQLSecurity implements LoadableInterface {
 	 */
 	private function count_field_duplicates( string $query ): int {
 		// Remove comments and strings to avoid false positives.
-		$cleaned_query = (string) preg_replace( '/\s*#[^\r\n]*/', '', $query );
-		$cleaned_query = (string) preg_replace( '/"[^"]*"/', '""', $cleaned_query );
-		$cleaned_query = (string) preg_replace( "/'[^']*'/", "''", $cleaned_query );
+		$cleaned_query = $this->strip_comments_and_strings( $query );
 
 		// Extract all field names (simplified pattern).
 		preg_match_all( '/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*[({]/', $cleaned_query, $matches );
