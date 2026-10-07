@@ -5,7 +5,7 @@
  * Comprehensive integration tests for AdminPanel class covering:
  * - WordPress admin menu registration (Settings Hub integration + fallback)
  * - Settings registration and validation
- * - AJAX endpoints (security status, login stats, blocked IPs, auto-save, path validation)
+ * - AJAX endpoints (security status, login stats, blocked IPs, path validation)
  * - Asset enqueuing (CSS, JS with minification support)
  * - Security configuration form processing
  * - GraphQL configuration integration via GraphQLConfigManager
@@ -127,7 +127,6 @@ class AdminPanelTest extends WP_UnitTestCase
         \remove_all_actions('wp_ajax_silver_assist_get_login_stats');
         \remove_all_actions('wp_ajax_silver_assist_get_blocked_ips');
         \remove_all_actions('wp_ajax_silver_assist_get_security_logs');
-        \remove_all_actions('wp_ajax_silver_assist_auto_save');
         \remove_all_actions('wp_ajax_silver_assist_validate_admin_path');
         \remove_all_actions('wp_ajax_silver_assist_check_updates');
 
@@ -168,7 +167,6 @@ class AdminPanelTest extends WP_UnitTestCase
             'silver_assist_get_login_stats',
             'silver_assist_get_blocked_ips',
             'silver_assist_get_security_logs',
-            'silver_assist_auto_save',
             'silver_assist_validate_admin_path',
         ];
 

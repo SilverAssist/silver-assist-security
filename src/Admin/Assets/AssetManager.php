@@ -198,11 +198,11 @@ class AssetManager {
 			'pathForbidden'           => \__( 'This path contains forbidden keywords', 'silver-assist-security' ),
 			'pathInvalidChars'        => \__( 'Path can only contain letters, numbers, hyphens, and underscores', 'silver-assist-security' ),
 			'pathEmpty'               => \__( 'Path cannot be empty', 'silver-assist-security' ),
-			// Auto-save strings.
+			// Save bar strings.
 			'saving'                  => \__( 'Saving...', 'silver-assist-security' ),
-			'saved'                   => \__( 'Saved!', 'silver-assist-security' ),
-			'nothingToSave'           => \__( 'Nothing to save', 'silver-assist-security' ),
-			'saveFailed'              => \__( 'Save failed', 'silver-assist-security' ),
+			'unsavedChanges'          => \__( 'You have unsaved changes.', 'silver-assist-security' ),
+			'leaveWarning'            => \__( 'You have unsaved changes. If you leave this page they will be lost.', 'silver-assist-security' ),
+			'adminHideConfirmNeeded'  => \__( 'Confirm that you saved the admin URL before Admin Hide takes effect.', 'silver-assist-security' ),
 			// AJAX error strings.
 			'updateCheckFailed'       => \__( 'Failed to check for Silver Assist updates', 'silver-assist-security' ),
 			'securityStatusFailed'    => \__( 'Failed to load security essentials', 'silver-assist-security' ),

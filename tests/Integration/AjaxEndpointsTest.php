@@ -78,7 +78,6 @@ class AjaxEndpointsTest extends WP_UnitTestCase {
 			'wp_ajax_silver_assist_get_login_stats',
 			'wp_ajax_silver_assist_get_blocked_ips',
 			'wp_ajax_silver_assist_get_security_logs',
-			'wp_ajax_silver_assist_auto_save',
 			'wp_ajax_silver_assist_validate_admin_path',
 			'wp_ajax_silver_assist_add_manual_ip',
 			'wp_ajax_silver_assist_unblock_ip',
@@ -157,7 +156,6 @@ class AjaxEndpointsTest extends WP_UnitTestCase {
 
 		$endpoints = [
 			'get_security_status',
-			'auto_save',
 			'add_manual_ip',
 			'unblock_ip',
 		];

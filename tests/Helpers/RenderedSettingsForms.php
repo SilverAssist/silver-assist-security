@@ -14,6 +14,7 @@ use DOMDocument;
 use DOMElement;
 use DOMXPath;
 use SilverAssist\Security\Admin\Renderer\SettingsRenderer;
+use SilverAssist\Security\Admin\Settings\SettingsRegistry;
 use SilverAssist\Security\GraphQL\GraphQLConfigManager;
 
 /**
@@ -147,14 +148,40 @@ trait RenderedSettingsForms {
 	}
 
 	/**
-	 * The rendered form for a section
+	 * The sections a rendered form saves: those of its tab
+	 *
+	 * @param DOMElement $form Form element.
+	 * @return string[]
+	 */
+	private function form_sections( DOMElement $form ): array {
+		return SettingsRegistry::sections_for_tab( $this->form_fields( $form )['settings_tab'] ?? '' );
+	}
+
+	/**
+	 * The rendered form of a tab
+	 *
+	 * @param string $tab Tab slug.
+	 * @return DOMElement
+	 */
+	private function form_for_tab( string $tab ): DOMElement {
+		foreach ( $this->submit_forms() as $form ) {
+			if ( ( $this->form_fields( $form )['settings_tab'] ?? '' ) === $tab ) {
+				return $form;
+			}
+		}
+
+		$this->fail( "No form for tab {$tab}." );
+	}
+
+	/**
+	 * The rendered form that saves a section
 	 *
 	 * @param string $section Section slug.
 	 * @return DOMElement
 	 */
 	private function form_with_section( string $section ): DOMElement {
 		foreach ( $this->submit_forms() as $form ) {
-			if ( ( $this->form_fields( $form )['settings_section'] ?? '' ) === $section ) {
+			if ( in_array( $section, $this->form_sections( $form ), true ) ) {
 				return $form;
 			}
 		}

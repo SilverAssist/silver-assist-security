@@ -99,8 +99,7 @@ class CF7RateLimitSettingTest extends WP_UnitTestCase {
 	private function save_cf7_tab( array $values ): void {
 		( new SettingsSaver() )->save(
 			\array_merge( array( 'silver_assist_cf7_protection_enabled' => '1' ), $values ),
-			'cf7',
-			SettingsSaver::MODE_FORM
+			'cf7'
 		);
 	}
 

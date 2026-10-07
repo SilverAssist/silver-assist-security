@@ -25,28 +25,6 @@ class SettingsRegistryTest extends WP_UnitTestCase {
 	use RenderedSettingsForms;
 
 	/**
-	 * Options auto-save may write: the set the endpoint accepted before the registry existed (#159)
-	 *
-	 * Changing this list is a product decision (#160), not a refactor.
-	 *
-	 * @var string[]
-	 */
-	private const AUTOSAVE_SET = array(
-		'silver_assist_login_attempts',
-		'silver_assist_lockout_duration',
-		'silver_assist_session_timeout',
-		'silver_assist_graphql_query_depth',
-		'silver_assist_graphql_query_complexity',
-		'silver_assist_password_strength_enforcement',
-		'silver_assist_bot_protection',
-		'silver_assist_graphql_headless_mode',
-		'silver_assist_admin_hide_enabled',
-		'silver_assist_ip_blacklist_enabled',
-		'silver_assist_ip_blacklist_threshold',
-		'silver_assist_cf7_protection_enabled',
-	);
-
-	/**
 	 * Every declaration is well formed
 	 *
 	 * @return void
@@ -67,7 +45,6 @@ class SettingsRegistryTest extends WP_UnitTestCase {
 			$this->assertContains( $declaration['type'], $types, "{$option} has an unknown type." );
 			$this->assertTrue( SettingsRegistry::has_section( $declaration['section'] ), "{$option} has an unknown section." );
 			$this->assertIsBool( $declaration['ui'] );
-			$this->assertIsBool( $declaration['autosave'] );
 
 			if ( SettingsRegistry::TYPE_INT === $declaration['type'] ) {
 				$this->assertIsInt( $declaration['min'], "{$option} needs a minimum." );
@@ -105,21 +82,27 @@ class SettingsRegistryTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Auto-save eligibility is exactly the documented set
+	 * Tabs list every section once, in sections that exist
 	 *
 	 * @return void
 	 */
-	public function test_autosave_eligibility_is_the_documented_set(): void {
-		$actual = SettingsRegistry::autosave_options();
-		$wanted = self::AUTOSAVE_SET;
-		\sort( $actual );
-		\sort( $wanted );
+	public function test_tabs_cover_every_section_exactly_once(): void {
+		$in_tabs = array();
+		foreach ( SettingsRegistry::tabs() as $tab => $sections ) {
+			$this->assertNotEmpty( $sections, "Tab {$tab} has no section." );
+			$this->assertSame( $sections, SettingsRegistry::sections_for_tab( $tab ) );
+			$in_tabs = array_merge( $in_tabs, $sections );
+		}
+		$expected = SettingsRegistry::sections();
+		\sort( $expected );
+		\sort( $in_tabs );
 
-		$this->assertSame( $wanted, $actual );
+		$this->assertSame( $expected, $in_tabs, 'Every registry section is saved from exactly one tab.' );
+		$this->assertSame( array(), SettingsRegistry::sections_for_tab( 'nope' ) );
 	}
 
 	/**
-	 * Every option flagged as having a field is rendered, inside the form of its own section
+	 * Every option flagged as having a field is rendered, inside the form of the tab that saves its section
 	 *
 	 * Options without a field are not rendered anywhere.
 	 *
@@ -131,18 +114,17 @@ class SettingsRegistryTest extends WP_UnitTestCase {
 
 		$rendered = array();
 		foreach ( $this->submit_forms() as $form ) {
-			$fields  = $this->form_fields( $form );
-			$section = $fields['settings_section'] ?? '';
+			$sections = $this->form_sections( $form );
 			foreach ( $this->form_field_names( $form ) as $name ) {
 				if ( null !== SettingsRegistry::get( $name ) ) {
-					$rendered[ $name ] = $section;
+					$rendered[ $name ] = $sections;
 				}
 			}
 		}
 
 		foreach ( SettingsRegistry::all() as $option => $declaration ) {
 			if ( $declaration['ui'] ) {
-				$this->assertSame( $declaration['section'], $rendered[ $option ] ?? null, "{$option} has a field, so it must be rendered in the form of section {$declaration['section']}." );
+				$this->assertContains( $declaration['section'], $rendered[ $option ] ?? array(), "{$option} has a field, so it must be rendered in the form of the tab that saves section {$declaration['section']}." );
 			} else {
 				$this->assertArrayNotHasKey( $option, $rendered, "{$option} is declared without a field but a form renders it." );
 			}

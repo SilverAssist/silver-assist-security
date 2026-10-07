@@ -136,9 +136,9 @@ class WordPressHooksIntegrationTest extends WP_UnitTestCase
             'AJAX security status hook should be registered'
         );
         
-        $this->assertTrue(
-            \has_action('wp_ajax_silver_assist_auto_save') !== false,
-            'AJAX auto-save hook should be registered'
+        $this->assertFalse(
+            \has_action('wp_ajax_silver_assist_auto_save'),
+            'The auto-save endpoint was removed (#160): settings are saved with the tab Save button'
         );
 
         \wp_set_current_user( 0 );
