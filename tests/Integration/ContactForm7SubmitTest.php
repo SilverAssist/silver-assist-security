@@ -59,7 +59,16 @@ class ContactForm7SubmitTest extends WP_UnitTestCase {
 			$this->markTestSkipped( $message . '.' );
 		}
 
-		require_once $main_file;
+		// CF7 6.2 loads its autoloader with a relative `require 'vendor/autoload.php'`, which PHP resolves
+		// against the working directory first; from the repository root that finds this plugin's own
+		// autoloader. Load it from CF7's folder, as a web server request would see it.
+		$previous_dir = (string) \getcwd();
+		\chdir( \dirname( $main_file ) );
+		try {
+			require_once $main_file;
+		} finally {
+			\chdir( $previous_dir );
+		}
 		\wpcf7();
 		\wpcf7_init();
 
@@ -92,9 +101,13 @@ class ContactForm7SubmitTest extends WP_UnitTestCase {
 		$this->form_id = (int) $form->save();
 		$this->assertGreaterThan( 0, $this->form_id, 'the CF7 form was created' );
 
-		// The plugin registers its CF7 hooks once Contact Form 7 is active; they are the only thing
-		// between a submission and the mail, so the tests below would be meaningless without them.
-		$this->assertNotFalse( \has_filter( 'wpcf7_validate', array( ContactForm7Integration::instance(), 'validate_cf7_form' ) ), 'the plugin guards CF7 submissions' );
+		// The plugin registers its CF7 hooks when its integration is built while CF7 is active. The
+		// booted singleton was built before this test loaded CF7, so build one now. They are the only
+		// thing between a submission and the mail, so the tests below would be meaningless without them.
+		if ( false === \has_filter( 'wpcf7_validate' ) ) {
+			new ContactForm7Integration();
+		}
+		$this->assertNotFalse( \has_filter( 'wpcf7_validate' ), 'the plugin guards CF7 submissions' );
 	}
 
 	/**

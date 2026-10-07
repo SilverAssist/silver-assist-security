@@ -75,6 +75,41 @@ class AuditResidualsBehaviorTest extends WP_UnitTestCase {
 	}
 
 	// ---------------------------------------------------------------------
+	// G1: cleanup cron.
+	// ---------------------------------------------------------------------
+
+	/**
+	 * The daily cleanup is scheduled once and, when it fires, removes expired lockout rows
+	 *
+	 * @return void
+	 */
+	public function test_cleanup_cron_is_scheduled_once_and_purges_expired_rows(): void {
+		global $wpdb;
+
+		wp_clear_scheduled_hook( 'silver_assist_security_cleanup' );
+		\SilverAssist\Security\Security\IPBlacklist::init_cron_cleanup();
+		\SilverAssist\Security\Security\IPBlacklist::init_cron_cleanup();
+
+		$crons = array_filter(
+			_get_cron_array(),
+			static fn( $events ) => isset( $events['silver_assist_security_cleanup'] )
+		);
+		$this->assertCount( 1, $crons, 'calling the initializer twice schedules one event' );
+		$event = wp_get_scheduled_event( 'silver_assist_security_cleanup' );
+		$this->assertIsObject( $event );
+		$this->assertSame( 'daily', $event->schedule );
+
+		$key = 'lockout_' . md5( '198.51.100.90' );
+		set_transient( $key, time() - 10, HOUR_IN_SECONDS );
+		$wpdb->update( $wpdb->options, array( 'option_value' => (string) ( time() - 5 ) ), array( 'option_name' => '_transient_timeout_' . $key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Age the row.
+		wp_cache_flush();
+
+		do_action( 'silver_assist_security_cleanup' );
+
+		$this->assertSame( 0, (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name = %s", '_transient_timeout_' . $key ) ), 'the expired row is gone' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Check the row.
+	}
+
+	// ---------------------------------------------------------------------
 	// G2: extension filters.
 	// ---------------------------------------------------------------------
 
