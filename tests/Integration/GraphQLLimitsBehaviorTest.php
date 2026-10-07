@@ -408,21 +408,54 @@ class GraphQLLimitsBehaviorTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Fields repeated many times are flagged, a wide selection of different fields is not
+	 * Fields repeated many times are flagged for the log, a wide selection of different fields is not
 	 *
 	 * The signature was a pattern that matched any long flat selection set, not repetition (#185). The
-	 * flag starts at 50 duplicates.
+	 * flag starts at 50 duplicates. Validation rejects 11 repeats of a field in one selection set, so
+	 * a request this repetitive never reaches the log; the classifier is exercised directly.
 	 *
 	 * @return void
 	 */
 	public function test_repeated_fields_are_flagged_and_wide_selections_are_not(): void {
-		$this->spy_on_security_events();
+		$classify = new \ReflectionMethod( $this->security, 'is_suspicious_query' );
+		$classify->setAccessible( true );
 
-		$this->run_query( '{ generalSettings { title description url dateFormat timeFormat timezone language startOfWeek email defaultCategory defaultPostFormat postsPerPage } }' );
-		$this->assertNotContains( 'GRAPHQL_SUSPICIOUS_QUERY', $this->event_types(), 'a wide selection of different fields is not repetition' );
+		$this->assertFalse( $classify->invoke( $this->security, '{ generalSettings { title description url dateFormat timeFormat timezone language startOfWeek email defaultCategory defaultPostFormat postsPerPage } }' ), 'a wide selection of different fields is not repetition' );
+		$this->assertTrue( $classify->invoke( $this->security, '{ ' . \str_repeat( 'generalSettings { title } ', 55 ) . '}' ), '54 repeats of one field are flagged' );
+	}
 
-		$this->run_query( '{ ' . \str_repeat( 'generalSettings { title } ', 55 ) . '}' );
-		$this->assertContains( 'GRAPHQL_SUSPICIOUS_QUERY', $this->event_types(), '54 repeats of one field are flagged' );
+	/**
+	 * Repeating one field in a selection set is rejected, the same name elsewhere is not
+	 *
+	 * The limit (10, headless 20) is enforced by a linear pass. `nodes` under every connection, or
+	 * aliased copies of a field, are ordinary (the alias limit governs those).
+	 *
+	 * @return void
+	 */
+	public function test_field_duplication_limit_is_enforced_per_selection_set(): void {
+		$repeated = $this->run_query_or_error( '{ ' . \str_repeat( 'generalSettings { title } ', 12 ) . '}' );
+		$this->assertStringContainsString( 'field duplication', $repeated, '11 repeats in one selection set are over the limit' );
+
+		$connections = '';
+		for ( $i = 0; $i < 12; $i++ ) {
+			$connections .= "p{$i}: posts(first: 1) { nodes { id } } ";
+		}
+		$many = $this->run_query( '{ ' . $connections . '}' );
+		$this->assertSame( array(), $many['errors'] ?? array(), (string) \wp_json_encode( $many ) );
+	}
+
+	/**
+	 * Run a query and return the message of the error, whether graphql() returns or throws it
+	 *
+	 * @param string $query GraphQL document.
+	 * @return string
+	 */
+	private function run_query_or_error( string $query ): string {
+		try {
+			return $this->error_messages( $this->run_query( $query ) );
+		} catch ( \Throwable $e ) {
+			return $e->getMessage();
+		}
 	}
 
 	/**
@@ -462,5 +495,101 @@ class GraphQLLimitsBehaviorTest extends WP_UnitTestCase {
 		}
 		$index = \array_search( 'GRAPHQL_SUSPICIOUS_QUERY', $this->event_types(), true );
 		$this->assertArrayHasKey( 'query_length', $this->events[ $index ][2], 'the rest of the context is still there' );
+	}
+
+	/**
+	 * Directives inside a comment or a string are not directives
+	 *
+	 * The validation counted every `@word` of the raw text, so a harmless query with a long email list in
+	 * a string or a comment was rejected as directive abuse (#185).
+	 *
+	 * @return void
+	 */
+	public function test_directives_inside_strings_and_comments_are_not_counted(): void {
+		$mentions = \str_repeat( '@a ', 40 );
+
+		$commented = $this->run_query( "{ generalSettings { title } } # {$mentions}" );
+		$this->assertSame( array(), $commented['errors'] ?? array(), (string) \wp_json_encode( $commented ) );
+
+		$in_string = $this->run_query( "{ posts(first: 1, where: {search: \"{$mentions}\"}) { nodes { id } } }" );
+		$this->assertSame( array(), $in_string['errors'] ?? array(), (string) \wp_json_encode( $in_string ) );
+
+		$validate = new \ReflectionMethod( $this->security, 'validate_query_patterns' );
+		$validate->setAccessible( true );
+		$this->expectException( \GraphQL\Error\UserError::class );
+		$this->expectExceptionMessage( 'too many directives' );
+		$validate->invoke( $this->security, '{ generalSettings ' . \str_repeat( '@a ', 31 ) . '{ title } }' );
+	}
+
+	/**
+	 * Comment and string stripping honours escaped quotes and block strings
+	 *
+	 * @return void
+	 */
+	public function test_stripping_is_escape_aware(): void {
+		$strip = new \ReflectionMethod( $this->security, 'strip_comments_and_strings' );
+		$strip->setAccessible( true );
+
+		$this->assertSame( 'a "" b', $strip->invoke( $this->security, 'a "x \" @y # z" b' ), 'an escaped quote does not end the string' );
+		$this->assertSame( 'a "" b', $strip->invoke( $this->security, 'a """ x " \""" @y { """ b' ), 'a block string ends at an unescaped triple quote' );
+		$this->assertSame( "a \nb", $strip->invoke( $this->security, "a # \" @c {\nb" ), 'a comment ends at the line break and hides quotes in it' );
+		$this->assertSame( 'a ""', $strip->invoke( $this->security, 'a "unterminated @x { {' ), 'an unterminated string is dropped to the end of the text' );
+	}
+
+	/**
+	 * Crafted documents get an answer in well under a second, through a real request
+	 *
+	 * Long runs of tokens and a thousands-deep brace stack. The parser or the plugin rejects them; what
+	 * matters is that nothing in the plugin's checks stalls on them (#185).
+	 *
+	 * @return void
+	 */
+	public function test_crafted_documents_are_answered_quickly(): void {
+		$documents = array(
+			'token run'   => '{ ' . \str_repeat( 'a ', 4000 ) . '{ a }',
+			'word run'    => '{ ' . \str_repeat( 'a', 8000 ) . '{ a a }',
+			'brace stack' => \str_repeat( '{', 2000 ),
+			'deep nest'   => \str_repeat( 'a{', 2000 ) . 'b' . \str_repeat( '}', 2000 ),
+		);
+
+		foreach ( $documents as $name => $document ) {
+			$started = \microtime( true );
+			try {
+				$result = $this->run_query( $document );
+			} catch ( \Throwable $e ) {
+				// graphql() lets a syntax error escape; it is a rejection as far as this test goes.
+				$result = array( 'errors' => array( array( 'message' => $e->getMessage() ) ) );
+			}
+			$elapsed = \microtime( true ) - $started;
+
+			$this->assertNotEmpty( $result['errors'] ?? array(), "{$name} is rejected" );
+			$this->assertLessThan( 1.0, $elapsed, "{$name} is answered in under a second" );
+		}
+	}
+
+	/**
+	 * A check that cannot run rejects the query, it does not let it through
+	 *
+	 * Forcing PCRE to give up (a 1 backtrack limit) makes `preg_match_all` return false. The checks used
+	 * to read that as zero matches.
+	 *
+	 * @return void
+	 */
+	public function test_validation_fails_closed_when_pcre_gives_up(): void {
+		$validate = new \ReflectionMethod( $this->security, 'validate_query_patterns' );
+		$validate->setAccessible( true );
+
+		$limit = \ini_get( 'pcre.backtrack_limit' );
+		\ini_set( 'pcre.backtrack_limit', '1' );
+		\ini_set( 'pcre.jit', '0' );
+		try {
+			$validate->invoke( $this->security, '{ a: generalSettings { title } b: generalSettings { title } }' );
+			$this->fail( 'a query that could not be checked was accepted' );
+		} catch ( \GraphQL\Error\UserError $e ) {
+			$this->assertStringContainsString( 'could not be validated', $e->getMessage() );
+		} finally {
+			\ini_set( 'pcre.backtrack_limit', (string) $limit );
+			\ini_set( 'pcre.jit', '1' );
+		}
 	}
 }
