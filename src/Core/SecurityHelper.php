@@ -574,6 +574,19 @@ class SecurityHelper {
 	 * @return void
 	 */
 	public static function log_security_event( string $event_type, string $message, array $context = array() ): void {
+		/**
+		 * Fires for every security event, before the WP_DEBUG and test environment gates below.
+		 *
+		 * Observation only: it does not change what is written to the log. Tests use it to assert an
+		 * event was raised, since under PHPUnit only errors are written.
+		 *
+		 * @since 1.5.4
+		 * @param string $event_type Type of security event.
+		 * @param string $message    Human-readable event description.
+		 * @param array  $context    Additional context data.
+		 */
+		\do_action( 'silver_assist_security_event', $event_type, $message, $context );
+
 		// Only log when WP_DEBUG is enabled.
 		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
 			return;
