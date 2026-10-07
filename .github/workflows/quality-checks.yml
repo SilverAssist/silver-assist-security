@@ -216,7 +216,7 @@ jobs:
                   echo "" >> cf7-integration-report.md
                   echo "**Security Features Validated:**" >> cf7-integration-report.md
                   echo "- ✅ Rate limiting and IP blocking" >> cf7-integration-report.md
-                  echo "- ✅ Under Attack mode integration" >> cf7-integration-report.md
+                  echo "- ✅ Form flood blacklist and automatic blocking" >> cf7-integration-report.md
                   echo "- ✅ Honeypot protection" >> cf7-integration-report.md
                   echo "- ✅ Obsolete browser detection" >> cf7-integration-report.md
                   echo "- ✅ Submission timing validation" >> cf7-integration-report.md

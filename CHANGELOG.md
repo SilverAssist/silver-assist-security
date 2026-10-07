@@ -121,6 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Six security log event types of the removed Under Attack Mode (`CAPTCHA_MISSING`, `CAPTCHA_INVALID_TOKEN`, `CAPTCHA_FAILED`, `CF7_BLOCKED_UNDER_ATTACK`, `UNDER_ATTACK_ACTIVATED`, `ATTACK_RECORDED`) are dropped from the allowed list in `SecurityHelper` (#176): nothing logs them.
 - Auto-save (#160): the debounced background save of settings (`initAutoSave`), the `silver_assist_auto_save` AJAX endpoint (`SecurityAjaxHandler::auto_save()`), its "Saved!", "Nothing to save" and "Save failed" strings, the `autosave` flag of `SettingsRegistry` (`autosave_options()`), `SettingsSaver::MODE_AUTOSAVE` (`SettingsSaver::save()` no longer takes a mode) and the `SETTINGS_AUTO_SAVE_ERROR` log type. **Behavior change**: changing a setting no longer applies until Save is pressed. The live admin-path check (`silver_assist_validate_admin_path`) stays.
 
 ## [1.5.3] - 2026-10-05
