@@ -109,7 +109,9 @@ test.describe("Login protection: lockout", () => {
 
   test("the lockout ends on time even when the locked-out person keeps trying", async ({ request }) => {
     test.setTimeout(120_000);
-    wp("option", "update", "silver_assist_lockout_duration", "12");
+    // Written straight to the table: the settings sanitizer (1.5.4) raises anything under 60 s to 60,
+    // which `wp option update` goes through, and the screen offers nothing shorter either.
+    wp("db", "query", "UPDATE wp_options SET option_value = '12' WHERE option_name = 'silver_assist_lockout_duration'");
 
     for (let i = 0; i < 5; i++) await attempt(request, ADMIN_USER, "wrong");
     expect(succeeded(await attempt(request, ADMIN_USER, ADMIN_PASS))).toBe(false);
