@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+
+### Changed
+
+- The Dependabot auto-merge job moved out of `dependency-updates.yml` into `auto-merge-dependabot.yml`, a thin caller of the shared `SilverAssist/workflows/dependabot-auto-merge@v1` action. The cooldown (3 days for patch, 7 for minor) and the approval logic live there. Majors are left for a person without a comment, and the action also refuses pull requests carrying commits that are not verified Dependabot commits. The audit jobs in `dependency-updates.yml` are reports and no longer gate the approval; the required checks do.
+
 ## [1.5.4] - 2026-10-07
 
 ### Security
