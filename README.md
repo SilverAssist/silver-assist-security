@@ -328,7 +328,7 @@ Never commit a token or an `auth.json`.
 - ✅ **Weekly Checks**: Automatically verifies Composer, npm, and GitHub Actions updates every Monday
 - ✅ **Auto-PRs**: Creates Pull Requests with dependency updates
 - ✅ **Quality Gates**: The Quality Checks workflow (PHPStan, PHPCS, PHPUnit) and the security audit run on every PR
-- ✅ **Auto-Merge**: Safe updates (minor/patch) merge automatically
+- ✅ **Auto-Merge**: Safe updates (minor/patch) merge automatically once the required checks pass and the release-age cooldown clears
 - ✅ **Manual Review**: Major version updates require human approval
 - ✅ **Security Audits**: Continuous vulnerability scanning (90-day reports)
 - ✅ **Copilot Reviews**: All PRs automatically reviewed by GitHub Copilot
@@ -355,7 +355,8 @@ Never commit a token or an `auth.json`.
 1. `check-composer-updates` - PHP dependencies report
 2. `check-npm-updates` - JavaScript dependencies report
 3. `security-audit` - CVE scanning and reports
-4. `auto-merge-dependabot` - Approves and auto-merges Dependabot patch and minor PRs, comments on major ones
+
+Dependabot patch and minor PRs are approved and auto-merged by `auto-merge-dependabot.yml`, a thin caller of the shared `SilverAssist/workflows/dependabot-auto-merge@v1` action, after a 3 and 7 day release-age cooldown. Major versions are left for a person.
 
 **For contributors:**
 
